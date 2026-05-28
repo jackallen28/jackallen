@@ -9,8 +9,9 @@ import SerialMonitor from './components/SerialMonitor'
 const BASE = "http://localhost:8000"
 
 export default function App() {
-  const [code, setCode] = useState(undefined)
+  const [code, setCode]       = useState(undefined)
   const [activeFile, setActiveFile] = useState("sketch.ino")
+  const [wiring, setWiring]   = useState({ connections: [] })
 
   // Load file content when selection changes
   useEffect(() => {
@@ -63,11 +64,11 @@ export default function App() {
 
       <div style={{ gridArea: 'main', display: 'grid', gridTemplateRows: '1fr 1fr', overflow: 'hidden' }}>
         <CodeEditor value={code} onChange={setCode} filename={activeFile} />
-        <WiringDiagram />
+        <WiringDiagram wiring={wiring} />
       </div>
 
       <div style={{ gridArea: 'chat', overflow: 'hidden' }}>
-        <ChatPanel code={code} />
+        <ChatPanel code={code} onWiring={setWiring} />
       </div>
 
       <div style={{ gridArea: 'serial', overflow: 'hidden' }}>

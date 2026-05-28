@@ -1,125 +1,157 @@
-import { Cpu } from "lucide-react"
+import { useState, useRef, useCallback } from "react"
+import { Cpu, Plus, Trash2 } from "lucide-react"
+import { COMPONENT_DEFS } from "./wiring/components.js"
+import WireCanvas from "./wiring/WireCanvas.jsx"
 
-// Animated circuit trace component
-function Trace({ d, delay = 0, color = "#1a2744" }) {
-  return (
-    <path
-      d={d}
-      fill="none"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeDasharray="200"
-      strokeDashoffset="0"
-      strokeLinecap="round"
-      style={{ animation: `circuit-trace 3s ease-in-out ${delay}s infinite` }}
-    />
-  )
+const WIRE_COLORS = [
+  "#e94560","#4a9eff","#00ff88","#ffcc00",
+  "#ff6b9d","#c084fc","#fb923c","#34d399",
+]
+
+const DEFAULT_PLACEMENTS = {
+  "arduino-uno-r3": { x: 40,  y: 40 },
+  "hc-sr501":       { x: 320, y: 80 },
 }
 
-function PlaceholderBoard() {
-  return (
-    <svg viewBox="0 0 360 200" className="w-full max-w-sm opacity-60" aria-hidden="true">
-      {/* PCB base */}
-      <rect x="40" y="10" width="280" height="180" rx="8"
-        fill="#050d1a" stroke="#1a2744" strokeWidth="1.5" />
+const CANVAS_W = 600
+const CANVAS_H = 340
 
-      {/* Animated traces */}
-      <Trace d="M 80 50 L 160 50 L 160 100" delay={0} color="#0f3460" />
-      <Trace d="M 280 60 L 200 60 L 200 100" delay={0.8} color="#0f3460" />
-      <Trace d="M 80 150 L 160 150 L 160 100" delay={1.6} color="#0f3460" />
-      <Trace d="M 280 140 L 200 140 L 200 100" delay={2.4} color="#0f3460" />
+export default function WiringDiagram({ wiring = { connections: [] } }) {
+  const [placements, setPlacements] = useState(DEFAULT_PLACEMENTS)
+  const [canvasSize]  = useState({ w: CANVAS_W, h: CANVAS_H })
+  const dragging = useRef(null)
 
-      {/* Left pin header */}
-      {[0,1,2,3,4,5,6,7].map(i => (
-        <g key={`lp${i}`}>
-          <rect x="44" y={22 + i * 20} width="22" height="10" rx="2"
-            fill="#0a1628" stroke="#1e3a5f" strokeWidth="1" />
-          <circle cx="55" cy={27 + i * 20} r="2.5" fill="#4a7fc1" opacity="0.7" />
-          <text x="72" y={31 + i * 20} fill="#1e3a5f" fontSize="7" fontFamily="monospace">
-            D{i}
-          </text>
-        </g>
-      ))}
+  // ── drag-to-reposition components ──────────────────────────────────────────
+  function onMouseDown(e, compId) {
+    e.preventDefault()
+    const start = { mx: e.clientX, my: e.clientY, ...placements[compId] }
+    dragging.current = { compId, start }
+    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseup", onMouseUp)
+  }
 
-      {/* Right pin header */}
-      {[0,1,2,3,4,5].map(i => (
-        <g key={`rp${i}`}>
-          <rect x="294" y={22 + i * 20} width="22" height="10" rx="2"
-            fill="#0a1628" stroke="#1e3a5f" strokeWidth="1" />
-          <circle cx="305" cy={27 + i * 20} r="2.5" fill="#4a7fc1" opacity="0.7" />
-          <text x="280" y={31 + i * 20} fill="#1e3a5f" fontSize="7" fontFamily="monospace" textAnchor="end">
-            {i < 4 ? `A${i}` : i === 4 ? "3V3" : "GND"}
-          </text>
-        </g>
-      ))}
+  const onMouseMove = useCallback((e) => {
+    if (!dragging.current) return
+    const { compId, start } = dragging.current
+    setPlacements(prev => ({
+      ...prev,
+      [compId]: {
+        x: Math.max(0, start.x + e.clientX - start.mx),
+        y: Math.max(0, start.y + e.clientY - start.my),
+      }
+    }))
+  }, [])
 
-      {/* MCU chip */}
-      <rect x="120" y="72" width="120" height="56" rx="4"
-        fill="#0a1628" stroke="#1e3a5f" strokeWidth="1.5" />
-      {/* Chip pin marks */}
-      {[0,1,2,3].map(i => (
-        <g key={`cp${i}`}>
-          <rect x={130 + i * 24} y="68" width="8" height="8" rx="1" fill="#1e3a5f" />
-          <rect x={130 + i * 24} y="124" width="8" height="8" rx="1" fill="#1e3a5f" />
-        </g>
-      ))}
-      <text x="180" y="97" fill="#2a4a7f" fontSize="9" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
-        ATmega328P
-      </text>
-      <text x="180" y="112" fill="#1e3a5f" fontSize="7" textAnchor="middle" fontFamily="monospace">
-        16 MHz
-      </text>
+  const onMouseUp = useCallback(() => {
+    dragging.current = null
+    window.removeEventListener("mousemove", onMouseMove)
+    window.removeEventListener("mouseup", onMouseUp)
+  }, [onMouseMove])
 
-      {/* Crystal */}
-      <ellipse cx="260" cy="100" rx="12" ry="6" fill="#0a1628" stroke="#1e3a5f" strokeWidth="1" />
-      <text x="260" y="103" fill="#1e3a5f" fontSize="6" textAnchor="middle" fontFamily="monospace">XTAL</text>
+  const connections = wiring.connections ?? []
+  const activeComponents = Object.keys(placements)
 
-      {/* USB */}
-      <rect x="143" y="172" width="38" height="14" rx="3"
-        fill="#0a1628" stroke="#1e3a5f" strokeWidth="1" />
-      <rect x="149" y="176" width="6" height="6" rx="1" fill="#1e3a5f" />
-      <rect x="157" y="176" width="6" height="6" rx="1" fill="#1e3a5f" />
-      <rect x="165" y="176" width="6" height="6" rx="1" fill="#1e3a5f" />
-      <text x="162" y="171" fill="#1e3a5f" fontSize="6" textAnchor="middle" fontFamily="monospace">USB</text>
-
-      {/* Power LED */}
-      <circle cx="100" cy="165" r="5" fill="#0a1628" stroke="#e94560" strokeWidth="1" />
-      <circle cx="100" cy="165" r="2" fill="#e94560" opacity="0.6"
-        style={{ animation: "glow-pulse 2s ease-in-out infinite" }} />
-      <text x="100" y="158" fill="#e94560" fontSize="5.5" textAnchor="middle" opacity="0.5">PWR</text>
-    </svg>
-  )
-}
-
-export default function WiringDiagram({ components = [] }) {
   return (
     <div className="h-full flex flex-col bg-[#050c18] panel-border-t">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-1.5 panel-border-b bg-[#080e1c] shrink-0">
         <Cpu size={11} className="text-[#4a9eff]" />
         <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Wiring Diagram</span>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 overflow-hidden px-4">
-        {components.length === 0 ? (
-          <>
-            <PlaceholderBoard />
-            <p className="text-[10px] text-gray-700 text-center max-w-xs">
-              Ask the AI to &quot;wire an LED to pin 13&quot; and the diagram will update here
-            </p>
-          </>
-        ) : (
-          <div className="w-full overflow-auto p-4 text-xs text-gray-400 space-y-1">
-            {components.map((c, i) => (
-              <div key={i} className="flex gap-2">
-                <span className="text-[#e94560]">{c.name}</span>
-                <span className="text-gray-600">→</span>
-                <span className="text-[#4a9eff]">{c.pin}</span>
-              </div>
-            ))}
-          </div>
+        {connections.length > 0 && (
+          <span className="ml-auto text-[10px] text-gray-600">{connections.length} connection{connections.length !== 1 ? "s" : ""}</span>
         )}
       </div>
+
+      {/* Canvas */}
+      <div className="flex-1 overflow-auto">
+        <div
+          className="relative bg-[#040810]"
+          style={{
+            width: canvasSize.w,
+            height: canvasSize.h,
+            minWidth: "100%",
+            backgroundImage: "radial-gradient(circle, #1a2744 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
+          }}
+        >
+          {/* Wire layer */}
+          <WireCanvas
+            connections={connections}
+            placements={placements}
+            componentDefs={COMPONENT_DEFS}
+            width={canvasSize.w}
+            height={canvasSize.h}
+          />
+
+          {/* Component layer */}
+          {activeComponents.map(compId => {
+            const def = COMPONENT_DEFS[compId]
+            if (!def) return null
+            const { x, y } = placements[compId]
+            const SVGRenderer = def.render
+
+            return (
+              <div
+                key={compId}
+                onMouseDown={e => onMouseDown(e, compId)}
+                style={{ position: "absolute", left: x, top: y, cursor: "grab", userSelect: "none" }}
+                title={`${def.label} — drag to move`}
+              >
+                <div className="relative group">
+                  {/* Hover ring */}
+                  <div className="absolute inset-0 rounded border border-transparent group-hover:border-[#e94560]/30 pointer-events-none" />
+                  <SVGRenderer width={def.width} height={def.height} pinMap={def.pinMap} />
+                  {/* Label */}
+                  <div className="absolute -top-4 left-0 text-[9px] text-gray-600 whitespace-nowrap font-mono">
+                    {def.label}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Empty state */}
+          {connections.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <p className="text-[11px] text-gray-700 text-center">
+                Ask the AI to wire a component<br/>
+                <span className="text-gray-800">e.g. "wire the HC-SR501 to pin D2"</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Connection table */}
+      {connections.length > 0 && (
+        <div className="shrink-0 panel-border-t overflow-x-auto">
+          <table className="w-full text-[10px] font-mono">
+            <thead>
+              <tr className="bg-[#080e1c]">
+                <th className="px-3 py-1 text-left text-gray-600 font-normal">#</th>
+                <th className="px-3 py-1 text-left text-gray-600 font-normal">From</th>
+                <th className="px-3 py-1 text-left text-gray-600 font-normal">To</th>
+                <th className="px-3 py-1 text-left text-gray-600 font-normal">Wire</th>
+              </tr>
+            </thead>
+            <tbody>
+              {connections.map((c, i) => (
+                <tr key={i} className="border-t border-[#0d1526]">
+                  <td className="px-3 py-0.5 text-gray-700">{i + 1}</td>
+                  <td className="px-3 py-0.5 text-[#4a9eff]">{c.from}</td>
+                  <td className="px-3 py-0.5 text-[#00ff88]">{c.to}</td>
+                  <td className="px-3 py-0.5">
+                    <span
+                      className="inline-block w-8 h-1.5 rounded"
+                      style={{ background: WIRE_COLORS[i % WIRE_COLORS.length] }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

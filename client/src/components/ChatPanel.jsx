@@ -37,7 +37,7 @@ function ThinkingDots() {
   )
 }
 
-export default function ChatPanel({ code }) {
+export default function ChatPanel({ code, onWiring }) {
   const [messages, setMessages] = useState([])
   const [input, setInput]       = useState("")
   const [loading, setLoading]   = useState(false)
@@ -65,8 +65,9 @@ export default function ChatPanel({ code }) {
     textareaRef.current?.focus()
 
     try {
-      const reply = await sendMessage(next)
+      const { reply, wiring } = await sendMessage(next)
       setMessages([...next, { role: "assistant", content: reply }])
+      if (wiring) onWiring?.(wiring)
     } catch (e) {
       setError(e.message)
     } finally {
