@@ -4,7 +4,12 @@ from pydantic import BaseModel
 from anthropic import Anthropic
 
 router = APIRouter()
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+def _client():
+    key = os.getenv("ANTHROPIC_API_KEY")
+    if not key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not set")
+    return Anthropic(api_key=key)
 
 SYSTEM_PROMPT = (
     "You are an expert Arduino and ESP32 embedded systems assistant embedded in the "
@@ -22,10 +27,7 @@ class ChatRequest(BaseModel):
 
 @router.post("/api/chat")
 async def chat(body: ChatRequest):
-    if not client.api_key:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not set")
-
-    response = client.messages.create(
+    response = _client().messages.create(
         model="claude-sonnet-4-6",
         max_tokens=1024,
         system=SYSTEM_PROMPT,
