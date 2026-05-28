@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Toolbar from './components/Toolbar'
 import Sidebar from './components/Sidebar'
 import CodeEditor from './components/CodeEditor'
@@ -6,8 +6,33 @@ import ChatPanel from './components/ChatPanel'
 import WiringDiagram from './components/WiringDiagram'
 import SerialMonitor from './components/SerialMonitor'
 
+const BASE = "http://localhost:8000"
+
 export default function App() {
-  const [code, setCode] = useState(undefined) // undefined lets CodeEditor use its own default
+  const [code, setCode] = useState(undefined)
+  const [activeFile, setActiveFile] = useState("sketch.ino")
+
+  // Load file content when selection changes
+  useEffect(() => {
+    if (!activeFile) return
+    fetch(`${BASE}/api/files/${activeFile}?project=default`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setCode(d.content) })
+      .catch(() => {})
+  }, [activeFile])
+
+  // Auto-save on code change (debounced)
+  useEffect(() => {
+    if (code === undefined || !activeFile) return
+    const t = setTimeout(() => {
+      fetch(`${BASE}/api/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: activeFile, content: code, project: "default" }),
+      }).catch(() => {})
+    }, 800)
+    return () => clearTimeout(t)
+  }, [code, activeFile])
 
   return (
     <div
@@ -25,15 +50,19 @@ export default function App() {
       }}
     >
       <div style={{ gridArea: 'toolbar' }}>
-        <Toolbar />
+        <Toolbar code={code} />
       </div>
 
       <div style={{ gridArea: 'sidebar', overflow: 'hidden' }}>
-        <Sidebar />
+        <Sidebar
+          activeFile={activeFile}
+          onFileSelect={setActiveFile}
+          onFileCreated={setActiveFile}
+        />
       </div>
 
       <div style={{ gridArea: 'main', display: 'grid', gridTemplateRows: '1fr 1fr', overflow: 'hidden' }}>
-        <CodeEditor value={code} onChange={setCode} />
+        <CodeEditor value={code} onChange={setCode} filename={activeFile} />
         <WiringDiagram />
       </div>
 

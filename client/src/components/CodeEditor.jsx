@@ -18,7 +18,7 @@ void loop() {
 }
 `
 
-export default function CodeEditor({ value = DEFAULT_SKETCH, onChange }) {
+export default function CodeEditor({ value = DEFAULT_SKETCH, onChange, filename = "sketch.ino" }) {
   const editorRef = useRef(null)
 
   function handleMount(editor) {
@@ -29,7 +29,7 @@ export default function CodeEditor({ value = DEFAULT_SKETCH, onChange }) {
     <div className="h-full flex flex-col">
       <div className="px-3 py-1 bg-[#0d0d1a] border-b border-[#0f3460] text-xs text-gray-500 shrink-0 flex items-center gap-2">
         <span className="text-[#e94560]">■</span>
-        <span>sketch.ino</span>
+        <span>{filename}</span>
       </div>
 
       <div className="flex-1 min-h-0">
