@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Toolbar from './components/Toolbar'
 import Sidebar from './components/Sidebar'
 import CodeEditor from './components/CodeEditor'
@@ -6,6 +7,8 @@ import WiringDiagram from './components/WiringDiagram'
 import SerialMonitor from './components/SerialMonitor'
 
 export default function App() {
+  const [code, setCode] = useState(undefined) // undefined lets CodeEditor use its own default
+
   return (
     <div
       style={{
@@ -30,12 +33,12 @@ export default function App() {
       </div>
 
       <div style={{ gridArea: 'main', display: 'grid', gridTemplateRows: '1fr 1fr', overflow: 'hidden' }}>
-        <CodeEditor />
+        <CodeEditor value={code} onChange={setCode} />
         <WiringDiagram />
       </div>
 
       <div style={{ gridArea: 'chat', overflow: 'hidden' }}>
-        <ChatPanel />
+        <ChatPanel code={code} />
       </div>
 
       <div style={{ gridArea: 'serial', overflow: 'hidden' }}>

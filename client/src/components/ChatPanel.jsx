@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { sendMessage } from "../api/claude"
 
-export default function ChatPanel() {
+export default function ChatPanel({ code }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -16,7 +16,11 @@ export default function ChatPanel() {
     const text = input.trim()
     if (!text || loading) return
 
-    const next = [...messages, { role: "user", content: text }]
+    const userContent = code
+      ? `${text}\n\n[Current sketch]\n\`\`\`cpp\n${code}\n\`\`\``
+      : text
+
+    const next = [...messages, { role: "user", content: userContent }]
     setMessages(next)
     setInput("")
     setError(null)
