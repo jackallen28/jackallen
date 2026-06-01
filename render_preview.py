@@ -1,61 +1,79 @@
-import vtk
+"""
+Normal-shaded render of acme_c_bushing.stl — makes thread flanks visible.
+Uses trimesh ray casting + face normals for Phong shading.
+"""
 
-# Read STL
-reader = vtk.vtkSTLReader()
-reader.SetFileName("acme_c_bushing.stl")
-reader.Update()
+import numpy as np
+from PIL import Image
+import trimesh
 
-# Smooth normals for better shading
-normals = vtk.vtkPolyDataNormals()
-normals.SetInputConnection(reader.GetOutputPort())
-normals.SetFeatureAngle(60)
-normals.Update()
+mesh = trimesh.load("acme_c_bushing.stl")
+print(f"Mesh: {len(mesh.vertices)} verts, {len(mesh.faces)} faces")
 
-mapper = vtk.vtkPolyDataMapper()
-mapper.SetInputConnection(normals.GetOutputPort())
+# ── Camera / view setup ───────────────────────────────────────────────────────
+# Slight isometric: rotate around Z then tilt down — shows thread spiral well
+def rot_z(a):
+    c, s = np.cos(a), np.sin(a)
+    return np.array([[c,-s,0,0],[s,c,0,0],[0,0,1,0],[0,0,0,1]], float)
 
-actor = vtk.vtkActor()
-actor.SetMapper(mapper)
-actor.GetProperty().SetColor(0.75, 0.75, 0.78)   # aluminium
-actor.GetProperty().SetSpecular(0.6)
-actor.GetProperty().SetSpecularPower(40)
-actor.GetProperty().SetAmbient(0.2)
-actor.GetProperty().SetDiffuse(0.8)
+def rot_x(a):
+    c, s = np.cos(a), np.sin(a)
+    return np.array([[1,0,0,0],[0,c,-s,0],[0,s,c,0],[0,0,0,1]], float)
 
-renderer = vtk.vtkRenderer()
-renderer.AddActor(actor)
-renderer.SetBackground(0.15, 0.15, 0.18)
-renderer.ResetCamera()
+T = rot_z(np.radians(40)) @ rot_x(np.radians(-70))
+m = mesh.copy()
+m.apply_transform(T)
+m.fix_normals()
 
-# Isometric-ish view
-cam = renderer.GetActiveCamera()
-cam.Elevation(20)
-cam.Azimuth(45)
-renderer.ResetCameraClippingRange()
+bb = m.bounds
+cx = (bb[0,0]+bb[1,0])/2
+cy = (bb[0,1]+bb[1,1])/2
+extent = max(bb[1]-bb[0])
 
-# Two lights for depth
-light1 = vtk.vtkLight()
-light1.SetPosition(100, 100, 200)
-light1.SetIntensity(1.0)
-renderer.AddLight(light1)
+# ── Ray grid ──────────────────────────────────────────────────────────────────
+W, H = 1000, 1200
+pad = 6
+x = np.linspace(bb[0,0]-pad, bb[1,0]+pad, W)
+y = np.linspace(bb[0,1]-pad, bb[1,1]+pad, H)
+xx, yy = np.meshgrid(x, y)
+N = W * H
+origins = np.c_[xx.ravel(), yy.ravel(), np.full(N, bb[1,2]+100)]
+dirs    = np.tile([0, 0, -1.0], (N, 1))
 
-light2 = vtk.vtkLight()
-light2.SetPosition(-80, -50, 100)
-light2.SetIntensity(0.4)
-renderer.AddLight(light2)
+# ── Intersect ─────────────────────────────────────────────────────────────────
+from trimesh.ray.ray_triangle import RayMeshIntersector
+inter   = RayMeshIntersector(m)
+locs, idx_ray, idx_tri = inter.intersects_location(origins, dirs, multiple_hits=False)
 
-rw = vtk.vtkRenderWindow()
-rw.SetOffScreenRendering(1)
-rw.AddRenderer(renderer)
-rw.SetSize(900, 900)
-rw.Render()
+# ── Phong shading ─────────────────────────────────────────────────────────────
+BG     = np.array([30, 30, 35],    float)
+METAL  = np.array([185, 188, 195], float)   # steel colour
+LIGHT  = np.array([1.0, 0.8, 0.5])          # key light direction (normalised)
+LIGHT /= np.linalg.norm(LIGHT)
+FILL   = np.array([0.3, 0.4, 0.7])          # cool fill light
+FILL  /= np.linalg.norm(FILL)
 
-w2i = vtk.vtkWindowToImageFilter()
-w2i.SetInput(rw)
-w2i.Update()
+img = np.full((H, W, 3), BG, dtype=float)
 
-writer = vtk.vtkPNGWriter()
-writer.SetFileName("acme_c_bushing_preview.png")
-writer.SetInputConnection(w2i.GetOutputPort())
-writer.Write()
+if len(locs):
+    normals = m.face_normals[idx_tri]          # (N_hits, 3)
+
+    # diffuse
+    d_key  = np.clip( normals @ LIGHT, 0, 1)
+    d_fill = np.clip( normals @ FILL,  0, 1) * 0.25
+
+    # specular (Blinn-Phong)
+    view = np.array([0., 0., 1.])
+    H_vec = (LIGHT + view); H_vec /= np.linalg.norm(H_vec)
+    spec  = np.clip(normals @ H_vec, 0, 1) ** 60 * 0.7
+
+    shading = 0.15 + 0.75*d_key + d_fill + spec   # ambient + diff + spec
+    colours = np.clip(METAL[None,:] * shading[:,None], 0, 255)
+
+    rows = idx_ray // W
+    cols = idx_ray %  W
+    img[rows, cols] = colours
+
+img = img.astype(np.uint8)
+Image.fromarray(img, 'RGB').save("acme_c_bushing_preview.png")
 print("Saved acme_c_bushing_preview.png")
