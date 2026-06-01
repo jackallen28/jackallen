@@ -1,52 +1,45 @@
 """
 1-3/4 - 6 ACME-C Tapered Bushing
-  Nominal thread: 1-3/4" = 44.45 mm major dia, 6 TPI, ACME-C (29 deg included)
-  Body top OD:    33.4 mm
-  Body bottom OD: 45.0 mm
+  Body top OD:    45.0 mm  (large end, Z = HEIGHT)
+  Body bottom OD: 33.4 mm  (small end, Z = 0)
   Height:         64.0 mm
-  Taper:          body taper follows top/bottom OD; thread helix radius tracks taper
+  Thread:         1-3/4" - 6 ACME-C (TAPER), 29-deg included, on outer taper surface
 """
 
 from build123d import *
-from math import tan, radians, pi
+from math import tan, radians
 
 # ── Thread parameters ─────────────────────────────────────────────────────────
 TPI        = 6
 PITCH      = 25.4 / TPI          # 4.2333 mm
-THREAD_H   = PITCH / 2           # ACME full depth = P/2 = 2.1167 mm
-FLANK_DEG  = 14.5                 # half-angle (29 deg included / 2)
-HALF_CREST = PITCH * 0.3707 / 2  # ACME-C crest flat ≈ 0.3707p per side
+THREAD_H   = PITCH / 2           # ACME depth = P/2 = 2.1167 mm
+FLANK_DEG  = 14.5                 # half-angle (29 deg included)
+HALF_CREST = PITCH * 0.3707 / 2  # ACME-C crest flat
 
 # ── Body geometry ─────────────────────────────────────────────────────────────
-TOP_OD  = 33.4
-BOT_OD  = 45.0
+BOT_OD  = 33.4   # small end at Z = 0
+TOP_OD  = 45.0   # large end at Z = HEIGHT
 HEIGHT  = 64.0
-top_r   = TOP_OD / 2
 bot_r   = BOT_OD / 2
+top_r   = TOP_OD / 2
+mean_r  = (bot_r + top_r) / 2
 
-# Taper rate: change in radius per unit Z (positive = narrowing toward top)
-taper_rate = (bot_r - top_r) / HEIGHT   # mm radius per mm height
-
-# ── Frustum body ──────────────────────────────────────────────────────────────
+# ── Frustum (small end down, large end up) ────────────────────────────────────
 with BuildPart() as part:
     with BuildSketch(Plane.XZ):
         with BuildLine():
-            Line((0, 0),          (bot_r, 0))
-            Line((bot_r, 0),      (top_r, HEIGHT))
-            Line((top_r, HEIGHT), (0, HEIGHT))
-            Line((0, HEIGHT),     (0, 0))
+            Line((0, 0),          (bot_r, 0))         # bottom face (small)
+            Line((bot_r, 0),      (top_r, HEIGHT))     # tapered side
+            Line((top_r, HEIGHT), (0, HEIGHT))         # top face (large)
+            Line((0, HEIGHT),     (0, 0))              # axis
         make_face()
     revolve(axis=Axis.Z)
 
-    # ── ACME-C tapered thread ─────────────────────────────────────────────────
-    # Use the mean radius (mid-height) for the helix; the groove subtraction
-    # will intersect the tapered body correctly.
+    # ── ACME-C tapered thread on outer surface ────────────────────────────────
     flank_run   = THREAD_H * tan(radians(FLANK_DEG))
-    mean_r      = (top_r + bot_r) / 2   # 39.1 mm — helix reference radius
 
     helix_path  = Helix(pitch=PITCH, height=HEIGHT, radius=mean_r)
 
-    # Tooth profile in a plane normal to X at mean_r
     sweep_plane = Plane(
         origin=(mean_r, 0, 0),
         z_dir=(1, 0, 0),
@@ -64,7 +57,7 @@ with BuildPart() as part:
         )
     sweep(path=helix_path, mode=Mode.SUBTRACT)
 
-# ── Export STEP ───────────────────────────────────────────────────────────────
+# ── Export ────────────────────────────────────────────────────────────────────
 output = "acme_c_bushing.step"
 export_step(part.part, output)
 
