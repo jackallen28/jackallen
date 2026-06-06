@@ -21,8 +21,8 @@ def gen_step():
     MINOR_D       = 12.8   # = female bore — root fills female bore exactly
     MAJOR_D       = 14.4   # = female groove — crest fills female groove exactly
     SHAFT_H       = 12.0
-    PITCH         = 1.5
-    LEAD          = 3.0
+    PITCH         = 1.65
+    LEAD          = 3.2
     THREAD_H      = (MAJOR_D - MINOR_D) / 2   # 0.85 mm
     FLANK_DEG     = 30.0
     FLANK_RUN     = THREAD_H * tan(radians(FLANK_DEG))
