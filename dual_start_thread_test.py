@@ -16,8 +16,8 @@ def gen_step():
     # ── Parameters ────────────────────────────────────────────────────────
     OD            = 20.0
     HEIGHT        = 12.0
-    MINOR_D       = 12.5       # bore / thread crest diameter
-    MAJOR_D       = 14.2       # groove bottom diameter
+    MINOR_D       = 12.8       # bore dia (+0.2mm tolerance for shrinkage)
+    MAJOR_D       = 14.4       # groove bottom dia (+0.2mm tolerance)
     PITCH         = 1.5        # distance between adjacent crests (one-start pitch)
     LEAD          = 3.0        # axial advance per revolution (2 × pitch)
     THREAD_H      = (MAJOR_D - MINOR_D) / 2   # 0.85 mm radial depth
