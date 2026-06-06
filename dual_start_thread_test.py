@@ -24,8 +24,8 @@ def gen_step():
     FLANK_DEG     = 30.0       # half-angle of 60-deg included metric profile
     FLANK_RUN     = THREAD_H * tan(radians(FLANK_DEG))   # 0.491 mm
     HALF_CREST    = 0.09       # small metric crest flat half-width
-    THREAD_LEN    = 7.0
-    THREAD_Z0     = (HEIGHT - THREAD_LEN) / 2   # 2.5 mm
+    THREAD_LEN    = HEIGHT - 0.1   # full bore, stop just before end faces
+    THREAD_Z0     = 0.05           # start just after bottom face
     minor_r       = MINOR_D / 2   # 6.25 mm
 
     # ── Body: outer cylinder with through bore ────────────────────────────
@@ -93,11 +93,13 @@ def gen_step():
             z0 += LEAD
         return solids
 
-    # ── Collect and subtract grooves for both starts ──────────────────────
+    # ── Collect grooves, fuse into one tool, single subtraction ──────────
     all_grooves = groove_solids(0.0) + groove_solids(180.0)
-    result = body
-    for g in all_grooves:
-        result = result - g
+    # Fuse all groove solids into one compound tool before subtracting
+    tool = all_grooves[0]
+    for g in all_grooves[1:]:
+        tool = tool.fuse(g)
+    result = body - tool
 
     result.label = "dual_start_thread_test"
     return result
