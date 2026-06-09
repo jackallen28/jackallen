@@ -1,8 +1,10 @@
 """
-Male 2-start threaded shaft
+Male 2-start threaded shaft — Hunter solenoid profile
   Shaft:   OD=13.8mm (major), H=10mm, Z=0..10
-  Thread:  2-start RH, pitch=1.4mm, lead=2.8mm, 60 deg profile
-           Major (crest)=13.8mm, minor (root)=12.3mm, depth=0.75mm
+  Thread:  2-start RH, pitch=1.8mm, lead=3.6mm
+           55 deg included (27.5 deg half-angle), Whitworth-form
+           Major (crest)=13.8mm, minor (root)=12.10mm, depth=0.85mm
+           Crest: small flat (r~0.12mm) approximating Whitworth radius
 """
 
 from build123d import *
@@ -11,13 +13,13 @@ from math import tan, radians, sin, cos, sqrt, pi
 
 def gen_step():
     MAJOR_D    = 13.8
-    MINOR_D    = 12.3
+    MINOR_D    = 12.10
     SHAFT_H    = 10.0
-    LEAD       = 2.8
-    THREAD_H   = (MAJOR_D - MINOR_D) / 2   # 0.75 mm
-    FLANK_DEG  = 30.0
+    LEAD       = 3.6
+    THREAD_H   = (MAJOR_D - MINOR_D) / 2   # 0.85 mm
+    FLANK_DEG  = 27.5                        # half of 55 deg included
     FLANK_RUN  = THREAD_H * tan(radians(FLANK_DEG))
-    HALF_CREST = 0.08
+    HALF_CREST = 0.12                        # small flat ~ Whitworth crest radius
     major_r    = MAJOR_D / 2
 
     with BuildPart() as bp:
