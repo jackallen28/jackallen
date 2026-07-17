@@ -1,0 +1,132 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Button from '@/components/Button.astro';
+import ImagePlaceholder from '@/components/ImagePlaceholder.astro';
+
+const showcase = [
+  {
+    title: 'Nyikina Country 3D map',
+    caption: 'Flagship place-based fabrication project — Nyikina Mangala Community School, Kimberley WA.',
+  },
+  {
+    title: 'DigiCon25',
+    caption: 'Presented on 3D printing & CAD for STEM at Digital Learning & Teaching Victoria, ACMI.',
+  },
+  {
+    title: 'VibeDuino',
+    caption: 'A browser-based Arduino / ESP32 coding environment, built for the classroom.',
+  },
+  {
+    title: 'MODUSHIELD',
+    caption: 'An Arduino shield with swappable sensor modules, lowering the barrier to real electronics.',
+  },
+  {
+    title: 'Classroom STEM resources',
+    caption: 'Units and materials spanning STEM, Business and Physics.',
+  },
+  {
+    title: 'Custom manufacturing',
+    caption: 'Machined and printed parts made to spec, proof of a working manufacturing practice.',
+  },
+];
+
+const proof = ['RMIT', 'Banyule Nillumbik Tech School', 'DigiCon25', 'Emergence'];
+---
+
+<Layout
+  title="Allentronics"
+  description="Allentronics is an education studio led by Jack Allen, helping schools bring AI, design thinking and real-world fabrication to students — backed by a working manufacturing business."
+>
+  <!-- Hero -->
+  <section class="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
+    <p class="reveal text-xs font-medium uppercase tracking-[0.2em] text-ink-soft">
+      Education studio · Melbourne
+    </p>
+    <h1 class="reveal mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tightest sm:text-6xl">
+      AI, design thinking and fabrication — brought into the classroom.
+    </h1>
+    <p class="reveal mx-auto mt-6 max-w-2xl text-balance text-base leading-relaxed text-ink-soft sm:text-lg">
+      Allentronics is led by Jack Allen, an industry maker turned teacher, helping schools bring
+      AI, design thinking and real-world making to students — grounded in real manufacturing
+      practice, not theory.
+    </p>
+    <div class="reveal mt-10 flex justify-center">
+      <Button href="/contact/">Discuss a program</Button>
+    </div>
+  </section>
+
+  <!-- Jack introduction -->
+  <section class="border-t border-line">
+    <div class="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2 md:items-center md:gap-16">
+      <div class="reveal order-2 md:order-1">
+        <p class="text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">About Jack</p>
+        <p class="mt-6 text-balance text-2xl font-medium leading-snug tracking-tight sm:text-3xl">
+          I'm Jack Allen — a Master of Teaching candidate at RMIT, a STEM Communicator at Banyule
+          Nillumbik Tech School, and a maker and manufacturer.
+        </p>
+        <p class="mt-6 text-base leading-relaxed text-ink-soft">
+          I help schools teach how things are actually designed and built, backed by a working
+          manufacturing business.
+        </p>
+      </div>
+      <div class="reveal order-1 md:order-2">
+        <ImagePlaceholder label="Portrait — Jack Allen" ratio="aspect-[4/5]" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Showcase -->
+  <section class="border-t border-line">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="reveal max-w-2xl">
+        <p class="text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">Selected work</p>
+        <h2 class="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          Programs, tools and projects made real.
+        </h2>
+      </div>
+
+      <div class="mt-14 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          showcase.map((item) => (
+            <div class="reveal">
+              <ImagePlaceholder label={item.title} />
+              <h3 class="mt-5 text-base font-semibold tracking-tight">{item.title}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-ink-soft">{item.caption}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Proof strip -->
+  <section class="border-t border-line">
+    <div class="reveal mx-auto max-w-6xl px-6 py-12">
+      <p class="text-center text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">
+        Trusted in
+      </p>
+      <ul class="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+        {
+          proof.map((name) => (
+            <li class="text-sm font-medium tracking-tight text-ink-soft">{name}</li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section class="border-t border-line">
+    <div class="reveal mx-auto max-w-3xl px-6 py-24 text-center">
+      <h2 class="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+        Ready to bring this into your classroom?
+      </h2>
+      <p class="mx-auto mt-4 max-w-lg text-base leading-relaxed text-ink-soft">
+        Let's talk about a program that fits your students, your curriculum and your school.
+      </p>
+      <div class="mt-8 flex justify-center">
+        <Button href="/contact/">Discuss a program</Button>
+      </div>
+    </div>
+  </section>
+</Layout>

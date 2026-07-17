@@ -1,0 +1,155 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import SectionLabel from '@/components/SectionLabel.astro';
+import { site } from '@/lib/site';
+---
+
+<Layout
+  title="Contact"
+  description="For school programs, staff PD, classroom fabrication projects, or manufacturing enquiries — get in touch with Allentronics."
+>
+  <section class="mx-auto max-w-4xl px-6 pb-12 pt-20 sm:pt-28">
+    <SectionLabel number="05" label="Contact" class="reveal" />
+    <h1 class="reveal mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tightest sm:text-5xl">
+      Let's build the program, prototype or proof your students can hold.
+    </h1>
+    <p class="reveal mt-6 max-w-2xl text-balance text-base leading-relaxed text-ink-soft sm:text-lg">
+      For school programs, staff PD, classroom fabrication projects, or manufacturing enquiries.
+    </p>
+  </section>
+
+  <section class="border-t border-line">
+    <div class="mx-auto grid max-w-6xl gap-16 px-6 py-16 md:grid-cols-[1fr_1.3fr]">
+      <div class="reveal">
+        <p class="text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">Details</p>
+        <ul class="mt-6 flex flex-col gap-4 text-base">
+          <li>
+            <a href={`mailto:${site.email}`} class="text-ink transition-colors hover:text-accent">
+              {site.email}
+            </a>
+          </li>
+          <li>
+            <a href={site.phoneHref} class="text-ink transition-colors hover:text-accent">
+              {site.phone}
+            </a>
+          </li>
+          <li class="text-ink-soft">{site.domain}</li>
+        </ul>
+
+        <p class="mt-10 text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">Find us on our socials</p>
+        <div class="mt-4 flex gap-5">
+          {
+            site.socials.map((s) => (
+              <a href={s.href} class="text-sm text-ink-soft transition-colors hover:text-ink" target="_blank" rel="noopener noreferrer">
+                {s.label}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <form
+        class="reveal flex flex-col gap-6"
+        action="https://api.web3forms.com/submit"
+        method="POST"
+        id="contact-form"
+      >
+        <!--
+          Web3Forms: replace the access key below with your own free key from
+          https://web3forms.com — no backend required. See README for setup.
+        -->
+        <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY" />
+        <input type="hidden" name="subject" value="New enquiry from allentronics.com.au" />
+        <input type="text" name="botcheck" class="hidden" tabindex="-1" autocomplete="off" />
+
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label for="name" class="text-sm font-medium text-ink">Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              class="mt-2 w-full rounded-lg border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60 focus:border-ink"
+              placeholder="Your name"
+            />
+          </div>
+          <div>
+            <label for="email" class="text-sm font-medium text-ink">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              class="mt-2 w-full rounded-lg border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60 focus:border-ink"
+              placeholder="you@school.edu.au"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="school" class="text-sm font-medium text-ink">School / organisation</label>
+          <input
+            id="school"
+            name="school"
+            type="text"
+            class="mt-2 w-full rounded-lg border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60 focus:border-ink"
+            placeholder="Your school or organisation"
+          />
+        </div>
+
+        <div>
+          <label for="message" class="text-sm font-medium text-ink">Message</label>
+          <textarea
+            id="message"
+            name="message"
+            rows="5"
+            required
+            class="mt-2 w-full rounded-lg border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60 focus:border-ink"
+            placeholder="Tell us about your program, project or enquiry"
+          ></textarea>
+        </div>
+
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center gap-2 self-start rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-colors hover:bg-accent"
+        >
+          Send enquiry
+        </button>
+
+        <p id="form-status" class="text-sm text-ink-soft" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const status = document.getElementById('form-status');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!status) return;
+
+    status.textContent = 'Sending...';
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: { Accept: 'application/json' },
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        status.textContent = "Thanks — we'll be in touch shortly.";
+        form.reset();
+      } else {
+        status.textContent = 'Something went wrong. Please email info@allentronics.com directly.';
+      }
+    } catch {
+      status.textContent = 'Something went wrong. Please email info@allentronics.com directly.';
+    }
+  });
+</script>

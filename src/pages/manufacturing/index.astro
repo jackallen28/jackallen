@@ -1,0 +1,84 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Button from '@/components/Button.astro';
+import SectionLabel from '@/components/SectionLabel.astro';
+import ImagePlaceholder from '@/components/ImagePlaceholder.astro';
+
+const services = [
+  {
+    title: '3D Printing & CAD',
+    description:
+      'Local FDM and resin machines, CAD support, and access to advanced overseas supplier networks in Japan, Korea, Germany and China.',
+    image: '3D printed parts',
+  },
+  {
+    title: 'CNC Machining',
+    description:
+      'High-quality, affordable precision turning and milling, with CAD drawing services and tolerances within ±0.005mm.',
+    image: 'CNC machined part',
+  },
+  {
+    title: 'Injection Moulding',
+    description:
+      'Prototype runs through to volume production, shaped by local engineering expertise and global supply options.',
+    image: 'Injection moulded components',
+  },
+  {
+    title: 'Specialist & OEM parts sourcing',
+    description: 'Sourcing hard-to-find and discontinued OEM automotive and machinery parts.',
+    image: 'OEM parts on a bench',
+  },
+];
+---
+
+<Layout
+  title="Manufacturing"
+  description="A working manufacturing business behind the studio — 3D printing & CAD, CNC machining, injection moulding, and specialist OEM parts sourcing."
+>
+  <section class="mx-auto max-w-4xl px-6 pb-16 pt-20 sm:pt-28">
+    <SectionLabel number="01" label="Manufacturing" class="reveal" />
+    <h1 class="reveal mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tightest sm:text-5xl">
+      Real, constraint-aware making.
+    </h1>
+    <p class="reveal mt-6 max-w-2xl text-balance text-base leading-relaxed text-ink-soft sm:text-lg">
+      A working manufacturing business sits behind the studio — real, constraint-aware making.
+      It's the practice that makes the classroom work credible: materials, tolerances, processes
+      and the discipline of shipping.
+    </p>
+  </section>
+
+  <section class="border-t border-line">
+    <div class="mx-auto max-w-6xl divide-y divide-line px-6">
+      {
+        services.map((service, i) => (
+          <div class="reveal grid gap-8 py-16 md:grid-cols-2 md:items-center md:gap-16">
+            <div class={i % 2 === 1 ? 'md:order-2' : ''}>
+              <ImagePlaceholder label={service.image} />
+            </div>
+            <div class={i % 2 === 1 ? 'md:order-1' : ''}>
+              <span class="text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">
+                {`0${i + 1}`}
+              </span>
+              <h2 class="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">{service.title}</h2>
+              <p class="mt-4 max-w-md text-base leading-relaxed text-ink-soft">{service.description}</p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="border-t border-line">
+    <div class="reveal mx-auto max-w-3xl px-6 py-24 text-center">
+      <h2 class="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+        Have a manufacturing brief?
+      </h2>
+      <p class="mx-auto mt-4 max-w-lg text-base leading-relaxed text-ink-soft">
+        From a single prototype to a production run, let's talk about what you need made.
+      </p>
+      <div class="mt-8 flex justify-center">
+        <Button href="/contact/">Talk manufacturing</Button>
+      </div>
+    </div>
+  </section>
+</Layout>

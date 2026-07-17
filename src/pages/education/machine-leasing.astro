@@ -1,0 +1,34 @@
+---
+import EducationPage from '@/components/EducationPage.astro';
+
+const blocks = [
+  {
+    title: 'Hardware',
+    description: 'Bambu Lab X1 Carbon and other options, matched to your program\'s needs.',
+  },
+  {
+    title: 'Included',
+    description: 'Setup, teacher training, and ongoing support — all part of the lease.',
+  },
+  {
+    title: 'Flexible',
+    description: 'Access that scales with your program, from a single classroom to a whole school.',
+  },
+  {
+    title: 'Pricing',
+    description: '[Placeholder: current leasing options and rates — enquire for details.]',
+  },
+];
+---
+
+<EducationPage
+  title="Machine Leasing"
+  description="Practical 3D printer access for schools — without the upfront capital or the setup headache."
+  number="02"
+  label="Machine Leasing"
+  heading="Printer access, without the overhead."
+  intro="Practical 3D printer access for schools — without the upfront capital or the setup headache."
+  blocks={blocks}
+  ctaLabel="Enquire about leasing"
+  heroImage="Bambu Lab X1 Carbon 3D printer"
+/>

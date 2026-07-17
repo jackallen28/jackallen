@@ -1,0 +1,34 @@
+---
+import EducationPage from '@/components/EducationPage.astro';
+
+const blocks = [
+  {
+    title: 'Platforms',
+    description: 'micro:bit, Arduino and ESP32 — classroom-ready, well-documented, and battle-tested.',
+  },
+  {
+    title: 'Support',
+    description: 'Workshops, resources, troubleshooting and kit guidance for teachers.',
+  },
+  {
+    title: 'Approachable hardware',
+    description: 'MODUSHIELD\'s swappable sensor modules lower the barrier to real electronics.',
+  },
+  {
+    title: 'Experience',
+    description: 'Drawn from STEM communication work at Banyule Nillumbik Tech School.',
+  },
+];
+---
+
+<EducationPage
+  title="Micro:bits & Electronics"
+  description="Support for teachers running electronics and physical-computing units — practical, classroom-ready, and low-stress."
+  number="04"
+  label="Micro:bits & Electronics"
+  heading="Physical computing, made low-stress."
+  intro="Support for teachers running electronics and physical-computing units — practical, classroom-ready, and low-stress."
+  blocks={blocks}
+  ctaLabel="Discuss a program"
+  heroImage="Micro:bit and MODUSHIELD electronics kit"
+/>

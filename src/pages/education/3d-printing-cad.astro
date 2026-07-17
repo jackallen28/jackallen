@@ -1,0 +1,38 @@
+---
+import EducationPage from '@/components/EducationPage.astro';
+
+const blocks = [
+  {
+    title: 'Workshops',
+    description: 'Student learning built around real modelling, making and reflection.',
+  },
+  {
+    title: 'Curriculum fit',
+    description: 'Aligned to Digital Technologies, STEM and Design & Technologies.',
+  },
+  {
+    title: 'CAD & design thinking',
+    description: 'Concept, through CAD, to printed prototype — the full design-thinking arc, made tangible.',
+  },
+  {
+    title: 'Custom maps & models',
+    description: 'Place-based fabrication, such as the Nyikina Country 3D map.',
+  },
+  {
+    title: 'Credibility',
+    description: 'Presented on 3D printing & CAD for STEM at DigiCon25 (Digital Learning & Teaching Victoria, ACMI).',
+  },
+];
+---
+
+<EducationPage
+  title="3D Printing & CAD"
+  description="Hands-on 3D printing and CAD programs that take students from idea to object — the full design-thinking arc, made tangible."
+  number="01"
+  label="3D Printing & CAD"
+  heading="From idea to object."
+  intro="Hands-on 3D printing and CAD programs that take students from idea to object — the full design-thinking arc, made tangible."
+  blocks={blocks}
+  ctaLabel="Discuss a program"
+  heroImage="Students CAD modelling and 3D printing"
+/>

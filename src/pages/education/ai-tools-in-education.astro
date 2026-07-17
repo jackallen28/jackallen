@@ -1,0 +1,35 @@
+---
+import EducationPage from '@/components/EducationPage.astro';
+
+const blocks = [
+  {
+    title: 'Staff PD',
+    description: 'Professional learning for confident, ethical and critical AI use in classrooms.',
+  },
+  {
+    title: 'Grounded in research',
+    description:
+      'Informed by research into preservice teachers\' confidence fostering students\' ethical and critical engagement with AI.',
+  },
+  {
+    title: 'Practical tools',
+    description: 'AI literacy, design thinking with AI, and responsible-use frameworks for the classroom.',
+  },
+  {
+    title: 'Made, not just talked about',
+    description: 'VibeDuino — an AI-assisted making tool that keeps the student in control.',
+  },
+];
+---
+
+<EducationPage
+  title="AI Tools in Education"
+  description="Helping schools use AI confidently, ethically and critically — with the human work of teaching kept at the centre."
+  number="03"
+  label="AI Tools in Education"
+  heading="AI, with teaching kept at the centre."
+  intro="Helping schools use AI confidently, ethically and critically — with the human work of teaching kept at the centre."
+  blocks={blocks}
+  ctaLabel="Discuss a program"
+  heroImage="Students using AI tools in a classroom setting"
+/>
