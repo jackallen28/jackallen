@@ -1,1 +1,128 @@
-"""\nMoss Pole Hold & Watering System - Base Assembly (MP-BASE-01/02)\n  Base:       Half-frustum, flat front at Y=0, curved rear at +Y\n              Top dia=165mm (R=82.5), Bot dia=140mm (R=70), H=25mm\n              Wall=3mm, Floor=5mm\n  D-pole:     100mm wide x 60mm deep x 50mm high above base, open front\n              Wall=3mm on rear and sides\n  Pipe socket: OD=25mm (ID=20mm), H=75mm above base, centred rear, 3mm gap\n  Side pins:  3x square 10x10mm holes through curved wall at 45/90/135 deg\n"""\n\nfrom build123d import *\nfrom math import pi, cos, sin, radians\n\n\ndef gen_step():\n    BASE_TOP_R  = 82.5\n    BASE_BOT_R  = 70.0\n    BASE_H      = 25.0\n    WALL_T      = 3.0\n    FLOOR_T     = 5.0\n\n    DPOLE_W     = 100.0\n    DPOLE_D     = 60.0\n    DPOLE_H     = 50.0\n    DPOLE_T     = 3.0\n\n    PIPE_ID     = 20.0\n    PIPE_T      = 2.5\n    PIPE_H      = 75.0\n    PIPE_GAP    = 3.0\n\n    PIN_SIZE    = 10.0\n\n    pipe_r_outer = (PIPE_ID / 2) + PIPE_T   # 12.5 mm\n    pipe_r_inner = PIPE_ID / 2              # 10.0 mm\n    # pipe centre Y: outer face 3mm from inner rear wall face\n    # inner rear wall at Y = BASE_TOP_R - WALL_T = 79.5\n    pipe_cy = (BASE_TOP_R - WALL_T) - PIPE_GAP - pipe_r_outer  # 64.0 mm\n\n    # ── Outer half-frustum ────────────────────────────────────────────────────\n    outer_cone = Cone(\n        bottom_radius=BASE_BOT_R,\n        top_radius=BASE_TOP_R,\n        height=BASE_H,\n        align=(Align.CENTER, Align.CENTER, Align.MIN),\n    )\n    # Cut away front half (Y < 0)\n    front_cut = Box(\n        BASE_TOP_R * 2 + 10, BASE_TOP_R + 5, BASE_H + 2,\n        align=(Align.CENTER, Align.MAX, Align.MIN),\n    )\n    outer_half = outer_cone - front_cut\n\n    # ── Inner cavity ──────────────────────────────────────────────────────────\n    inner_cone = Cone(\n        bottom_radius=BASE_BOT_R - WALL_T,\n        top_radius=BASE_TOP_R - WALL_T,\n        height=BASE_H - FLOOR_T,\n        align=(Align.CENTER, Align.CENTER, Align.MIN),\n    ).moved(Location((0, 0, FLOOR_T)))\n    inner_half = inner_cone - Box(\n        (BASE_TOP_R - WALL_T) * 2 + 10, BASE_TOP_R + 5, BASE_H,\n        align=(Align.CENTER, Align.MAX, Align.MIN),\n    )\n    # also open the flat front face fully\n    inner_front_slot = Box(\n        (BASE_TOP_R - WALL_T) * 2 + 10, WALL_T + 1, BASE_H - FLOOR_T,\n        align=(Align.CENTER, Align.MIN, Align.MIN),\n    ).moved(Location((0, 0, FLOOR_T)))\n\n    base = outer_half - inner_half - inner_front_slot\n\n    # ── D-pole socket (3-sided channel, open at front) ────────────────────────\n    # Rear outer face aligns with base outer rear (Y = BASE_TOP_R)\n    dpole_back_outer_y = BASE_TOP_R\n    dpole_front_y      = dpole_back_outer_y - DPOLE_D   # = 22.5 mm from front\n\n    dpole_outer = Box(\n        DPOLE_W, DPOLE_D, DPOLE_H,\n        align=(Align.CENTER, Align.MAX, Align.MIN),\n    ).moved(Location((0, dpole_back_outer_y, BASE_H)))\n\n    # Hollow: remove interior leaving rear + two side walls (DPOLE_T thick)\n    # Inner void is open at front — box extends past front face by 1mm\n    dpole_void = Box(\n        DPOLE_W - 2 * DPOLE_T,\n        DPOLE_D - DPOLE_T + 1,   # no front wall, rear wall = DPOLE_T\n        DPOLE_H + 1,\n        align=(Align.CENTER, Align.MAX, Align.MIN),\n    ).moved(Location((0, dpole_back_outer_y - DPOLE_T, BASE_H - 0.5)))\n\n    dpole = dpole_outer - dpole_void\n\n    # ── Water pipe socket ─────────────────────────────────────────────────────\n    pipe_outer_cyl = Cylinder(\n        radius=pipe_r_outer, height=PIPE_H,\n        align=(Align.CENTER, Align.CENTER, Align.MIN),\n    ).moved(Location((0, pipe_cy, BASE_H)))\n\n    pipe_inner_cyl = Cylinder(\n        radius=pipe_r_inner, height=PIPE_H + 1,\n        align=(Align.CENTER, Align.CENTER, Align.MIN),\n    ).moved(Location((0, pipe_cy, BASE_H - 0.5)))\n\n    pipe_socket = pipe_outer_cyl - pipe_inner_cyl\n\n    # ── Assemble main body ────────────────────────────────────────────────────\n    body = base + dpole + pipe_socket\n\n    # ── Side pin holes (10x10mm square, radial through curved wall) ───────────\n    for ang_deg in [45, 90, 135]:\n        ang = radians(ang_deg)\n        # Point on wall mid-surface\n        wall_r = BASE_TOP_R - WALL_T / 2\n        cx = wall_r * sin(ang)      # note: ang measured from +Y axis\n        cy = wall_r * cos(ang)\n        cz = BASE_H / 2             # mid-height of base wall\n\n        pin_hole = Box(\n            PIN_SIZE, WALL_T * 4, PIN_SIZE,\n            align=(Align.CENTER, Align.CENTER, Align.CENTER),\n        ).moved(Location((cx, cy, cz), (0, 0, ang_deg)))\n\n        body = body - pin_hole\n\n    body.label = \"moss_pole_base\"\n    return body\n
+"""
+Moss Pole Hold & Watering System - Base Assembly (MP-BASE-01/02)
+  Base:       Half-frustum, flat front at Y=0, curved rear at +Y
+              Top dia=165mm (R=82.5), Bot dia=140mm (R=70), H=25mm
+              Wall=3mm, Floor=5mm
+  D-pole:     100mm wide x 60mm deep x 50mm high above base, open front
+              Wall=3mm on rear and sides
+  Pipe socket: OD=25mm (ID=20mm), H=75mm above base, centred rear, 3mm gap
+  Side pins:  3x square 10x10mm holes through curved wall at 45/90/135 deg
+"""
+
+from build123d import *
+from math import pi, cos, sin, radians
+
+
+def gen_step():
+    BASE_TOP_R  = 82.5
+    BASE_BOT_R  = 70.0
+    BASE_H      = 25.0
+    WALL_T      = 3.0
+    FLOOR_T     = 5.0
+
+    DPOLE_W     = 100.0
+    DPOLE_D     = 60.0
+    DPOLE_H     = 50.0
+    DPOLE_T     = 3.0
+
+    PIPE_ID     = 20.0
+    PIPE_T      = 2.5
+    PIPE_H      = 75.0
+    PIPE_GAP    = 3.0
+
+    PIN_SIZE    = 10.0
+
+    pipe_r_outer = (PIPE_ID / 2) + PIPE_T   # 12.5 mm
+    pipe_r_inner = PIPE_ID / 2              # 10.0 mm
+    # pipe centre Y: outer face 3mm from inner rear wall face
+    # inner rear wall at Y = BASE_TOP_R - WALL_T = 79.5
+    pipe_cy = (BASE_TOP_R - WALL_T) - PIPE_GAP - pipe_r_outer  # 64.0 mm
+
+    # ── Outer half-frustum ────────────────────────────────────────────────────
+    outer_cone = Cone(
+        bottom_radius=BASE_BOT_R,
+        top_radius=BASE_TOP_R,
+        height=BASE_H,
+        align=(Align.CENTER, Align.CENTER, Align.MIN),
+    )
+    # Cut away front half (Y < 0)
+    front_cut = Box(
+        BASE_TOP_R * 2 + 10, BASE_TOP_R + 5, BASE_H + 2,
+        align=(Align.CENTER, Align.MAX, Align.MIN),
+    )
+    outer_half = outer_cone - front_cut
+
+    # ── Inner cavity ──────────────────────────────────────────────────────────
+    inner_cone = Cone(
+        bottom_radius=BASE_BOT_R - WALL_T,
+        top_radius=BASE_TOP_R - WALL_T,
+        height=BASE_H - FLOOR_T,
+        align=(Align.CENTER, Align.CENTER, Align.MIN),
+    ).moved(Location((0, 0, FLOOR_T)))
+    inner_half = inner_cone - Box(
+        (BASE_TOP_R - WALL_T) * 2 + 10, BASE_TOP_R + 5, BASE_H,
+        align=(Align.CENTER, Align.MAX, Align.MIN),
+    )
+    # also open the flat front face fully
+    inner_front_slot = Box(
+        (BASE_TOP_R - WALL_T) * 2 + 10, WALL_T + 1, BASE_H - FLOOR_T,
+        align=(Align.CENTER, Align.MIN, Align.MIN),
+    ).moved(Location((0, 0, FLOOR_T)))
+
+    base = outer_half - inner_half - inner_front_slot
+
+    # ── D-pole socket (3-sided channel, open at front) ────────────────────────
+    # Rear outer face aligns with base outer rear (Y = BASE_TOP_R)
+    dpole_back_outer_y = BASE_TOP_R
+    dpole_front_y      = dpole_back_outer_y - DPOLE_D   # = 22.5 mm from front
+
+    dpole_outer = Box(
+        DPOLE_W, DPOLE_D, DPOLE_H,
+        align=(Align.CENTER, Align.MAX, Align.MIN),
+    ).moved(Location((0, dpole_back_outer_y, BASE_H)))
+
+    # Hollow: remove interior leaving rear + two side walls (DPOLE_T thick)
+    # Inner void is open at front — box extends past front face by 1mm
+    dpole_void = Box(
+        DPOLE_W - 2 * DPOLE_T,
+        DPOLE_D - DPOLE_T + 1,   # no front wall, rear wall = DPOLE_T
+        DPOLE_H + 1,
+        align=(Align.CENTER, Align.MAX, Align.MIN),
+    ).moved(Location((0, dpole_back_outer_y - DPOLE_T, BASE_H - 0.5)))
+
+    dpole = dpole_outer - dpole_void
+
+    # ── Water pipe socket ─────────────────────────────────────────────────────
+    pipe_outer_cyl = Cylinder(
+        radius=pipe_r_outer, height=PIPE_H,
+        align=(Align.CENTER, Align.CENTER, Align.MIN),
+    ).moved(Location((0, pipe_cy, BASE_H)))
+
+    pipe_inner_cyl = Cylinder(
+        radius=pipe_r_inner, height=PIPE_H + 1,
+        align=(Align.CENTER, Align.CENTER, Align.MIN),
+    ).moved(Location((0, pipe_cy, BASE_H - 0.5)))
+
+    pipe_socket = pipe_outer_cyl - pipe_inner_cyl
+
+    # ── Assemble main body ────────────────────────────────────────────────────
+    body = base + dpole + pipe_socket
+
+    # ── Side pin holes (10x10mm square, radial through curved wall) ───────────
+    for ang_deg in [45, 90, 135]:
+        ang = radians(ang_deg)
+        # Point on wall mid-surface
+        wall_r = BASE_TOP_R - WALL_T / 2
+        cx = wall_r * sin(ang)      # note: ang measured from +Y axis
+        cy = wall_r * cos(ang)
+        cz = BASE_H / 2             # mid-height of base wall
+
+        pin_hole = Box(
+            PIN_SIZE, WALL_T * 4, PIN_SIZE,
+            align=(Align.CENTER, Align.CENTER, Align.CENTER),
+        ).moved(Location((cx, cy, cz), (0, 0, ang_deg)))
+
+        body = body - pin_hole
+
+    body.label = "moss_pole_base"
+    return body
