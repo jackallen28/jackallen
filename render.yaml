@@ -1,0 +1,20 @@
+# One-click deploy config for Render (https://render.com).
+#
+# The app keeps the whole classroom in memory, so it must run as a single
+# instance — do not raise numInstances or add a second region.
+services:
+  - type: web
+    name: human-or-not
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      # sync: false means Render prompts for the value and keeps it out of git.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TEACHER_PASSCODE
+        sync: false
+      - key: NODE_VERSION
+        value: "22"

@@ -73,6 +73,16 @@ function primaryAddress() {
   });
 }
 
+/**
+ * When the app is deployed, its public URL is the only one that means anything —
+ * the container's own addresses are private and unreachable. Render sets
+ * RENDER_EXTERNAL_URL itself; PUBLIC_URL covers every other host.
+ */
+function publicUrl() {
+  const url = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '';
+  return url.trim().replace(/\/+$/, '');
+}
+
 /** The addresses to advertise, best guess first. */
 async function joinAddresses() {
   const all = lanAddresses();
@@ -254,6 +264,17 @@ let cachedJoinUrls = [];
 
 server.listen(PORT, async () => {
   console.log('[server] Human or Not — classroom edition');
+
+  const hosted = publicUrl();
+  if (hosted) {
+    cachedJoinUrls = [hosted];
+    console.log('[server]');
+    console.log(`[server] STUDENTS JOIN AT ...... ${hosted}`);
+    console.log(`[server] TEACHER CONSOLE ....... ${hosted}/teacher`);
+    console.log('[server]');
+    return;
+  }
+
   console.log(`[server] Teacher console (this machine only) ... http://localhost:${PORT}/teacher`);
 
   const addresses = await joinAddresses();

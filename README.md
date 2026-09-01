@@ -167,11 +167,31 @@ offline fallback.
 
 ## Deploying
 
-It's a single Node process holding state in memory, so any host that runs a
-long-lived container works (Render, Railway, Fly.io, a VM). Two requirements:
-the host must support websockets, and you must run **one** instance — a second
-replica would have its own separate lobby. Set `ANTHROPIC_API_KEY`,
-`TEACHER_PASSCODE`, and `PORT` in the host's environment.
+Hosting it removes every local-network problem at once: no Node install on the
+teaching machine, no firewall rules, no client isolation. Students open a link.
+
+`render.yaml` in this repo is a ready-made blueprint for [Render](https://render.com).
+Point Render at the repo, it reads that file, and prompts for the two secrets
+(`ANTHROPIC_API_KEY` and `TEACHER_PASSCODE`) so they never enter git.
+
+Three constraints apply to any host:
+
+- **Websockets must be supported.** Serverless platforms (Vercel, Netlify,
+  Cloudflare Workers) will not work — the app needs one long-lived process.
+- **Run exactly one instance.** The classroom lives in memory, so a second
+  replica would have its own separate lobby and half the class would vanish.
+- **Set `PUBLIC_URL`** to the deployed address, so the console and the startup
+  banner advertise a URL students can actually reach rather than the container's
+  private address. Render sets `RENDER_EXTERNAL_URL` itself and the app picks
+  that up automatically.
+
+On a free tier the service usually sleeps after a period of inactivity and cold
+starts take up to a minute. Open the teacher console a few minutes before the
+lesson to wake it. A restart also clears the room, so avoid restarting mid-class.
+
+**Once it is on the public internet, anyone with the link can join as a student**
+— the 6-digit number is an identifier, not a password. Use a strong
+`TEACHER_PASSCODE`, since that is the only thing protecting the console.
 
 State is deliberately not persisted. Restarting the server clears the room, and
 nothing about a student is stored beyond the number they typed in.
