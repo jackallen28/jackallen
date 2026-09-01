@@ -22,8 +22,35 @@ cp .env.example .env      # then edit .env
 npm start
 ```
 
-Open `http://localhost:3000/teacher` for yourself and point students at
-`http://localhost:3000/`.
+Open `http://localhost:3000/teacher` for yourself. The Terminal prints the
+address students should use — see *Getting students connected* below.
+
+On **Windows**, the app is identical; only the setup commands differ. Use
+PowerShell, and swap the copy step:
+
+```powershell
+git clone -b claude/human-or-not-classroom-c5gvde https://github.com/jackallen28/jackallen.git humanornot
+cd humanornot
+npm install
+copy .env.example .env
+notepad .env
+npm start
+```
+
+## Getting students connected
+
+`localhost` works only on the machine running the server. On startup the app
+prints every address it can be reached on from the local network, and the same
+address appears in the teacher console header — that is what students type.
+
+Students must be on the same Wi-Fi, and the address is `http://`, not `https`.
+Allow the firewall prompt the first time you start it (macOS asks about
+"node"; Windows asks to allow Node.js on **private** networks).
+
+If your own machine loads the page but another device on the same Wi-Fi cannot,
+the network is probably using client isolation, which stops devices reaching
+each other. No application setting can work around that — use a different SSID,
+a phone/laptop hotspot for a small group, or deploy it (see *Deploying*).
 
 The two settings that matter in `.env`:
 
