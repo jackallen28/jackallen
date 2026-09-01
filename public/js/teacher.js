@@ -17,7 +17,16 @@
 
   // -------------------------------------------------------------------- auth
 
+  // Replaced with the server's real network address once we unlock — `localhost`
+  // is right only on the machine running the server, never for students.
   $('join-url').textContent = `${location.host}/`;
+
+  function showJoinUrls(urls) {
+    if (!urls || !urls.length) return;
+    const host = $('join-url');
+    host.textContent = urls[0];
+    if (urls.length > 1) host.title = `Also reachable at: ${urls.slice(1).join(', ')}`;
+  }
 
   function unlock() {
     const passcode = $('passcode').value;
@@ -31,6 +40,7 @@
       $('screen-dash').classList.remove('hidden');
       $('bot-warning').classList.toggle('hidden', Boolean(res.liveBot));
       catalog = res.models || [];
+      showJoinUrls(res.joinUrls);
       buildMixer();
     });
   }

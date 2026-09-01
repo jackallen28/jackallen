@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -22,6 +23,20 @@ if (!isLiveBotConfigured()) {
   console.warn('[server] ANTHROPIC_API_KEY is not set. The AI partner will use scripted replies.');
 } else {
   console.log(`[server] Default AI partner model: ${defaultModel}`);
+}
+
+/**
+ * Every IPv4 address this machine can be reached on from the local network.
+ * `localhost` only works on the host itself, so this is what students need.
+ */
+function lanAddresses() {
+  const found = [];
+  for (const addresses of Object.values(os.networkInterfaces())) {
+    for (const address of addresses || []) {
+      if (address.family === 'IPv4' && !address.internal) found.push(address.address);
+    }
+  }
+  return found;
 }
 
 const app = express();
@@ -123,7 +138,12 @@ io.on('connection', (socket) => {
     }
     role = 'teacher';
     teacherSockets.add(socket.id);
-    ack?.({ ok: true, liveBot: isLiveBotConfigured(), models: MODEL_CATALOG });
+    ack?.({
+      ok: true,
+      liveBot: isLiveBotConfigured(),
+      models: MODEL_CATALOG,
+      joinUrls: lanAddresses().map((address) => `http://${address}:${PORT}`),
+    });
     socket.emit('teacher:state', session.teacherView());
   });
 
@@ -187,6 +207,14 @@ setInterval(() => {
 }, 1000);
 
 server.listen(PORT, () => {
-  console.log(`[server] Human or Not — classroom edition on http://localhost:${PORT}`);
-  console.log(`[server] Students: http://localhost:${PORT}/   Teacher: http://localhost:${PORT}/teacher`);
+  console.log(`[server] Human or Not — classroom edition`);
+  console.log(`[server] On this Mac ...... http://localhost:${PORT}/teacher  (teacher console)`);
+
+  const addresses = lanAddresses();
+  if (addresses.length === 0) {
+    console.log('[server] No network address found — students on other devices will not be able to connect.');
+  } else {
+    console.log('[server] Students on the same Wi-Fi join at:');
+    for (const address of addresses) console.log(`[server]   http://${address}:${PORT}`);
+  }
 });
