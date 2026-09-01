@@ -1,0 +1,91 @@
+/**
+ * Exercises the live Anthropic code path in bot.js against a local stand-in for
+ * the Messages API. Verifies the request we send and how we read the response,
+ * without needing real credentials. Run with `npm run test:bot`.
+ */
+import http from 'node:http';
+
+let lastRequest = null;
+let nextResponse = null;
+
+const api = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (chunk) => { body += chunk; });
+  req.on('end', () => {
+    lastRequest = { url: req.url, headers: req.headers, body: JSON.parse(body) };
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(nextResponse));
+  });
+});
+await new Promise((resolve) => api.listen(3200, resolve));
+
+process.env.ANTHROPIC_BASE_URL = 'http://localhost:3200';
+process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
+const { botReply } = await import('../server/bot.js');
+
+let failures = 0;
+function check(label, cond, extra = '') {
+  console.log(`${cond ? 'PASS' : 'FAIL'}  ${label}${extra ? '  ' + extra : ''}`);
+  if (!cond) failures++;
+}
+
+const reply = (text, extra = {}) => ({
+  id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5',
+  content: [{ type: 'text', text }],
+  stop_reason: 'end_turn', stop_sequence: null,
+  usage: { input_tokens: 10, output_tokens: 5 },
+  ...extra,
+});
+
+const history = [
+  { role: 'user', content: 'hey' },
+  { role: 'assistant', content: 'hi' },
+  { role: 'user', content: 'whats 17 x 43' },
+];
+
+// --- request shape
+nextResponse = reply('why would i know that lol');
+let out = await botReply(history);
+const body = lastRequest.body;
+
+check('calls the beta messages endpoint', lastRequest.url.startsWith('/v1/messages'), lastRequest.url);
+check('sends the api key header', lastRequest.headers['x-api-key'] === 'sk-ant-test');
+check('model is claude-opus-5', body.model === 'claude-opus-5', body.model);
+check('max_tokens is small for chat', body.max_tokens === 200, String(body.max_tokens));
+check('system prompt sent as a cached block',
+  Array.isArray(body.system) && body.system[0].cache_control?.type === 'ephemeral');
+check('persona tells it to play a student', /high school student/i.test(body.system[0].text));
+check('effort low for terse, fast replies', body.output_config?.effort === 'low');
+// The SDK lifts `betas` into the anthropic-beta header; `fallbacks` stays in the body.
+check('server-side refusal fallback enabled',
+  lastRequest.headers['anthropic-beta']?.includes('server-side-fallback-2026-07-01') &&
+    body.fallbacks === 'default',
+  `${lastRequest.headers['anthropic-beta']} / ${JSON.stringify(body.fallbacks)}`);
+check('no budget_tokens (rejected on opus 5)', body.thinking?.budget_tokens === undefined);
+check('history passed through verbatim', JSON.stringify(body.messages) === JSON.stringify(history));
+check('live reply returned', out.live === true && out.text === 'why would i know that lol', out.text);
+
+// --- response cleanup
+nextResponse = reply('**Certainly!** Here is a list:\n\n- one\n- two\n\n`code`');
+out = await botReply(history);
+check('markdown stripped from replies', !/[*`#\n]/.test(out.text), JSON.stringify(out.text));
+
+nextResponse = reply('x'.repeat(400));
+out = await botReply(history);
+check('over-long replies truncated', out.text.length <= 220, `len=${out.text.length}`);
+
+nextResponse = reply('', { stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'cyber' } });
+out = await botReply(history);
+check('refusal deflects in character', out.live === true && /something else/.test(out.text), out.text);
+
+nextResponse = reply('   ');
+out = await botReply(history);
+check('empty reply falls back to a scripted line', out.live === false && out.text.length > 0, out.text);
+
+// --- outage handling
+await new Promise((resolve) => api.close(resolve));
+out = await botReply(history);
+check('API outage degrades to scripted reply', out.live === false && out.text.length > 0, out.text);
+
+console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : failures + ' CHECK(S) FAILED'}`);
+process.exit(failures === 0 ? 0 : 1);

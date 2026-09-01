@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Human or Not? — Teacher</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎛️</text></svg>">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<!-- Passcode -->
+<section id="screen-auth" class="wrap">
+  <div class="card" style="max-width:400px;margin:12vh auto;">
+    <h1>Teacher console</h1>
+    <p class="muted small">Enter the teacher passcode to open the control panel.</p>
+    <div class="field">
+      <label for="passcode">Passcode</label>
+      <input id="passcode" type="password" autocomplete="current-password">
+    </div>
+    <button id="auth-btn" style="width:100%">Unlock</button>
+    <div id="auth-error" class="error"></div>
+  </div>
+</section>
+
+<!-- Dashboard -->
+<section id="screen-dash" class="wrap hidden">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+    <div>
+      <h1 style="margin:0">Human or Not? <span class="muted" style="font-weight:400">— teacher console</span></h1>
+      <div class="small muted">Students join at <strong id="join-url"></strong></div>
+    </div>
+    <div class="center">
+      <div id="phase-pill" class="pill">Lobby</div>
+      <div id="dash-clock" class="clock" style="font-size:2.6rem">—</div>
+    </div>
+  </div>
+
+  <div id="bot-warning" class="card hidden" style="border-color:#5a4515;background:#2a2210;margin-bottom:16px;">
+    <strong class="pill ai">Heads up</strong>
+    <span class="small">No <code>ANTHROPIC_API_KEY</code> is set on the server, so AI partners will send simple scripted replies instead of real Claude responses.</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="row">
+      <div>
+        <label for="duration">Round length</label>
+        <select id="duration">
+          <option value="60">1 minute</option>
+          <option value="120" selected>2 minutes</option>
+          <option value="180">3 minutes</option>
+          <option value="300">5 minutes</option>
+        </select>
+      </div>
+      <div>
+        <label for="ratio">Share paired with AI — <span id="ratio-label">50%</span></label>
+        <input id="ratio" type="range" min="0" max="100" step="10" value="50" style="padding:0">
+      </div>
+      <div class="shrink">
+        <button id="start-btn" class="big">▶ Start round</button>
+      </div>
+      <div class="shrink"><button id="end-btn" class="ghost" disabled>End early</button></div>
+      <div class="shrink"><button id="results-btn" class="ghost" disabled>Show results</button></div>
+      <div class="shrink"><button id="reset-btn" class="ghost">New round</button></div>
+    </div>
+    <div id="dash-error" class="error"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row" style="margin-bottom:16px;">
+    <div class="stat"><div class="n" id="stat-joined">0</div><div class="k">Joined</div></div>
+    <div class="stat"><div class="n" id="stat-paired">0</div><div class="k">In round</div></div>
+    <div class="stat"><div class="n" id="stat-human">0</div><div class="k">With a peer</div></div>
+    <div class="stat"><div class="n" id="stat-ai">0</div><div class="k">With AI</div></div>
+    <div class="stat"><div class="n" id="stat-answered">0</div><div class="k">Answered</div></div>
+    <div class="stat"><div class="n" id="stat-accuracy">—</div><div class="k">Class accuracy</div></div>
+  </div>
+
+  <!-- Lobby roster -->
+  <div id="lobby-panel" class="card" style="margin-bottom:16px;">
+    <h2>Waiting room</h2>
+    <p class="muted small" id="lobby-empty">No students yet. Numbers appear here as students sign in.</p>
+    <div class="code-grid" id="code-grid"></div>
+  </div>
+
+  <!-- Round table -->
+  <div id="round-panel" class="card hidden" style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <h2 style="margin:0">Pairings &amp; answers</h2>
+      <button id="spoiler-btn" class="ghost small">👁 Reveal pairings</button>
+    </div>
+    <p class="small muted" id="spoiler-note">Pairings are blurred so you can safely project this screen. Click to reveal.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Status</th>
+            <th>Paired with</th>
+            <th>Messages</th>
+            <th>Their answer</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="round-body"></tbody>
+      </table>
+    </div>
+    <div class="row small muted" style="margin-top:14px;">
+      <div>Guessed correctly when talking to a <strong>peer</strong>: <span id="acc-human">—</span></div>
+      <div>Guessed correctly when talking to <strong>AI</strong>: <span id="acc-ai">—</span></div>
+    </div>
+  </div>
+
+  <!-- Transcripts -->
+  <div id="transcript-panel" class="card hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <h2 style="margin:0">Transcripts</h2>
+      <button id="transcript-btn" class="ghost small">Load transcripts</button>
+    </div>
+    <p class="small muted">Useful for the debrief: what actually gave the bot away?</p>
+    <div id="transcripts"></div>
+  </div>
+
+</section>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/teacher.js"></script>
+</body>
+</html>

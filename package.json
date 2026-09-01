@@ -1,0 +1,27 @@
+{
+  "name": "human-or-not-classroom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A 2-minute classroom Turing-test activity: students chat with either a peer or an AI, then guess which.",
+  "type": "module",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/run.mjs && node test/bot-mock.mjs",
+    "test:e2e": "node test/run.mjs",
+    "test:bot": "node test/bot-mock.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

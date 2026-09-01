@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Human or Not?</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤔</text></svg>">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<!-- Sign in -->
+<section id="screen-signin" class="wrap">
+  <div class="card" style="max-width:420px;margin:8vh auto;">
+    <h1>Human or Not?</h1>
+    <p class="muted">Enter your 6-digit number to join the activity.</p>
+    <div class="field">
+      <label for="code">Your 6-digit number</label>
+      <input id="code" inputmode="numeric" autocomplete="off" maxlength="6"
+             placeholder="000000" style="font-size:1.6rem;letter-spacing:.35em;text-align:center;">
+    </div>
+    <button id="join-btn" class="big" style="width:100%">Join</button>
+    <div id="signin-error" class="error"></div>
+  </div>
+</section>
+
+<!-- Waiting room -->
+<section id="screen-waiting" class="wrap hidden">
+  <div class="card center" style="max-width:460px;margin:10vh auto;">
+    <h1>You're in</h1>
+    <p class="muted">You are number <strong id="waiting-code" class="clock"></strong></p>
+    <div class="typing" style="margin:22px auto;width:fit-content;"><span></span><span></span><span></span></div>
+    <p>Waiting for your teacher to start the round.</p>
+    <p class="small muted"><span id="waiting-count">1</span> in the room</p>
+  </div>
+</section>
+
+<!-- Joined after the round began -->
+<section id="screen-late" class="wrap hidden">
+  <div class="card center" style="max-width:460px;margin:10vh auto;">
+    <h1>Round in progress</h1>
+    <p class="muted">You joined after this round started, so you're sitting this one out. Hang tight for the next round.</p>
+  </div>
+</section>
+
+<!-- Chat -->
+<section id="screen-chat" class="chat-shell hidden">
+  <div class="chat-head">
+    <div>
+      <div style="font-weight:650">Someone</div>
+      <div class="small muted">Are they a classmate, or an AI?</div>
+    </div>
+    <div class="clock" id="chat-clock" style="font-size:1.5rem">2:00</div>
+  </div>
+  <div class="log" id="log"></div>
+  <form class="composer" id="composer" autocomplete="off">
+    <input id="msg" maxlength="300" placeholder="Say something…" autocomplete="off">
+    <button type="submit">Send</button>
+  </form>
+</section>
+
+<!-- Guess -->
+<section id="screen-guess" class="wrap hidden">
+  <div class="card center" style="max-width:480px;margin:8vh auto;">
+    <h1>Time's up</h1>
+    <p class="muted">Who were you just chatting with?</p>
+    <div class="row" style="margin-top:26px;">
+      <button id="guess-human" class="big" style="background:var(--human);color:#06281d;">🧑 A classmate</button>
+      <button id="guess-ai" class="big" style="background:var(--ai);color:#2e2205;">🤖 An AI bot</button>
+    </div>
+    <div id="guess-error" class="error"></div>
+  </div>
+</section>
+
+<!-- Reveal -->
+<section id="screen-reveal" class="wrap hidden">
+  <div class="card center" style="max-width:480px;margin:8vh auto;">
+    <div id="reveal-icon" style="font-size:3.6rem;line-height:1">🎉</div>
+    <h1 id="reveal-title">Correct</h1>
+    <p id="reveal-body" class="muted"></p>
+    <p class="small muted">Your teacher will show the class results shortly.</p>
+  </div>
+</section>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/student.js"></script>
+</body>
+</html>
