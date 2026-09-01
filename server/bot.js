@@ -10,6 +10,14 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const MODEL = process.env.BOT_MODEL || 'claude-opus-5';
 
+// Two request params are model-gated. `effort` is rejected by Haiku 4.5 and
+// Sonnet 4.5, and the server-side refusal fallback only applies to models that
+// can return stop_reason "refusal". Sending either to a model that doesn't take
+// it returns a 400 on *every* turn, which would quietly drop a whole class onto
+// the scripted fallback — so only send them where they're accepted.
+const SUPPORTS_EFFORT = /^claude-(fable-5|mythos-5|opus-5|opus-4-[5678]|sonnet-5|sonnet-4-6)/.test(MODEL);
+const SUPPORTS_REFUSAL_FALLBACK = /^claude-(fable-5|mythos-5|opus-5|opus-4-[78])/.test(MODEL);
+
 const DEFAULT_PERSONA = [
   'You are pretending to be a high school student (around 15 years old) in a chat',
   'with another student. You are playing a guessing game where the other person is',
@@ -66,6 +74,8 @@ function getClient() {
   }
 }
 
+export const botModel = MODEL;
+
 export function isLiveBotConfigured() {
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }
@@ -112,17 +122,21 @@ export async function botReply(history) {
   if (!api) return { text: scriptedReply(history), live: false };
 
   try {
-    const response = await api.beta.messages.create({
+    const request = {
       model: MODEL,
       max_tokens: 200,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: history,
-      // Low effort keeps replies terse and fast, which is what the persona needs.
-      output_config: { effort: 'low' },
-      // Route around a safety refusal rather than dropping the turn mid-activity.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-    });
+    };
+    // Low effort keeps replies terse and fast, which is what the persona needs.
+    if (SUPPORTS_EFFORT) request.output_config = { effort: 'low' };
+    // Route around a safety refusal rather than dropping the turn mid-activity.
+    if (SUPPORTS_REFUSAL_FALLBACK) {
+      request.betas = ['server-side-fallback-2026-07-01'];
+      request.fallbacks = 'default';
+    }
+
+    const response = await api.beta.messages.create(request);
 
     if (response.stop_reason === 'refusal') {
       console.warn('[bot] refusal:', response.stop_details?.category);

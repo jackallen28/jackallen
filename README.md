@@ -88,9 +88,17 @@ a live classroom moving.
 
 Tunable in `.env`:
 
-- `BOT_MODEL` — defaults to `claude-opus-5`
+- `BOT_MODEL` — defaults to `claude-opus-5`. `claude-haiku-4-5` is the cheapest
+  and fastest option and `claude-sonnet-5` sits in between. The optional request
+  parameters are gated on the model: `effort` and the server-side refusal
+  fallback are only sent to models that accept them, because a model that
+  rejects them would fail *every* turn and quietly drop the class onto the
+  scripted fallback. If you set a model outside the families listed in
+  `server/bot.js`, check the Terminal for `[bot]` errors before running a lesson.
 - `BOT_PERSONA` — replaces the persona instructions entirely, if you want to run
   the activity with a different character or in another language
+
+The configured model is printed at startup, so you can confirm a change took.
 
 ## Tests
 

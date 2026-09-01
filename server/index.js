@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { Session, PHASES } from './state.js';
-import { isLiveBotConfigured } from './bot.js';
+import { isLiveBotConfigured, botModel } from './bot.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(here, '..', 'public');
@@ -18,6 +18,8 @@ if (!process.env.TEACHER_PASSCODE) {
 }
 if (!isLiveBotConfigured()) {
   console.warn('[server] ANTHROPIC_API_KEY is not set. The AI partner will use scripted replies.');
+} else {
+  console.log(`[server] AI partner model: ${botModel}`);
 }
 
 const app = express();

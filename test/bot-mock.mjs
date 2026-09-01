@@ -82,6 +82,24 @@ nextResponse = reply('   ');
 out = await botReply(history);
 check('empty reply falls back to a scripted line', out.live === false && out.text.length > 0, out.text);
 
+// --- a model that does not accept the optional params
+process.env.BOT_MODEL = 'claude-haiku-4-5';
+const { botReply: haikuReply } = await import('../server/bot.js?variant=haiku');
+nextResponse = reply('cbf honestly');
+out = await haikuReply(history);
+const hBody = lastRequest.body;
+
+check('haiku: model switched', hBody.model === 'claude-haiku-4-5', hBody.model);
+check('haiku: no effort (it is rejected there)', hBody.output_config === undefined,
+  JSON.stringify(hBody.output_config));
+check('haiku: no refusal-fallback beta', lastRequest.headers['anthropic-beta'] === undefined,
+  String(lastRequest.headers['anthropic-beta']));
+check('haiku: no fallbacks field', hBody.fallbacks === undefined, JSON.stringify(hBody.fallbacks));
+check('haiku: persona and cache breakpoint still sent',
+  Array.isArray(hBody.system) && hBody.system[0].cache_control?.type === 'ephemeral');
+check('haiku: reply still returned', out.live === true && out.text === 'cbf honestly', out.text);
+delete process.env.BOT_MODEL;
+
 // --- outage handling
 await new Promise((resolve) => api.close(resolve));
 out = await botReply(history);
