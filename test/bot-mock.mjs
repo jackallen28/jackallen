@@ -33,7 +33,7 @@ const reply = (text, extra = {}) => ({
   id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5',
   content: [{ type: 'text', text }],
   stop_reason: 'end_turn', stop_sequence: null,
-  usage: { input_tokens: 10, output_tokens: 5 },
+  usage: { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 90 },
   ...extra,
 });
 
@@ -81,6 +81,25 @@ check('refusal deflects in character', out.live === true && /something else/.tes
 nextResponse = reply('   ');
 out = await botReply(history);
 check('empty reply falls back to a scripted line', out.live === false && out.text.length > 0, out.text);
+
+check('usage reported for cost tracking',
+  out.usage.inputTokens === 100 && out.usage.outputTokens === 5,
+  JSON.stringify(out.usage));
+
+// --- an explicit per-conversation model overrides the default
+nextResponse = reply('cbf');
+out = await botReply(history, 'claude-sonnet-5');
+check('explicit model is used', lastRequest.body.model === 'claude-sonnet-5', lastRequest.body.model);
+check('sonnet 5 still gets effort', lastRequest.body.output_config?.effort === 'low');
+check('sonnet 5 gets no refusal fallback',
+  lastRequest.headers['anthropic-beta'] === undefined && lastRequest.body.fallbacks === undefined);
+
+nextResponse = reply('yeah nah');
+await botReply(history, 'claude-haiku-4-5');
+check('per-call haiku drops the gated params',
+  lastRequest.body.model === 'claude-haiku-4-5' &&
+    lastRequest.body.output_config === undefined &&
+    lastRequest.body.fallbacks === undefined);
 
 // --- a model that does not accept the optional params
 process.env.BOT_MODEL = 'claude-haiku-4-5';

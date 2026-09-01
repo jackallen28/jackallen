@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { Session, PHASES } from './state.js';
-import { isLiveBotConfigured, botModel } from './bot.js';
+import { isLiveBotConfigured, defaultModel } from './bot.js';
+import { MODEL_CATALOG } from './models.js';
+import { buildCsvReport, buildHtmlReport, reportFilename } from './report.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(here, '..', 'public');
@@ -19,7 +21,7 @@ if (!process.env.TEACHER_PASSCODE) {
 if (!isLiveBotConfigured()) {
   console.warn('[server] ANTHROPIC_API_KEY is not set. The AI partner will use scripted replies.');
 } else {
-  console.log(`[server] AI partner model: ${botModel}`);
+  console.log(`[server] Default AI partner model: ${defaultModel}`);
 }
 
 const app = express();
@@ -121,7 +123,7 @@ io.on('connection', (socket) => {
     }
     role = 'teacher';
     teacherSockets.add(socket.id);
-    ack?.({ ok: true, liveBot: isLiveBotConfigured() });
+    ack?.({ ok: true, liveBot: isLiveBotConfigured(), models: MODEL_CATALOG });
     socket.emit('teacher:state', session.teacherView());
   });
 
@@ -138,6 +140,8 @@ io.on('connection', (socket) => {
     session.start({
       durationSec: Number(payload?.durationSec) || 120,
       aiRatio: Number(payload?.aiRatio ?? 0.5),
+      // Validated against the server-side catalog inside start().
+      modelMix: payload?.modelMix,
     })
   ));
 
@@ -151,6 +155,19 @@ io.on('connection', (socket) => {
     socketFor(code)?.emit('student:kicked');
     return { ok: session.remove(code) };
   }));
+  socket.on('teacher:report', (_payload, ack) => {
+    if (role !== 'teacher') return ack?.({ ok: false, error: 'Not authorised.' });
+    if (session.roundNumber === 0) return ack?.({ ok: false, error: 'No round has run yet.' });
+    const data = session.reportData();
+    ack?.({
+      ok: true,
+      html: buildHtmlReport(data),
+      csv: buildCsvReport(data),
+      htmlName: reportFilename(data, 'html'),
+      csvName: reportFilename(data, 'csv'),
+    });
+  });
+
   socket.on('teacher:transcripts', (_payload, ack) => {
     if (role !== 'teacher') return ack?.({ ok: false, error: 'Not authorised.' });
     ack?.({ ok: true, transcripts: session.transcripts() });

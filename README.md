@@ -43,8 +43,10 @@ during it.
 2. **Students join** — they enter any 6-digit number (student ID, or numbers you
    hand out). Their number appears in your waiting room as they arrive. A green
    dot means connected; a faded chip means they've dropped off.
-3. **Set the round** — pick a length (2 minutes is the default) and what share of
-   the class gets an AI partner (50% by default).
+3. **Set the round** — pick a length (2 minutes is the default), what share of the
+   class gets an AI partner (50% by default), and which models those partners
+   use. Tick as many models as you like and drag their sliders to set the split;
+   the percentages next to each one are what the class will actually get.
 4. **Press Start** — everyone is paired at that moment and the countdown begins on
    every screen at once.
 5. **While it runs** — your table shows who's paired with whom. It's blurred by
@@ -52,11 +54,17 @@ during it.
    to see it.
 6. **Time's up** — students get the vote screen automatically. Each one sees their
    own answer as soon as they've locked it in.
-7. **Debrief** — press *Show results*, then *Load transcripts*. The per-partner
-   accuracy split ("correct when talking to a peer" vs "correct when talking to
-   AI") is usually the most interesting number in the room, and the transcripts
-   show exactly what gave the bot away.
-8. **Go again** — *New round* re-pairs everyone. You'll be asked whether to keep
+7. **Debrief** — press *Show results*, then *Load transcripts*. The **By model**
+   table is the interesting one when you've run several models at once: its
+   *fooled rate* is the share of students facing that model who believed they
+   were talking to a classmate, so a higher number means a more convincing bot.
+   The per-partner accuracy split ("correct when talking to a peer" vs "correct
+   when talking to AI") and the transcripts fill in the rest.
+8. **Download the report** — *Download report* gives you a single HTML file with
+   the metrics, the per-model breakdown, every student's result and every
+   transcript. It has no external assets, so it opens anywhere and prints to PDF.
+   *CSV* gives one row per student, transcript included, for a spreadsheet.
+9. **Go again** — *New round* re-pairs everyone. You'll be asked whether to keep
    the current students signed in or clear the roster entirely.
 
 You can also press *End early* if the conversation dies, and double-click any
@@ -86,19 +94,34 @@ so nobody stares at an empty window. If the API call fails — no key, rate limi
 outage — the bot drops to scripted replies rather than going silent, which keeps
 a live classroom moving.
 
-Tunable in `.env`:
+### Choosing models
 
-- `BOT_MODEL` — defaults to `claude-opus-5`. `claude-haiku-4-5` is the cheapest
-  and fastest option and `claude-sonnet-5` sits in between. The optional request
-  parameters are gated on the model: `effort` and the server-side refusal
-  fallback are only sent to models that accept them, because a model that
-  rejects them would fail *every* turn and quietly drop the class onto the
-  scripted fallback. If you set a model outside the families listed in
-  `server/bot.js`, check the Terminal for `[bot]` errors before running a lesson.
+Pick the models in the teacher console — no restart, no editing files. The
+catalog lives in `server/models.js` (Opus 5, Sonnet 5, Haiku 4.5 by default) and
+each entry carries its price per million tokens, which is what the report uses to
+estimate what a round cost.
+
+**You can run several models in the same round.** Tick two or three, set their
+weights, and the AI-paired students are split between them using largest-
+remainder rounding, so the split matches the weights as closely as whole students
+allow. That turns the activity into a comparison: same class, same two minutes,
+and you can see which model held the persona best.
+
+The catalog is server-owned on purpose. The console sends model *ids* and
+anything not in the catalog is rejected, so a tampered-with browser can't choose
+the model or run up the bill.
+
+Two request parameters are gated per model: `effort` and the server-side refusal
+fallback are only sent to models that accept them. Haiku 4.5 rejects `effort`, and
+sending it anyway would fail *every* turn and quietly drop that student onto the
+scripted fallback. Add a model outside the families listed in `server/models.js`
+and you should check the Terminal for `[bot]` errors before running a lesson.
+
+Also tunable in `.env`:
+
+- `BOT_MODEL` — the model used when a round doesn't specify one
 - `BOT_PERSONA` — replaces the persona instructions entirely, if you want to run
   the activity with a different character or in another language
-
-The configured model is printed at startup, so you can confirm a change took.
 
 ## Tests
 
@@ -109,9 +132,11 @@ npm test
 Two suites. `test/e2e.mjs` boots the server and drives a five-student round over
 real websockets: joining, pairing, chatting, the rate limiter, reconnecting
 mid-round, the countdown expiring on its own, voting, scoring, transcripts, reset,
-and that students can't invoke teacher commands. `test/bot-mock.mjs` points the
-Anthropic SDK at a local stand-in and asserts the exact request shape, the
-markdown stripping, the refusal path, and the offline fallback.
+and that students can't invoke teacher commands, plus a multi-model round, the
+rejection of unknown model ids, and both report formats. `test/bot-mock.mjs`
+points the Anthropic SDK at a local stand-in and asserts the exact request shape
+per model, token accounting, the markdown stripping, the refusal path, and the
+offline fallback.
 
 ## Deploying
 
@@ -131,7 +156,9 @@ server/
   index.js    HTTP + websocket wiring, teacher auth, broadcasting
   state.js    the round state machine: roster, pairing, chat routing, scoring
   bot.js      the Anthropic call, persona, typing delays, offline fallback
-  pairing.js  shuffling and the human/AI split
+  models.js   the model catalog, per-model capability gating, cost estimates
+  pairing.js  shuffling, the human/AI split, and the model allocation
+  report.js   the downloadable HTML and CSV reports
 public/
   index.html  student app        js/student.js
   teacher.html teacher console   js/teacher.js

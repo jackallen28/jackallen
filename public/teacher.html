@@ -66,6 +66,15 @@
       <div class="shrink"><button id="reset-btn" class="ghost">New round</button></div>
     </div>
     <div id="dash-error" class="error"></div>
+
+    <div class="mix">
+      <div class="mix-head">
+        <label style="margin:0">Which models the AI partners use</label>
+        <span class="small muted" id="mix-summary"></span>
+      </div>
+      <div id="model-mix"></div>
+      <p class="small muted" id="mix-warning" style="margin:8px 0 0"></p>
+    </div>
   </div>
 
   <!-- Stats -->
@@ -85,6 +94,24 @@
     <div class="code-grid" id="code-grid"></div>
   </div>
 
+  <!-- Per-model breakdown -->
+  <div id="model-panel" class="card hidden" style="margin-bottom:16px;">
+    <h2>By model</h2>
+    <p class="small muted">Fooled rate is the share of students facing that model who believed it was a classmate. Higher means more convincing.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th><th>Students</th><th>Answered</th>
+            <th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th>
+            <th>Tokens in / out</th><th>Est. cost</th>
+          </tr>
+        </thead>
+        <tbody id="model-body"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Round table -->
   <div id="round-panel" class="card hidden" style="margin-bottom:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
@@ -99,6 +126,7 @@
             <th>Student</th>
             <th>Status</th>
             <th>Paired with</th>
+            <th>Model</th>
             <th>Messages</th>
             <th>Their answer</th>
             <th>Result</th>
@@ -116,10 +144,16 @@
   <!-- Transcripts -->
   <div id="transcript-panel" class="card hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-      <h2 style="margin:0">Transcripts</h2>
-      <button id="transcript-btn" class="ghost small">Load transcripts</button>
+      <h2 style="margin:0">Transcripts &amp; report</h2>
+      <div class="row shrink" style="gap:8px;flex:0 0 auto;">
+        <button id="transcript-btn" class="ghost small">Load transcripts</button>
+        <button id="report-html-btn" class="small">⬇ Download report</button>
+        <button id="report-csv-btn" class="ghost small">⬇ CSV</button>
+      </div>
     </div>
-    <p class="small muted">Useful for the debrief: what actually gave the bot away?</p>
+    <p class="small muted">The report is a single HTML file with every transcript, the per-model
+      breakdown and each student's result — open it in a browser, or print it to PDF. The CSV is
+      one row per student for a spreadsheet.</p>
     <div id="transcripts"></div>
   </div>
 

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { modelCapabilities, normaliseMix } from './models.js';
 
 /**
  * The AI chat partner.
@@ -8,15 +9,8 @@ import Anthropic from '@anthropic-ai/sdk';
  * scripted responder so a live classroom never ends up staring at a dead chat.
  */
 
-const MODEL = process.env.BOT_MODEL || 'claude-opus-5';
-
-// Two request params are model-gated. `effort` is rejected by Haiku 4.5 and
-// Sonnet 4.5, and the server-side refusal fallback only applies to models that
-// can return stop_reason "refusal". Sending either to a model that doesn't take
-// it returns a 400 on *every* turn, which would quietly drop a whole class onto
-// the scripted fallback — so only send them where they're accepted.
-const SUPPORTS_EFFORT = /^claude-(fable-5|mythos-5|opus-5|opus-4-[5678]|sonnet-5|sonnet-4-6)/.test(MODEL);
-const SUPPORTS_REFUSAL_FALLBACK = /^claude-(fable-5|mythos-5|opus-5|opus-4-[78])/.test(MODEL);
+/** The model used when a round does not specify one. */
+export const defaultModel = Object.keys(normaliseMix(null))[0];
 
 const DEFAULT_PERSONA = [
   'You are pretending to be a high school student (around 15 years old) in a chat',
@@ -74,8 +68,6 @@ function getClient() {
   }
 }
 
-export const botModel = MODEL;
-
 export function isLiveBotConfigured() {
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }
@@ -115,32 +107,44 @@ function scriptedReply(history) {
  * Produce the bot's next message.
  *
  * @param {Array<{role: 'user'|'assistant', content: string}>} history
- * @returns {Promise<{text: string, live: boolean}>}
+ * @param {string} modelId  which model answers this turn
+ * @returns {Promise<{text: string, live: boolean, usage: {inputTokens: number, outputTokens: number}}>}
  */
-export async function botReply(history) {
+export async function botReply(history, modelId = defaultModel) {
+  const noUsage = { inputTokens: 0, outputTokens: 0 };
   const api = getClient();
-  if (!api) return { text: scriptedReply(history), live: false };
+  if (!api) return { text: scriptedReply(history), live: false, usage: noUsage };
+
+  const caps = modelCapabilities(modelId);
 
   try {
     const request = {
-      model: MODEL,
+      model: modelId,
       max_tokens: 200,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: history,
     };
     // Low effort keeps replies terse and fast, which is what the persona needs.
-    if (SUPPORTS_EFFORT) request.output_config = { effort: 'low' };
+    if (caps.effort) request.output_config = { effort: 'low' };
     // Route around a safety refusal rather than dropping the turn mid-activity.
-    if (SUPPORTS_REFUSAL_FALLBACK) {
+    if (caps.refusalFallback) {
       request.betas = ['server-side-fallback-2026-07-01'];
       request.fallbacks = 'default';
     }
 
     const response = await api.beta.messages.create(request);
 
+    const usage = {
+      inputTokens:
+        (response.usage?.input_tokens || 0) +
+        (response.usage?.cache_read_input_tokens || 0) +
+        (response.usage?.cache_creation_input_tokens || 0),
+      outputTokens: response.usage?.output_tokens || 0,
+    };
+
     if (response.stop_reason === 'refusal') {
-      console.warn('[bot] refusal:', response.stop_details?.category);
-      return { text: 'nah lets talk about something else', live: true };
+      console.warn(`[bot] ${modelId} refusal:`, response.stop_details?.category);
+      return { text: 'nah lets talk about something else', live: true, usage };
     }
 
     const text = sanitize(
@@ -150,10 +154,10 @@ export async function botReply(history) {
         .join(' ')
     );
 
-    if (!text) return { text: scriptedReply(history), live: false };
-    return { text, live: true };
+    if (!text) return { text: scriptedReply(history), live: false, usage };
+    return { text, live: true, usage };
   } catch (err) {
-    console.warn('[bot] API call failed, falling back to scripted reply:', err.message);
-    return { text: scriptedReply(history), live: false };
+    console.warn(`[bot] ${modelId} call failed, falling back to scripted reply:`, err.message);
+    return { text: scriptedReply(history), live: false, usage: noUsage };
   }
 }

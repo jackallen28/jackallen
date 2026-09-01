@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { buildConversations } from './pairing.js';
 import { botReply, typingDelayMs } from './bot.js';
+import { estimateCost, modelLabel, normaliseMix } from './models.js';
 
 export const PHASES = {
   LOBBY: 'lobby',     // students joining, waiting for the teacher
@@ -24,6 +25,9 @@ export class Session extends EventEmitter {
     this.roundNumber = 0;
     this.durationSec = 120;
     this.aiRatio = 0.5;
+    this.modelMix = normaliseMix(null);
+    this.startedAt = null;
+    this.endedAt = null;
     this.endsAt = null;
     this.roundTimer = null;
     this.usedLiveBot = false;
@@ -101,7 +105,7 @@ export class Session extends EventEmitter {
   // ------------------------------------------------------------------- round
 
   /** Pair everyone currently in the lobby and start the clock. */
-  start({ durationSec = 120, aiRatio = 0.5 } = {}) {
+  start({ durationSec = 120, aiRatio = 0.5, modelMix = null } = {}) {
     if (this.phase === PHASES.ACTIVE) {
       return { ok: false, error: 'A round is already running.' };
     }
@@ -113,6 +117,8 @@ export class Session extends EventEmitter {
     this.clearTimers();
     this.durationSec = Math.max(15, Math.min(900, Math.round(durationSec)));
     this.aiRatio = Math.max(0, Math.min(1, aiRatio));
+    // Unknown model ids are dropped here, so the browser can never choose the spend.
+    this.modelMix = normaliseMix(modelMix);
     this.roundNumber += 1;
     this.usedLiveBot = false;
     this.conversations.clear();
@@ -125,10 +131,14 @@ export class Session extends EventEmitter {
       student.lastSentAt = 0;
     }
 
-    for (const spec of buildConversations(codes, this.aiRatio)) {
+    for (const spec of buildConversations(codes, this.aiRatio, this.modelMix)) {
       const conv = {
         ...spec,
         messages: [],
+        botTurns: 0,
+        liveTurns: 0,
+        tokensIn: 0,
+        tokensOut: 0,
         botBusy: false,
         botAgain: false,
         botTimer: null,
@@ -143,6 +153,8 @@ export class Session extends EventEmitter {
     }
 
     this.phase = PHASES.ACTIVE;
+    this.startedAt = Date.now();
+    this.endedAt = null;
     this.endsAt = Date.now() + this.durationSec * 1000;
     this.roundTimer = setTimeout(() => this.endRound(), this.durationSec * 1000);
 
@@ -167,6 +179,7 @@ export class Session extends EventEmitter {
     if (this.phase !== PHASES.ACTIVE) return { ok: false, error: 'No round running.' };
     this.clearTimers();
     this.phase = PHASES.GUESS;
+    this.endedAt = Date.now();
     this.endsAt = null;
     this.emit('phase');
     return { ok: true };
@@ -320,9 +333,15 @@ export class Session extends EventEmitter {
       if (history.length === 0) return;
 
       this.emitTypingToMembers(conv, true);
-      const { text, live } = await botReply(history);
+      const { text, live, usage } = await botReply(history, conv.model);
       if (this.phase !== PHASES.ACTIVE) return;
-      if (live) this.usedLiveBot = true;
+      conv.botTurns += 1;
+      conv.tokensIn += usage?.inputTokens || 0;
+      conv.tokensOut += usage?.outputTokens || 0;
+      if (live) {
+        conv.liveTurns += 1;
+        this.usedLiveBot = true;
+      }
 
       await new Promise((resolve) => {
         conv.replyTimer = setTimeout(resolve, typingDelayMs(text));
@@ -414,7 +433,7 @@ export class Session extends EventEmitter {
         const conv = student.convId ? this.conversations.get(student.convId) : null;
         const partner = conv
           ? conv.type === 'ai'
-            ? 'AI bot'
+            ? modelLabel(conv.model)
             : conv.members.find((m) => m !== student.code) || 'unpaired'
           : null;
         return {
@@ -423,6 +442,8 @@ export class Session extends EventEmitter {
           joinedAt: student.joinedAt,
           inRound: Boolean(conv),
           partnerType: conv ? conv.type : null,
+          model: conv && conv.type === 'ai' ? conv.model : null,
+          modelLabel: conv && conv.type === 'ai' ? modelLabel(conv.model) : null,
           partner,
           messagesSent: student.sent,
           guess: student.guess,
@@ -442,8 +463,10 @@ export class Session extends EventEmitter {
       endsAt: this.endsAt,
       durationSec: this.durationSec,
       aiRatio: this.aiRatio,
+      modelMix: this.modelMix,
       usedLiveBot: this.usedLiveBot,
       students,
+      byModel: this.modelBreakdown(),
       stats: {
         joined: students.length,
         connected: students.filter((s) => s.connected).length,
@@ -463,17 +486,96 @@ export class Session extends EventEmitter {
     };
   }
 
+  /**
+   * Per-model results.
+   *
+   * The headline number for a teacher is `foolRate`: of the students who faced
+   * this model and answered, how many believed it was a classmate.
+   */
+  modelBreakdown() {
+    const rows = new Map();
+
+    for (const conv of this.conversations.values()) {
+      if (conv.type !== 'ai') continue;
+      const id = conv.model || 'unknown';
+      if (!rows.has(id)) {
+        rows.set(id, {
+          id,
+          label: modelLabel(id),
+          students: 0,
+          answered: 0,
+          caught: 0,
+          fooled: 0,
+          studentMessages: 0,
+          botTurns: 0,
+          liveTurns: 0,
+          tokensIn: 0,
+          tokensOut: 0,
+        });
+      }
+      const row = rows.get(id);
+      row.tokensIn += conv.tokensIn;
+      row.tokensOut += conv.tokensOut;
+      row.botTurns += conv.botTurns;
+      row.liveTurns += conv.liveTurns;
+
+      for (const code of conv.members) {
+        const student = this.students.get(code);
+        if (!student) continue;
+        row.students += 1;
+        row.studentMessages += student.sent;
+        if (student.guess) {
+          row.answered += 1;
+          if (student.guess === 'ai') row.caught += 1;
+          else row.fooled += 1;
+        }
+      }
+    }
+
+    return [...rows.values()].map((row) => ({
+      ...row,
+      foolRate: row.answered ? Math.round((row.fooled / row.answered) * 100) : null,
+      costUsd: Number(estimateCost(row.id, row.tokensIn, row.tokensOut).toFixed(4)),
+    }));
+  }
+
   /** Full transcripts, for the teacher to review after the reveal. */
   transcripts() {
     return [...this.conversations.values()].map((conv) => ({
       id: conv.id,
       type: conv.type,
+      model: conv.model || null,
+      modelLabel: conv.type === 'ai' ? modelLabel(conv.model) : null,
       members: conv.members,
+      botTurns: conv.botTurns,
+      liveTurns: conv.liveTurns,
+      tokensIn: conv.tokensIn,
+      tokensOut: conv.tokensOut,
       messages: conv.messages.map((m) => ({
-        sender: m.sender === 'bot' ? 'AI bot' : m.sender,
+        sender: m.sender === 'bot' ? modelLabel(conv.model) : m.sender,
+        isBot: m.sender === 'bot',
         text: m.text,
         ts: m.ts,
       })),
     }));
+  }
+
+  /** Everything the downloadable teacher report needs, in one object. */
+  reportData() {
+    const view = this.teacherView();
+    return {
+      generatedAt: Date.now(),
+      roundNumber: this.roundNumber,
+      durationSec: this.durationSec,
+      startedAt: this.startedAt,
+      endedAt: this.endedAt,
+      aiRatio: this.aiRatio,
+      modelMix: this.modelMix,
+      usedLiveBot: this.usedLiveBot,
+      stats: view.stats,
+      byModel: view.byModel,
+      students: view.students,
+      transcripts: this.transcripts(),
+    };
   }
 }

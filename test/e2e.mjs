@@ -131,8 +131,62 @@ await sleep(200);
 check('phase results', tState?.phase === 'results');
 const tr = await emit(teacher, 'teacher:transcripts', {});
 check('transcripts returned', tr.ok && tr.transcripts.length > 0, `${tr.transcripts?.length} convs`);
-check('transcripts label the bot',
-  tr.transcripts.filter((c) => c.type === 'ai').every((c) => c.messages.some((m) => m.sender === 'AI bot')));
+check('transcripts name the model that replied',
+  tr.transcripts.filter((c) => c.type === 'ai')
+    .every((c) => c.messages.some((m) => m.isBot && m.sender === c.modelLabel)),
+  tr.transcripts.filter((c) => c.type === 'ai').map((c) => c.modelLabel).join(','));
+
+// ---- report on the finished round
+const rep = await emit(teacher, 'teacher:report', {});
+check('report builds', rep.ok === true, rep.error || '');
+check('report is a standalone html page',
+  rep.html?.startsWith('<!doctype html>') && rep.html.includes('</html>'));
+check('report names every student in the round',
+  codes.every((c) => rep.html.includes(c)));
+check('report includes transcript text', rep.html.includes('hey from 100001'));
+const csvLines = rep.csv.trim().split('\n');
+check('report csv is one physical line per student',
+  csvLines.length === 6, `${csvLines.length} lines`);
+check('report csv embeds the transcript in the row',
+  csvLines.slice(1).every((line) => line.includes('hey from ')));
+check('report csv header is right',
+  rep.csv.split('\n')[0].startsWith('student,partner_type,model,'));
+check('report filenames are dated', /^human-or-not_round-\d+_\d{4}-\d{2}-\d{2}_\d{4}\.html$/.test(rep.htmlName),
+  rep.htmlName);
+
+// ---- a second round using several models at once
+check('reset for multi-model round', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
+await sleep(200);
+const mix = { 'claude-opus-5': 1, 'claude-sonnet-5': 1, 'claude-haiku-4-5': 1 };
+check('start multi-model round',
+  (await emit(teacher, 'teacher:start', { durationSec: 15, aiRatio: 1, modelMix: mix })).ok);
+await sleep(400);
+const aiRows = tState.students.filter((s) => s.partnerType === 'ai');
+check('every AI student has a model', aiRows.length > 0 && aiRows.every((s) => s.model),
+  aiRows.map((s) => s.modelLabel).join(','));
+check('models come from the requested mix',
+  aiRows.every((s) => Object.keys(mix).includes(s.model)));
+check('more than one model in play', new Set(aiRows.map((s) => s.model)).size > 1,
+  `${new Set(aiRows.map((s) => s.model)).size} distinct`);
+check('breakdown rows sum to the AI students',
+  tState.byModel.reduce((n, r) => n + r.students, 0) === aiRows.length);
+
+// an unknown model id from the browser must never reach the API
+check('reset before rejecting bad model', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
+await sleep(150);
+await emit(teacher, 'teacher:start', {
+  durationSec: 15, aiRatio: 1, modelMix: { 'evil-model-9000': 5 },
+});
+await sleep(300);
+check('unknown model id is rejected and replaced',
+  tState.students.filter((s) => s.partnerType === 'ai').every((s) => s.model !== 'evil-model-9000'),
+  JSON.stringify(tState.modelMix));
+
+check('breakdown reports fooled vs caught',
+  tState.byModel.every((r) => 'foolRate' in r && 'costUsd' in r));
+
+await emit(teacher, 'teacher:end', {});
+await sleep(200);
 
 // ---- reset
 check('reset keeps roster', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
