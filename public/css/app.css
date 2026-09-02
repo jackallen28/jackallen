@@ -293,3 +293,145 @@ tbody tr:hover { background: var(--panel-2); }
   .mix-row { grid-template-columns: 22px 1fr 56px; }
   .mix-row input[type="range"] { grid-column: 2 / 4; }
 }
+
+/* --------------------------------------------------------- student conduct */
+
+.rules {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ai);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.rules h2 {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ai);
+  margin: 0 0 8px;
+}
+.rules ul { margin: 0; padding-left: 18px; }
+.rules li { font-size: .88rem; margin-bottom: 6px; color: var(--muted); }
+.rules li:last-child { margin-bottom: 0; }
+.rules strong { color: var(--text); }
+
+/* ------------------------------------------------------------ staged flow */
+
+.stagebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.steps {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+.steps li {
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.steps li.on {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.bignum {
+  font-size: 3.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin-top: 6px;
+}
+
+.bigclock {
+  font-size: clamp(4rem, 18vw, 9rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.bigclock.warn { color: var(--ai); }
+.bigclock.critical { color: var(--danger); }
+
+button.danger-solid { background: var(--danger); color: #2a0b0b; }
+
+/* Lobby chips now carry the student number as well as the login */
+.code-chip .who { font-size: .95rem; font-weight: 700; letter-spacing: normal; }
+.code-chip .sub { font-size: .7rem; color: var(--muted); letter-spacing: .08em; margin-top: 2px; }
+
+/* ---------------------------------------------------------- reveal screen */
+
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: center;
+  opacity: 0;
+  animation: reveal .45s ease-out forwards;
+}
+.pair.human { border-color: #1c5344; background: linear-gradient(180deg, #10281f 0%, var(--panel) 70%); }
+.pair.ai { border-color: #5a4515; background: linear-gradient(180deg, #2a2210 0%, var(--panel) 70%); }
+.pair .face { font-size: 2.1rem; line-height: 1; }
+.pair .who { font-weight: 650; margin-top: 4px; overflow-wrap: anywhere; }
+.pair .sub { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+.pair .link { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------- scores screen */
+
+.scoregrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.scorecell {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  background: var(--panel);
+}
+.scorecell.right { border-color: #1c5344; background: #10281f; }
+.scorecell.wrong { border-color: #5b2b2b; background: #2a1414; }
+.scorecell .mark { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.scorecell.right .mark { color: var(--human); }
+.scorecell.wrong .mark { color: var(--danger); }
+.scorecell .who { font-weight: 650; margin-top: 4px; font-size: .92rem; overflow-wrap: anywhere; }
+.scorecell .sub { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+@media (max-width: 640px) {
+  .steps li { font-size: .62rem; padding: 4px 8px; }
+  .pairs { grid-template-columns: 1fr; }
+}

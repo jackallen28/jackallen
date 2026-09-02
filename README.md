@@ -64,38 +64,52 @@ replies that students will spot immediately. The teacher console shows a warning
 banner when that's the case, so you'll know before the lesson starts rather than
 during it.
 
+## Student logins
+
+A login is **four letters then four numbers** (`WXYZ1234`), handed out on cards
+before the lesson. Before opening the room, upload a CSV pairing each login with
+a student number:
+
+```
+login,student
+WXYZ1234,Student 01
+ABCD5678,Student 02
+```
+
+A header row is optional and the columns can be either way round — the parser
+takes whichever cell looks like a login. Rows that contain no valid login are
+reported back rather than silently dropped, so a typo does not quietly leave a
+student unable to log in. Logins are case-insensitive.
+
+With a list uploaded, only those logins are accepted. Without one, any correctly
+formatted login works, so a forgotten upload does not stop the lesson.
+
+The student number is what appears on the teacher's screens and in the report;
+no student ever types a name into the activity. The sign-in screen carries the
+conduct rules: you may be talking to a person or an AI, be respectful, share no
+personal information, and everything is recorded.
+
 ## Running the activity
 
-1. **Before class** — start the server, open `/teacher`, enter your passcode.
-2. **Students join** — they enter any 6-digit number (student ID, or numbers you
-   hand out). Their number appears in your waiting room as they arrive. A green
-   dot means connected; a faded chip means they've dropped off.
-3. **Set the round** — pick a length (2 minutes is the default), what share of the
-   class gets an AI partner (50% by default), and which models those partners
-   use. Tick as many models as you like and drag their sliders to set the split;
-   the percentages next to each one are what the class will actually get.
-4. **Press Start** — everyone is paired at that moment and the countdown begins on
-   every screen at once.
-5. **While it runs** — your table shows who's paired with whom. It's blurred by
-   default so the screen is safe to project; click *Reveal pairings* when you want
-   to see it.
-6. **Time's up** — students get the vote screen automatically. Each one sees their
-   own answer as soon as they've locked it in.
-7. **Debrief** — press *Show results*, then *Load transcripts*. The **By model**
-   table is the interesting one when you've run several models at once: its
-   *fooled rate* is the share of students facing that model who believed they
-   were talking to a classmate, so a higher number means a more convincing bot.
-   The per-partner accuracy split ("correct when talking to a peer" vs "correct
-   when talking to AI") and the transcripts fill in the rest.
-8. **Download the report** — *Download report* gives you a single HTML file with
-   the metrics, the per-model breakdown, every student's result and every
-   transcript. It has no external assets, so it opens anywhere and prints to PDF.
-   *CSV* gives one row per student, transcript included, for a spreadsheet.
-9. **Go again** — *New round* re-pairs everyone. You'll be asked whether to keep
-   the current students signed in or clear the roster entirely.
+The teacher console is a sequence of screens. Each one has a single button that
+moves to the next.
 
-You can also press *End early* if the conversation dies, and double-click any
-number in the waiting room to remove it.
+1. **Set up** — upload the login CSV, then choose round length, the share paired
+   with AI, which models, and which personas. Students cannot log in yet.
+2. **Open the room** — students log in and their **student numbers appear on
+   screen** as each one succeeds, counted against the roster.
+3. **Begin the round** — a large countdown fills the screen for projection.
+   Anyone logging in after this sits the round out.
+4. **Time's up** — students choose classmate or AI; the screen shows how many
+   have answered.
+5. **Reveal** — who was talking to whom, and which partners were never human.
+6. **Scores** — who worked it out, class accuracy, and the fooled rate per model
+   and per persona.
+7. **Report** — one button downloads a single `.zip` containing the full HTML
+   report, a results spreadsheet, and every transcript.
+8. **Start over** — wipes every login, student number, message and result, and
+   returns to a blank set-up screen for the next class. Nothing is written to
+   disk, so download the report first; the console warns you if you have not.
 
 ## How pairing works
 

@@ -10,7 +10,8 @@ import { Session, PHASES } from './state.js';
 import { isLiveBotConfigured, defaultModel, voiceSampleCount, usingClassroomPack } from './bot.js';
 import { blocklistCount, personaCatalog } from './classroom.js';
 import { MODEL_CATALOG } from './models.js';
-import { buildCsvReport, buildHtmlReport, reportFilename } from './report.js';
+import { buildCsvReport, buildHtmlReport, buildTranscriptText, reportFilename } from './report.js';
+import { createZip } from './zip.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(here, '..', 'public');
@@ -166,14 +167,16 @@ io.on('connection', (socket) => {
   // -- student ---------------------------------------------------------------
 
   socket.on('student:join', (payload, ack) => {
-    const code = String(payload?.code ?? '').trim();
-    const result = session.join(code, socket.id);
+    const result = session.join(payload?.code, socket.id);
     if (!result.ok) return ack?.(result);
 
     role = 'student';
-    socket.data.code = code;
-    ack?.({ ok: true });
-    pushStudent(code);
+    // Track the student under the canonical login the session returned, never the
+    // raw text they typed — otherwise a lower-case login joins fine and then
+    // every message from it is rejected as "not in this round".
+    socket.data.code = result.code;
+    ack?.({ ok: true, code: result.code });
+    pushStudent(result.code);
   });
 
   socket.on('chat:send', (payload, ack) => {
@@ -235,6 +238,10 @@ io.on('connection', (socket) => {
     })
   ));
 
+  socket.on('teacher:roster', teacherOnly((payload) => session.setRoster(payload?.csv)));
+  socket.on('teacher:clearRoster', teacherOnly(() => session.clearRoster()));
+  socket.on('teacher:openLobby', teacherOnly(() => session.openLobby()));
+  socket.on('teacher:startOver', teacherOnly(() => session.startOver()));
   socket.on('teacher:end', teacherOnly(() => session.endRound()));
   socket.on('teacher:results', teacherOnly(() => session.showResults()));
   socket.on('teacher:reset', teacherOnly((payload) =>
@@ -249,12 +256,21 @@ io.on('connection', (socket) => {
     if (role !== 'teacher') return ack?.({ ok: false, error: 'Not authorised.' });
     if (session.roundNumber === 0) return ack?.({ ok: false, error: 'No round has run yet.' });
     const data = session.reportData();
+    const base = reportFilename(data, '').replace(/\.$/, '');
+    // One archive so the teacher clicks once and walks away with everything.
+    const zip = createZip([
+      { name: `${base}/report.html`, content: buildHtmlReport(data) },
+      { name: `${base}/results.csv`, content: buildCsvReport(data) },
+      { name: `${base}/transcripts.txt`, content: buildTranscriptText(data) },
+    ]);
     ack?.({
       ok: true,
       html: buildHtmlReport(data),
       csv: buildCsvReport(data),
       htmlName: reportFilename(data, 'html'),
       csvName: reportFilename(data, 'csv'),
+      zipName: `${base}.zip`,
+      zipBase64: zip.toString('base64'),
     });
   });
 

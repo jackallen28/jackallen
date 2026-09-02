@@ -18,10 +18,39 @@ teacher.on('teacher:state', (s) => { tState = s; });
 
 check('wrong passcode rejected', !(await emit(teacher, 'teacher:auth', { passcode: 'nope' })).ok);
 check('teacher auth', (await emit(teacher, 'teacher:auth', { passcode: 'test' })).ok);
-check('start blocked with no students', !(await emit(teacher, 'teacher:start', {})).ok);
+await sleep(150);
+check('starts in setup', tState?.phase === 'setup', tState?.phase);
+check('start blocked during setup', !(await emit(teacher, 'teacher:start', {})).ok);
+
+// ---- roster upload
+const codes = ['ABCD0001', 'EFGH0002', 'IJKL0003', 'MNOP0004', 'QRST0005'];
+const lateCode = 'UVWX0006';
+const rosterCsv = [
+  'login,student',
+  ...codes.map((c, i) => `${c},Student 0${i + 1}`),
+  `${lateCode},Student 06`,
+  'BADROW,Student 99',
+].join('\n');
+
+const rosterRes = await emit(teacher, 'teacher:roster', { csv: rosterCsv });
+check('roster uploads', rosterRes.ok === true, rosterRes.error || '');
+check('roster counts valid logins', rosterRes.count === 6, String(rosterRes.count));
+check('roster reports the bad row', rosterRes.errors.length === 1, JSON.stringify(rosterRes.errors));
+await sleep(150);
+check('teacher sees the roster size', tState?.roster?.size === 6, String(tState?.roster?.size));
+
+// ---- students cannot get in before the room opens
+const early = io(URL);
+await new Promise((r) => early.on('connect', r));
+check('no login before the room opens',
+  !(await emit(early, 'student:join', { code: codes[0] })).ok);
+early.close();
+
+check('open the room', (await emit(teacher, 'teacher:openLobby', {})).ok);
+await sleep(150);
+check('phase is lobby', tState?.phase === 'lobby');
 
 // ---- students
-const codes = ['100001', '100002', '100003', '100004', '100005'];
 const students = {};
 for (const code of codes) {
   const sock = io(URL);
@@ -31,13 +60,20 @@ for (const code of codes) {
   sock.on('chat:message', (m) => rec.msgs.push(m));
   sock.on('chat:typing', (t) => { if (t) rec.typing++; });
   students[code] = rec;
-  check(`join ${code}`, (await emit(sock, 'student:join', { code })).ok);
+  check(`login ${code}`, (await emit(sock, 'student:join', { code })).ok);
 }
-check('bad code rejected', !(await emit(students['100001'].sock, 'student:join', { code: '12' })).ok);
+check('malformed login rejected',
+  !(await emit(students[codes[0]].sock, 'student:join', { code: '123456' })).ok);
+check('login not on the class list rejected',
+  !(await emit(students[codes[0]].sock, 'student:join', { code: 'ZZZZ9999' })).ok);
+check('lower case login accepted',
+  (await emit(students[codes[0]].sock, 'student:join', { code: codes[0].toLowerCase() })).ok);
 await sleep(200);
-check('teacher sees 5 joined', tState?.stats.joined === 5, `got ${tState?.stats.joined}`);
+check('student numbers come from the roster',
+  tState?.students?.[0]?.student === 'Student 01', tState?.students?.[0]?.student);
+check('teacher sees 5 logged in', tState?.stats.joined === 5, `got ${tState?.stats.joined}`);
 check('all in lobby', Object.values(students).every((s) => s.state?.phase === 'lobby'));
-check('no chat before start', !(await emit(students['100001'].sock, 'chat:send', { text: 'hi' })).ok);
+check('no chat before start', !(await emit(students[codes[0]].sock, 'chat:send', { text: 'hi' })).ok);
 
 // ---- start
 check('start round', (await emit(teacher, 'teacher:start', { durationSec: 15, aiRatio: 0.5 })).ok);
@@ -54,7 +90,7 @@ const late = io(URL);
 await new Promise((r) => late.on('connect', r));
 let lateState = null;
 late.on('student:state', (s) => { lateState = s; });
-await emit(late, 'student:join', { code: '999999' });
+await emit(late, 'student:join', { code: lateCode });
 await sleep(200);
 check('late joiner not in round', lateState?.phase === 'active' && lateState?.inRound === false);
 
@@ -62,8 +98,8 @@ check('late joiner not in round', lateState?.phase === 'active' && lateState?.in
 for (const code of codes) await emit(students[code].sock, 'chat:send', { text: `hey from ${code}` });
 await sleep(300);
 check('own message echoed', Object.values(students).every((s) => s.msgs.some((m) => m.mine)));
-check('rate limit works', !(await emit(students['100001'].sock, 'chat:send', { text: 'spam' })).ok);
-check('empty message rejected', !(await emit(students['100002'].sock, 'chat:send', { text: '   ' })).ok);
+check('rate limit works', !(await emit(students[codes[0]].sock, 'chat:send', { text: 'spam' })).ok);
+check('empty message rejected', !(await emit(students[codes[1]].sock, 'chat:send', { text: '   ' })).ok);
 
 // human pairs relay
 const humanCodes = tState.students.filter((s) => s.partnerType === 'human').map((s) => s.code);
@@ -103,18 +139,18 @@ await sleep(12000);
 check('phase auto-advanced to guess', tState?.phase === 'guess', `phase=${tState?.phase}`);
 check('students on guess screen',
   codes.every((c) => students[c].state?.phase === 'guess' && !students[c].state.reveal));
-check('chat closed after time', !(await emit(students['100003'].sock, 'chat:send', { text: 'late' })).ok);
+check('chat closed after time', !(await emit(students[codes[2]].sock, 'chat:send', { text: 'late' })).ok);
 
 // ---- guesses
-check('bad guess value rejected', !(await emit(students['100001'].sock, 'guess:submit', { guess: 'maybe' })).ok);
+check('bad guess value rejected', !(await emit(students[codes[0]].sock, 'guess:submit', { guess: 'maybe' })).ok);
 for (const code of codes) {
   const partnerType = tState.students.find((s) => s.code === code).partnerType;
-  // 100001 deliberately guesses wrong so we can verify scoring both ways.
-  const guess = code === '100001' ? (partnerType === 'ai' ? 'human' : 'ai') : partnerType;
+  // The first student deliberately guesses wrong so we verify scoring both ways.
+  const guess = code === codes[0] ? (partnerType === 'ai' ? 'human' : 'ai') : partnerType;
   await emit(students[code].sock, 'guess:submit', { guess });
 }
 await sleep(300);
-check('double guess rejected', !(await emit(students['100002'].sock, 'guess:submit', { guess: 'ai' })).ok);
+check('double guess rejected', !(await emit(students[codes[1]].sock, 'guess:submit', { guess: 'ai' })).ok);
 check('all answered', tState?.stats.answered === 5, `answered=${tState?.stats.answered}`);
 check('scoring: 4 of 5 correct', tState?.stats.correct === 4, `correct=${tState?.stats.correct}`);
 check('accuracy = 80%', tState?.stats.accuracy === 80, `acc=${tState?.stats.accuracy}`);
@@ -122,7 +158,7 @@ check('reveal only after guessing',
   codes.every((c) => students[c].state?.reveal),
   'each student has reveal');
 check('reveal correctness matches',
-  students['100001'].state.reveal.correct === false &&
+  students[codes[0]].state.reveal.correct === false &&
   codes.slice(1).every((c) => students[c].state.reveal.correct === true));
 
 // ---- results + transcripts
@@ -143,16 +179,28 @@ check('report is a standalone html page',
   rep.html?.startsWith('<!doctype html>') && rep.html.includes('</html>'));
 check('report names every student in the round',
   codes.every((c) => rep.html.includes(c)));
-check('report includes transcript text', rep.html.includes('hey from 100001'));
+check('report includes transcript text', rep.html.includes(`hey from ${codes[0]}`));
 const csvLines = rep.csv.trim().split('\n');
 check('report csv is one physical line per student',
   csvLines.length === 6, `${csvLines.length} lines`);
 check('report csv embeds the transcript in the row',
   csvLines.slice(1).every((line) => line.includes('hey from ')));
-check('report csv header carries the persona',
-  rep.csv.split('\n')[0].startsWith('student,partner_type,model,persona,'));
 check('report filenames are dated', /^human-or-not_round-\d+_\d{4}-\d{2}-\d{2}_\d{4}\.html$/.test(rep.htmlName),
   rep.htmlName);
+check('report names the student number, not just the login',
+  rep.html.includes('Student 01') && rep.csv.includes('Student 01'));
+check('csv carries both number and login',
+  rep.csv.split('\n')[0].startsWith('student_number,login,'), rep.csv.split('\n')[0].slice(0, 40));
+
+// the one-click bundle
+check('zip bundle built', typeof rep.zipBase64 === 'string' && rep.zipBase64.length > 100);
+check('zip is named', /\.zip$/.test(rep.zipName || ''), rep.zipName);
+const zipBuf = Buffer.from(rep.zipBase64, 'base64');
+check('zip has the local-file signature', zipBuf.subarray(0, 4).toString('hex') === '504b0304');
+const zipText = zipBuf.toString('latin1');
+check('zip contains all three files',
+  zipText.includes('report.html') && zipText.includes('results.csv') && zipText.includes('transcripts.txt'));
+check('transcripts file has real content', zipText.includes('where was your mind') || zipText.includes('hey from '));
 
 // ---- a second round using several models at once
 check('reset for multi-model round', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
@@ -232,7 +280,19 @@ check('guesses cleared', tState?.students.every((s) => s.guess === null));
 check('students see waiting room', codes.every((c) => students[c].state?.phase === 'lobby'));
 
 // unauthorised control attempt
-check('student cannot start a round', !(await emit(students['100001'].sock, 'teacher:start', {})).ok);
+check('student cannot start a round', !(await emit(students[codes[0]].sock, 'teacher:start', {})).ok);
+check('student cannot upload a roster', !(await emit(students[codes[0]].sock, 'teacher:roster', { csv: 'x' })).ok);
+
+// ---- start over wipes the room
+check('start over', (await emit(teacher, 'teacher:startOver', {})).ok);
+await sleep(250);
+check('back to setup', tState?.phase === 'setup', tState?.phase);
+check('students wiped', tState?.stats.joined === 0, String(tState?.stats.joined));
+check('roster wiped', tState?.roster?.size === 0, String(tState?.roster?.size));
+check('round counter reset', tState?.roundNumber === 0, String(tState?.roundNumber));
+check('no report after a wipe', !(await emit(teacher, 'teacher:report', {})).ok);
+check('students cannot log back in after a wipe',
+  !(await emit(students[codes[0]].sock, 'student:join', { code: codes[0] })).ok);
 
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : failures + ' CHECK(S) FAILED'}`);
 teacher.close();

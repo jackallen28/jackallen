@@ -3,8 +3,10 @@ import { buildConversations } from './pairing.js';
 import { botReply, typingDelayMs } from './bot.js';
 import { estimateCost, modelLabel, normaliseMix } from './models.js';
 import { isKnownPersona, personaCatalog, personaLabel } from './classroom.js';
+import { isValidLogin, normaliseLogin, parseRoster } from './roster.js';
 
 export const PHASES = {
+  SETUP: 'setup',     // teacher configuring; students cannot log in yet
   LOBBY: 'lobby',     // students joining, waiting for the teacher
   ACTIVE: 'active',   // the chat window is open and the clock is running
   GUESS: 'guess',     // time is up, students are voting human vs AI
@@ -20,8 +22,10 @@ const BOT_OPENERS = ['hey', 'hi', 'yo', 'hey hey', 'sup'];
 export class Session extends EventEmitter {
   constructor() {
     super();
-    this.phase = PHASES.LOBBY;
-    this.students = new Map();      // code -> student record
+    this.phase = PHASES.SETUP;
+    this.students = new Map();      // login -> student record
+    this.roster = new Map();        // login -> student number/label
+    this.rosterIssues = { errors: [], duplicates: [] };
     this.conversations = new Map(); // convId -> conversation record
     this.roundNumber = 0;
     this.durationSec = 120;
@@ -35,12 +39,53 @@ export class Session extends EventEmitter {
     this.usedLiveBot = false;
   }
 
+  // ------------------------------------------------------------------ roster
+
+  /** Replace the class login list from an uploaded CSV. */
+  setRoster(csvText) {
+    if (this.phase !== PHASES.SETUP) {
+      return { ok: false, error: 'Upload the login list before opening the room.' };
+    }
+    const { entries, errors, duplicates } = parseRoster(csvText);
+    if (entries.length === 0) {
+      return { ok: false, error: 'No valid logins found. Each needs four letters then four numbers.' };
+    }
+    this.roster = new Map(entries.map((entry) => [entry.login, entry.student]));
+    this.rosterIssues = { errors, duplicates };
+    this.emit('roster');
+    return { ok: true, count: entries.length, errors, duplicates };
+  }
+
+  clearRoster() {
+    this.roster.clear();
+    this.rosterIssues = { errors: [], duplicates: [] };
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  /** Open the room so students can log in. */
+  openLobby() {
+    if (this.phase !== PHASES.SETUP) return { ok: false, error: 'The room is already open.' };
+    this.phase = PHASES.LOBBY;
+    this.emit('phase');
+    return { ok: true };
+  }
+
   // ---------------------------------------------------------------- students
 
   /** Join or reconnect. Returns {ok, error?}. */
-  join(code, socketId) {
-    if (!/^\d{6}$/.test(code)) {
-      return { ok: false, error: 'Enter a 6-digit number.' };
+  join(rawLogin, socketId) {
+    const code = normaliseLogin(rawLogin);
+    if (!isValidLogin(code)) {
+      return { ok: false, error: 'Logins are four letters then four numbers, like WXYZ1234.' };
+    }
+    if (this.phase === PHASES.SETUP) {
+      return { ok: false, error: 'The activity has not opened yet. Wait for your teacher.' };
+    }
+    // With a list uploaded, only those logins work. Without one, any well-formed
+    // login is accepted so the activity still runs if the upload is forgotten.
+    if (this.roster.size > 0 && !this.roster.has(code)) {
+      return { ok: false, error: 'That login is not on the class list. Check the card you were given.' };
     }
 
     const existing = this.students.get(code);
@@ -49,11 +94,14 @@ export class Session extends EventEmitter {
       existing.socketId = socketId;
       existing.connected = true;
       this.emit('roster');
-      return { ok: true, reconnected: true };
+      // The canonical login goes back to the caller: a student who typed it in
+      // lower case must be tracked under the same key as everyone else.
+      return { ok: true, reconnected: true, code };
     }
 
     this.students.set(code, {
       code,
+      student: this.roster.get(code) || code,
       socketId,
       connected: true,
       joinedAt: Date.now(),
@@ -64,7 +112,7 @@ export class Session extends EventEmitter {
       lastSentAt: 0,
     });
     this.emit('roster');
-    return { ok: true, reconnected: false };
+    return { ok: true, reconnected: false, code };
   }
 
   /** Mark a student offline without dropping their round data. */
@@ -110,6 +158,9 @@ export class Session extends EventEmitter {
   start({ durationSec = 120, aiRatio = 0.5, modelMix = null, personaMix = null } = {}) {
     if (this.phase === PHASES.ACTIVE) {
       return { ok: false, error: 'A round is already running.' };
+    }
+    if (this.phase === PHASES.SETUP) {
+      return { ok: false, error: 'Open the room and let students log in first.' };
     }
     const codes = [...this.students.keys()];
     if (codes.length === 0) {
@@ -220,6 +271,30 @@ export class Session extends EventEmitter {
       this.students.clear();
     }
 
+    this.emit('phase');
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  /**
+   * Start over: back to a blank setup screen.
+   *
+   * Wipes every login, student number, transcript and result. Nothing was ever
+   * written to disk, so once this runs the round is genuinely gone — download the
+   * report first.
+   */
+  startOver() {
+    this.clearTimers();
+    this.conversations.clear();
+    this.students.clear();
+    this.roster.clear();
+    this.rosterIssues = { errors: [], duplicates: [] };
+    this.phase = PHASES.SETUP;
+    this.endsAt = null;
+    this.startedAt = null;
+    this.endedAt = null;
+    this.roundNumber = 0;
+    this.usedLiveBot = false;
     this.emit('phase');
     this.emit('roster');
     return { ok: true };
@@ -407,6 +482,7 @@ export class Session extends EventEmitter {
     const view = {
       phase: this.phase,
       code,
+      student: student.student,
       inRound,
       roundNumber: this.roundNumber,
       endsAt: this.endsAt,
@@ -441,6 +517,7 @@ export class Session extends EventEmitter {
           : null;
         return {
           code: student.code,
+          student: student.student,
           connected: student.connected,
           joinedAt: student.joinedAt,
           inRound: Boolean(conv),
@@ -473,9 +550,16 @@ export class Session extends EventEmitter {
       modelMix: this.modelMix,
       personaMix: this.personaMix,
       usedLiveBot: this.usedLiveBot,
+      roster: {
+        size: this.roster.size,
+        errors: this.rosterIssues.errors,
+        duplicates: this.rosterIssues.duplicates,
+        loggedIn: [...this.students.keys()].filter((login) => this.roster.has(login)).length,
+      },
       students,
       byModel: this.modelBreakdown(),
       byPersona: this.personaBreakdown(),
+      pairs: this.revealPairs(),
       stats: {
         joined: students.length,
         connected: students.filter((s) => s.connected).length,
@@ -592,6 +676,29 @@ export class Session extends EventEmitter {
     }));
   }
 
+  /**
+   * The pairings as pairs rather than as rows, for the reveal screen the class
+   * actually looks at: who was talking to whom, and which ones were never human.
+   */
+  revealPairs() {
+    return [...this.conversations.values()].map((conv) => ({
+      id: conv.id,
+      type: conv.type,
+      modelLabel: conv.type === 'ai' ? modelLabel(conv.model) : null,
+      personaLabel: conv.persona ? `${conv.persona} — ${personaLabel(conv.persona)}` : null,
+      messages: conv.messages.length,
+      members: conv.members.map((login) => {
+        const student = this.students.get(login);
+        return {
+          login,
+          student: student?.student || login,
+          guess: student?.guess || null,
+          correct: student?.guess ? student.guess === conv.type : null,
+        };
+      }),
+    }));
+  }
+
   /** Full transcripts, for the teacher to review after the reveal. */
   transcripts() {
     return [...this.conversations.values()].map((conv) => ({
@@ -602,12 +709,16 @@ export class Session extends EventEmitter {
       personaLabel: conv.persona ? `${conv.persona} — ${personaLabel(conv.persona)}` : null,
       modelLabel: conv.type === 'ai' ? modelLabel(conv.model) : null,
       members: conv.members,
+      memberLabels: conv.members.map((login) => this.students.get(login)?.student || login),
       botTurns: conv.botTurns,
       liveTurns: conv.liveTurns,
       tokensIn: conv.tokensIn,
       tokensOut: conv.tokensOut,
       messages: conv.messages.map((m) => ({
-        sender: m.sender === 'bot' ? modelLabel(conv.model) : m.sender,
+        // Student numbers read better in a debrief than raw logins.
+        sender: m.sender === 'bot'
+          ? modelLabel(conv.model)
+          : this.students.get(m.sender)?.student || m.sender,
         isBot: m.sender === 'bot',
         text: m.text,
         ts: m.ts,
@@ -631,6 +742,7 @@ export class Session extends EventEmitter {
       stats: view.stats,
       byModel: view.byModel,
       byPersona: view.byPersona,
+      pairs: view.pairs,
       students: view.students,
       transcripts: this.transcripts(),
     };

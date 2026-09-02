@@ -26,8 +26,12 @@
 
   const codeInput = $('code');
 
+  // Four letters then four digits, forced upper case as they type.
   codeInput.addEventListener('input', () => {
-    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+    const cleaned = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const letters = cleaned.slice(0, 4).replace(/[^A-Z]/g, '');
+    const digits = cleaned.slice(letters.length).replace(/\D/g, '').slice(0, 4);
+    codeInput.value = letters + digits;
   });
   codeInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') join();
@@ -36,8 +40,8 @@
   $('join-btn').addEventListener('click', () => join());
 
   function join(code = codeInput.value.trim()) {
-    if (!/^\d{6}$/.test(code)) {
-      $('signin-error').textContent = 'Enter exactly 6 digits.';
+    if (!/^[A-Z]{4}\d{4}$/.test(code.toUpperCase())) {
+      $('signin-error').textContent = 'Four letters then four numbers, like WXYZ1234.';
       return;
     }
     $('signin-error').textContent = '';
@@ -47,7 +51,7 @@
         return;
       }
       myCode = code;
-      sessionStorage.setItem('hon-code', code);
+      sessionStorage.setItem('hon-code', code.toUpperCase());
     });
   }
 
@@ -176,7 +180,7 @@
     }
 
     myCode = state.code;
-    $('waiting-code').textContent = state.code;
+    $('waiting-code').textContent = state.student || state.code;
     $('waiting-count').textContent = state.waitingCount;
 
     switch (state.phase) {

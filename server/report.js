@@ -44,7 +44,7 @@ export function buildCsvReport(data) {
   };
 
   const header = [
-    'student', 'partner_type', 'model', 'persona', 'partner', 'messages_sent',
+    'student_number', 'login', 'partner_type', 'model', 'persona', 'partner', 'messages_sent',
     'their_answer', 'correct', 'bot_turns', 'tokens_in', 'tokens_out', 'transcript',
   ];
 
@@ -53,6 +53,7 @@ export function buildCsvReport(data) {
     .map((student) => {
       const conv = data.transcripts.find((c) => c.members.includes(student.code));
       return [
+        student.student || student.code,
         student.code,
         student.partnerType === 'ai' ? 'AI' : 'peer',
         student.model || '',
@@ -69,6 +70,27 @@ export function buildCsvReport(data) {
     });
 
   return [header, ...rows].map((row) => row.map(cell).join(',')).join('\n');
+}
+
+/** Plain-text transcripts, for anyone who wants them outside the HTML report. */
+export function buildTranscriptText(data) {
+  const lines = [
+    `Human or Not? — round ${data.roundNumber}`,
+    `Generated ${stamp(data.generatedAt)}`,
+    '',
+  ];
+
+  for (const conv of data.transcripts) {
+    const who = conv.type === 'ai'
+      ? `${(conv.memberLabels || conv.members)[0]} with ${conv.modelLabel || 'AI'}` +
+        (conv.personaLabel ? ` (persona ${conv.personaLabel})` : '')
+      : (conv.memberLabels || conv.members).join(' with ');
+    lines.push('='.repeat(70), who, '');
+    if (!conv.messages.length) lines.push('(no messages sent)');
+    for (const message of conv.messages) lines.push(`${message.sender}: ${message.text}`);
+    lines.push('');
+  }
+  return lines.join('\n');
 }
 
 function modelTable(data) {
@@ -141,7 +163,7 @@ function studentTable(data) {
     .filter((student) => student.inRound)
     .map(
       (student) => `<tr>
-        <td><strong>${escapeHtml(student.code)}</strong></td>
+        <td><strong>${escapeHtml(student.student || student.code)}</strong><div class="sub">${escapeHtml(student.code)}</div></td>
         <td>${student.partnerType === 'ai'
           ? `<span class="tag ai">AI</span> ${escapeHtml(student.modelLabel || '')}`
           : `<span class="tag human">Peer</span> ${escapeHtml(student.partner || '')}`}</td>

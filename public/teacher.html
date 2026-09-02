@@ -23,166 +23,201 @@
   </div>
 </section>
 
-<!-- Dashboard -->
 <section id="screen-dash" class="wrap hidden">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+  <div class="stagebar">
     <div>
-      <h1 style="margin:0">Human or Not? <span class="muted" style="font-weight:400">— teacher console</span></h1>
-      <div class="small muted">Students on this Wi-Fi join at <strong id="join-url"></strong></div>
+      <h1 style="margin:0">Human or Not?</h1>
+      <div class="small muted" id="join-line">Students join at <strong id="join-url"></strong></div>
     </div>
-    <div class="center">
-      <div id="phase-pill" class="pill">Lobby</div>
-      <div id="dash-clock" class="clock" style="font-size:2.6rem">—</div>
-    </div>
+    <ol class="steps" id="steps">
+      <li data-step="setup">Set up</li>
+      <li data-step="lobby">Log in</li>
+      <li data-step="running">Chat</li>
+      <li data-step="reveal">Reveal</li>
+      <li data-step="scores">Scores</li>
+      <li data-step="report">Report</li>
+    </ol>
   </div>
 
   <div id="bot-warning" class="card hidden" style="border-color:#5a4515;background:#2a2210;margin-bottom:16px;">
     <strong class="pill ai">Heads up</strong>
     <span class="small">No <code>ANTHROPIC_API_KEY</code> is set on the server, so AI partners will send simple scripted replies instead of real Claude responses.</span>
   </div>
+  <div id="dash-error" class="error"></div>
 
-  <!-- Controls -->
-  <div class="card" style="margin-bottom:16px;">
-    <div class="row">
-      <div>
-        <label for="duration">Round length</label>
-        <select id="duration">
-          <option value="60">1 minute</option>
-          <option value="120" selected>2 minutes</option>
-          <option value="180">3 minutes</option>
-          <option value="300">5 minutes</option>
-        </select>
+  <!-- ============================ 1. SET UP ============================ -->
+  <div id="stage-setup">
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Class login list</h2>
+      <p class="small muted">Upload a CSV of the logins you handed out. Four letters then four numbers,
+        paired with the student number, for example <code>WXYZ1234,Student 07</code>. A header row is fine
+        and the columns can be either way round.</p>
+      <div class="row">
+        <div class="shrink"><button id="roster-btn" class="ghost">Choose CSV…</button></div>
+        <div class="shrink"><button id="roster-clear" class="ghost small hidden">Clear list</button></div>
+        <div><div class="small" id="roster-status">No list uploaded — any correctly formatted login will work.</div></div>
       </div>
-      <div>
-        <label for="ratio">Share paired with AI — <span id="ratio-label">50%</span></label>
-        <input id="ratio" type="range" min="0" max="100" step="10" value="50" style="padding:0">
-      </div>
-      <div class="shrink">
-        <button id="start-btn" class="big">▶ Start round</button>
-      </div>
-      <div class="shrink"><button id="end-btn" class="ghost" disabled>End early</button></div>
-      <div class="shrink"><button id="results-btn" class="ghost" disabled>Show results</button></div>
-      <div class="shrink"><button id="reset-btn" class="ghost">New round</button></div>
-    </div>
-    <div id="dash-error" class="error"></div>
-
-    <div class="mix">
-      <div class="mix-head">
-        <label style="margin:0">Which models the AI partners use</label>
-        <span class="small muted" id="mix-summary"></span>
-      </div>
-      <div id="model-mix"></div>
-      <p class="small muted" id="mix-warning" style="margin:8px 0 0"></p>
-      <p class="small muted" id="voice-note" style="margin:8px 0 0"></p>
+      <input id="roster-file" type="file" accept=".csv,text/csv,text/plain" class="hidden">
+      <div id="roster-issues" class="small" style="margin-top:10px"></div>
     </div>
 
-    <div class="mix" id="persona-block">
-      <div class="mix-head">
-        <label style="margin:0">Which student personas the bots play</label>
-        <span class="small muted" id="persona-summary"></span>
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Round settings</h2>
+      <div class="row">
+        <div>
+          <label for="duration">Round length</label>
+          <select id="duration">
+            <option value="60">1 minute</option>
+            <option value="120" selected>2 minutes</option>
+            <option value="180">3 minutes</option>
+            <option value="300">5 minutes</option>
+          </select>
+        </div>
+        <div>
+          <label for="ratio">Share paired with AI — <span id="ratio-label">50%</span></label>
+          <input id="ratio" type="range" min="0" max="100" step="10" value="50" style="padding:0">
+        </div>
       </div>
-      <div id="persona-pick"></div>
-      <p class="small muted" id="persona-warning" style="margin:8px 0 0"></p>
+
+      <div class="mix">
+        <div class="mix-head">
+          <label style="margin:0">Which models the AI partners use</label>
+          <span class="small muted" id="mix-summary"></span>
+        </div>
+        <div id="model-mix"></div>
+        <p class="small muted" id="mix-warning" style="margin:8px 0 0"></p>
+        <p class="small muted" id="voice-note" style="margin:8px 0 0"></p>
+      </div>
+
+      <div class="mix" id="persona-block">
+        <div class="mix-head">
+          <label style="margin:0">Which student personas the bots play</label>
+          <span class="small muted" id="persona-summary"></span>
+        </div>
+        <div id="persona-pick"></div>
+        <p class="small muted" id="persona-warning" style="margin:8px 0 0"></p>
+      </div>
+    </div>
+
+    <div class="center">
+      <button id="open-btn" class="big">Open the room →</button>
+      <p class="small muted" style="margin-top:10px">Students cannot log in until you do this.</p>
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="stat-row" style="margin-bottom:16px;">
-    <div class="stat"><div class="n" id="stat-joined">0</div><div class="k">Joined</div></div>
-    <div class="stat"><div class="n" id="stat-paired">0</div><div class="k">In round</div></div>
-    <div class="stat"><div class="n" id="stat-human">0</div><div class="k">With a peer</div></div>
-    <div class="stat"><div class="n" id="stat-ai">0</div><div class="k">With AI</div></div>
-    <div class="stat"><div class="n" id="stat-answered">0</div><div class="k">Answered</div></div>
-    <div class="stat"><div class="n" id="stat-accuracy">—</div><div class="k">Class accuracy</div></div>
+  <!-- ============================ 2. LOG IN ============================ -->
+  <div id="stage-lobby" class="hidden">
+    <div class="card center" style="margin-bottom:16px;">
+      <h2 style="margin:0">Students are logging in</h2>
+      <p class="muted" style="margin:6px 0 0">Go to <strong id="join-url-2"></strong> and enter your login.</p>
+      <div class="bignum" id="lobby-count">0</div>
+      <div class="small muted" id="lobby-of"></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="code-grid" id="code-grid"></div>
+      <p class="muted small" id="lobby-empty">Nobody has logged in yet.</p>
+    </div>
+    <div class="center">
+      <button id="begin-btn" class="big" disabled>Begin the round →</button>
+      <p class="small muted" style="margin-top:10px">Anyone who logs in after this sits the round out.</p>
+    </div>
   </div>
 
-  <!-- Lobby roster -->
-  <div id="lobby-panel" class="card" style="margin-bottom:16px;">
-    <h2>Waiting room</h2>
-    <p class="muted small" id="lobby-empty">No students yet. Numbers appear here as students sign in.</p>
-    <div class="code-grid" id="code-grid"></div>
+  <!-- ============================ 3. CHAT ============================ -->
+  <div id="stage-running" class="hidden">
+    <div class="card center">
+      <div class="small muted" style="text-transform:uppercase;letter-spacing:.08em">Time remaining</div>
+      <div id="big-clock" class="bigclock">2:00</div>
+      <div class="stat-row" style="max-width:640px;margin:18px auto 0">
+        <div class="stat"><div class="n" id="run-students">0</div><div class="k">In the round</div></div>
+        <div class="stat"><div class="n" id="run-messages">0</div><div class="k">Messages sent</div></div>
+      </div>
+      <p style="margin-top:22px"><button id="end-btn" class="ghost">End early</button></p>
+    </div>
   </div>
 
-  <!-- Per-model breakdown -->
-  <div id="model-panel" class="card hidden" style="margin-bottom:16px;">
-    <h2>By model</h2>
-    <p class="small muted">Fooled rate is the share of students facing that model who believed it was a classmate. Higher means more convincing.</p>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Model</th><th>Students</th><th>Answered</th>
-            <th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th>
-            <th>Tokens in / out</th><th>Est. cost</th>
-          </tr>
-        </thead>
+  <!-- ============================ 4. ANSWERING ============================ -->
+  <div id="stage-answering" class="hidden">
+    <div class="card center">
+      <h2 style="margin:0">Time's up — students are answering</h2>
+      <p class="muted">Each student is choosing whether they were talking to a classmate or an AI.</p>
+      <div class="bignum" id="answered-count">0/0</div>
+      <p style="margin-top:18px"><button id="reveal-btn" class="big">Reveal the answers →</button></p>
+    </div>
+  </div>
+
+  <!-- ============================ 5. REVEAL ============================ -->
+  <div id="stage-reveal" class="hidden">
+    <div class="center" style="margin-bottom:18px">
+      <h1 style="margin:0">Who was talking to whom</h1>
+      <p class="muted">Green pairs were two real students. Amber means the partner was never human.</p>
+    </div>
+    <div class="pairs" id="pairs"></div>
+    <div class="center" style="margin-top:24px">
+      <button id="to-scores-btn" class="big">Who guessed right? →</button>
+    </div>
+  </div>
+
+  <!-- ============================ 6. SCORES ============================ -->
+  <div id="stage-scores" class="hidden">
+    <div class="center" style="margin-bottom:18px">
+      <h1 style="margin:0">Who worked it out</h1>
+    </div>
+    <div class="stat-row" style="margin-bottom:18px">
+      <div class="stat"><div class="n" id="sc-correct">0</div><div class="k">Got it right</div></div>
+      <div class="stat"><div class="n" id="sc-wrong">0</div><div class="k">Fooled</div></div>
+      <div class="stat"><div class="n" id="sc-accuracy">—</div><div class="k">Class accuracy</div></div>
+      <div class="stat"><div class="n" id="sc-human">—</div><div class="k">Right about peers</div></div>
+      <div class="stat"><div class="n" id="sc-ai">—</div><div class="k">Right about AI</div></div>
+    </div>
+    <div class="scoregrid" id="scoregrid"></div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>By model</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Model</th><th>Students</th><th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th><th>Est. cost</th></tr></thead>
         <tbody id="model-body"></tbody>
-      </table>
+      </table></div>
     </div>
-  </div>
-
-  <!-- Per-persona breakdown -->
-  <div id="persona-panel" class="card hidden" style="margin-bottom:16px;">
-    <h2>By persona</h2>
-    <p class="small muted">The pack predicts the disengaged persona survives longest and the over-explainer gets caught first. Check that against your class.</p>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Persona</th><th>Students</th><th>Answered</th>
-            <th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th>
-          </tr>
-        </thead>
+    <div class="card" style="margin-top:16px">
+      <h2>By persona</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Persona</th><th>Students</th><th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th></tr></thead>
         <tbody id="persona-body"></tbody>
-      </table>
+      </table></div>
+    </div>
+
+    <div class="center" style="margin-top:24px">
+      <button id="to-report-btn" class="big">Get the report →</button>
     </div>
   </div>
 
-  <!-- Round table -->
-  <div id="round-panel" class="card hidden" style="margin-bottom:16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-      <h2 style="margin:0">Pairings &amp; answers</h2>
-      <button id="spoiler-btn" class="ghost small">👁 Reveal pairings</button>
-    </div>
-    <p class="small muted" id="spoiler-note">Pairings are blurred so you can safely project this screen. Click to reveal.</p>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Status</th>
-            <th>Paired with</th>
-            <th>Model</th>
-            <th>Persona</th>
-            <th>Messages</th>
-            <th>Their answer</th>
-            <th>Result</th>
-          </tr>
-        </thead>
-        <tbody id="round-body"></tbody>
-      </table>
-    </div>
-    <div class="row small muted" style="margin-top:14px;">
-      <div>Guessed correctly when talking to a <strong>peer</strong>: <span id="acc-human">—</span></div>
-      <div>Guessed correctly when talking to <strong>AI</strong>: <span id="acc-ai">—</span></div>
+  <!-- ============================ 7. REPORT ============================ -->
+  <div id="stage-report" class="hidden">
+    <div class="card center" style="max-width:620px;margin:0 auto">
+      <h1 style="margin:0">Download the round</h1>
+      <p class="muted">One file with everything: the full report, a spreadsheet of results,
+        and every transcript.</p>
+      <p style="margin:26px 0 10px"><button id="zip-btn" class="big">⬇ Download everything</button></p>
+      <div class="small muted" id="zip-note"></div>
+      <p class="small muted" style="margin-top:22px">
+        Nothing is saved on the server. Once you start over, this round is gone.
+      </p>
+      <p style="margin-top:20px"><button id="to-startover-btn" class="ghost">Finished — go to start over →</button></p>
     </div>
   </div>
 
-  <!-- Transcripts -->
-  <div id="transcript-panel" class="card hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-      <h2 style="margin:0">Transcripts &amp; report</h2>
-      <div class="row shrink" style="gap:8px;flex:0 0 auto;">
-        <button id="transcript-btn" class="ghost small">Load transcripts</button>
-        <button id="report-html-btn" class="small">⬇ Download report</button>
-        <button id="report-csv-btn" class="ghost small">⬇ CSV</button>
-      </div>
+  <!-- ============================ 8. START OVER ============================ -->
+  <div id="stage-startover" class="hidden">
+    <div class="card center" style="max-width:560px;margin:0 auto">
+      <h1 style="margin:0">Start over</h1>
+      <p class="muted">This wipes every login, student number, message and result, and returns
+        to a blank set-up screen ready for the next class.</p>
+      <div id="download-warning" class="small" style="color:var(--ai);margin:14px 0"></div>
+      <p style="margin-top:18px"><button id="startover-btn" class="big danger-solid">Wipe everything and start over</button></p>
+      <p style="margin-top:10px"><button id="back-report-btn" class="ghost small">← back to the report</button></p>
     </div>
-    <p class="small muted">The report is a single HTML file with every transcript, the per-model
-      breakdown and each student's result — open it in a browser, or print it to PDF. The CSV is
-      one row per student for a spreadsheet.</p>
-    <div id="transcripts"></div>
   </div>
 
 </section>
