@@ -51,8 +51,7 @@ const body = lastRequest.body;
 check('calls the beta messages endpoint', lastRequest.url.startsWith('/v1/messages'), lastRequest.url);
 check('sends the api key header', lastRequest.headers['x-api-key'] === 'sk-ant-test');
 check('model is claude-opus-5', body.model === 'claude-opus-5', body.model);
-check('max_tokens leaves room for the long-winded persona',
-  body.max_tokens === 500, String(body.max_tokens));
+check('max_tokens keeps replies short', body.max_tokens === 120, String(body.max_tokens));
 check('shared briefing sent as a cached block',
   Array.isArray(body.system) && body.system[0].cache_control?.type === 'ephemeral');
 check('persona sent as a separate uncached block',
@@ -75,7 +74,8 @@ check('markdown stripped from replies', !/[*`#\n]/.test(out.text), JSON.stringif
 
 nextResponse = reply('x'.repeat(900));
 out = await botReply(history);
-check('runaway replies still truncated', out.text.length <= 700, `len=${out.text.length}`);
+check('replies capped to something typable in the round',
+  out.text.length <= 140, `len=${out.text.length}`);
 
 nextResponse = reply('the mind is what the brain does — thats it');
 out = await botReply(history);
@@ -92,6 +92,48 @@ check('empty reply falls back to a scripted line', out.live === false && out.tex
 check('usage reported for cost tracking',
   out.usage.inputTokens === 100 && out.usage.outputTokens === 5,
   JSON.stringify(out.usage));
+
+// --- reply pacing: at least 4s of thinking, then a human typing speed
+const { replyTiming, drawWpm, THINK_MIN_MS, WPM_MIN, WPM_MAX } =
+  await import('../server/bot.js');
+
+const speeds = Array.from({ length: 400 }, () => drawWpm());
+check('typing speeds stay inside 5-60 wpm',
+  speeds.every((w) => w >= WPM_MIN && w <= WPM_MAX),
+  `${Math.min(...speeds).toFixed(0)}-${Math.max(...speeds).toFixed(0)} wpm`);
+check('the whole range is actually used',
+  Math.min(...speeds) < 20 && Math.max(...speeds) > 45);
+check('minimum thinking time is 4 seconds', THINK_MIN_MS === 4000, String(THINK_MIN_MS));
+
+const timings = Array.from({ length: 200 }, () => replyTiming('idk', 60));
+check('even a three-letter reply waits 4s first',
+  timings.every((t) => t.thinkMs >= 4000), `min ${Math.min(...timings.map(t => t.thinkMs))}ms`);
+check('nothing is delivered instantly',
+  timings.every((t) => t.thinkMs + t.typeMs >= 4600));
+
+// A slower typist must take longer over the same message.
+const slow = replyTiming('gage shows the brain changes the mind', 10);
+const fast = replyTiming('gage shows the brain changes the mind', 60);
+check('slower typists take longer', slow.typeMs > fast.typeMs * 2,
+  `${slow.typeMs}ms vs ${fast.typeMs}ms`);
+check('typing time tracks words per minute',
+  Math.abs(fast.typeMs - (37 / 5 / 60) * 60000) < 400, `${fast.typeMs}ms`);
+check('no reply outlasts the cap',
+  replyTiming('x'.repeat(1000), 5).thinkMs + replyTiming('x'.repeat(1000), 5).typeMs <= 32000);
+
+// --- conversation scope: subject matter only
+const scopeShared = body.system[0].text;
+// Whitespace-tolerant: the prompt is line-wrapped, so phrases straddle newlines.
+check('prompt forbids timetable questions',
+  /what\s+class they have next/i.test(scopeShared) &&
+    /what their timetable is/i.test(scopeShared) &&
+    /whats ur first class/i.test(scopeShared));
+check('prompt forbids day and weekend small talk',
+  /how their day is going/i.test(scopeShared) && /weekend/i.test(scopeShared));
+check('prompt tells it to stay on the subject material',
+  /Stay on the subject material/i.test(scopeShared));
+check('prompt states the two-minute pace',
+  /two minutes/i.test(scopeShared) && /under fifteen words/i.test(scopeShared));
 
 // --- the classroom pack reaches the prompt
 const shared = body.system[0].text;

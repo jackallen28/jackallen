@@ -138,6 +138,38 @@ punctuation, no lists, and a flat refusal to be impressive. The classic probes
 assistant's. Replies are stripped of any markdown and delayed in proportion to
 their length, with a typing indicator, so they don't arrive suspiciously fast.
 
+### How fast the bots reply
+
+A reply is paced like a person writing one. Every message waits at least **four
+seconds** before anything happens — reading and thinking, with no typing
+indicator shown, since a real partner is not visibly typing while they think.
+Only then does the indicator appear, and it stays for as long as the message
+would actually take to type.
+
+Typing runs at **5 to 60 words per minute** (a word being five characters, the
+standard measure). Each conversation draws one speed at the start and keeps it,
+because a person does not type at a different pace from one message to the next.
+The draw is triangular, so the whole range occurs but the middle is common.
+
+Two things follow from the arithmetic and are deliberate. At 20 wpm a person can
+only type about forty words in a two-minute round, so replies are capped at 140
+characters and the prompt tells the model it has one short sentence per message
+— otherwise a single reply would consume the entire round. And a hard 30-second
+ceiling per reply stops a slow typist still "typing" after the bell.
+
+Tunable in `.env`: `BOT_WPM_MIN`, `BOT_WPM_MAX`, `BOT_THINK_MS`, `BOT_REPLY_CAP_MS`.
+
+### What the bots talk about
+
+The prompt restricts them to the subject material: the mind, the brain,
+consciousness, the self, and the class's own arguments and thought experiments.
+They may ask what the other person thinks, why, or what their evidence is.
+
+They may **not** ask about anyone's day or life — no timetables, no what-class-
+have-you-got-next, no weekend, no lunch. That kind of small talk gives a student
+nothing to reason about and invites them to share personal details. If a student
+raises it, the bot gives it one flat word and returns to the topic.
+
 Bots open with a "hey" if the student hasn't said anything after a few seconds,
 so nobody stares at an empty window. If the API call fails — no key, rate limit,
 outage — the bot drops to scripted replies rather than going silent, which keeps

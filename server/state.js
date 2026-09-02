@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { buildConversations } from './pairing.js';
-import { botReply, typingDelayMs } from './bot.js';
+import { botReply, drawWpm, replyTiming } from './bot.js';
 import { estimateCost, modelLabel, normaliseMix } from './models.js';
 import { isKnownPersona, personaCatalog, personaLabel } from './classroom.js';
 import { isValidLogin, normaliseLogin, parseRoster } from './roster.js';
@@ -188,6 +188,9 @@ export class Session extends EventEmitter {
     for (const spec of buildConversations(codes, this.aiRatio, this.modelMix, this.personaMix)) {
       const conv = {
         ...spec,
+        // One typing speed per conversation, kept for the whole round: a person
+        // does not type at a different pace from one message to the next.
+        wpm: drawWpm(),
         messages: [],
         botTurns: 0,
         liveTurns: 0,
@@ -410,7 +413,9 @@ export class Session extends EventEmitter {
       const history = this.historyFor(conv);
       if (history.length === 0) return;
 
-      this.emitTypingToMembers(conv, true);
+      // No typing indicator yet: this stretch is reading and thinking, and the
+      // API call itself is part of it.
+      const startedAt = Date.now();
       const { text, live, usage } = await botReply(history, conv.model, conv.persona);
       if (this.phase !== PHASES.ACTIVE) return;
       conv.botTurns += 1;
@@ -421,9 +426,14 @@ export class Session extends EventEmitter {
         this.usedLiveBot = true;
       }
 
-      await new Promise((resolve) => {
-        conv.replyTimer = setTimeout(resolve, typingDelayMs(text));
-      });
+      const { thinkMs, typeMs } = replyTiming(text, conv.wpm);
+      await this.pause(conv, Math.max(0, thinkMs - (Date.now() - startedAt)));
+      if (this.phase !== PHASES.ACTIVE) return;
+
+      // Only now does the other side see "typing", and it lasts as long as this
+      // conversation's pace says the message would take to type.
+      this.emitTypingToMembers(conv, true);
+      await this.pause(conv, typeMs);
       if (this.phase !== PHASES.ACTIVE) return;
 
       this.deliverBotMessage(conv, text);
@@ -438,6 +448,14 @@ export class Session extends EventEmitter {
         this.scheduleBotTurn(conv);
       }
     }
+  }
+
+  /** Cancellable wait, so a reset or the end of the round stops it. */
+  pause(conv, ms) {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      conv.replyTimer = setTimeout(resolve, ms);
+    });
   }
 
   deliverBotMessage(conv, text) {

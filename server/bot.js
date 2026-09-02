@@ -41,8 +41,19 @@ const DEFAULT_PERSONA = [
   '- Do not be offensive, do not discuss anything unsafe, and keep it school appropriate.',
   '  If the other person goes there, just deflect flatly ("nah") and change the subject.',
   '',
-  'You have opinions and a life: school subjects you find boring, sport, music, games,',
-  'siblings, being tired. Invent small consistent details as needed and stick to them.',
+  '',
+  'What you talk about:',
+  '- Stay on whatever subject the other person raises about the work. Ask what they think',
+  '  about it, why, or what their reason is.',
+  '- Never ask about their day or their life. No asking what class they have next, their',
+  '  timetable, how their day is going, weekend plans, lunch, or anything they are doing',
+  '  later. If they bring it up, one flat word and move on.',
+  '',
+  'How fast you type:',
+  '- This is a live chat lasting about two minutes and you type at teenager-on-a-phone',
+  '  speed. One short sentence per message, usually under fifteen words.',
+  '- Never a paragraph. A long message is impossible at this pace and is the clearest',
+  '  sign that a machine wrote it.',
 ].join('\n');
 
 // The classroom pack, when present, replaces the generic teenager entirely.
@@ -68,10 +79,14 @@ function systemBlocks(personaId) {
   ];
 }
 
+// Offline fallback lines. Every one stays on the subject matter — no timetables,
+// no weekend plans, nothing that invites a student to talk about their own life.
 const FALLBACK_LINES = [
-  'hey', 'yeah what about u', 'idk lol', 'sameee', 'fair enough',
-  'im so tired today', 'cbf honestly', 'whats ur first class',
-  'nah that sounds rough', 'lol true', 'wdym', 'hows ur day going',
+  'idk', 'wdym', 'yeah nah i dont buy that', 'whats ur claim then',
+  'thats not really evidence though', 'fair enough', 'lol true',
+  'cbf explaining it again', 'i still think its just the brain',
+  'wheres the mind then if its not there', 'already said that',
+  'nah that doesnt prove it', 'idk im not sure anymore',
 ];
 
 let client = null;
@@ -95,11 +110,35 @@ export function isLiveBotConfigured() {
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }
 
-/** Human-ish delay: a beat to "read", then time proportional to what was typed. */
-export function typingDelayMs(text) {
-  const base = 700 + Math.random() * 900;
-  const perChar = 28 + Math.random() * 22;
-  return Math.min(7000, Math.round(base + text.length * perChar));
+// Typing pace, in words per minute. A word is five characters, the standard
+// measure. Real classes are bell-shaped rather than uniform, so a speed is drawn
+// from a triangular distribution: the whole range occurs, the extremes rarely.
+export const WPM_MIN = Number(process.env.BOT_WPM_MIN || 5);
+export const WPM_MAX = Number(process.env.BOT_WPM_MAX || 60);
+// Minimum pause before a reply starts being typed — nobody answers instantly.
+export const THINK_MIN_MS = Number(process.env.BOT_THINK_MS || 4000);
+// Ceiling on one reply. Without it a slow typist with a long message would still
+// be "typing" after the round had ended.
+export const REPLY_CAP_MS = Number(process.env.BOT_REPLY_CAP_MS || 30000);
+
+/** A typing speed for one conversation. Assigned once and kept, as a person's is. */
+export function drawWpm() {
+  const triangular = (Math.random() + Math.random()) / 2;
+  return WPM_MIN + triangular * (WPM_MAX - WPM_MIN);
+}
+
+/**
+ * How long a reply should take: a pause to read and think, then time spent
+ * actually typing at this conversation's pace.
+ *
+ * @returns {{thinkMs: number, typeMs: number}}
+ */
+export function replyTiming(text, wpm = drawWpm()) {
+  const thinkMs = Math.round(THINK_MIN_MS + Math.random() * 2500);
+  const words = String(text || '').length / 5;
+  const rawTypeMs = Math.round((words / Math.max(1, wpm)) * 60000);
+  const typeMs = Math.max(600, Math.min(rawTypeMs, Math.max(0, REPLY_CAP_MS - thinkMs)));
+  return { thinkMs, typeMs };
 }
 
 /** Trim the model's output back into something a teenager would actually send. */
@@ -111,9 +150,11 @@ function sanitize(text) {
     .replace(/\s*[—–]\s*/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  // Roomy enough for the long-winded persona; still catches a runaway essay.
-  if (out.length > 700) {
-    const cut = out.slice(0, 700);
+  // At these typing speeds a two-minute round only affords a few dozen words in
+  // total, so replies have to be genuinely short or the pacing above would spend
+  // the whole round on one message. The long-winded persona is still the longest.
+  if (out.length > 140) {
+    const cut = out.slice(0, 140);
     const stop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('?'), cut.lastIndexOf('!'));
     out = stop > 60 ? cut.slice(0, stop + 1) : cut;
   }
@@ -146,7 +187,7 @@ export async function botReply(history, modelId = defaultModel, personaId = null
   try {
     const request = {
       model: modelId,
-      max_tokens: 500,
+      max_tokens: 120,
       system: systemBlocks(personaId),
       messages: history,
     };
