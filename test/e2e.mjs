@@ -55,8 +55,9 @@ const students = {};
 for (const code of codes) {
   const sock = io(URL);
   await new Promise((r) => sock.on('connect', r));
-  const rec = { sock, code, state: null, msgs: [], typing: 0 };
+  const rec = { sock, code, state: null, msgs: [], typing: 0, resets: 0 };
   sock.on('student:state', (s) => { rec.state = s; });
+  sock.on('session:reset', () => { rec.resets += 1; });
   sock.on('chat:message', (m) => rec.msgs.push(m));
   sock.on('chat:typing', (t) => { if (t) rec.typing++; });
   students[code] = rec;
@@ -283,13 +284,35 @@ check('students see waiting room', codes.every((c) => students[c].state?.phase =
 check('student cannot start a round', !(await emit(students[codes[0]].sock, 'teacher:start', {})).ok);
 check('student cannot upload a roster', !(await emit(students[codes[0]].sock, 'teacher:roster', { csv: 'x' })).ok);
 
-// ---- start over wipes the room
+// ---- reset is available mid-round, not just at the end
+check('reopen for the mid-round reset test', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
+await sleep(150);
+check('mid-round: start a round',
+  (await emit(teacher, 'teacher:start', { durationSec: 60, aiRatio: 0.5, modelMix: mix })).ok);
+await sleep(300);
+check('mid-round: round is running', tState?.phase === 'active');
+
+const resetsBefore = students[codes[0]].resets;
+check('reset works while a round is running', (await emit(teacher, 'teacher:startOver', {})).ok);
+await sleep(300);
+check('mid-round reset lands on setup', tState?.phase === 'setup', tState?.phase);
+check('mid-round reset clears the round', tState?.stats.paired === 0, String(tState?.stats.paired));
+check('students are told the session was reset',
+  students[codes[0]].resets === resetsBefore + 1,
+  `${students[codes[0]].resets} reset events`);
+check('students cannot keep chatting after a reset',
+  !(await emit(students[codes[0]].sock, 'chat:send', { text: 'still here?' })).ok);
+
+// ---- start over from the end of the flow
+check('reopen room', (await emit(teacher, 'teacher:openLobby', {})).ok);
+await sleep(150);
 check('start over', (await emit(teacher, 'teacher:startOver', {})).ok);
 await sleep(250);
 check('back to setup', tState?.phase === 'setup', tState?.phase);
 check('students wiped', tState?.stats.joined === 0, String(tState?.stats.joined));
 check('roster wiped', tState?.roster?.size === 0, String(tState?.roster?.size));
 check('round counter reset', tState?.roundNumber === 0, String(tState?.roundNumber));
+check('reset is idempotent', (await emit(teacher, 'teacher:startOver', {})).ok);
 check('no report after a wipe', !(await emit(teacher, 'teacher:report', {})).ok);
 check('students cannot log back in after a wipe',
   !(await emit(students[codes[0]].sock, 'student:join', { code: codes[0] })).ok);

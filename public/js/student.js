@@ -224,6 +224,16 @@
     }
   });
 
+  socket.on('session:reset', () => {
+    sessionStorage.removeItem('hon-code');
+    myCode = null;
+    stopClock();
+    renderTranscript([]);
+    codeInput.value = '';
+    show('signin');
+    $('signin-error').textContent = 'Your teacher reset the activity. Wait for the next round.';
+  });
+
   socket.on('student:kicked', () => {
     sessionStorage.removeItem('hon-code');
     myCode = null;

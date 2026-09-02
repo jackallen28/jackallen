@@ -111,6 +111,14 @@ moves to the next.
    returns to a blank set-up screen for the next class. Nothing is written to
    disk, so download the report first; the console warns you if you have not.
 
+A **Reset** button sits in the header on every screen, so a lesson can be
+restarted at any point — including mid-round. It always asks *Are you sure?*
+first, in an in-page dialog that names what will be lost and warns if the report
+has not been downloaded. Cancel, the Escape key and clicking the backdrop all
+back out; only the confirm button resets. Resetting mid-round ends it
+immediately and returns every student to the login screen with an explanation,
+rather than leaving them on a frozen chat.
+
 ## How pairing works
 
 Students are shuffled, then a slice of them is assigned AI partners and the rest

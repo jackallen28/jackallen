@@ -30,14 +30,17 @@
       <h1 style="margin:0">Human or Not?</h1>
       <div class="small muted" id="join-line">Students join at <strong id="join-url"></strong></div>
     </div>
-    <ol class="steps" id="steps">
-      <li data-step="setup">Set up</li>
-      <li data-step="lobby">Log in</li>
-      <li data-step="running">Chat</li>
-      <li data-step="reveal">Reveal</li>
-      <li data-step="scores">Scores</li>
-      <li data-step="report">Report</li>
-    </ol>
+    <div class="barright">
+      <ol class="steps" id="steps">
+        <li data-step="setup">Set up</li>
+        <li data-step="lobby">Log in</li>
+        <li data-step="running">Chat</li>
+        <li data-step="reveal">Reveal</li>
+        <li data-step="scores">Scores</li>
+        <li data-step="report">Report</li>
+      </ol>
+      <button id="reset-btn" class="ghost small" title="Wipe everything and go back to the start">↺ Reset</button>
+    </div>
   </div>
 
   <div id="bot-warning" class="card hidden" style="border-color:#5a4515;background:#2a2210;margin-bottom:16px;">
@@ -221,6 +224,19 @@
   </div>
 
 </section>
+
+<!-- Confirmation dialog, used for anything destructive -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-card">
+    <h2 id="modal-title">Are you sure?</h2>
+    <p id="modal-body" class="muted"></p>
+    <div id="modal-warn" class="small hidden"></div>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="ghost">Cancel</button>
+      <button id="modal-confirm" class="danger-solid">Yes, I'm sure</button>
+    </div>
+  </div>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/teacher.js"></script>

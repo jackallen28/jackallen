@@ -435,3 +435,55 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
   .steps li { font-size: .62rem; padding: 4px 8px; }
   .pairs { grid-template-columns: 1fr; }
 }
+
+/* ------------------------------------------------------ confirmation modal */
+
+.barright { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 9, 14, .72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+  animation: fade .12s ease-out;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+  animation: pop .16s ease-out;
+}
+.modal-card h2 { margin: 0 0 8px; font-size: 1.3rem; }
+.modal-card p { margin: 0 0 4px; }
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.modal-actions button { flex: 0 0 auto; }
+
+#modal-warn {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #5a4515;
+  background: #2a2210;
+  color: var(--ai);
+}
+
+@media (max-width: 640px) {
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions button { width: 100%; }
+}

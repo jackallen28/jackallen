@@ -241,7 +241,13 @@ io.on('connection', (socket) => {
   socket.on('teacher:roster', teacherOnly((payload) => session.setRoster(payload?.csv)));
   socket.on('teacher:clearRoster', teacherOnly(() => session.clearRoster()));
   socket.on('teacher:openLobby', teacherOnly(() => session.openLobby()));
-  socket.on('teacher:startOver', teacherOnly(() => session.startOver()));
+  socket.on('teacher:startOver', teacherOnly(() => {
+    const result = session.startOver();
+    // The roster is gone, so the usual per-student push has nobody to send to.
+    // Tell every connected page directly, or students sit on a frozen chat.
+    io.emit('session:reset');
+    return result;
+  }));
   socket.on('teacher:end', teacherOnly(() => session.endRound()));
   socket.on('teacher:results', teacherOnly(() => session.showResults()));
   socket.on('teacher:reset', teacherOnly((payload) =>

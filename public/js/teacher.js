@@ -213,6 +213,66 @@
     $('open-btn').disabled = Object.keys(currentMix()).length === 0;
   }
 
+  // ------------------------------------------------------------------- modal
+
+  let modalResolve = null;
+
+  /**
+   * In-page confirmation. Returns a promise for the answer.
+   * Used for anything that destroys a round, so the click is always deliberate.
+   */
+  function askConfirm({ title, body, warn = '', confirmLabel = "Yes, I'm sure" }) {
+    $('modal-title').textContent = title;
+    $('modal-body').textContent = body;
+    $('modal-confirm').textContent = confirmLabel;
+    $('modal-warn').textContent = warn;
+    $('modal-warn').classList.toggle('hidden', !warn);
+    $('modal').classList.remove('hidden');
+    $('modal-cancel').focus();
+    return new Promise((resolve) => { modalResolve = resolve; });
+  }
+
+  function closeModal(answer) {
+    $('modal').classList.add('hidden');
+    const resolve = modalResolve;
+    modalResolve = null;
+    if (resolve) resolve(answer);
+  }
+
+  $('modal-cancel').addEventListener('click', () => closeModal(false));
+  $('modal-confirm').addEventListener('click', () => closeModal(true));
+  // Clicking the backdrop or pressing Escape cancels — never confirms.
+  $('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(false); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalResolve) closeModal(false);
+  });
+
+  /** The reset flow, reachable from the header at any point in the lesson. */
+  async function confirmReset() {
+    const roundStarted = latest && latest.roundNumber > 0;
+    const midRound = latest && ['active', 'guess'].includes(latest.phase);
+
+    const ok = await askConfirm({
+      title: 'Are you sure?',
+      body: midRound
+        ? 'A round is running. Resetting ends it immediately and returns every student to the login screen.'
+        : 'This wipes every login, student number, message and result, and goes back to the start.',
+      warn: roundStarted && !downloaded
+        ? 'You have not downloaded the report for this round. Nothing is saved on the server, so it will be gone.'
+        : '',
+      confirmLabel: 'Yes, reset everything',
+    });
+    if (!ok) return;
+
+    postStage = 'reveal';
+    downloaded = false;
+    $('zip-note').textContent = '';
+    $('roster-issues').innerHTML = '';
+    command('teacher:startOver');
+  }
+
+  $('reset-btn').addEventListener('click', confirmReset);
+
   // ---------------------------------------------------------------- commands
 
   function command(event, payload) {
@@ -239,16 +299,7 @@
   $('to-startover-btn').addEventListener('click', () => { postStage = 'startover'; render(); });
   $('back-report-btn').addEventListener('click', () => { postStage = 'report'; render(); });
 
-  $('startover-btn').addEventListener('click', () => {
-    const warning = downloaded
-      ? 'Wipe every login, student number, message and result?'
-      : 'You have NOT downloaded the report yet, and nothing is saved on the server.\n\nWipe everything anyway?';
-    if (!confirm(warning)) return;
-    postStage = 'reveal';
-    downloaded = false;
-    $('zip-note').textContent = '';
-    command('teacher:startOver');
-  });
+  $('startover-btn').addEventListener('click', confirmReset);
 
   // ------------------------------------------------------------------ report
 
