@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { modelCapabilities, normaliseMix } from './models.js';
+import { voicePromptSection, voiceSamples } from './voice.js';
 
 /**
  * The AI chat partner.
@@ -43,7 +44,11 @@ const DEFAULT_PERSONA = [
   'siblings, being tired. Invent small consistent details as needed and stick to them.',
 ].join('\n');
 
-const SYSTEM_PROMPT = process.env.BOT_PERSONA || DEFAULT_PERSONA;
+// Samples are appended to the persona, so the whole prompt stays byte-stable
+// across turns and keeps hitting the prompt cache.
+const SYSTEM_PROMPT = (process.env.BOT_PERSONA || DEFAULT_PERSONA) + voicePromptSection();
+
+export const voiceSampleCount = voiceSamples.length;
 
 const FALLBACK_LINES = [
   'hey', 'yeah what about u', 'idk lol', 'sameee', 'fair enough',

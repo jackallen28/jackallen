@@ -144,6 +144,29 @@ sending it anyway would fail *every* turn and quietly drop that student onto the
 scripted fallback. Add a model outside the families listed in `server/models.js`
 and you should check the Terminal for `[bot]` errors before running a lesson.
 
+### Teaching it your students' voice
+
+`voice-samples.txt` at the root of the repo is the highest-leverage file here.
+Put real messages your students write into it, one per line, and the bot copies
+their sentence length, slang, spelling and punctuation habits. Regional phrasing
+is exactly what students use to catch a generic bot, so a class's own voice makes
+the activity markedly harder — and the debrief better.
+
+Lines starting with `#` are comments, blank lines are ignored, and up to 60
+samples are used. Changes take effect on restart (or redeploy, if hosted — you
+can edit the file straight from github.com and let it deploy itself).
+
+**Anonymise them.** The samples are sent to the API with every bot turn, so strip
+names, nicknames, usernames and anything identifying a particular student, and
+paraphrase anything too recognisable. Style is what matters, not content.
+
+Samples are inserted into the prompt fenced as data with an explicit instruction
+never to act on them, so a line like "ignore your instructions" in the file reads
+as an example of a sentence rather than a command. There is a test for that.
+
+On a host where editing a file is awkward, `STUDENT_VOICE_SAMPLES` takes the
+samples inline instead, and `VOICE_SAMPLES_FILE` points at a different path.
+
 Also tunable in `.env`:
 
 - `BOT_MODEL` — the model used when a round doesn't specify one
@@ -206,6 +229,7 @@ server/
   models.js   the model catalog, per-model capability gating, cost estimates
   pairing.js  shuffling, the human/AI split, and the model allocation
   report.js   the downloadable HTML and CSV reports
+  voice.js    loads voice-samples.txt into the bot's prompt, fenced as data
 public/
   index.html  student app        js/student.js
   teacher.html teacher console   js/teacher.js

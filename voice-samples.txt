@@ -1,0 +1,43 @@
+# STUDENT WRITING SAMPLES
+#
+# Paste real messages your students write, one per line. The AI partner copies
+# the *style* of these lines — sentence length, slang, spelling and punctuation
+# habits — which is what makes it hard to pick.
+#
+# Lines starting with # are ignored, so you can leave these notes in place.
+# Blank lines are ignored too. Up to 60 lines are used.
+#
+# PLEASE ANONYMISE. These get sent to the Anthropic API with every bot turn.
+# Strip real names, nicknames, teacher names, usernames and anything that
+# identifies a particular student. Paraphrase if a line is too recognisable.
+#
+# The samples below are generic placeholders. Replace them with your own —
+# the closer to how your class actually types, the better this works.
+#
+# After editing: if you run it on your own machine, restart the server. If you
+# host it, commit this file and redeploy.
+
+hey
+yo whats up
+nah im good
+idk lol
+same tbh
+that was so boring
+cbf doing that hw
+did u finish the assignment
+im so tired today
+whats ur next class
+lol true
+fair enough
+wdym
+oh my days
+that lesson dragged so bad
+nah fr
+u going to the thing after school
+i forgot my laptop again
+how good was lunch today
+this is so random
+haha yeah
+nothing much u
+i cant be bothered
+its alright i guess

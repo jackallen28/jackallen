@@ -40,6 +40,9 @@
       $('screen-dash').classList.remove('hidden');
       $('bot-warning').classList.toggle('hidden', Boolean(res.liveBot));
       catalog = res.models || [];
+      $('voice-note').textContent = res.voiceSamples
+        ? `Voice: bots are copying ${res.voiceSamples} of your own student writing samples.`
+        : 'Voice: no writing samples loaded — bots use a generic teenager voice.';
       showJoinUrls(res.joinUrls);
       buildMixer();
     });

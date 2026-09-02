@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { Session, PHASES } from './state.js';
-import { isLiveBotConfigured, defaultModel } from './bot.js';
+import { isLiveBotConfigured, defaultModel, voiceSampleCount } from './bot.js';
 import { MODEL_CATALOG } from './models.js';
 import { buildCsvReport, buildHtmlReport, reportFilename } from './report.js';
 
@@ -25,6 +25,11 @@ if (!isLiveBotConfigured()) {
 } else {
   console.log(`[server] Default AI partner model: ${defaultModel}`);
 }
+console.log(
+  voiceSampleCount > 0
+    ? `[server] Student writing samples loaded: ${voiceSampleCount}`
+    : '[server] No student writing samples — the bot uses its generic teenager voice.'
+);
 
 // Adapters that exist on a machine but are not how other devices reach it.
 // Windows in particular ships several of these (WSL, Hyper-V, VirtualBox).
@@ -196,6 +201,7 @@ io.on('connection', (socket) => {
       ok: true,
       liveBot: isLiveBotConfigured(),
       models: MODEL_CATALOG,
+      voiceSamples: voiceSampleCount,
       joinUrls: cachedJoinUrls,
     });
     socket.emit('teacher:state', session.teacherView());
