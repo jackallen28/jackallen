@@ -149,8 +149,8 @@ check('report csv is one physical line per student',
   csvLines.length === 6, `${csvLines.length} lines`);
 check('report csv embeds the transcript in the row',
   csvLines.slice(1).every((line) => line.includes('hey from ')));
-check('report csv header is right',
-  rep.csv.split('\n')[0].startsWith('student,partner_type,model,'));
+check('report csv header carries the persona',
+  rep.csv.split('\n')[0].startsWith('student,partner_type,model,persona,'));
 check('report filenames are dated', /^human-or-not_round-\d+_\d{4}-\d{2}-\d{2}_\d{4}\.html$/.test(rep.htmlName),
   rep.htmlName);
 
@@ -170,6 +170,42 @@ check('more than one model in play', new Set(aiRows.map((s) => s.model)).size > 
   `${new Set(aiRows.map((s) => s.model)).size} distinct`);
 check('breakdown rows sum to the AI students',
   tState.byModel.reduce((n, r) => n + r.students, 0) === aiRows.length);
+
+// --- classroom personas
+check('every AI student is assigned a persona', aiRows.every((s) => s.persona),
+  aiRows.map((s) => s.persona).join(','));
+check('personas come from the pack (A-D)',
+  aiRows.every((s) => ['A', 'B', 'C', 'D'].includes(s.persona)));
+check('persona labels are readable',
+  aiRows.every((s) => /^[A-D] — .+/.test(s.personaLabel)), aiRows[0]?.personaLabel);
+check('persona breakdown sums to the AI students',
+  tState.byPersona.reduce((n, r) => n + r.students, 0) === aiRows.length);
+check('persona breakdown reports a fooled rate',
+  tState.byPersona.every((r) => 'foolRate' in r));
+
+// only the requested personas are used
+check('reset before restricting personas', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
+await sleep(150);
+await emit(teacher, 'teacher:start', {
+  durationSec: 15, aiRatio: 1, modelMix: mix, personaMix: { B: 1 },
+});
+await sleep(300);
+check('persona selection is honoured',
+  tState.students.filter((s) => s.partnerType === 'ai').every((s) => s.persona === 'B'),
+  JSON.stringify(tState.personaMix));
+
+// an unknown persona must not reach the prompt
+check('reset before bad persona', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
+await sleep(150);
+await emit(teacher, 'teacher:start', {
+  durationSec: 15, aiRatio: 1, modelMix: mix, personaMix: { Z: 9 },
+});
+await sleep(300);
+check('unknown persona rejected and replaced',
+  tState.students.filter((s) => s.partnerType === 'ai').every((s) => s.persona !== 'Z'),
+  JSON.stringify(tState.personaMix));
+await emit(teacher, 'teacher:end', {});
+await sleep(200);
 
 // an unknown model id from the browser must never reach the API
 check('reset before rejecting bad model', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);

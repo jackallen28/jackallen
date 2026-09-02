@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { modelCapabilities, normaliseMix } from './models.js';
 import { voicePromptSection, voiceSamples } from './voice.js';
+import { packLoaded, personaPrompt, sharedPrompt } from './classroom.js';
 
 /**
  * The AI chat partner.
@@ -44,11 +45,28 @@ const DEFAULT_PERSONA = [
   'siblings, being tired. Invent small consistent details as needed and stick to them.',
 ].join('\n');
 
-// Samples are appended to the persona, so the whole prompt stays byte-stable
-// across turns and keeps hitting the prompt cache.
-const SYSTEM_PROMPT = (process.env.BOT_PERSONA || DEFAULT_PERSONA) + voicePromptSection();
+// The classroom pack, when present, replaces the generic teenager entirely.
+// Without it we fall back to the built-in persona plus voice-samples.txt.
+const FALLBACK_PROMPT = (process.env.BOT_PERSONA || DEFAULT_PERSONA) + voicePromptSection();
 
 export const voiceSampleCount = voiceSamples.length;
+export const usingClassroomPack = packLoaded && !process.env.BOT_PERSONA;
+
+/**
+ * System blocks for one turn.
+ *
+ * The shared briefing is its own cached block so all four personas read from one
+ * cache entry; only the short persona block after it varies per conversation.
+ */
+function systemBlocks(personaId) {
+  if (!usingClassroomPack) {
+    return [{ type: 'text', text: FALLBACK_PROMPT, cache_control: { type: 'ephemeral' } }];
+  }
+  return [
+    { type: 'text', text: sharedPrompt, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: personaPrompt(personaId) },
+  ];
+}
 
 const FALLBACK_LINES = [
   'hey', 'yeah what about u', 'idk lol', 'sameee', 'fair enough',
@@ -89,10 +107,13 @@ function sanitize(text) {
   let out = String(text || '')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/[*_#>`]/g, '')
+    // Em and en dashes are a strong model tell and the pack forbids them outright.
+    .replace(/\s*[—–]\s*/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  if (out.length > 220) {
-    const cut = out.slice(0, 220);
+  // Roomy enough for the long-winded persona; still catches a runaway essay.
+  if (out.length > 700) {
+    const cut = out.slice(0, 700);
     const stop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('?'), cut.lastIndexOf('!'));
     out = stop > 60 ? cut.slice(0, stop + 1) : cut;
   }
@@ -115,7 +136,7 @@ function scriptedReply(history) {
  * @param {string} modelId  which model answers this turn
  * @returns {Promise<{text: string, live: boolean, usage: {inputTokens: number, outputTokens: number}}>}
  */
-export async function botReply(history, modelId = defaultModel) {
+export async function botReply(history, modelId = defaultModel, personaId = null) {
   const noUsage = { inputTokens: 0, outputTokens: 0 };
   const api = getClient();
   if (!api) return { text: scriptedReply(history), live: false, usage: noUsage };
@@ -125,8 +146,8 @@ export async function botReply(history, modelId = defaultModel) {
   try {
     const request = {
       model: modelId,
-      max_tokens: 200,
-      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      max_tokens: 500,
+      system: systemBlocks(personaId),
       messages: history,
     };
     // Low effort keeps replies terse and fast, which is what the persona needs.

@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import { buildConversations } from './pairing.js';
 import { botReply, typingDelayMs } from './bot.js';
 import { estimateCost, modelLabel, normaliseMix } from './models.js';
+import { isKnownPersona, personaCatalog, personaLabel } from './classroom.js';
 
 export const PHASES = {
   LOBBY: 'lobby',     // students joining, waiting for the teacher
@@ -26,6 +27,7 @@ export class Session extends EventEmitter {
     this.durationSec = 120;
     this.aiRatio = 0.5;
     this.modelMix = normaliseMix(null);
+    this.personaMix = defaultPersonaMix();
     this.startedAt = null;
     this.endedAt = null;
     this.endsAt = null;
@@ -105,7 +107,7 @@ export class Session extends EventEmitter {
   // ------------------------------------------------------------------- round
 
   /** Pair everyone currently in the lobby and start the clock. */
-  start({ durationSec = 120, aiRatio = 0.5, modelMix = null } = {}) {
+  start({ durationSec = 120, aiRatio = 0.5, modelMix = null, personaMix = null } = {}) {
     if (this.phase === PHASES.ACTIVE) {
       return { ok: false, error: 'A round is already running.' };
     }
@@ -119,6 +121,7 @@ export class Session extends EventEmitter {
     this.aiRatio = Math.max(0, Math.min(1, aiRatio));
     // Unknown model ids are dropped here, so the browser can never choose the spend.
     this.modelMix = normaliseMix(modelMix);
+    this.personaMix = normalisePersonaMix(personaMix);
     this.roundNumber += 1;
     this.usedLiveBot = false;
     this.conversations.clear();
@@ -131,7 +134,7 @@ export class Session extends EventEmitter {
       student.lastSentAt = 0;
     }
 
-    for (const spec of buildConversations(codes, this.aiRatio, this.modelMix)) {
+    for (const spec of buildConversations(codes, this.aiRatio, this.modelMix, this.personaMix)) {
       const conv = {
         ...spec,
         messages: [],
@@ -333,7 +336,7 @@ export class Session extends EventEmitter {
       if (history.length === 0) return;
 
       this.emitTypingToMembers(conv, true);
-      const { text, live, usage } = await botReply(history, conv.model);
+      const { text, live, usage } = await botReply(history, conv.model, conv.persona);
       if (this.phase !== PHASES.ACTIVE) return;
       conv.botTurns += 1;
       conv.tokensIn += usage?.inputTokens || 0;
@@ -444,6 +447,10 @@ export class Session extends EventEmitter {
           partnerType: conv ? conv.type : null,
           model: conv && conv.type === 'ai' ? conv.model : null,
           modelLabel: conv && conv.type === 'ai' ? modelLabel(conv.model) : null,
+          persona: conv && conv.type === 'ai' ? conv.persona : null,
+          personaLabel: conv && conv.type === 'ai' && conv.persona
+            ? `${conv.persona} — ${personaLabel(conv.persona)}`
+            : null,
           partner,
           messagesSent: student.sent,
           guess: student.guess,
@@ -464,9 +471,11 @@ export class Session extends EventEmitter {
       durationSec: this.durationSec,
       aiRatio: this.aiRatio,
       modelMix: this.modelMix,
+      personaMix: this.personaMix,
       usedLiveBot: this.usedLiveBot,
       students,
       byModel: this.modelBreakdown(),
+      byPersona: this.personaBreakdown(),
       stats: {
         joined: students.length,
         connected: students.filter((s) => s.connected).length,
@@ -539,12 +548,58 @@ export class Session extends EventEmitter {
     }));
   }
 
+  /**
+   * Per-persona results, the same shape as the model breakdown. Which persona
+   * survived contact with the class is the question the pack is built around.
+   */
+  personaBreakdown() {
+    const rows = new Map();
+
+    for (const conv of this.conversations.values()) {
+      if (conv.type !== 'ai' || !conv.persona) continue;
+      const id = conv.persona;
+      if (!rows.has(id)) {
+        rows.set(id, {
+          id,
+          label: personaLabel(id),
+          students: 0,
+          answered: 0,
+          caught: 0,
+          fooled: 0,
+          studentMessages: 0,
+          botTurns: 0,
+        });
+      }
+      const row = rows.get(id);
+      row.botTurns += conv.botTurns;
+
+      for (const code of conv.members) {
+        const student = this.students.get(code);
+        if (!student) continue;
+        row.students += 1;
+        row.studentMessages += student.sent;
+        if (student.guess) {
+          row.answered += 1;
+          if (student.guess === 'ai') row.caught += 1;
+          else row.fooled += 1;
+        }
+      }
+    }
+
+    return [...rows.values()].map((row) => ({
+      ...row,
+      foolRate: row.answered ? Math.round((row.fooled / row.answered) * 100) : null,
+    }));
+  }
+
   /** Full transcripts, for the teacher to review after the reveal. */
   transcripts() {
     return [...this.conversations.values()].map((conv) => ({
       id: conv.id,
       type: conv.type,
       model: conv.model || null,
+      persona: conv.persona || null,
+      personaLabel: conv.persona ? `${conv.persona} — ${personaLabel(conv.persona)}` : null,
       modelLabel: conv.type === 'ai' ? modelLabel(conv.model) : null,
       members: conv.members,
       botTurns: conv.botTurns,
@@ -571,11 +626,31 @@ export class Session extends EventEmitter {
       endedAt: this.endedAt,
       aiRatio: this.aiRatio,
       modelMix: this.modelMix,
+      personaMix: this.personaMix,
       usedLiveBot: this.usedLiveBot,
       stats: view.stats,
       byModel: view.byModel,
+      byPersona: view.byPersona,
       students: view.students,
       transcripts: this.transcripts(),
     };
   }
+}
+
+
+/** All personas from the pack, equally weighted. */
+export function defaultPersonaMix() {
+  const mix = {};
+  for (const persona of personaCatalog) mix[persona.id] = 1;
+  return mix;
+}
+
+/** Drop anything the pack does not define, and fall back to all of them. */
+export function normalisePersonaMix(mix) {
+  const cleaned = {};
+  for (const [id, weight] of Object.entries(mix || {})) {
+    const value = Number(weight);
+    if (isKnownPersona(id) && Number.isFinite(value) && value > 0) cleaned[id] = value;
+  }
+  return Object.keys(cleaned).length ? cleaned : defaultPersonaMix();
 }

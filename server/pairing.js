@@ -44,10 +44,10 @@ export function aiCountFor(n, aiRatio) {
  * 3/2, never 2/2 with one student silently unassigned.
  *
  * @param {number} count           how many AI-paired students there are
- * @param {Record<string, number>} mix  modelId -> relative weight
- * @returns {string[]} one model id per slot, shuffled
+ * @param {Record<string, number>} mix  key -> relative weight
+ * @returns {string[]} one key per slot, shuffled
  */
-export function allocateModels(count, mix) {
+export function allocateWeighted(count, mix) {
   const entries = Object.entries(mix || {}).filter(([, w]) => Number(w) > 0);
   if (count <= 0 || entries.length === 0) return [];
 
@@ -77,15 +77,19 @@ export function allocateModels(count, mix) {
  * @param {string[]} codes  student codes taking part
  * @param {number} aiRatio  target proportion paired with the AI (0..1)
  * @param {Record<string, number>} mix  which models to use, and in what shares
- * @returns {Array<{id: string, type: 'ai'|'human', members: string[], model?: string}>}
+ * @param {Record<string, number>} personaMix  which personas to use, and in what shares
+ * @returns {Array<{id, type, members, model?, persona?}>}
  */
-export function buildConversations(codes, aiRatio, mix) {
+export function buildConversations(codes, aiRatio, mix, personaMix = null) {
   const shuffled = shuffle(codes);
   const aiCount = aiCountFor(shuffled.length, aiRatio);
 
   const aiStudents = shuffled.slice(0, aiCount);
   const humanStudents = shuffled.slice(aiCount);
-  const models = allocateModels(aiStudents.length, mix);
+  const models = allocateWeighted(aiStudents.length, mix);
+  // Personas are drawn independently of models, so a class covers combinations
+  // of the two rather than locking one persona to one model.
+  const personaList = personaMix ? allocateWeighted(aiStudents.length, personaMix) : [];
 
   const conversations = [];
   let seq = 0;
@@ -96,6 +100,7 @@ export function buildConversations(codes, aiRatio, mix) {
       type: 'ai',
       members: [code],
       model: models[index],
+      persona: personaList[index] || null,
     });
   }
   for (let i = 0; i + 1 < humanStudents.length; i += 2) {

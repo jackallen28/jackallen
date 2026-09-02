@@ -144,7 +144,44 @@ sending it anyway would fail *every* turn and quietly drop that student onto the
 scripted fallback. Add a model outside the families listed in `server/models.js`
 and you should check the Terminal for `[bot]` errors before running a lesson.
 
+### The classroom pack
+
+`classroom/` holds the teacher-authored briefing that the bot actually runs on:
+
+| File | What it does |
+|---|---|
+| `01-class-context.md` | What the class has been taught, shared reference points, and the vocabulary boundary — terms students have met, and terms that would expose the bot instantly |
+| `02-bot-scope.md` | Register rules, the AI tells to avoid, name handling, and the safeguards |
+| `03-personas.md` | Four unnamed composite personas |
+| `04-writing-samples.md` | Paraphrased corpus of authentic student register |
+
+**One persona is drawn per conversation and held for the whole round**, as the pack
+requires. Personas are assigned independently of models, so a class covers
+combinations of the two, and the console reports a fooled rate per persona
+alongside the one per model.
+
+The pack is split into two prompt blocks: a shared briefing that is identical for
+every conversation and is cached, plus a short persona block that varies. All four
+personas therefore read from one cache entry.
+
+`CLASS_BLOCKLIST` (comma-separated first names) fills the blocklist placeholder in
+`02-bot-scope.md`, so the bot can never generate a name belonging to someone in the
+room. With none set, the pack tells it to pick a common name at random.
+
+Two register guards are enforced in code rather than trusted to the prompt: em and
+en dashes are stripped from every reply, and markdown is removed. `max_tokens` is
+set high enough that the long-winded persona is not clipped mid-sentence, since a
+truncated reply is its own tell.
+
+The safeguards in `02-bot-scope.md` are restated at the very end of the prompt,
+after the persona, because they override staying in character.
+
+Delete `classroom/` (or set `BOT_PERSONA`) and the app falls back to the generic
+teenager persona plus `voice-samples.txt`, described next.
+
 ### Teaching it your students' voice
+
+This is the fallback used when no classroom pack is present.
 
 `voice-samples.txt` at the root of the repo is the highest-leverage file here.
 Put real messages your students write into it, one per line, and the bot copies
@@ -230,6 +267,8 @@ server/
   pairing.js  shuffling, the human/AI split, and the model allocation
   report.js   the downloadable HTML and CSV reports
   voice.js    loads voice-samples.txt into the bot's prompt, fenced as data
+  classroom.js  loads classroom/, splits out the four personas, builds the prompt
+classroom/    the teacher's briefing: class context, scope, personas, samples
 public/
   index.html  student app        js/student.js
   teacher.html teacher console   js/teacher.js

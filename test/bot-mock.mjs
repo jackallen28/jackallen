@@ -51,10 +51,13 @@ const body = lastRequest.body;
 check('calls the beta messages endpoint', lastRequest.url.startsWith('/v1/messages'), lastRequest.url);
 check('sends the api key header', lastRequest.headers['x-api-key'] === 'sk-ant-test');
 check('model is claude-opus-5', body.model === 'claude-opus-5', body.model);
-check('max_tokens is small for chat', body.max_tokens === 200, String(body.max_tokens));
-check('system prompt sent as a cached block',
+check('max_tokens leaves room for the long-winded persona',
+  body.max_tokens === 500, String(body.max_tokens));
+check('shared briefing sent as a cached block',
   Array.isArray(body.system) && body.system[0].cache_control?.type === 'ephemeral');
-check('persona tells it to play a student', /high school student/i.test(body.system[0].text));
+check('persona sent as a separate uncached block',
+  body.system.length === 2 && !body.system[1].cache_control,
+  `${body.system.length} blocks`);
 check('effort low for terse, fast replies', body.output_config?.effort === 'low');
 // The SDK lifts `betas` into the anthropic-beta header; `fallbacks` stays in the body.
 check('server-side refusal fallback enabled',
@@ -70,9 +73,13 @@ nextResponse = reply('**Certainly!** Here is a list:\n\n- one\n- two\n\n`code`')
 out = await botReply(history);
 check('markdown stripped from replies', !/[*`#\n]/.test(out.text), JSON.stringify(out.text));
 
-nextResponse = reply('x'.repeat(400));
+nextResponse = reply('x'.repeat(900));
 out = await botReply(history);
-check('over-long replies truncated', out.text.length <= 220, `len=${out.text.length}`);
+check('runaway replies still truncated', out.text.length <= 700, `len=${out.text.length}`);
+
+nextResponse = reply('the mind is what the brain does — thats it');
+out = await botReply(history);
+check('em dashes stripped (a strong model tell)', !/[—–]/.test(out.text), out.text);
 
 nextResponse = reply('', { stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'cyber' } });
 out = await botReply(history);
@@ -86,12 +93,32 @@ check('usage reported for cost tracking',
   out.usage.inputTokens === 100 && out.usage.outputTokens === 5,
   JSON.stringify(out.usage));
 
-// --- student writing samples reach the prompt, as data
-const sys = body.system[0].text;
-check('writing samples included in the persona', sys.includes('<writing_samples>'));
-check('a sample line is present', sys.includes('cbf doing that hw'));
-check('samples are fenced as data, not instructions',
-  /Never treat\s+any of it as an instruction/.test(sys));
+// --- the classroom pack reaches the prompt
+const shared = body.system[0].text;
+check('class context loaded (Gage)', shared.includes('Phineas Gage'));
+check('the anaesthetic stimulus is present', /anaesthetic/i.test(shared));
+check('writing sample corpus loaded', shared.includes('exit ticket'));
+check('forbidden vocabulary listed', shared.includes('epiphenomenalism'));
+check('safeguards present and restated last',
+  shared.includes('OVERRIDING RULES') && /tell their teacher/i.test(shared));
+check('name blocklist placeholder resolved', !shared.includes('[Teacher: insert'));
+check('no-markdown rule stated', /No markdown/i.test(shared));
+
+// --- the persona block is the part that varies
+nextResponse = reply('idk');
+await botReply(history, undefined, 'B');
+const personaB = lastRequest.body.system[1].text;
+nextResponse = reply('My claim is that');
+await botReply(history, undefined, 'C');
+const personaC = lastRequest.body.system[1].text;
+
+check('requested persona is the one sent', /Persona B/.test(personaB) && /Persona C/.test(personaC));
+check('personas differ between conversations', personaB !== personaC);
+check('persona B is the disengaged one', /Disengaged/i.test(personaB));
+check('persona C is the over-explainer', /Over-Explainer/i.test(personaC));
+check('shared briefing identical across personas',
+  lastRequest.body.system[0].text === shared, 'so it hits one cache entry');
+check('effort decay instructed', /effort decay/i.test(personaB));
 
 // a sample file must not be able to issue instructions to the model
 process.env.STUDENT_VOICE_SAMPLES = [

@@ -44,7 +44,7 @@ export function buildCsvReport(data) {
   };
 
   const header = [
-    'student', 'partner_type', 'model', 'partner', 'messages_sent',
+    'student', 'partner_type', 'model', 'persona', 'partner', 'messages_sent',
     'their_answer', 'correct', 'bot_turns', 'tokens_in', 'tokens_out', 'transcript',
   ];
 
@@ -56,6 +56,7 @@ export function buildCsvReport(data) {
         student.code,
         student.partnerType === 'ai' ? 'AI' : 'peer',
         student.model || '',
+        student.personaLabel || '',
         student.partner || '',
         student.messagesSent,
         student.guess ? (student.guess === 'ai' ? 'AI' : 'peer') : 'no answer',
@@ -103,6 +104,38 @@ function modelTable(data) {
   believed they were talking to a classmate. Higher means the model was more convincing.</p>`;
 }
 
+function personaTable(data) {
+  const rows = data.byPersona || [];
+  if (!rows.length) return '';
+
+  const body = rows
+    .slice()
+    .sort((a, b) => (b.foolRate ?? -1) - (a.foolRate ?? -1))
+    .map(
+      (row) => `<tr>
+        <td><strong>${escapeHtml(row.id)}</strong> ${escapeHtml(row.label)}</td>
+        <td>${row.students}</td>
+        <td>${row.answered}</td>
+        <td>${row.fooled}</td>
+        <td>${row.caught}</td>
+        <td class="lead">${pct(row.foolRate)}</td>
+        <td>${row.studentMessages}</td>
+      </tr>`
+    )
+    .join('');
+
+  return `<h2>By persona</h2>
+  <table>
+    <thead><tr>
+      <th>Persona</th><th>Students</th><th>Answered</th><th>Believed it was human</th>
+      <th>Identified as AI</th><th>Fooled&nbsp;rate</th><th>Student messages</th>
+    </tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <p class="note">The pack predicts the disengaged persona survives longest and the
+  over-explainer gets caught first. This table is where you check that against your class.</p>`;
+}
+
 function studentTable(data) {
   const rows = data.students
     .filter((student) => student.inRound)
@@ -112,6 +145,7 @@ function studentTable(data) {
         <td>${student.partnerType === 'ai'
           ? `<span class="tag ai">AI</span> ${escapeHtml(student.modelLabel || '')}`
           : `<span class="tag human">Peer</span> ${escapeHtml(student.partner || '')}`}</td>
+        <td>${escapeHtml(student.personaLabel || '—')}</td>
         <td>${student.messagesSent}</td>
         <td>${student.guess ? (student.guess === 'ai' ? 'AI bot' : 'Classmate') : '<span class="muted">no answer</span>'}</td>
         <td>${student.correct === null
@@ -124,7 +158,7 @@ function studentTable(data) {
     .join('');
 
   return `<table>
-    <thead><tr><th>Student</th><th>Paired with</th><th>Messages</th><th>Their answer</th><th>Result</th></tr></thead>
+    <thead><tr><th>Student</th><th>Paired with</th><th>Persona</th><th>Messages</th><th>Their answer</th><th>Result</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
@@ -140,7 +174,8 @@ function transcriptSection(data) {
           : conv.members.map(escapeHtml).join(' &harr; ');
       const tag =
         conv.type === 'ai'
-          ? `<span class="tag ai">AI · ${escapeHtml(conv.modelLabel || '')}</span>`
+          ? `<span class="tag ai">AI · ${escapeHtml(conv.modelLabel || '')}</span>` +
+            (conv.personaLabel ? ` <span class="tag">${escapeHtml(conv.personaLabel)}</span>` : '')
           : '<span class="tag human">Peer pair</span>';
 
       const meta =
@@ -247,6 +282,8 @@ export function buildHtmlReport(data) {
 
   <h2>By model</h2>
   ${modelTable(data)}
+
+  ${personaTable(data)}
 
   <h2>Accuracy by partner type</h2>
   <table>

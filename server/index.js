@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { Session, PHASES } from './state.js';
-import { isLiveBotConfigured, defaultModel, voiceSampleCount } from './bot.js';
+import { isLiveBotConfigured, defaultModel, voiceSampleCount, usingClassroomPack } from './bot.js';
+import { blocklistCount, personaCatalog } from './classroom.js';
 import { MODEL_CATALOG } from './models.js';
 import { buildCsvReport, buildHtmlReport, reportFilename } from './report.js';
 
@@ -26,6 +27,12 @@ if (!isLiveBotConfigured()) {
   console.log(`[server] Default AI partner model: ${defaultModel}`);
 }
 console.log(
+  usingClassroomPack
+    ? `[server] Classroom pack loaded: ${personaCatalog.length} personas` +
+      (blocklistCount ? `, ${blocklistCount} blocked names` : ', no name blocklist')
+    : '[server] No classroom pack — using the built-in generic persona.'
+);
+if (!usingClassroomPack) console.log(
   voiceSampleCount > 0
     ? `[server] Student writing samples loaded: ${voiceSampleCount}`
     : '[server] No student writing samples — the bot uses its generic teenager voice.'
@@ -201,6 +208,8 @@ io.on('connection', (socket) => {
       ok: true,
       liveBot: isLiveBotConfigured(),
       models: MODEL_CATALOG,
+      personas: personaCatalog,
+      classroomPack: usingClassroomPack,
       voiceSamples: voiceSampleCount,
       joinUrls: cachedJoinUrls,
     });
@@ -220,8 +229,9 @@ io.on('connection', (socket) => {
     session.start({
       durationSec: Number(payload?.durationSec) || 120,
       aiRatio: Number(payload?.aiRatio ?? 0.5),
-      // Validated against the server-side catalog inside start().
+      // Both validated against the server-side catalogs inside start().
       modelMix: payload?.modelMix,
+      personaMix: payload?.personaMix,
     })
   ));
 

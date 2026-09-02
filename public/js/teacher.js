@@ -7,6 +7,8 @@
   let spoilersShown = false;
   let catalog = [];
   const mixState = new Map(); // model id -> { on, weight }
+  let personaCatalog = [];
+  const personaState = new Map(); // persona id -> on
 
   const PHASE_LABELS = {
     lobby: 'Lobby',
@@ -44,7 +46,10 @@
         ? `Voice: bots are copying ${res.voiceSamples} of your own student writing samples.`
         : 'Voice: no writing samples loaded — bots use a generic teenager voice.';
       showJoinUrls(res.joinUrls);
+      personaCatalog = res.personas || [];
+      $('persona-block').classList.toggle('hidden', !res.classroomPack);
       buildMixer();
+      buildPersonaPicker();
     });
   }
 
@@ -120,6 +125,59 @@
     refreshMixer();
   }
 
+  /**
+   * Personas are a plain pick list — the pack treats them as four alternatives
+   * rather than a blend, so there is nothing to weight.
+   */
+  function buildPersonaPicker() {
+    const host = $('persona-pick');
+    host.innerHTML = '';
+    for (const persona of personaCatalog) {
+      if (!personaState.has(persona.id)) personaState.set(persona.id, true);
+
+      const row = document.createElement('div');
+      row.className = 'mix-row';
+      row.style.gridTemplateColumns = '22px 1fr';
+      row.dataset.persona = persona.id;
+
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.checked = personaState.get(persona.id);
+      toggle.id = `persona-${persona.id}`;
+      toggle.setAttribute('aria-label', `Use persona ${persona.id}`);
+      toggle.addEventListener('change', () => {
+        personaState.set(persona.id, toggle.checked);
+        refreshPersonaPicker();
+      });
+
+      const name = document.createElement('div');
+      name.innerHTML = `<div class="name">${persona.id} — ${persona.label}</div>`;
+
+      row.append(toggle, name);
+      host.appendChild(row);
+    }
+    refreshPersonaPicker();
+  }
+
+  function currentPersonaMix() {
+    const mix = {};
+    for (const [id, on] of personaState) if (on) mix[id] = 1;
+    return mix;
+  }
+
+  function refreshPersonaPicker() {
+    const active = Object.keys(currentPersonaMix()).length;
+    for (const row of document.querySelectorAll('#persona-pick .mix-row')) {
+      row.classList.toggle('off', !personaState.get(row.dataset.persona));
+    }
+    $('persona-summary').textContent = active === 0
+      ? 'none selected'
+      : `${active} of ${personaCatalog.length} in play`;
+    $('persona-warning').textContent = active === 0
+      ? 'Pick at least one persona, or all four will be used.'
+      : '';
+  }
+
   /** Enabled models and their weights, as the server expects them. */
   function currentMix() {
     const mix = {};
@@ -175,6 +233,7 @@
       durationSec: Number($('duration').value),
       aiRatio: Number($('ratio').value) / 100,
       modelMix: currentMix(),
+      personaMix: currentPersonaMix(),
     });
   });
 
@@ -304,6 +363,8 @@
     $('round-panel').classList.toggle('hidden', inLobby);
     $('model-panel').classList.toggle('hidden', inLobby || !(state.byModel || []).length);
     renderModels(state.byModel || []);
+    $('persona-panel').classList.toggle('hidden', inLobby || !(state.byPersona || []).length);
+    renderPersonas(state.byPersona || []);
     $('transcript-panel').classList.toggle('hidden', state.phase === 'lobby' || state.phase === 'active');
 
     if (inLobby) renderLobby(state.students);
@@ -366,6 +427,13 @@
         : '<span class="muted">—</span>';
       tr.appendChild(model);
 
+      const persona = document.createElement('td');
+      persona.className = 'spoiler';
+      persona.innerHTML = student.personaLabel
+        ? `<span class="small">${student.personaLabel}</span>`
+        : '<span class="muted">—</span>';
+      tr.appendChild(persona);
+
       const sent = document.createElement('td');
       sent.textContent = student.inRound ? student.messagesSent : '—';
       tr.appendChild(sent);
@@ -409,6 +477,28 @@
         row.foolRate === null ? '<span class="muted">—</span>' : `<strong>${row.foolRate}%</strong>`,
         `<span class="small muted">${row.tokensIn.toLocaleString()} / ${row.tokensOut.toLocaleString()}</span>`,
         `<span class="small">$${row.costUsd.toFixed(4)}</span>`,
+      ];
+      for (const html of cells) {
+        const td = document.createElement('td');
+        td.innerHTML = String(html);
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+  }
+
+  function renderPersonas(rows) {
+    const body = $('persona-body');
+    body.innerHTML = '';
+    for (const row of [...rows].sort((a, b) => (b.foolRate ?? -1) - (a.foolRate ?? -1))) {
+      const tr = document.createElement('tr');
+      const cells = [
+        `<strong>${row.id}</strong> <span class="small muted">${row.label}</span>`,
+        row.students,
+        row.answered,
+        row.fooled,
+        row.caught,
+        row.foolRate === null ? '<span class="muted">—</span>' : `<strong>${row.foolRate}%</strong>`,
       ];
       for (const html of cells) {
         const td = document.createElement('td');

@@ -76,6 +76,15 @@
       <p class="small muted" id="mix-warning" style="margin:8px 0 0"></p>
       <p class="small muted" id="voice-note" style="margin:8px 0 0"></p>
     </div>
+
+    <div class="mix" id="persona-block">
+      <div class="mix-head">
+        <label style="margin:0">Which student personas the bots play</label>
+        <span class="small muted" id="persona-summary"></span>
+      </div>
+      <div id="persona-pick"></div>
+      <p class="small muted" id="persona-warning" style="margin:8px 0 0"></p>
+    </div>
   </div>
 
   <!-- Stats -->
@@ -113,6 +122,23 @@
     </div>
   </div>
 
+  <!-- Per-persona breakdown -->
+  <div id="persona-panel" class="card hidden" style="margin-bottom:16px;">
+    <h2>By persona</h2>
+    <p class="small muted">The pack predicts the disengaged persona survives longest and the over-explainer gets caught first. Check that against your class.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Persona</th><th>Students</th><th>Answered</th>
+            <th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th>
+          </tr>
+        </thead>
+        <tbody id="persona-body"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Round table -->
   <div id="round-panel" class="card hidden" style="margin-bottom:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
@@ -128,6 +154,7 @@
             <th>Status</th>
             <th>Paired with</th>
             <th>Model</th>
+            <th>Persona</th>
             <th>Messages</th>
             <th>Their answer</th>
             <th>Result</th>
