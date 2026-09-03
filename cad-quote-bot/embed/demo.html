@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAD Quote Bot — embed demo</title>
+<style>
+  :root { --accent: #FF6A1A; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #fff; color: #14161a;
+    font: 400 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 64px 24px 96px; }
+  .kicker { color: var(--accent); font-size: 13px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.1; letter-spacing: -.02em; margin: 12px 0 14px; font-weight: 680; }
+  p.lede { font-size: 18px; color: #4b5157; max-width: 56ch; margin: 0 0 40px; }
+  .grid { display: grid; grid-template-columns: 1fr 460px; gap: 48px; align-items: start; }
+  ol { padding-left: 18px; margin: 0 0 32px; }
+  ol li { margin-bottom: 10px; color: #4b5157; }
+  ol li strong { color: #14161a; }
+  .rule { height: 3px; width: 48px; background: var(--accent); border-radius: 2px; margin-bottom: 28px; }
+  code { background: #f6f7f9; border: 1px solid #eceef1; border-radius: 6px; padding: 2px 6px; font-size: 13px; }
+  pre { background: #f6f7f9; border: 1px solid #eceef1; border-radius: 10px; padding: 16px; overflow-x: auto; font-size: 13px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="rule"></div>
+    <div class="kicker">Custom manufacturing</div>
+    <h1>Describe your part.<br>Get a 3D model and a quote.</h1>
+    <p class="lede">Tell the assistant what you need in a sentence. It asks a few questions, builds a real CAD
+      model you can spin around, and passes it to our workshop for pricing.</p>
+
+    <div class="grid">
+      <div>
+        <ol>
+          <li><strong>Describe it</strong> — one sentence is enough.</li>
+          <li><strong>Answer a few questions</strong> — sizes, mounting, material.</li>
+          <li><strong>Check the spec</strong> — confirm or change anything.</li>
+          <li><strong>Review the 3D model</strong> — opens in its own tab.</li>
+          <li><strong>Request a quote</strong> — we come back within a business day.</li>
+        </ol>
+        <p>Embed it on any page with two lines:</p>
+<pre>&lt;div id="cad-quote-bot"&gt;&lt;/div&gt;
+&lt;script src="https://YOUR-API/embed/cad-quote-widget.js"
+        data-api="https://YOUR-API"
+        data-target="#cad-quote-bot"&gt;&lt;/script&gt;</pre>
+      </div>
+
+      <div id="cad-quote-bot" style="height:660px"></div>
+    </div>
+  </div>
+
+  <!-- Point data-api at your deployed server. When you open this file straight
+       from disk, run the server locally and leave it as http://localhost:8080. -->
+  <script src="./cad-quote-widget.js"
+          data-api="http://localhost:8080"
+          data-target="#cad-quote-bot"
+          data-accent="#FF6A1A"></script>
+</body>
+</html>

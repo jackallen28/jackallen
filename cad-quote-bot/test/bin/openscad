@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Stub OpenSCAD: emits a valid 12-triangle binary STL cube, or a 1x1 PNG.
+out=""
+prev=""
+for a in "$@"; do
+  if [ "$prev" = "-o" ]; then out="$a"; fi
+  prev="$a"
+done
+case "$out" in
+  *.stl) node -e '
+    const fs=require("fs");
+    const tris=[[[0,0,0],[1,0,0],[1,1,0]],[[0,0,0],[1,1,0],[0,1,0]],
+                [[0,0,1],[1,1,1],[1,0,1]],[[0,0,1],[0,1,1],[1,1,1]],
+                [[0,0,0],[0,1,0],[0,1,1]],[[0,0,0],[0,1,1],[0,0,1]],
+                [[1,0,0],[1,1,1],[1,1,0]],[[1,0,0],[1,0,1],[1,1,1]],
+                [[0,0,0],[1,0,1],[1,0,0]],[[0,0,0],[0,0,1],[1,0,1]],
+                [[0,1,0],[1,1,0],[1,1,1]],[[0,1,0],[1,1,1],[0,1,1]]];
+    const b=Buffer.alloc(84+tris.length*50);
+    b.writeUInt32LE(tris.length,80);
+    tris.forEach((t,i)=>{let o=84+i*50+12;t.flat().forEach((v,j)=>b.writeFloatLE(v*20,o+j*4));});
+    fs.writeFileSync(process.argv[1],b);' "$out" ;;
+  *.png) printf '\x89PNG\r\n\x1a\n' > "$out"; head -c 200 /dev/zero >> "$out" ;;
+esac
+exit 0

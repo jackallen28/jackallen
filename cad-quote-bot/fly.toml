@@ -1,0 +1,34 @@
+# fly.toml — deploy with:  fly launch --no-deploy   then   fly deploy
+app = "cad-quote-bot"
+primary_region = "syd"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  DATA_DIR = "/data"
+  STORAGE_DRIVER = "local"
+  PUBLIC_URL = "https://cad-quote-bot.fly.dev"
+
+[[mounts]]
+  source = "cadbot_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 8
+    hard_limit = 16
+
+[[vm]]
+  # OpenSCAD's CGAL render is single-threaded and memory hungry: 2 GB is the
+  # comfortable floor, 1 GB will OOM on anything with many boolean operations.
+  size = "shared-cpu-2x"
+  memory = "2gb"
