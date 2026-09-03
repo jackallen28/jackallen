@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
-const requiredFiles = ['index.html', 'styles.css', 'app.js'];
+const requiredFiles = ['index.html', 'styles.css', 'app.js', 'render.yaml'];
 const requiredIds = [
   'canvas', 'clearCanvas', 'fitCanvas', 'moduleSearch', 'promptForm',
   'promptInput', 'runButton', 'toast', 'zoomIn', 'zoomLevel', 'zoomOut',

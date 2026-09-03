@@ -57,6 +57,57 @@ The suite checks that:
 - HTML IDs are unique; and
 - the controls required by `app.js` exist in the page.
 
+## Host on Render
+
+The repository includes a Render Blueprint in `render.yaml`. It configures a
+static site, runs the production build, publishes only the contents of `dist/`,
+and enables pull-request preview environments.
+
+### Option 1: Deploy the Blueprint (recommended)
+
+1. Push this repository to GitHub, GitLab, or Bitbucket.
+2. Sign in to the [Render Dashboard](https://dashboard.render.com/).
+3. Select **New +** and then **Blueprint**.
+4. Connect the repository containing Sparkbench.
+5. Render will detect `render.yaml`. Review the `sparkbench` service and select
+   **Apply**.
+6. Wait for the build and deploy to complete, then open the `onrender.com` URL
+   shown on the service page.
+
+Future pushes to the connected branch will automatically rebuild and deploy the
+site. Render also creates previews for pull requests because the Blueprint sets
+`pullRequestPreviewsEnabled: true`.
+
+### Option 2: Create the static site manually
+
+If you do not want to use the Blueprint, select **New + → Static Site**, connect
+the repository, and enter:
+
+| Render setting | Value |
+| --- | --- |
+| Language | `Node` |
+| Build command | `npm run build` |
+| Publish directory | `dist` |
+
+No environment variables are required. Before deploying, reproduce Render's
+production build locally:
+
+```bash
+npm run build
+npx serve dist
+```
+
+If `npx serve` is unavailable, inspect the same output without downloading a
+package:
+
+```bash
+cd dist
+python3 -m http.server 4173
+```
+
+Do not commit `dist/`; Render creates it from the source files during each
+deployment.
+
 ## Manual interaction checklist
 
 After starting the app, verify these user flows:
@@ -82,7 +133,9 @@ index.html         Application markup and example plant-watering flow
 styles.css         Workspace, component, and responsive styling
 app.js             Drag/drop, filtering, canvas, run, and prompt interactions
 scripts/serve.mjs  Dependency-free local static server
+scripts/build.mjs  Creates the production-ready dist directory
 scripts/verify.mjs Dependency-free automated checks
+render.yaml        Render static-site Blueprint
 ```
 
 This is currently a front-end prototype. Canvas changes are kept in browser
