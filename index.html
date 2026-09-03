@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkbench — Arduino prototyping, reimagined</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">S</span><span>Sparkbench</span><span class="beta">BETA</span></div>
+    <div class="project-title"><span class="status-dot"></span><button id="projectName">Plant Guardian <span>⌄</span></button><span class="saved">Saved just now</span></div>
+    <div class="top-actions">
+      <button class="icon-button" aria-label="Undo">↶</button><button class="icon-button" aria-label="Redo">↷</button>
+      <span class="divider"></span><button class="outline-button">↗ Share</button><button class="run-button" id="runButton"><span>▶</span> Run prototype</button>
+      <button class="avatar">JA</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="library-panel">
+      <div class="panel-heading"><div><p class="eyebrow">BUILDING BLOCKS</p><h2>Module library</h2></div><button class="square-button" title="Add custom module">＋</button></div>
+      <label class="search"><span>⌕</span><input id="moduleSearch" placeholder="Search modules..." /></label>
+      <div class="filter-row"><button class="chip active" data-filter="all">All</button><button class="chip" data-filter="sensor">Sensors</button><button class="chip" data-filter="output">Outputs</button><button class="chip" data-filter="logic">Logic</button></div>
+      <div class="module-list" id="moduleList">
+        <article class="module-card" draggable="true" data-type="sensor" data-module="Soil moisture" data-color="#ef6b46" data-icon="◒">
+          <div class="module-icon coral">◒</div><div><h3>Soil moisture</h3><p>Capacitive · Analog</p></div><span class="drag-handle">⠿</span>
+        </article>
+        <article class="module-card" draggable="true" data-type="sensor" data-module="Temperature" data-color="#4479e8" data-icon="♨">
+          <div class="module-icon blue">♨</div><div><h3>Temperature</h3><p>DHT22 · Digital</p></div><span class="drag-handle">⠿</span>
+        </article>
+        <article class="module-card" draggable="true" data-type="output" data-module="Water pump" data-color="#7559d9" data-icon="↟">
+          <div class="module-icon purple">↟</div><div><h3>Water pump</h3><p>5V relay · Output</p></div><span class="drag-handle">⠿</span>
+        </article>
+        <article class="module-card" draggable="true" data-type="output" data-module="Status light" data-color="#e1a82b" data-icon="✦">
+          <div class="module-icon yellow">✦</div><div><h3>Status light</h3><p>RGB LED · PWM</p></div><span class="drag-handle">⠿</span>
+        </article>
+        <article class="module-card" draggable="true" data-type="logic" data-module="Wait timer" data-color="#1fa47f" data-icon="◷">
+          <div class="module-icon green">◷</div><div><h3>Wait timer</h3><p>Delay · Logic</p></div><span class="drag-handle">⠿</span>
+        </article>
+      </div>
+      <button class="custom-module">＋ Create custom module <span>›</span></button>
+      <div class="library-tip"><span>✣</span><div><strong>Your hardware, your way</strong><p>Add modules made for your custom shield.</p></div><button>×</button></div>
+    </aside>
+
+    <section class="canvas-section">
+      <div class="canvas-toolbar">
+        <div class="view-tabs"><button class="active" data-view="canvas">Canvas</button><button data-view="blocks">Blocks</button><button data-view="code">Code</button></div>
+        <div class="canvas-actions"><button id="zoomOut">−</button><span id="zoomLevel">100%</span><button id="zoomIn">＋</button><button id="fitCanvas">⌗</button><span></span><button id="clearCanvas">Clear</button></div>
+      </div>
+      <div class="canvas" id="canvas">
+        <div class="canvas-label"><span>✣</span> DROP MODULES HERE</div>
+        <svg class="connections" aria-hidden="true"><path d="M 290 199 C 360 199, 345 343, 430 343"/><path d="M 290 313 C 360 313, 348 343, 430 343"/><path d="M 625 343 C 700 343, 676 238, 770 238"/><circle cx="290" cy="199" r="4"/><circle cx="290" cy="313" r="4"/><circle cx="430" cy="343" r="4"/><circle cx="625" cy="343" r="4"/><circle cx="770" cy="238" r="4"/></svg>
+        <div class="flow-card sensor-node" style="left:92px; top:142px" data-node>
+          <div class="node-top"><span class="node-icon coral">◒</span><div><small>SENSOR · A0</small><h3>Soil moisture</h3></div><button>•••</button></div>
+          <div class="reading"><span>Current reading</span><strong>32<span>%</span></strong></div><div class="node-footer"><span class="live-dot"></span> Live data <span>Calibrate ›</span></div>
+        </div>
+        <div class="flow-card temp-node" style="left:92px; top:270px" data-node>
+          <div class="node-top"><span class="node-icon blue">♨</span><div><small>SENSOR · D2</small><h3>Temperature</h3></div><button>•••</button></div><div class="compact-reading"><strong>24.6°</strong><span>celsius</span></div>
+        </div>
+        <div class="flow-card logic-node" style="left:430px; top:265px" data-node>
+          <div class="node-top"><span class="node-icon green">⌘</span><div><small>LOGIC</small><h3>Check moisture</h3></div><button>•••</button></div>
+          <div class="rule-row"><span>WHEN</span><div>Moisture <b>is below</b> <em>35%</em></div></div><div class="rule-row"><span>THEN</span><div>Turn pump <b>on</b></div></div>
+        </div>
+        <div class="flow-card output-node" style="left:770px; top:180px" data-node>
+          <div class="node-top"><span class="node-icon purple">↟</span><div><small>OUTPUT · D8</small><h3>Water pump</h3></div><button>•••</button></div><div class="output-state"><span>State</span><label class="toggle"><input type="checkbox"><i></i></label></div><div class="node-footer">Safety cutoff <span>30 sec</span></div>
+        </div>
+        <div class="add-step" style="left:657px;top:330px">＋</div>
+        <div class="canvas-help"><span>?</span> Need help connecting modules?</div>
+      </div>
+    </section>
+
+    <aside class="copilot-panel">
+      <div class="copilot-heading"><div class="spark-icon">✦</div><div><p class="eyebrow">AI COPILOT</p><h2>Build with a prompt</h2></div><button class="square-button">↗</button></div>
+      <div class="chat" id="chat">
+        <div class="date-label">TODAY</div>
+        <div class="message user-message">Water the plant when the soil is dry, but only during the daytime.</div>
+        <div class="message ai-message"><div class="mini-spark">✦</div><div><p>I've set up your watering logic:</p><ul><li>Moisture below <strong>35%</strong></li><li>Only between <strong>7am–7pm</strong></li><li>Pump runs for max <strong>30 sec</strong></li></ul><button class="change-button">✓ Changes applied <span>View 3 changes</span></button></div></div>
+        <div class="message user-message">Also blink the status light twice after watering.</div>
+        <div class="message ai-message typing-message"><div class="mini-spark">✦</div><div><p>Done — the status light will blink twice when the pump finishes. I've added a 300ms interval so it's easy to see.</p><button class="change-button">✓ Changes applied <span>View on canvas</span></button></div></div>
+      </div>
+      <div class="suggestions"><p>TRY ASKING</p><button>“Add a manual override button”</button><button>“Make it conserve more water”</button></div>
+      <form class="prompt-box" id="promptForm"><textarea id="promptInput" rows="2" placeholder="Describe what you want to build..."></textarea><div><button type="button" class="attach">＋</button><span><kbd>⌘</kbd><kbd>↵</kbd></span><button class="send-button" type="submit">↑</button></div></form>
+      <div class="shield-status"><div class="shield-icon">▦</div><div><strong>Spark Shield connected</strong><span><i></i> Arduino Uno · USB</span></div><button>Manage</button></div>
+    </aside>
+  </main>
+  <div class="toast" id="toast"><span>✓</span><div><strong>Prototype running</strong><small>Uploading to Arduino Uno...</small></div></div>
+  <script src="app.js"></script>
+</body>
+</html>

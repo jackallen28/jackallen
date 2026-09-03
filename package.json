@@ -1,0 +1,14 @@
+{
+  "name": "sparkbench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A visual, prompt-driven Arduino prototyping workspace",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "test": "node scripts/verify.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
