@@ -6,7 +6,7 @@ import * as llm from './llm.js';
 import { renderScad, analyzeStl } from './openscad.js';
 import { putFile } from './storage.js';
 import { createSession, saveSession, newId, appendLead } from './store.js';
-import { sendQuoteEmails } from './mailer.js';
+import { notifyQuote } from './notify.js';
 
 const GREETING = `Hi! Tell me in one sentence what you'd like made and I'll turn it into a 3D model you can look at — then a quote.`;
 const EXAMPLE = `For example: "a wall bracket to hold a 90 mm diameter torch" or "a replacement knob for my oven dial".`;
@@ -355,8 +355,21 @@ export async function submitLead(session, payload) {
   await saveSession(session);
 
   await appendLead(lead);
-  // Email failures must not lose the lead: it is already on disk.
-  sendQuoteEmails(lead).catch((err) => console.error('[flow] quote email failed:', err));
+
+  // Notification failures must not lose the lead: it is already on disk.
+  try {
+    const sent = await notifyQuote(lead);
+    if (sent.mode === 'preview') {
+      bot(session, 'Preview mode is on, so nothing was emailed. Here is the request exactly as it would arrive:', {
+        type: 'link',
+        label: 'Preview the quote request',
+        url: sent.previewUrl,
+      });
+      await saveSession(session);
+    }
+  } catch (err) {
+    console.error('[flow] quote notification failed:', err);
+  }
 
   return { ok: true, lead };
 }

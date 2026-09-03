@@ -68,6 +68,7 @@ try {
     PUBLIC_URL: API,
     RESEND_API_KEY: '',
     SMTP_HOST: '',
+    ADMIN_KEY: 'test-key',
   });
 
   check('server starts and answers /healthz', await waitForHealth());
@@ -135,10 +136,25 @@ try {
   const leads = fs.readFileSync(path.join(dataDir, 'leads.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
   check('the lead is persisted with its spec and files', leads.length === 1 && Boolean(leads[0].files.stl) && leads[0].quantity === 25);
 
-  await wait(300);
-  const mailLog = server.log.join('');
-  check('an owner notification is sent', mailLog.includes('to=owner@example.com') && mailLog.includes('Quote request'));
-  check('the customer gets a confirmation', mailLog.includes('to=jack@example.com'));
+  const leadId = leads[0].id;
+  const linkCard = good.body.messages.map((m) => m.card).find((c) => c && c.type === 'link');
+  check('the chat offers a preview link instead of emailing', linkCard?.url?.endsWith(`/quote/${leadId}`), JSON.stringify(linkCard));
+
+  const ownerView = await (await fetch(`${API}/quote/${leadId}`)).text();
+  check('the preview shows the request as you would receive it',
+    ownerView.includes('PREVIEW') && ownerView.includes('Jack Allen') && ownerView.includes('0412 345 678') && ownerView.includes('Open 3D viewer'));
+  const customerView = await (await fetch(`${API}/quote/${leadId}?view=customer`)).text();
+  check('the customer copy is previewable too', customerView.includes('got your design request'));
+  check('an unknown quote id 404s', (await fetch(`${API}/quote/q_${'0'.repeat(24)}`)).status === 404);
+
+  check('/requests needs the admin key', (await fetch(`${API}/requests`)).status === 401);
+  const list = await fetch(`${API}/requests?key=test-key`);
+  check('/requests lists the request with the key', list.ok && (await list.text()).includes('Jack Allen'));
+
+  const home = await fetch(`${API}/`);
+  const homeHtml = await home.text();
+  check('the hosted demo page points the widget at this server',
+    home.ok && homeHtml.includes(`data-api="${API}"`) && homeHtml.includes('/embed/cad-quote-widget.js'));
 } finally {
   for (const child of children) child.kill();
   fs.rmSync(dataDir, { recursive: true, force: true });

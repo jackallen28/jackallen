@@ -17,8 +17,13 @@ preview card in chat + 3D viewer in a new tab ("Return to chat" closes it)
       ↓
 approve  ──► name, email, mobile, post code, quantity, lead time
       ↓
-customer sees a confirmation · you get the quote request by email
+customer sees a confirmation · the request reaches you
 ```
+
+**Preview mode (the default).** Nothing is emailed. The submitted request is
+rendered in the browser at `/quote/<id>` — exactly the page that becomes the
+email later — and the chat offers the customer a link to it. Add a mail key when
+you want it delivered for real; the HTML is identical either way.
 
 Everything the customer sees is white with orange accents, flat, no gradients or
 shadows beyond a single elevation on the popup launcher. The accent is one CSS
@@ -37,7 +42,7 @@ variable (`data-accent`), so it re-skins in a second.
 | `server/src/llm.js` | All Claude calls, each returning structured JSON via `output_config.format`. |
 | `server/src/openscad.js` | Sanitises generated `.scad`, runs OpenSCAD headlessly, measures the resulting mesh. |
 | `server/src/viewer.js` | The standalone 3D viewer page (self-hosted three.js, inline STL parser and orbit controls). |
-| `server/src/mailer.js` | Quote notification to you + confirmation to the customer. |
+| `server/src/notify.js` | Builds the quote notification: previewed in the browser, or emailed to you + confirmed to the customer. |
 | `server/src/storage.js` | Local disk or any S3-compatible bucket. |
 | `test/` | Stub Claude API, stub OpenSCAD binary, and two runnable test suites. |
 
@@ -80,7 +85,9 @@ npm run test:ui      # drives the widget in headless Chromium + screenshots
 
 `test:smoke` walks a whole conversation and asserts the state machine, the
 generated files, the STL measurement, the viewer route, path-traversal
-rejection, form validation, the honeypot, lead persistence, and both emails.
+rejection, form validation, the honeypot, lead persistence, the quote preview
+(both the copy addressed to you and the customer's), and the admin-key guard on
+`/requests`.
 
 `test:ui` needs Playwright once:
 
@@ -100,16 +107,17 @@ The stubs deliberately don't test Claude's output quality or OpenSCAD itself.
 For those:
 
 ```bash
-# 1. Real model, real OpenSCAD, fake email — talk to it yourself
-cd server && npm start          # with a real ANTHROPIC_API_KEY, no mail keys set
+# 1. Real model, real OpenSCAD, preview instead of email — talk to it yourself
+cd server && npm start          # with a real ANTHROPIC_API_KEY
 
 # 2. Check what Claude actually generated for a session
 cat data/files/s_*/j_*/model.scad
 openscad data/files/s_*/j_*/model.scad     # opens it in the GUI
 
-# 3. Check the emails render before going live
-#    set RESEND_API_KEY + QUOTE_NOTIFY_EMAIL to your own address and run a
-#    full conversation — you get both the owner and customer copies.
+# 3. Check what a submitted request looks like
+#    the chat links to it, or set ADMIN_KEY and open /requests?key=...
+#    Before going live, set RESEND_API_KEY + QUOTE_NOTIFY_EMAIL to your own
+#    address and run one conversation to confirm delivery.
 ```
 
 Worth doing by hand before launch: run ten briefs of the kind your customers
@@ -159,18 +167,55 @@ needs 30–60 seconds and ~1–2 GB of RAM per render.** That rules out Vercel,
 Netlify Functions, and Cloudflare Workers — no arbitrary binaries, and request
 timeouts shorter than a render. You need a container.
 
-### Recommended stack
+### Deploy to Render (what the prototype is set up for)
+
+`render.yaml` at the repo root is a Blueprint. In Render: **New → Blueprint →
+pick this repo → Apply.** It builds the Dockerfile (OpenSCAD and Xvfb are baked
+in), attaches a 1 GB disk at `/data`, and boots in preview mode.
+
+The only value you supply is `ANTHROPIC_API_KEY` — Render prompts for it on
+apply. Everything else has a default, including `ADMIN_KEY`, which Render
+generates for you.
+
+When it's live:
+
+| URL | What it is |
+|---|---|
+| `https://<your-app>.onrender.com/` | The demo page with the widget on it — start here |
+| `…/quote/<id>` | The quote request as you'd receive it (linked from the chat) |
+| `…/requests?key=<ADMIN_KEY>` | Every request received. Copy the key from Render → Environment |
+| `…/embed/cad-quote-widget.js` | The script tag to drop on your real site |
+| `…/healthz` | Health check |
+
+Notes for the prototype:
+
+- **Plan.** `starter` ($7/mo) is the cheapest that supports a disk. Its 512 MB of
+  RAM is enough for typical brackets and enclosures; if renders start failing on
+  bigger models, move to `standard` (2 GB) — that's the usual cause.
+- **Region** is set to `singapore`. Change it in `render.yaml` if your customers
+  are elsewhere.
+- **No disk?** On the free plan, delete the `disk:` block and set
+  `DATA_DIR=/tmp/cadbot`. Models and leads then vanish on each restart, which is
+  fine for a look but not for collecting real requests. (The container's
+  entrypoint takes ownership of the mounted disk before dropping to an
+  unprivileged user; if it still can't write there, the server logs a loud
+  warning and falls back to temporary storage rather than refusing to boot.)
+- **`ALLOWED_ORIGINS` ships as `*`** so you can embed the widget anywhere while
+  testing. Tighten it to your own origins before real customers see it.
+
+### Going live: recommended stack
 
 | Piece | Use | Why | Cost |
 |---|---|---|---|
-| **App** | [Fly.io](https://fly.io) — `fly launch` with the included `Dockerfile` + `fly.toml` | Runs the container as-is, gives you a persistent volume, scales to zero between quotes, region close to your customers | ~$5–15/mo |
+| **App** | Render (above), or [Fly.io](https://fly.io) with the included `fly.toml` | Both run the container as-is with a persistent volume; Fly scales to zero between quotes | ~$7–15/mo |
 | **Files** (STL/PNG/SCAD) | [Cloudflare R2](https://developers.cloudflare.com/r2/) | S3-compatible, **no egress fees** — STLs are the bandwidth here | ~$0.015/GB/mo, effectively pennies |
-| **Email** | [Resend](https://resend.com) or [Postmark](https://postmarkapp.com) | One API key; good deliverability for transactional mail | Free tier covers early volume |
+| **Notification** | Preview mode to start; [Resend](https://resend.com) or [Postmark](https://postmarkapp.com) when you want email | One API key, good transactional deliverability | Free tier covers early volume |
 | **Leads** | JSONL on the volume + the email itself | Two copies from day one; add a database when you outgrow it | £0 |
 
 Deploy:
 
 ```bash
+# Fly.io, if you'd rather not use Render:
 fly launch --no-deploy          # accept the included fly.toml
 fly volumes create cadbot_data --size 3
 fly secrets set ANTHROPIC_API_KEY=sk-ant-... \
@@ -186,12 +231,30 @@ Then point `PUBLIC_URL` at your domain and add a CNAME (`quotes.yourcompany.com`
 
 | Host | Verdict |
 |---|---|
-| **Fly.io** | Best fit. Docker, volumes, scale-to-zero, cheap. |
-| **Render / Railway** | Just as easy, no scale-to-zero on paid tiers. Fine if you prefer the UI. |
+| **Render** | What this repo is configured for. Blueprint, Docker, disks, generated secrets — least setup. |
+| **Fly.io** | Equally good and scales to zero between quotes, so it's cheaper when idle. `fly.toml` included. |
+| **Railway** | Same shape as Render. Fine if you prefer it. |
 | **Google Cloud Run** | Excellent if you're already on GCP — set concurrency to 1–2 and timeout to 300 s. Needs GCS for files (no local disk). |
 | **AWS App Runner / ECS Fargate** | Works, more moving parts. Use if AWS is already your world. |
 | **A $6 VPS (Hetzner/DigitalOcean) + Docker + Caddy** | Cheapest and completely under your control. You own patching and backups. |
 | **Vercel / Netlify / Workers** | ❌ Can't run OpenSCAD. Only use these to host the *widget file* if you want. |
+
+### Turning email on
+
+Preview mode exists so you can test without a mail provider. When you want the
+requests delivered:
+
+```env
+NOTIFY_MODE=resend
+RESEND_API_KEY=re_...
+QUOTE_NOTIFY_EMAIL=you@yourcompany.com
+MAIL_FROM=Quotes <quotes@yourcompany.com>     # domain verified in Resend
+```
+
+You then get the request in your inbox and the customer gets a confirmation —
+the same HTML the preview page shows, so there is nothing new to check. `/quote/<id>`
+keeps working either way. Any SMTP provider works instead: set `NOTIFY_MODE=smtp`
+and the `SMTP_*` variables.
 
 ### Where should the customer's files live?
 

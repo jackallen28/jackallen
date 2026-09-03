@@ -7,7 +7,12 @@ const list = (v) => String(v || '').split(',').map((s) => s.trim()).filter(Boole
 
 export const config = {
   port: int(process.env.PORT, 8080),
-  publicUrl: (process.env.PUBLIC_URL || `http://localhost:${int(process.env.PORT, 8080)}`).replace(/\/$/, ''),
+  // RENDER_EXTERNAL_URL is set automatically by Render, so a deploy there needs
+  // no manual PUBLIC_URL.
+  publicUrl: (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${int(process.env.PORT, 8080)}`).replace(/\/$/, ''),
+
+  // Guards the /requests list of submitted quote requests. Unset = route off.
+  adminKey: process.env.ADMIN_KEY || '',
 
   // Comma-separated list of sites allowed to embed the widget. "*" allows any
   // origin (fine while testing, tighten before you go live).
@@ -47,9 +52,13 @@ export const config = {
     },
   },
 
-  mail: {
-    // Provider is picked automatically: Resend if RESEND_API_KEY is set,
-    // otherwise SMTP if SMTP_HOST is set, otherwise console logging.
+  notify: {
+    // How a submitted quote request reaches you:
+    //   preview — nothing is sent; the request is viewable in the browser
+    //   resend  — Resend HTTP API        smtp — any SMTP provider
+    // Picked automatically from the keys present; NOTIFY_MODE forces one.
+    mode: (process.env.NOTIFY_MODE
+      || (process.env.RESEND_API_KEY ? 'resend' : process.env.SMTP_HOST ? 'smtp' : 'preview')).toLowerCase(),
     resendApiKey: process.env.RESEND_API_KEY,
     smtp: {
       host: process.env.SMTP_HOST,
@@ -77,7 +86,9 @@ export const config = {
 export function assertConfig() {
   const problems = [];
   if (!config.anthropic.apiKey) problems.push('ANTHROPIC_API_KEY is not set');
-  if (!config.mail.to.length) problems.push('QUOTE_NOTIFY_EMAIL is not set (you will not receive quote requests)');
+  if (config.notify.mode !== 'preview' && !config.notify.to.length) {
+    problems.push('QUOTE_NOTIFY_EMAIL is not set (you will not receive quote requests)');
+  }
   if (config.storage.driver === 's3' && !config.storage.s3.bucket) problems.push('STORAGE_DRIVER=s3 but S3_BUCKET is not set');
   return problems;
 }

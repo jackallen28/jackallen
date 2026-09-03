@@ -1,12 +1,14 @@
 import express from 'express';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, assertConfig } from './config.js';
-import { initStore, getSession, saveSession, pruneSessions } from './store.js';
+import { initStore, getSession, getLead, listLeads, pruneSessions } from './store.js';
 import * as flow from './flow.js';
 import { rateLimit } from './ratelimit.js';
 import { readLocalFile, contentTypeFor } from './storage.js';
 import { renderViewerPage } from './viewer.js';
+import { renderQuotePreview, renderRequestList } from './notify.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -120,6 +122,33 @@ app.post('/api/lead', async (req, res, next) => {
   } catch (err) { return next(err); }
 });
 
+/* --------------------- quote previews (no email) --------------------- */
+
+// The notification as it would arrive, rendered in the browser. Addressed by an
+// unguessable id so the customer can be handed the link in chat.
+// No scripts, so lock the page down.
+const PREVIEW_CSP = "default-src 'none'; img-src * data:; style-src 'unsafe-inline'; frame-ancestors 'none'";
+
+app.get('/quote/:leadId', async (req, res) => {
+  const lead = await getLead(req.params.leadId);
+  if (!lead) return res.status(404).send('Quote request not found.');
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Content-Security-Policy', PREVIEW_CSP);
+  res.set('X-Robots-Tag', 'noindex');
+  return res.send(renderQuotePreview(lead, req.query.view === 'customer' ? 'customer' : 'owner'));
+});
+
+// Every request received. Off unless ADMIN_KEY is set, because it lists
+// customers' contact details.
+app.get('/requests', async (req, res) => {
+  if (!config.adminKey) return res.status(404).send('Set ADMIN_KEY to enable this page.');
+  if (req.query.key !== config.adminKey) return res.status(401).send('Add ?key=<ADMIN_KEY> to this URL.');
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Content-Security-Policy', PREVIEW_CSP);
+  res.set('X-Robots-Tag', 'noindex');
+  return res.send(renderRequestList(await listLeads(200), config.adminKey));
+});
+
 /* ------------------------- files and viewer ------------------------- */
 
 app.get('/files/*', async (req, res) => {
@@ -143,6 +172,19 @@ app.get('/viewer/:sessionId/:jobId', async (req, res) => {
     stlUrl: job.stlUrl,
     stats: job.stats,
   }));
+});
+
+// The demo page, served from this host so a fresh deploy is testable at its own
+// URL with nothing else to set up. The API and widget URLs are rewritten to
+// wherever this server is actually running.
+app.get('/', async (req, res, next) => {
+  try {
+    const html = await fs.readFile(path.join(here, '..', '..', 'embed', 'demo.html'), 'utf8');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html
+      .replaceAll('http://localhost:8080', config.publicUrl)
+      .replace('./cad-quote-widget.js', '/embed/cad-quote-widget.js'));
+  } catch (err) { return next(err); }
 });
 
 // three.js is served from here rather than a CDN: one less third party, and it
@@ -181,4 +223,7 @@ setInterval(() => {
 
 app.listen(config.port, () => {
   console.log(`${config.brand.name} listening on :${config.port} (public: ${config.publicUrl})`);
+  console.log(`[notify] mode: ${config.notify.mode}${config.notify.mode === 'preview' ? ' — quote requests are viewable in the browser, not emailed' : ` -> ${config.notify.to.join(', ')}`}`);
+  if (config.adminKey) console.log(`[admin] quote requests: ${config.publicUrl}/requests?key=${config.adminKey}`);
+  else console.log('[admin] set ADMIN_KEY to enable the /requests list');
 });

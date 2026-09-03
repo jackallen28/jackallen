@@ -4,8 +4,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { config } from './config.js';
+import { paths } from './store.js';
 
-const filesDir = path.join(config.storage.dataDir, 'files');
+// Resolved per call: initStore() may have redirected the data directory if the
+// configured one turned out to be read-only.
+const filesDir = () => path.join(paths.dataDir, 'files');
 
 const CONTENT_TYPES = {
   '.stl': 'model/stl',
@@ -60,7 +63,7 @@ export async function putFile(key, body, opts = {}) {
     });
   }
 
-  const dest = path.join(filesDir, safeKey);
+  const dest = path.join(filesDir(), safeKey);
   await fs.mkdir(path.dirname(dest), { recursive: true });
   await fs.writeFile(dest, body);
   return `${config.publicUrl}/files/${safeKey}`;
@@ -69,8 +72,9 @@ export async function putFile(key, body, opts = {}) {
 // Local-driver reads for the /files route. Returns null when the key escapes
 // the files directory or does not exist.
 export async function readLocalFile(key) {
-  const dest = path.join(filesDir, key);
-  if (!dest.startsWith(filesDir + path.sep)) return null;
+  const root = filesDir();
+  const dest = path.join(root, key);
+  if (!dest.startsWith(root + path.sep)) return null;
   try {
     return await fs.readFile(dest);
   } catch {

@@ -1,0 +1,63 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# In Render: New → Blueprint → pick this repo → Apply. It builds the Dockerfile
+# (OpenSCAD and Xvfb are installed in the image), attaches a 1 GB disk for
+# generated models, and boots in preview mode so no email provider is needed.
+#
+# The only value you must supply is ANTHROPIC_API_KEY — Render prompts for it.
+
+services:
+  - type: web
+    name: cad-quote-bot
+    runtime: docker
+    dockerfilePath: ./cad-quote-bot/Dockerfile
+    dockerContext: ./cad-quote-bot
+    # Starter is the cheapest plan that supports a disk. If OpenSCAD renders
+    # start failing on bigger models, the cause is usually its 512 MB of RAM —
+    # move to `standard` (2 GB).
+    plan: starter
+    region: singapore
+    healthCheckPath: /healthz
+    autoDeploy: true
+
+    disk:
+      name: cadbot-data
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # Prompted for on first apply, never stored in the repo.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      # Preview mode: submitted quote requests are viewable in the browser
+      # rather than emailed. Set this to `resend` and add RESEND_API_KEY +
+      # QUOTE_NOTIFY_EMAIL when you want them delivered for real.
+      - key: NOTIFY_MODE
+        value: preview
+
+      # Render generates this. Read it in the dashboard (Environment tab) and
+      # use it to open /requests?key=<value>.
+      - key: ADMIN_KEY
+        generateValue: true
+
+      - key: DATA_DIR
+        value: /data
+      - key: STORAGE_DRIVER
+        value: local
+      - key: BRAND_NAME
+        value: CAD Quote Bot
+      - key: BRAND_ACCENT
+        value: "#FF6A1A"
+
+      # While prototyping, any site may embed the widget. Before you go live,
+      # set this to your own origins, e.g. https://www.yourcompany.com
+      - key: ALLOWED_ORIGINS
+        value: "*"
+
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5
+      - key: OPENSCAD_XVFB
+        value: "true"
+      - key: OPENSCAD_TIMEOUT_MS
+        value: "90000"

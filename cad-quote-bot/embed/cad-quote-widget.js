@@ -364,6 +364,7 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     bubble.innerHTML = formatText(msg.text);
     col.appendChild(bubble);
     if (msg.card && msg.card.type === 'preview') col.appendChild(this.previewCard(msg.card));
+    if (msg.card && msg.card.type === 'link') col.appendChild(this.linkCard(msg.card));
     wrap.appendChild(col);
     this.log.appendChild(wrap);
     this.scrollDown();
@@ -402,6 +403,16 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     body.appendChild(row);
     box.appendChild(body);
     return box;
+  };
+
+  Widget.prototype.linkCard = function (card) {
+    var row = el('div', 'card');
+    var body = el('div', 'body');
+    var button = el('button', 'btn primary', card.label || 'Open');
+    button.addEventListener('click', function () { window.open(card.url, '_blank'); });
+    body.appendChild(button);
+    row.appendChild(body);
+    return row;
   };
 
   Widget.prototype.setFooter = function (node) {

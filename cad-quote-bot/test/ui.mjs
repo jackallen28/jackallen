@@ -60,6 +60,7 @@ try {
     ANTHROPIC_BASE_URL: 'http://127.0.0.1:9333',
     ANTHROPIC_API_KEY: 'sk-test',
     QUOTE_NOTIFY_EMAIL: 'owner@example.com',
+    ADMIN_KEY: 'test-key',
     ALLOWED_ORIGINS: SITE,
     OPENSCAD_BIN: path.join(here, 'bin', 'openscad'),
     OPENSCAD_XVFB: 'false',
@@ -134,6 +135,21 @@ try {
   await page.waitForSelector('#cad-quote-bot >> text=that\'s with us', { timeout: 20000 });
   await page.screenshot({ path: path.join(shots, '5-done.png') });
   check('the request is submitted and confirmed in-chat', true);
+
+  // Preview mode: the request is opened in a tab instead of emailed.
+  const [preview] = await Promise.all([
+    page.context().waitForEvent('page'),
+    bot.locator('button', { hasText: 'Preview the quote request' }).click(),
+  ]);
+  await preview.waitForLoadState('domcontentloaded');
+  await preview.screenshot({ path: path.join(shots, '6-quote-preview.png'), fullPage: true });
+  check('the quote request preview opens with the customer\'s details',
+    (await preview.content()).includes('Jack Allen') && (await preview.content()).includes('PREVIEW'));
+
+  await preview.goto(`${API}/requests?key=test-key`);
+  await preview.screenshot({ path: path.join(shots, '7-requests.png'), fullPage: true });
+  check('the /requests list shows the submitted request', (await preview.content()).includes('Jack Allen'));
+  await preview.close();
 
   check('no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   console.log(`\nScreenshots: ${shots}`);

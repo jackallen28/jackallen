@@ -3,18 +3,37 @@
 // container runs. Swap the four exported functions for Postgres when volume
 // justifies it (see README -> "When to move off the file store").
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from './config.js';
 
-const sessionsDir = path.join(config.storage.dataDir, 'sessions');
-const leadsFile = path.join(config.storage.dataDir, 'leads.jsonl');
+let dataDir = config.storage.dataDir;
+let sessionsDir = path.join(dataDir, 'sessions');
+let leadsFile = path.join(dataDir, 'leads.jsonl');
+
+export const paths = { get dataDir() { return dataDir; } };
 
 const cache = new Map(); // id -> session (write-through, keeps hot sessions fast)
 
 export async function initStore() {
-  await fs.mkdir(sessionsDir, { recursive: true });
-  await fs.mkdir(path.join(config.storage.dataDir, 'files'), { recursive: true });
+  try {
+    await fs.mkdir(sessionsDir, { recursive: true });
+    await fs.mkdir(path.join(dataDir, 'files'), { recursive: true });
+    await fs.access(dataDir, fsSync.constants.W_OK);
+  } catch (err) {
+    // A mounted disk owned by root is the usual cause. Keep running on
+    // temporary storage rather than refusing to boot, but be loud about it:
+    // anything written here disappears on the next restart.
+    const fallback = path.join(os.tmpdir(), 'cad-quote-bot-data');
+    console.error(`[store] ${dataDir} is not writable (${err.code || err.message}). Falling back to ${fallback} — DATA WILL NOT SURVIVE A RESTART.`);
+    dataDir = fallback;
+    sessionsDir = path.join(dataDir, 'sessions');
+    leadsFile = path.join(dataDir, 'leads.jsonl');
+    await fs.mkdir(sessionsDir, { recursive: true });
+    await fs.mkdir(path.join(dataDir, 'files'), { recursive: true });
+  }
 }
 
 export function newId(prefix) {
@@ -69,6 +88,28 @@ export async function saveSession(session) {
 
 export async function appendLead(lead) {
   await fs.appendFile(leadsFile, `${JSON.stringify(lead)}\n`);
+}
+
+async function readLeads() {
+  try {
+    return (await fs.readFile(leadsFile, 'utf8'))
+      .split('\n').filter(Boolean)
+      .map((line) => { try { return JSON.parse(line); } catch { return null; } })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export async function getLead(id) {
+  if (!/^q_[a-f0-9]{24}$/.test(String(id || ''))) return null;
+  const leads = await readLeads();
+  return leads.find((l) => l.id === id) || null;
+}
+
+/** Newest first, for the /requests list. */
+export async function listLeads(limit = 100) {
+  return (await readLeads()).reverse().slice(0, limit);
 }
 
 // Housekeeping: drop sessions (and their generated files) past the TTL.
