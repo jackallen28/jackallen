@@ -117,6 +117,28 @@ function firstError(stderr) {
   return line ? line.trim().slice(0, 400) : '';
 }
 
+/** Is OpenSCAD installed and runnable? Used by /diag on a fresh deploy. */
+export async function checkOpenscad() {
+  const probe = await run(config.openscad.bin, ['--version']);
+  // OpenSCAD prints its version to stderr.
+  const version = `${probe.stderr} ${probe.stdout}`.match(/OpenSCAD version ([\w.-]+)/)?.[1];
+  if (!version) {
+    return {
+      ok: false,
+      bin: config.openscad.bin,
+      error: probe.stderr.trim().slice(0, 300) || `could not run ${config.openscad.bin}`,
+    };
+  }
+  const xvfb = config.openscad.useXvfb ? await run('xvfb-run', ['--help']) : null;
+  return {
+    ok: true,
+    version,
+    bin: config.openscad.bin,
+    xvfb: config.openscad.useXvfb ? (xvfb.ok ? 'available' : 'MISSING — preview images will fail') : 'disabled',
+    colorScheme: config.openscad.colorScheme,
+  };
+}
+
 /**
  * Bounding box, volume and triangle count from a binary STL. Volume uses the
  * signed-tetrahedron sum, which is exact for a closed mesh and close enough to

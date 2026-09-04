@@ -287,7 +287,10 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (data) {
         if (!res.ok) {
-          var err = new Error(data.message || 'Request failed');
+          // Always say something specific: a bare "Request failed" tells nobody
+          // anything. An HTML error page from the host parses to {}, so fall
+          // back to the status code.
+          var err = new Error(data.message || data.error || ('The server returned HTTP ' + res.status + '.'));
           err.payload = data;
           err.status = res.status;
           throw err;
@@ -303,9 +306,24 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     this.call('/api/session', {})
       .then(function (snap) {
         self.sessionId = snap.sessionId;
+        self.messageCount = 0;
         self.apply(snap);
       })
       .catch(function (err) { self.showError(err); });
+  };
+
+  // A session that no longer exists is expected rather than exceptional: on a
+  // host without persistent storage every restart wipes them. Start a fresh
+  // chat instead of dead-ending on an error.
+  Widget.prototype.handleError = function (err) {
+    if (err && err.payload && err.payload.error === 'session_not_found') {
+      this.sessionId = null;
+      this.messageCount = 0;
+      this.log.innerHTML = '';
+      this.start();
+      return;
+    }
+    this.showError(err);
   };
 
   Widget.prototype.send = function (text) {
@@ -317,7 +335,7 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     this.setFooter(this.typingFooter());
     this.call('/api/message', { sessionId: this.sessionId, text: text })
       .then(function (snap) { self.busy = false; self.apply(snap); })
-      .catch(function (err) { self.busy = false; self.showError(err); });
+      .catch(function (err) { self.busy = false; self.handleError(err); });
   };
 
   Widget.prototype.action = function (id) {
@@ -327,7 +345,7 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     this.setFooter(this.typingFooter());
     this.call('/api/action', { sessionId: this.sessionId, action: id })
       .then(function (snap) { self.busy = false; self.apply(snap); })
-      .catch(function (err) { self.busy = false; self.showError(err); });
+      .catch(function (err) { self.busy = false; self.handleError(err); });
   };
 
   Widget.prototype.poll = function () {
@@ -336,7 +354,13 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
     this.polling = setInterval(function () {
       self.call('/api/session/' + self.sessionId + '?since=' + self.messageCount, null, 'GET')
         .then(function (snap) { self.apply(snap); })
-        .catch(function () { /* transient — the next tick retries */ });
+        .catch(function (err) {
+          if (err && err.payload && err.payload.error === 'session_not_found') {
+            self.stopPoll();
+            self.handleError(err);
+          }
+          // Anything else is transient — the next tick retries.
+        });
     }, 2500);
   };
 
@@ -600,7 +624,9 @@ form.lead .hp { position: absolute; left: -9999px; width: 1px; height: 1px; over
   Widget.prototype.showError = function (err) {
     var self = this;
     var wrap = el('div');
-    var msg = el('div', 'error', (err && err.message) || 'Connection problem.');
+    var text = (err && err.message) || 'Could not reach the assistant.';
+    if (err && !err.status) text += ' Check that the site can reach ' + opts.api + '.';
+    var msg = el('div', 'error', text);
     var retry = el('button', 'btn', 'Try again');
     retry.addEventListener('click', function () {
       if (self.sessionId) self.call('/api/session/' + self.sessionId + '?since=' + self.messageCount, null, 'GET')

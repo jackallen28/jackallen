@@ -3,8 +3,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, assertConfig } from './config.js';
-import { initStore, getSession, getLead, listLeads, pruneSessions } from './store.js';
+import { initStore, getSession, getLead, listLeads, pruneSessions, paths } from './store.js';
 import * as flow from './flow.js';
+import { checkModel } from './llm.js';
+import { checkOpenscad } from './openscad.js';
 import { rateLimit } from './ratelimit.js';
 import { readLocalFile, contentTypeFor } from './storage.js';
 import { renderViewerPage } from './viewer.js';
@@ -49,7 +51,9 @@ function snapshot(session, since = 0) {
 async function loadSession(req, res) {
   const session = await getSession(req.body?.sessionId || req.params?.sessionId || req.query?.sessionId);
   if (!session) {
-    res.status(404).json({ error: 'session_not_found' });
+    // The widget starts a fresh chat when it sees this code — sessions do not
+    // survive a restart on a host without persistent storage.
+    res.status(404).json({ error: 'session_not_found', message: 'That chat has expired. Starting a new one.' });
     return null;
   }
   return session;
@@ -57,7 +61,48 @@ async function loadSession(req, res) {
 
 /* ------------------------------ routes ------------------------------ */
 
-app.get('/healthz', (req, res) => res.json({ ok: true, warnings: assertConfig() }));
+app.get('/healthz', (req, res) => res.json({
+  ok: true,
+  notifyMode: config.notify.mode,
+  publicUrl: config.publicUrl,
+  warnings: assertConfig(),
+}));
+
+// Deep check for a fresh deploy: does the disk work, is OpenSCAD installed, is
+// the API key accepted? Answers the "why did the chat say it failed" question
+// without needing the logs. The Claude call costs a fraction of a cent.
+app.get('/diag', async (req, res) => {
+  if (!rateLimit(`d:${ip(req)}`, 20).ok) return res.status(429).json({ error: 'rate_limited' });
+
+  const checks = {};
+
+  checks.config = {
+    publicUrl: config.publicUrl,
+    dataDir: paths.dataDir,
+    storageDriver: config.storage.driver,
+    notifyMode: config.notify.mode,
+    allowedOrigins: config.allowedOrigins,
+    model: config.anthropic.model,
+    anthropicKeyPresent: Boolean(config.anthropic.apiKey),
+    adminPageEnabled: Boolean(config.adminKey),
+    warnings: assertConfig(),
+  };
+
+  try {
+    const probe = path.join(paths.dataDir, `.diag-${Date.now()}`);
+    await fs.writeFile(probe, 'ok');
+    await fs.rm(probe, { force: true });
+    checks.storage = { ok: true, writable: paths.dataDir };
+  } catch (err) {
+    checks.storage = { ok: false, error: `${err.code || ''} ${err.message}`.trim() };
+  }
+
+  checks.openscad = await checkOpenscad();
+  checks.claude = await checkModel();
+
+  const ok = Object.values(checks).every((c) => c.ok !== false);
+  return res.status(ok ? 200 : 503).json({ ok, checks });
+});
 
 app.post('/api/session', async (req, res, next) => {
   try {
@@ -112,12 +157,14 @@ app.post('/api/lead', async (req, res, next) => {
   try {
     const session = await loadSession(req, res);
     if (!session) return undefined;
-    if (session.state !== 'details') return res.status(409).json({ error: 'wrong_state' });
+    if (session.state !== 'details') {
+      return res.status(409).json({ error: 'wrong_state', message: 'This chat is not at the contact-details step.' });
+    }
     // Honeypot: real customers never fill a hidden field.
     if (String(req.body.company || '').trim()) return res.status(202).json(snapshot(session, session.messages.length));
     const since = session.messages.length;
     const result = await flow.submitLead(session, req.body);
-    if (!result.ok) return res.status(400).json({ error: 'validation', errors: result.errors });
+    if (!result.ok) return res.status(400).json({ error: 'validation', message: 'Please check the highlighted fields.', errors: result.errors });
     return res.json(snapshot(session, since));
   } catch (err) { return next(err); }
 });

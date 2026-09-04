@@ -156,6 +156,19 @@ try {
   const list = await fetch(`${API}/requests?key=test-key`);
   check('/requests lists the request with the key', list.ok && (await list.text()).includes('Jack Allen'));
 
+  // Diagnostics: the endpoint a fresh deploy is debugged with.
+  const diag = await (await fetch(`${API}/diag`)).json();
+  check('/diag reports the config, storage and OpenSCAD',
+    diag.checks.config.anthropicKeyPresent && diag.checks.storage.ok === true && 'ok' in diag.checks.openscad,
+    JSON.stringify(diag.checks).slice(0, 200));
+  check('/diag reaches the model', diag.checks.claude.ok === true, JSON.stringify(diag.checks.claude));
+
+  // An expired session must be reported in a way the widget can recover from.
+  const expired = await post('/api/message', { sessionId: `s_${'a'.repeat(24)}`, text: 'hello' });
+  check('an expired session returns a recoverable error',
+    expired.status === 404 && expired.body.error === 'session_not_found' && Boolean(expired.body.message),
+    JSON.stringify(expired.body));
+
   const home = await fetch(`${API}/`);
   const homeHtml = await home.text();
   check('the hosted demo page points the widget at this server',

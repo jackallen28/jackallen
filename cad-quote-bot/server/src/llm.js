@@ -65,6 +65,26 @@ async function askJson({ system, messages, schema, effort = 'high', maxTokens = 
   }
 }
 
+/** Smallest possible call, to prove the key and model work. Used by /diag. */
+export async function checkModel() {
+  if (!config.anthropic.apiKey) return { ok: false, error: 'ANTHROPIC_API_KEY is not set' };
+  try {
+    const response = await createMessage({
+      model: MODEL,
+      max_tokens: 16,
+      messages: [{ role: 'user', content: 'Reply with the single word: ready' }],
+    });
+    return { ok: true, model: MODEL, reply: textOf(response).trim().slice(0, 40) };
+  } catch (err) {
+    return {
+      ok: false,
+      model: MODEL,
+      status: err?.status ?? err?.statusCode ?? null,
+      error: String(err?.message || err).slice(0, 300),
+    };
+  }
+}
+
 const SHARED_CONTEXT = `You are the intake engineer for a workshop that 3D prints (FDM/SLA) and CNC machines
 one-off and small-batch parts. You turn a customer's plain-language description into a
 manufacturable parametric design, and you are pragmatic: customers are usually not engineers,

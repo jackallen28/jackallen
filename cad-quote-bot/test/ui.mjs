@@ -90,6 +90,18 @@ try {
   await bot.locator('textarea.input').waitFor({ timeout: 15000 });
   check('the widget mounts and greets the visitor', await bot.locator('.msg.bot').first().isVisible());
 
+  // An expired session (every restart on a host without a disk) must recover
+  // silently rather than dead-ending on an error.
+  await page.evaluate(() => { window.CADQuoteBot.sessionId = 's_' + 'a'.repeat(24); });
+  await bot.locator('textarea.input').fill('hello');
+  await bot.locator('button.btn.primary').click();
+  await page.waitForTimeout(2000);
+  const recovered = await page.evaluate(() => window.CADQuoteBot.sessionId);
+  check('an expired session silently starts a new chat',
+    recovered && recovered !== 's_' + 'a'.repeat(24) && (await bot.locator('.error').count()) === 0,
+    String(recovered));
+  errors.length = 0; // the deliberate 404 above is expected
+
   await bot.locator('textarea.input').fill('a wall bracket to hold a 90 mm diameter torch');
   await bot.locator('button.btn.primary').click();
   await bot.locator('.chip').first().waitFor({ timeout: 20000 });

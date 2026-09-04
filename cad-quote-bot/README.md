@@ -347,6 +347,37 @@ well; the OpenSCAD is where Opus earns its keep.
 
 ---
 
+## Troubleshooting a deploy
+
+**Open `https://<your-app>/diag` first.** It reports, in one JSON response, the
+things that actually break a fresh deploy:
+
+```json
+{ "ok": true,
+  "checks": {
+    "config":   { "publicUrl": "...", "anthropicKeyPresent": true, "warnings": [] },
+    "storage":  { "ok": true, "writable": "/data" },
+    "openscad": { "ok": true, "version": "2021.01", "xvfb": "available" },
+    "claude":   { "ok": true, "model": "claude-opus-5", "reply": "ready" } } }
+```
+
+It returns HTTP 503 if any check fails, and the failing check carries the error
+(`"claude": { "ok": false, "status": 401, "error": "invalid x-api-key" }`). The
+Claude check makes one tiny API call, so it costs a fraction of a cent.
+
+| Symptom | Usual cause |
+|---|---|
+| Chat says the server returned **HTTP 500** | The model call failed — check `/diag` → `claude`, usually a bad or unset `ANTHROPIC_API_KEY`. |
+| Chat says **HTTP 502/503** | The instance is still starting (free instances cold-start for ~50s after sleeping), or it crashed — check the Render logs. |
+| Chat can't reach the server at all | `data-api` points somewhere wrong, or your site is HTTPS and `data-api` is HTTP. On the hosted demo page this is `PUBLIC_URL` / `RENDER_EXTERNAL_URL`. |
+| Chat restarts itself mid-conversation | Expected without a disk: the instance restarted and sessions live in ephemeral storage. Attach a disk to stop it. |
+| Spec arrives but the model never renders | Check `/diag` → `openscad`. `xvfb: MISSING` means preview images fail; a missing binary means no STL either. |
+| Embedded on your own site, requests blocked | `ALLOWED_ORIGINS` doesn't include your site's origin. |
+
+Server logs (Render → your service → Logs) carry the same detail: every failed
+request is logged with its stack, and generation failures log the OpenSCAD error
+that caused them.
+
 ## Security notes
 
 - **Generated OpenSCAD is untrusted input.** `openscad.js` rejects `include<>`,
