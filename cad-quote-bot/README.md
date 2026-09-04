@@ -169,15 +169,36 @@ timeouts shorter than a render. You need a container.
 
 ### Deploy to Render (what the prototype is set up for)
 
-`render.yaml` at the repo root is a Blueprint. In Render: **New → Blueprint →
-pick this repo → Apply.** It builds the Dockerfile (OpenSCAD and Xvfb are baked
-in), attaches a 1 GB disk at `/data`, and boots in preview mode.
+`render.yaml` at the repo root is a Blueprint, configured for Render's **free**
+instance type. In Render: **New → Blueprint → pick this repo → Apply.** The only
+value you supply is `ANTHROPIC_API_KEY` — Render prompts for it and generates
+`ADMIN_KEY` for you.
 
-The only value you supply is `ANTHROPIC_API_KEY` — Render prompts for it on
-apply. Everything else has a default, including `ADMIN_KEY`, which Render
-generates for you.
+**Render asks for payment details before applying any Blueprint**, even one that
+only creates free services. If you'd rather not put a card on file, create the
+service by hand instead — same result, no Blueprint:
 
-When it's live:
+#### No card: create the service manually
+
+1. **New → Web Service**, connect this repo.
+2. **Language:** Docker. **Root Directory:** `cad-quote-bot`
+   (so the Dockerfile path is just `./Dockerfile`).
+3. **Instance Type:** Free.
+4. **Health Check Path:** `/healthz`
+5. Add these environment variables:
+
+   | Key | Value |
+   |---|---|
+   | `ANTHROPIC_API_KEY` | your key |
+   | `NOTIFY_MODE` | `preview` |
+   | `ADMIN_KEY` | any random string you pick |
+   | `DATA_DIR` | `/tmp/cadbot-data` |
+   | `ALLOWED_ORIGINS` | `*` |
+
+   Everything else has a working default.
+6. **Create Web Service.** First build takes a few minutes (it installs OpenSCAD).
+
+#### When it's live
 
 | URL | What it is |
 |---|---|
@@ -187,21 +208,29 @@ When it's live:
 | `…/embed/cad-quote-widget.js` | The script tag to drop on your real site |
 | `…/healthz` | Health check |
 
-Notes for the prototype:
+#### What the free tier costs you
 
-- **Plan.** `starter` ($7/mo) is the cheapest that supports a disk. Its 512 MB of
-  RAM is enough for typical brackets and enclosures; if renders start failing on
-  bigger models, move to `standard` (2 GB) — that's the usual cause.
-- **Region** is set to `singapore`. Change it in `render.yaml` if your customers
-  are elsewhere.
-- **No disk?** On the free plan, delete the `disk:` block and set
-  `DATA_DIR=/tmp/cadbot`. Models and leads then vanish on each restart, which is
-  fine for a look but not for collecting real requests. (The container's
-  entrypoint takes ownership of the mounted disk before dropping to an
-  unprivileged user; if it still can't write there, the server logs a loud
-  warning and falls back to temporary storage rather than refusing to boot.)
-- **`ALLOWED_ORIGINS` ships as `*`** so you can embed the widget anywhere while
-  testing. Tighten it to your own origins before real customers see it.
+- **Nothing persists.** No disk on free, so `DATA_DIR` is `/tmp`: sessions,
+  models and submitted requests are gone after a restart. Preview a request
+  while the chat is still open and it's there; come back tomorrow and it isn't.
+- **It sleeps after 15 minutes idle.** The next visitor waits ~50 seconds for a
+  cold start — the widget will just sit on "Starting…" until it wakes.
+- **512 MB of RAM.** Enough for typical brackets and enclosures. If a render
+  fails on something bigger, this is why.
+
+**To make it persistent** (~$7/mo): in `render.yaml` set `plan: starter`,
+uncomment the `disk:` block, and change `DATA_DIR` to `/data`. Or in the
+dashboard: Settings → Instance Type → Starter, then add a disk mounted at
+`/data` and update the variable. The container's entrypoint takes ownership of
+the mounted disk before dropping to an unprivileged user; if it still can't
+write there, the server logs a loud warning and falls back to temporary storage
+rather than refusing to boot.
+
+**Region** is `singapore` in the Blueprint. Change it if your customers are
+elsewhere.
+
+**`ALLOWED_ORIGINS` ships as `*`** so you can embed the widget anywhere while
+testing. Tighten it to your own origins before real customers see it.
 
 ### Going live: recommended stack
 
@@ -231,7 +260,7 @@ Then point `PUBLIC_URL` at your domain and add a CNAME (`quotes.yourcompany.com`
 
 | Host | Verdict |
 |---|---|
-| **Render** | What this repo is configured for. Blueprint, Docker, disks, generated secrets — least setup. |
+| **Render** | What this repo is configured for. Blueprint, Docker, disks, generated secrets — least setup, and the only one here with a free instance type you can use without a card (create the service manually). |
 | **Fly.io** | Equally good and scales to zero between quotes, so it's cheaper when idle. `fly.toml` included. |
 | **Railway** | Same shape as Render. Fine if you prefer it. |
 | **Google Cloud Run** | Excellent if you're already on GCP — set concurrency to 1–2 and timeout to 300 s. Needs GCS for files (no local disk). |

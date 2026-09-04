@@ -1,10 +1,17 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# In Render: New → Blueprint → pick this repo → Apply. It builds the Dockerfile
-# (OpenSCAD and Xvfb are installed in the image), attaches a 1 GB disk for
-# generated models, and boots in preview mode so no email provider is needed.
+# Configured for the FREE instance type: no card needed for the service itself.
+# Free instances have no disk, so generated models and submitted requests live
+# in /tmp and are lost when the instance restarts or spins down after 15 minutes
+# of inactivity. That is fine for testing the flow; see "Keeping the data" below
+# for the one-line change that makes it persistent.
 #
-# The only value you must supply is ANTHROPIC_API_KEY — Render prompts for it.
+# In Render: New → Blueprint → pick this repo → Apply. The only value you supply
+# is ANTHROPIC_API_KEY.
+#
+# NOTE: Render asks for payment details before applying a Blueprint. If you'd
+# rather not add a card at all, create the service by hand instead — the steps
+# are in cad-quote-bot/README.md ("No card: create the service manually").
 
 services:
   - type: web
@@ -12,18 +19,18 @@ services:
     runtime: docker
     dockerfilePath: ./cad-quote-bot/Dockerfile
     dockerContext: ./cad-quote-bot
-    # Starter is the cheapest plan that supports a disk. If OpenSCAD renders
-    # start failing on bigger models, the cause is usually its 512 MB of RAM —
-    # move to `standard` (2 GB).
-    plan: starter
+    plan: free
     region: singapore
     healthCheckPath: /healthz
     autoDeploy: true
 
-    disk:
-      name: cadbot-data
-      mountPath: /data
-      sizeGB: 1
+    # Keeping the data: switch `plan` to `starter` ($7/mo), uncomment this disk,
+    # and set DATA_DIR to /data below. Sessions, models and quote requests then
+    # survive restarts.
+    # disk:
+    #   name: cadbot-data
+    #   mountPath: /data
+    #   sizeGB: 1
 
     envVars:
       # Prompted for on first apply, never stored in the repo.
@@ -41,8 +48,10 @@ services:
       - key: ADMIN_KEY
         generateValue: true
 
+      # Ephemeral, because the free instance type has no disk. Change to /data
+      # when you attach the disk above.
       - key: DATA_DIR
-        value: /data
+        value: /tmp/cadbot-data
       - key: STORAGE_DRIVER
         value: local
       - key: BRAND_NAME
