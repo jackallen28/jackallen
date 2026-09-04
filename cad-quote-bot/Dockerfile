@@ -18,6 +18,11 @@ RUN cd server && npm ci --omit=dev --no-audit --no-fund
 COPY server ./server
 COPY embed ./embed
 
+# Preview renders in the widget's own palette — white ground, grey part, orange
+# cut faces — instead of OpenSCAD's default blue and orange. OpenSCAD only reads
+# colour schemes from its install directory, hence the copy.
+COPY server/assets/openscad-colorscheme.json /usr/share/openscad/color-schemes/render/quotebot.json
+
 ENV NODE_ENV=production \
     PORT=8080 \
     DATA_DIR=/data

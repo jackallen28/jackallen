@@ -62,8 +62,10 @@ try {
     QUOTE_NOTIFY_EMAIL: 'owner@example.com',
     ADMIN_KEY: 'test-key',
     ALLOWED_ORIGINS: SITE,
-    OPENSCAD_BIN: path.join(here, 'bin', 'openscad'),
-    OPENSCAD_XVFB: 'false',
+    // Stub renderer by default so the suite is hermetic and instant. Set
+    // OPENSCAD_BIN=openscad to run it against the real thing.
+    OPENSCAD_BIN: process.env.OPENSCAD_BIN || path.join(here, 'bin', 'openscad'),
+    OPENSCAD_XVFB: process.env.OPENSCAD_XVFB || 'false',
     DATA_DIR: dataDir,
     PORT: '8099',
     PUBLIC_URL: API,

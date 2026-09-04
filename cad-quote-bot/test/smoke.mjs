@@ -61,8 +61,10 @@ try {
     ANTHROPIC_BASE_URL: 'http://127.0.0.1:9333',
     ANTHROPIC_API_KEY: 'sk-test',
     QUOTE_NOTIFY_EMAIL: 'owner@example.com',
-    OPENSCAD_BIN: path.join(here, 'bin', 'openscad'),
-    OPENSCAD_XVFB: 'false',
+    // Stub renderer by default so the suite is hermetic and instant. Set
+    // OPENSCAD_BIN=openscad to run it against the real thing.
+    OPENSCAD_BIN: process.env.OPENSCAD_BIN || path.join(here, 'bin', 'openscad'),
+    OPENSCAD_XVFB: process.env.OPENSCAD_XVFB || 'false',
     DATA_DIR: dataDir,
     PORT: '8099',
     PUBLIC_URL: API,
@@ -105,7 +107,10 @@ try {
     || JSON.parse(fs.readFileSync(path.join(dataDir, 'sessions', `${id}.json`), 'utf8')).messages
       .map((m) => m.card).find((c) => c && c.type === 'preview');
   check('a preview card with a viewer link is returned', Boolean(preview?.viewerUrl && preview?.stlUrl));
-  check('the STL is measured (20 mm stub cube = 8 cm³)', preview?.stats?.volumeCm3 === 8, JSON.stringify(preview?.stats));
+  // The stub binary emits a 20 mm cube; real OpenSCAD builds the stub API's
+  // 40 mm one.
+  const expectedVolume = process.env.OPENSCAD_BIN ? 64 : 8;
+  check(`the STL is measured (${expectedVolume} cm³)`, preview?.stats?.volumeCm3 === expectedVolume, JSON.stringify(preview?.stats));
 
   const viewer = await fetch(preview.viewerUrl);
   const viewerHtml = await viewer.text();

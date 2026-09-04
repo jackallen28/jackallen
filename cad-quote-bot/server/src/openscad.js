@@ -86,17 +86,24 @@ export async function renderScad(scadSource) {
     }
 
     // Preview render. A failure here is not fatal — the STL is the deliverable.
-    const pngRun = await openscad([
+    const previewArgs = (scheme) => [
       '-o', pngFile,
       `--imgsize=${config.openscad.imgSize}`,
-      '--colorscheme=Tomorrow',
+      `--colorscheme=${scheme}`,
       '--projection=p',
       '--camera=0,0,0,60,0,315,0',
       '--viewall', '--autocenter',
       inFile,
-    ]);
+    ];
+    let pngRun = await openscad(previewArgs(config.openscad.colorScheme));
     let png = null;
-    try { png = await fs.readFile(pngFile); } catch { /* optional */ }
+    try { png = await fs.readFile(pngFile); } catch { /* handled below */ }
+    if (!png && config.openscad.colorScheme !== config.openscad.fallbackColorScheme) {
+      // An unknown colour scheme is fatal to OpenSCAD, and the branded one only
+      // exists inside our image — outside it, fall back to a built-in.
+      pngRun = await openscad(previewArgs(config.openscad.fallbackColorScheme));
+      try { png = await fs.readFile(pngFile); } catch { /* preview is optional */ }
+    }
 
     return { ok: true, stl, png, log: [stlRun.stderr, pngRun.stderr].filter(Boolean).join('\n') };
   } finally {

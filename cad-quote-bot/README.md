@@ -41,6 +41,7 @@ variable (`data-accent`), so it re-skins in a second.
 | `server/src/flow.js` | The conversation state machine. Every message the widget shows is produced here, so the flow can't be skipped from the browser. |
 | `server/src/llm.js` | All Claude calls, each returning structured JSON via `output_config.format`. |
 | `server/src/openscad.js` | Sanitises generated `.scad`, runs OpenSCAD headlessly, measures the resulting mesh. |
+| `server/assets/openscad-colorscheme.json` | Renders previews in the widget's palette — white ground, grey part, orange cut faces — instead of OpenSCAD's blue and orange. Installed into the image by the Dockerfile. |
 | `server/src/viewer.js` | The standalone 3D viewer page (self-hosted three.js, inline STL parser and orbit controls). |
 | `server/src/notify.js` | Builds the quote notification: previewed in the browser, or emailed to you + confirmed to the customer. |
 | `server/src/storage.js` | Local disk or any S3-compatible bucket. |
@@ -79,8 +80,9 @@ they cost nothing and need nothing installed.
 
 ```bash
 cd server
-npm run test:smoke   # 23 API-level checks, ~5 seconds
-npm run test:ui      # drives the widget in headless Chromium + screenshots
+npm run test:smoke    # 27 API-level checks, ~5 seconds
+npm run test:ui       # drives the widget in headless Chromium + screenshots
+npm run test:render   # real OpenSCAD: the text-to-model half (needs OpenSCAD on PATH)
 ```
 
 `test:smoke` walks a whole conversation and asserts the state machine, the
@@ -88,6 +90,21 @@ generated files, the STL measurement, the viewer route, path-traversal
 rejection, form validation, the honeypot, lead persistence, the quote preview
 (both the copy addressed to you and the customer's), and the admin-key guard on
 `/requests`.
+
+`test:render` is the one that covers **text to model**: it renders a
+representative part (plate, swept cradle, boolean cuts, countersunk holes)
+through the real pipeline and asserts the mesh is genuine, its dimensions match
+the source, the material volume is measured, and a preview image comes out. It
+also proves the sanitiser blocks `include<>`, `use<>`, `import()` and
+`surface()` before OpenSCAD ever runs. The rendered PNG and STL land in
+`test/screenshots/` so you can look at them.
+
+Both hermetic suites use the stub renderer by default. Point them at the real
+one to see genuine geometry all the way through the widget:
+
+```bash
+OPENSCAD_BIN=openscad OPENSCAD_XVFB=true npm run test:ui
+```
 
 `test:ui` needs Playwright once:
 
@@ -185,17 +202,12 @@ service by hand instead — same result, no Blueprint:
    (so the Dockerfile path is just `./Dockerfile`).
 3. **Instance Type:** Free.
 4. **Health Check Path:** `/healthz`
-5. Add these environment variables:
+5. Add **one** environment variable: `ANTHROPIC_API_KEY`.
 
-   | Key | Value |
-   |---|---|
-   | `ANTHROPIC_API_KEY` | your key |
-   | `NOTIFY_MODE` | `preview` |
-   | `ADMIN_KEY` | any random string you pick |
-   | `DATA_DIR` | `/tmp/cadbot-data` |
-   | `ALLOWED_ORIGINS` | `*` |
-
-   Everything else has a working default.
+   Everything else already defaults correctly for a prototype — preview mode
+   (no email provider needed), any origin allowed, files written inside the
+   container. Optionally add `ADMIN_KEY` (any random string) if you want the
+   `/requests` list.
 6. **Create Web Service.** First build takes a few minutes (it installs OpenSCAD).
 
 #### When it's live
@@ -215,8 +227,10 @@ service by hand instead — same result, no Blueprint:
   while the chat is still open and it's there; come back tomorrow and it isn't.
 - **It sleeps after 15 minutes idle.** The next visitor waits ~50 seconds for a
   cold start — the widget will just sit on "Starting…" until it wakes.
-- **512 MB of RAM.** Enough for typical brackets and enclosures. If a render
-  fails on something bigger, this is why.
+- **512 MB of RAM.** Plenty for typical parts — a bracket like the one in the
+  render test peaks at ~42 MB in OpenSCAD, with Node and Xvfb adding ~120 MB.
+  Only a genuinely heavy model (hundreds of boolean operations, `$fn` in the
+  hundreds) would trouble it.
 
 **To make it persistent** (~$7/mo): in `render.yaml` set `plan: starter`,
 uncomment the `disk:` block, and change `DATA_DIR` to `/data`. Or in the
