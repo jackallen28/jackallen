@@ -50,8 +50,13 @@ function run(cmd, args) {
   });
 }
 
-function openscad(args) {
-  return config.openscad.useXvfb
+/**
+ * STL export is pure CGAL — no display needed, so it runs the binary directly
+ * and cannot be broken by anything X-related. Only the preview image needs a
+ * virtual display, and that one is optional.
+ */
+function openscad(args, { needsDisplay = false } = {}) {
+  return needsDisplay && config.openscad.useXvfb
     ? run('xvfb-run', ['-a', config.openscad.bin, ...args])
     : run(config.openscad.bin, args);
 }
@@ -95,13 +100,13 @@ export async function renderScad(scadSource) {
       '--viewall', '--autocenter',
       inFile,
     ];
-    let pngRun = await openscad(previewArgs(config.openscad.colorScheme));
+    let pngRun = await openscad(previewArgs(config.openscad.colorScheme), { needsDisplay: true });
     let png = null;
     try { png = await fs.readFile(pngFile); } catch { /* handled below */ }
     if (!png && config.openscad.colorScheme !== config.openscad.fallbackColorScheme) {
       // An unknown colour scheme is fatal to OpenSCAD, and the branded one only
       // exists inside our image — outside it, fall back to a built-in.
-      pngRun = await openscad(previewArgs(config.openscad.fallbackColorScheme));
+      pngRun = await openscad(previewArgs(config.openscad.fallbackColorScheme), { needsDisplay: true });
       try { png = await fs.readFile(pngFile); } catch { /* preview is optional */ }
     }
 
@@ -117,10 +122,13 @@ function firstError(stderr) {
   return line ? line.trim().slice(0, 400) : '';
 }
 
-/** Is OpenSCAD installed and runnable? Used by /diag on a fresh deploy. */
+/**
+ * Can this box actually produce a model? Renders a real 10 mm cube rather than
+ * asking the binaries whether they exist: `xvfb-run --help` succeeds on a box
+ * with no xauth installed, where every real render fails.
+ */
 export async function checkOpenscad() {
   const probe = await run(config.openscad.bin, ['--version']);
-  // OpenSCAD prints its version to stderr.
   const version = `${probe.stderr} ${probe.stdout}`.match(/OpenSCAD version ([\w.-]+)/)?.[1];
   if (!version) {
     return {
@@ -129,12 +137,17 @@ export async function checkOpenscad() {
       error: probe.stderr.trim().slice(0, 300) || `could not run ${config.openscad.bin}`,
     };
   }
-  const xvfb = config.openscad.useXvfb ? await run('xvfb-run', ['--help']) : null;
+
+  const result = await renderScad('cube([10, 10, 10]);');
   return {
-    ok: true,
+    ok: result.ok,
     version,
     bin: config.openscad.bin,
-    xvfb: config.openscad.useXvfb ? (xvfb.ok ? 'available' : 'MISSING — preview images will fail') : 'disabled',
+    stl: result.ok ? `${result.stl.length} bytes` : `FAILED — ${result.error}`,
+    // A missing preview is survivable: the customer gets the model without a
+    // thumbnail. A missing STL is not.
+    preview: result.png ? `${result.png.length} bytes` : 'FAILED — no preview image (check xvfb and xauth)',
+    xvfb: config.openscad.useXvfb ? 'enabled for preview images only' : 'disabled',
     colorScheme: config.openscad.colorScheme,
   };
 }

@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderScad, analyzeStl, sanitizeScad } from '../server/src/openscad.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -87,6 +87,30 @@ check('$fn is clamped to a sane facet count', sanitizeScad('$fn = 999;\nsphere(5
 
 const rejected = await renderScad('include <x.scad>\ncube(10);');
 check('a rejected model never reaches the renderer', !rejected.ok && /safety check/i.test(rejected.error));
+
+// Regression: the STL export must not depend on the virtual display. A box
+// without xauth (node:bookworm-slim + xvfb, as shipped before this was fixed)
+// fails every xvfb-run, and wrapping the STL export in one made every model
+// fail — not just the preview image.
+{
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'brokenx-'));
+  fs.writeFileSync(path.join(dir, 'xvfb-run'), '#!/bin/sh\necho "xvfb-run: error: xauth command not found" >&2\nexit 3\n');
+  fs.chmodSync(path.join(dir, 'xvfb-run'), 0o755);
+
+  const script = `
+    const { renderScad } = await import(${JSON.stringify(pathToFileURL(path.join(here, '..', 'server', 'src', 'openscad.js')).href)});
+    const r = await renderScad('cube([10, 10, 10]);');
+    console.log(JSON.stringify({ ok: r.ok, stl: r.stl ? r.stl.length : 0, png: r.png ? r.png.length : 0 }));
+  `;
+  const out = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+    env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, OPENSCAD_XVFB: 'true' },
+    encoding: 'utf8',
+  });
+  const parsed = JSON.parse(out.trim().split('\n').pop());
+  check('the STL still renders when the virtual display is broken', parsed.ok && parsed.stl > 500, out.trim());
+  check('only the preview image is lost in that case', parsed.png === 0, out.trim());
+  fs.rmSync(dir, { recursive: true, force: true });
+}
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll checks passed');
 process.exit(failures ? 1 : 0);

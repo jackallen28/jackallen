@@ -357,7 +357,7 @@ things that actually break a fresh deploy:
   "checks": {
     "config":   { "publicUrl": "...", "anthropicKeyPresent": true, "warnings": [] },
     "storage":  { "ok": true, "writable": "/data" },
-    "openscad": { "ok": true, "version": "2021.01", "xvfb": "available" },
+    "openscad": { "ok": true, "version": "2021.01", "stl": "684 bytes", "preview": "17769 bytes" },
     "claude":   { "ok": true, "model": "claude-opus-5", "reply": "ready" } } }
 ```
 
@@ -376,7 +376,7 @@ It costs a few cents and takes several seconds.
 | Chat says **HTTP 502/503** | The instance is still starting (free instances cold-start for ~50s after sleeping), or it crashed — check the Render logs. |
 | Chat can't reach the server at all | `data-api` points somewhere wrong, or your site is HTTPS and `data-api` is HTTP. On the hosted demo page this is `PUBLIC_URL` / `RENDER_EXTERNAL_URL`. |
 | Chat restarts itself mid-conversation | Expected without a disk: the instance restarted and sessions live in ephemeral storage. Attach a disk to stop it. |
-| Spec arrives but the model never renders | Check `/diag` → `openscad`. `xvfb: MISSING` means preview images fail; a missing binary means no STL either. |
+| Spec arrives but the model never renders | Check `/diag` → `openscad`: it renders a real cube, so `stl: "FAILED — …"` carries the actual OpenSCAD error. STL export needs no display; only the preview image does, so `preview: FAILED` alone still leaves you with a working model. |
 | Embedded on your own site, requests blocked | `ALLOWED_ORIGINS` doesn't include your site's origin. |
 
 Server logs (Render → your service → Logs) carry the same detail: every failed

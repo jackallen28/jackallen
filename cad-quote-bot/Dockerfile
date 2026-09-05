@@ -2,10 +2,17 @@
 # serverless function. Any host that runs a Dockerfile will do.
 FROM node:22-bookworm-slim
 
+# xauth is required by xvfb-run and is NOT a dependency of the xvfb package —
+# without it every preview render fails. The mesa packages give OpenSCAD a
+# software GL renderer inside the virtual display; without them the STL still
+# exports but the preview image does not.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       openscad \
       xvfb \
+      xauth \
       libgl1 \
+      libglu1-mesa \
+      libgl1-mesa-dri \
       ca-certificates \
       fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
