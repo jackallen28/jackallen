@@ -27,12 +27,49 @@ async function createMessage(params) {
       });
     } catch (err) {
       const status = err?.status ?? err?.statusCode;
+      const message = String(err?.error?.error?.message || err?.message || '');
+      // Only blame the beta when the API actually complains about it — a 400
+      // about anything else (a schema, say) must not silently disable it.
       if (status !== 400 && status !== 404) throw err;
-      useFallbacks = false;
-      console.warn('[llm] server-side fallbacks unavailable, continuing without them:', err?.message);
+      // Retry without the beta either way, but only stop trying it for good
+      // when the API actually complained about it — a 400 about anything else
+      // (a schema, say) must not silently disable it for the whole process.
+      if (/fallback|beta/i.test(message)) {
+        useFallbacks = false;
+        console.warn('[llm] server-side fallbacks unavailable, continuing without them:', message);
+      }
     }
   }
   return client().messages.create(params);
+}
+
+// Structured outputs accept a subset of JSON Schema: no maxItems, minimum,
+// maximum, minLength, maxLength or pattern, and minItems only as 0 or 1. Sending
+// one of those is a 400 from the API, so scrub them here rather than relying on
+// every schema author remembering. Objects must also declare
+// additionalProperties:false and list every property in required.
+const UNSUPPORTED_KEYWORDS = ['maxItems', 'minimum', 'maximum', 'minLength', 'maxLength', 'pattern', 'multipleOf', 'uniqueItems', 'format'];
+
+export function strictSchema(node) {
+  if (Array.isArray(node)) return node.map(strictSchema);
+  if (!node || typeof node !== 'object') return node;
+
+  const out = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (UNSUPPORTED_KEYWORDS.includes(key)) continue;
+    if (key === 'minItems') {
+      // Only 0 and 1 are accepted; a larger floor belongs in the prompt.
+      out.minItems = Math.min(Number(value) || 0, 1);
+      continue;
+    }
+    out[key] = strictSchema(value);
+  }
+
+  if (out.type === 'object' && out.properties) {
+    out.additionalProperties = false;
+    out.required = Object.keys(out.properties);
+  }
+  return out;
 }
 
 function textOf(message) {
@@ -40,14 +77,32 @@ function textOf(message) {
 }
 
 async function askJson({ system, messages, schema, effort = 'high', maxTokens = 16000 }) {
-  const response = await createMessage({
+  const request = {
     model: MODEL,
     max_tokens: maxTokens,
     system,
     messages,
     thinking: { type: 'adaptive' },
-    output_config: { effort, format: { type: 'json_schema', schema } },
-  });
+    output_config: { effort, format: { type: 'json_schema', schema: strictSchema(schema) } },
+  };
+
+  let response;
+  try {
+    response = await createMessage(request);
+  } catch (err) {
+    if ((err?.status ?? err?.statusCode) !== 400) throw err;
+    // The API rejected the request shape — most often the schema. Rather than
+    // fail the customer's conversation, ask for the same JSON in prose and
+    // parse it ourselves.
+    console.warn('[llm] structured output rejected, falling back to prose JSON:', err.message);
+    response = await createMessage({
+      model: MODEL,
+      max_tokens: maxTokens,
+      system: `${system}\n\nReply with a single JSON object matching this schema and nothing else — no prose, no code fences:\n${JSON.stringify(schema)}`,
+      messages,
+      thinking: { type: 'adaptive' },
+    });
+  }
 
   if (response.stop_reason === 'refusal') {
     const err = new Error('The assistant declined this request.');
@@ -57,6 +112,10 @@ async function askJson({ system, messages, schema, effort = 'high', maxTokens = 
   const raw = textOf(response);
   try {
     return JSON.parse(raw);
+  } catch { /* fall through to the lenient parse below */ }
+  try {
+    // The prose fallback can wrap the object in stray text or a code fence.
+    return JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
   } catch {
     // Extremely rare with structured outputs, but a truncated response is possible.
     const err = new Error(`Model returned unparseable JSON (stop_reason=${response.stop_reason})`);
@@ -85,6 +144,25 @@ export async function checkModel() {
   }
 }
 
+/**
+ * Runs the first real structured-output call — the one a conversation makes —
+ * and reports the API's own error if it fails. This is what /diag?full=1 uses:
+ * a plain message proves the key works, only this proves the request shape does.
+ */
+export async function checkStructuredOutput() {
+  try {
+    const plan = await planQuestions('a wall bracket to hold a 90 mm diameter torch');
+    return { ok: true, questions: plan.questions.length, sample: plan.questions[0]?.question };
+  } catch (err) {
+    return {
+      ok: false,
+      status: err?.status ?? err?.statusCode ?? null,
+      type: err?.error?.error?.type || err?.code || null,
+      error: String(err?.error?.error?.message || err?.message || err).slice(0, 500),
+    };
+  }
+}
+
 const SHARED_CONTEXT = `You are the intake engineer for a workshop that 3D prints (FDM/SLA) and CNC machines
 one-off and small-batch parts. You turn a customer's plain-language description into a
 manufacturable parametric design, and you are pragmatic: customers are usually not engineers,
@@ -104,8 +182,7 @@ const QUESTION_PLAN_SCHEMA = {
     acknowledgement: { type: 'string', description: 'One friendly sentence confirming what you understood. No questions in it.' },
     questions: {
       type: 'array',
-      minItems: 3,
-      maxItems: 7,
+      description: 'Between 3 and 6 questions. Never more.',
       items: {
         type: 'object',
         additionalProperties: false,
@@ -116,9 +193,8 @@ const QUESTION_PLAN_SCHEMA = {
           type: { type: 'string', enum: ['text', 'choice', 'number'] },
           options: {
             type: 'array',
-            maxItems: 5,
             items: { type: 'string' },
-            description: 'Tappable suggested answers. Required for type=choice, otherwise up to 4 common values, or an empty array.',
+            description: 'At most 5 tappable suggested answers. Required for type=choice, otherwise up to 4 common values, or an empty array.',
           },
           why: { type: 'string', description: 'Half-sentence explaining why it matters, shown as helper text.' },
         },
@@ -160,8 +236,7 @@ const SPEC_SCHEMA = {
     one_liner: { type: 'string', description: 'One sentence describing the part.' },
     details: {
       type: 'array',
-      minItems: 3,
-      maxItems: 10,
+      description: 'Between 3 and 10 key/value spec lines.',
       items: {
         type: 'object',
         additionalProperties: false,
@@ -175,9 +250,8 @@ const SPEC_SCHEMA = {
     material: { type: 'string', description: 'Suggested material, e.g. "PETG" or "6061 aluminium".' },
     assumptions: {
       type: 'array',
-      maxItems: 6,
       items: { type: 'string' },
-      description: 'Anything you filled in yourself so the customer can correct it.',
+      description: 'At most 6 items: anything you filled in yourself so the customer can correct it.',
     },
   },
 };

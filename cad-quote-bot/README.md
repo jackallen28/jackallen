@@ -365,9 +365,14 @@ It returns HTTP 503 if any check fails, and the failing check carries the error
 (`"claude": { "ok": false, "status": 401, "error": "invalid x-api-key" }`). The
 Claude check makes one tiny API call, so it costs a fraction of a cent.
 
+**`/diag?full=1` additionally runs the first real call of a conversation** —
+structured output, thinking, the lot — and reports the API's own error verbatim.
+A plain message proves the key works; only this proves the request shape does.
+It costs a few cents and takes several seconds.
+
 | Symptom | Usual cause |
 |---|---|
-| Chat says the server returned **HTTP 500** | The model call failed — check `/diag` → `claude`, usually a bad or unset `ANTHROPIC_API_KEY`. |
+| Chat says the server returned **HTTP 500**, or "Something went wrong on our side" | The model call failed. `/diag` green but chat broken means the request shape, not the key — run `/diag?full=1`. The 500 response body also carries a `detail` field with the upstream error (visible in devtools → Network). |
 | Chat says **HTTP 502/503** | The instance is still starting (free instances cold-start for ~50s after sleeping), or it crashed — check the Render logs. |
 | Chat can't reach the server at all | `data-api` points somewhere wrong, or your site is HTTPS and `data-api` is HTTP. On the hosted demo page this is `PUBLIC_URL` / `RENDER_EXTERNAL_URL`. |
 | Chat restarts itself mid-conversation | Expected without a disk: the instance restarted and sessions live in ephemeral storage. Attach a disk to stop it. |

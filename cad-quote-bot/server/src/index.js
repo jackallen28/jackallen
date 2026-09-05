@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { config, assertConfig } from './config.js';
 import { initStore, getSession, getLead, listLeads, pruneSessions, paths } from './store.js';
 import * as flow from './flow.js';
-import { checkModel } from './llm.js';
+import { checkModel, checkStructuredOutput } from './llm.js';
 import { checkOpenscad } from './openscad.js';
 import { rateLimit } from './ratelimit.js';
 import { readLocalFile, contentTypeFor } from './storage.js';
@@ -99,6 +99,10 @@ app.get('/diag', async (req, res) => {
 
   checks.openscad = await checkOpenscad();
   checks.claude = await checkModel();
+
+  // ?full=1 also runs the first real call of a conversation. Slower and a few
+  // cents, but it is the check that catches a rejected request shape.
+  if (req.query.full) checks.structuredOutput = await checkStructuredOutput();
 
   const ok = Object.values(checks).every((c) => c.ok !== false);
   return res.status(ok ? 200 : 503).json({ ok, checks });
@@ -256,6 +260,10 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
     message: err.code === 'refusal'
       ? 'I can\'t help with that particular request. Try describing a different part.'
       : 'Something went wrong on our side. Please try again.',
+    // Not shown in the chat, but visible in the network tab and the logs — the
+    // difference between "it broke" and knowing why.
+    detail: String(err?.error?.error?.message || err?.message || '').slice(0, 300) || undefined,
+    upstreamStatus: err?.status ?? undefined,
   });
 });
 

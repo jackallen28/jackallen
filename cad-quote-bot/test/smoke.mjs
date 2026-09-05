@@ -169,10 +169,64 @@ try {
     expired.status === 404 && expired.body.error === 'session_not_found' && Boolean(expired.body.message),
     JSON.stringify(expired.body));
 
+  // Structured-output schemas: the API accepts only a subset of JSON Schema,
+  // and sending an unsupported keyword is a 400 that surfaces as a broken chat.
+  const { strictSchema } = await import('../server/src/llm.js');
+  const scrubbed = strictSchema({
+    type: 'object',
+    properties: { xs: { type: 'array', minItems: 4, maxItems: 9, items: { type: 'string', maxLength: 3 } } },
+  });
+  check('unsupported schema keywords are stripped before sending',
+    !JSON.stringify(scrubbed).includes('maxItems') && !JSON.stringify(scrubbed).includes('maxLength') && scrubbed.properties.xs.minItems === 1,
+    JSON.stringify(scrubbed));
+  check('objects get additionalProperties:false and a full required list',
+    scrubbed.additionalProperties === false && scrubbed.required.join() === 'xs');
+
+  // And the stub enforces those rules, so a future schema that would 400 in
+  // production fails here first.
+  const badSchema = await fetch('http://127.0.0.1:9333/v1/messages', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'x', output_config: { format: { schema: { type: 'object', properties: { a: { type: 'string' } }, maxItems: 5 } } } }),
+  });
+  check('the stub API rejects a schema the real one would reject', badSchema.status === 400,
+    `HTTP ${badSchema.status}`);
+
   const home = await fetch(`${API}/`);
   const homeHtml = await home.text();
   check('the hosted demo page points the widget at this server',
     home.ok && homeHtml.includes(`data-api="${API}"`) && homeHtml.includes('/embed/cad-quote-widget.js'));
+  // Finally: if structured outputs were ever rejected outright, a conversation
+  // must still work through the prose-JSON fallback.
+  spawnChild('stub-api-strict', process.execPath, [path.join(here, 'fake-anthropic.mjs')], {
+    PORT: '9334', REJECT_STRUCTURED: '1',
+  });
+  const fallbackDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cadbot-fallback-'));
+  spawnChild('server-fallback', process.execPath, [path.join(here, '..', 'server', 'src', 'index.js')], {
+    ANTHROPIC_BASE_URL: 'http://127.0.0.1:9334',
+    ANTHROPIC_API_KEY: 'sk-test',
+    OPENSCAD_BIN: process.env.OPENSCAD_BIN || path.join(here, 'bin', 'openscad'),
+    OPENSCAD_XVFB: process.env.OPENSCAD_XVFB || 'false',
+    DATA_DIR: fallbackDir,
+    PORT: '8098',
+    PUBLIC_URL: 'http://127.0.0.1:8098',
+    RESEND_API_KEY: '',
+    SMTP_HOST: '',
+  });
+  for (let i = 0; i < 40; i += 1) {
+    try { if ((await fetch('http://127.0.0.1:8098/healthz')).ok) break; } catch { /* not up yet */ }
+    await wait(250);
+  }
+  const fbSession = await (await fetch('http://127.0.0.1:8098/api/session', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+  })).json();
+  const fbReply = await (await fetch('http://127.0.0.1:8098/api/message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: fbSession.sessionId, text: 'a wall bracket to hold a 90 mm diameter torch' }),
+  })).json();
+  check('a conversation survives structured outputs being rejected',
+    fbReply.state === 'questions' && fbReply.ui.chips.length > 0, JSON.stringify(fbReply).slice(0, 200));
+  fs.rmSync(fallbackDir, { recursive: true, force: true });
 } finally {
   for (const child of children) child.kill();
   fs.rmSync(dataDir, { recursive: true, force: true });
