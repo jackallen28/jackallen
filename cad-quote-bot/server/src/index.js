@@ -108,6 +108,17 @@ app.get('/diag', async (req, res) => {
   return res.status(ok ? 200 : 503).json({ ok, checks });
 });
 
+// The last few render failures: the OpenSCAD error and the exact source that
+// produced it. This is the page to read when models fail to build.
+app.get('/diag/last-render', (req, res) => {
+  const failures = flow.getRecentFailures();
+  res.json({
+    count: failures.length,
+    hint: failures.length ? undefined : 'No render failures recorded since the last restart.',
+    failures,
+  });
+});
+
 app.post('/api/session', async (req, res, next) => {
   try {
     if (!rateLimit(`s:${ip(req)}`, config.limits.maxSessionsPerIpPerHour).ok) {

@@ -28,6 +28,9 @@ const responses = {
   },
   spec: CUBE_SPEC,
   scad: { scad: 'cube_size = 40;\n$fn = 64;\ncube([cube_size, cube_size, cube_size], center = false);\n', notes: 'Built as a single extruded body with filleted corners.' },
+  // BAD_SCAD=1 makes the stub emit source that cannot render, to exercise the
+  // repair loop and the failure diagnostics.
+  badScad: { scad: 'cube([10, 10, ; // deliberately broken\n', notes: 'broken on purpose' },
   triage: { kind: 'answer', normalised_answer: '250 mm', reply: '' },
 };
 
@@ -61,7 +64,7 @@ function pick(body) {
   if (system.includes('plan the SHORTEST set of questions')) return responses.questions;
   if (system.includes('build specification')) return responses.spec;
   if (system.includes('Decide whether their message answers it')) return responses.triage;
-  return responses.scad;
+  return process.env.BAD_SCAD === '1' ? responses.badScad : responses.scad;
 }
 
 // REJECT_STRUCTURED=1 makes every structured-output request fail the way a

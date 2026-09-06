@@ -263,13 +263,38 @@ async function startGeneration(session) {
   return session;
 }
 
+// The last few render failures, with the source that failed and the error
+// OpenSCAD gave. Exposed at /diag/last-render so a broken deploy can be
+// diagnosed from a URL instead of by trawling logs.
+const recentFailures = [];
+
+export function getRecentFailures() {
+  return recentFailures;
+}
+
+function recordFailure({ session, attempt, scad, result }) {
+  recentFailures.unshift({
+    at: new Date().toISOString(),
+    sessionId: session.id,
+    attempt,
+    part: session.spec?.title || session.product,
+    error: result.error,
+    durationMs: result.durationMs,
+    openscadLog: (result.log || '').trim().slice(0, 1500) || null,
+    scad,
+  });
+  recentFailures.length = Math.min(recentFailures.length, 5);
+}
+
 async function runGeneration(session) {
   const job = session.job;
   let { scad, notes } = await llm.generateScad(session.spec);
   let result = await renderScad(scad);
 
   for (let attempt = 0; attempt < 2 && !result.ok; attempt += 1) {
-    console.warn(`[flow] render failed (attempt ${attempt + 1}): ${result.error}`);
+    console.warn(`[flow] render failed (attempt ${attempt + 1}, ${result.durationMs}ms): ${result.error}`);
+    if (result.log) console.warn(`[flow] openscad said: ${result.log.trim().slice(0, 800)}`);
+    recordFailure({ session, attempt: attempt + 1, scad, result });
     const repaired = await llm.repairScad({ spec: session.spec, scad, error: result.error });
     scad = repaired.scad;
     notes = repaired.notes || notes;
@@ -277,10 +302,14 @@ async function runGeneration(session) {
   }
 
   if (!result.ok) {
+    console.error(`[flow] giving up after 3 attempts: ${result.error}`);
+    recordFailure({ session, attempt: 3, scad, result });
     job.status = 'error';
     job.error = result.error;
     session.state = 'review';
-    bot(session, 'That one defeated me — the geometry wouldn\'t render cleanly. Tell me what to simplify, or approve the spec as it stands and one of our engineers will model it by hand.');
+    bot(session, config.showRenderErrors
+      ? `That one defeated me. OpenSCAD said:\n\n${result.error}\n\n_(shown because SHOW_RENDER_ERRORS is on)_`
+      : 'That one defeated me — the geometry wouldn\'t render cleanly. Tell me what to simplify, or approve the spec as it stands and one of our engineers will model it by hand.');
     await saveSession(session);
     return;
   }

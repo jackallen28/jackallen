@@ -227,6 +227,56 @@ try {
   check('a conversation survives structured outputs being rejected',
     fbReply.state === 'questions' && fbReply.ui.chips.length > 0, JSON.stringify(fbReply).slice(0, 200));
   fs.rmSync(fallbackDir, { recursive: true, force: true });
+
+  // A model that will not render must be diagnosable from a URL: the error and
+  // the exact source that failed.
+  spawnChild('stub-api-bad', process.execPath, [path.join(here, 'fake-anthropic.mjs')], {
+    PORT: '9335', BAD_SCAD: '1',
+  });
+  const badDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cadbot-bad-'));
+  spawnChild('server-bad', process.execPath, [path.join(here, '..', 'server', 'src', 'index.js')], {
+    ANTHROPIC_BASE_URL: 'http://127.0.0.1:9335',
+    ANTHROPIC_API_KEY: 'sk-test',
+    OPENSCAD_BIN: process.env.OPENSCAD_BIN || path.join(here, 'bin', 'openscad'),
+    OPENSCAD_XVFB: process.env.OPENSCAD_XVFB || 'false',
+    DATA_DIR: badDir,
+    PORT: '8097',
+    PUBLIC_URL: 'http://127.0.0.1:8097',
+    RESEND_API_KEY: '',
+    SMTP_HOST: '',
+  });
+  const BAD = 'http://127.0.0.1:8097';
+  for (let i = 0; i < 40; i += 1) {
+    try { if ((await fetch(`${BAD}/healthz`)).ok) break; } catch { /* not up yet */ }
+    await wait(250);
+  }
+  const badPost = async (p, body) => (await fetch(BAD + p, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })).json();
+
+  let badSnap = await badPost('/api/session', {});
+  const badId = badSnap.sessionId;
+  await badPost('/api/message', { sessionId: badId, text: 'a wall bracket to hold a 90 mm diameter torch' });
+  for (const answer of ['250 mm', 'Timber stud', 'Horizontal']) {
+    badSnap = await badPost('/api/message', { sessionId: badId, text: answer });
+  }
+  badSnap = await badPost('/api/action', { sessionId: badId, action: 'spec_ok' });
+  for (let i = 0; i < 60 && badSnap.state === 'generating'; i += 1) {
+    await wait(400);
+    badSnap = await (await fetch(`${BAD}/api/session/${badId}?since=0`)).json();
+  }
+  check('an unrenderable model ends the wait instead of hanging', badSnap.state === 'review', badSnap.state);
+
+  const lastRender = await (await fetch(`${BAD}/diag/last-render`)).json();
+  check('/diag/last-render records the failure with the source and the error',
+    lastRender.count > 0
+      && Boolean(lastRender.failures[0].error)
+      && lastRender.failures[0].scad.includes('cube')
+      && typeof lastRender.failures[0].durationMs === 'number',
+    JSON.stringify(lastRender).slice(0, 200));
+  check('the repair loop is attempted before giving up',
+    lastRender.failures.some((f) => f.attempt >= 2), JSON.stringify(lastRender.failures.map((f) => f.attempt)));
+  fs.rmSync(badDir, { recursive: true, force: true });
 } finally {
   for (const child of children) child.kill();
   fs.rmSync(dataDir, { recursive: true, force: true });

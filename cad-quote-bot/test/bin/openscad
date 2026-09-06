@@ -1,11 +1,30 @@
 #!/usr/bin/env bash
 # Stub OpenSCAD: emits a valid 12-triangle binary STL cube, or a 1x1 PNG.
 out=""
+src=""
 prev=""
 for a in "$@"; do
   if [ "$prev" = "-o" ]; then out="$a"; fi
+  case "$a" in *.scad) src="$a";; esac
   prev="$a"
 done
+
+# Crude stand-in for OpenSCAD's parser: unbalanced brackets fail the way a
+# syntax error does, so the repair loop and failure diagnostics get exercised.
+if [ -n "$src" ] && ! node -e '
+  const fs = require("fs");
+  const t = fs.readFileSync(process.argv[1], "utf8");
+  const pairs = { "(": ")", "[": "]", "{": "}" };
+  const stack = [];
+  for (const c of t) {
+    if (pairs[c]) stack.push(pairs[c]);
+    else if (Object.values(pairs).includes(c) && stack.pop() !== c) process.exit(1);
+  }
+  process.exit(stack.length ? 1 : 0);
+' "$src" 2>/dev/null; then
+  echo "ERROR: Parser error: syntax error in file $src" >&2
+  exit 1
+fi
 case "$out" in
   *.stl) node -e '
     const fs=require("fs");

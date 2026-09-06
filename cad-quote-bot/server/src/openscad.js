@@ -66,6 +66,7 @@ function openscad(args, { needsDisplay = false } = {}) {
  * @returns {Promise<{ok: boolean, stl?: Buffer, png?: Buffer, log: string, error?: string}>}
  */
 export async function renderScad(scadSource) {
+  const startedAt = Date.now();
   const { code, errors } = sanitizeScad(scadSource);
   if (errors.length) return { ok: false, log: '', error: `Rejected by safety check: ${errors.join('; ')}` };
 
@@ -83,10 +84,11 @@ export async function renderScad(scadSource) {
     if (!stl || stl.length < 100) {
       return {
         ok: false,
+        durationMs: Date.now() - startedAt,
         log: stlRun.stderr,
         error: stlRun.timedOut
-          ? `OpenSCAD timed out after ${Math.round(config.openscad.timeoutMs / 1000)}s`
-          : (firstError(stlRun.stderr) || 'OpenSCAD produced no geometry'),
+          ? `OpenSCAD timed out after ${Math.round(config.openscad.timeoutMs / 1000)}s — the model is too heavy for this machine`
+          : (firstError(stlRun.stderr) || `OpenSCAD produced no geometry (exit without output). stderr: ${stlRun.stderr.trim().slice(0, 200) || '(empty)'}`),
       };
     }
 
@@ -110,7 +112,13 @@ export async function renderScad(scadSource) {
       try { png = await fs.readFile(pngFile); } catch { /* preview is optional */ }
     }
 
-    return { ok: true, stl, png, log: [stlRun.stderr, pngRun.stderr].filter(Boolean).join('\n') };
+    return {
+      ok: true,
+      stl,
+      png,
+      durationMs: Date.now() - startedAt,
+      log: [stlRun.stderr, pngRun.stderr].filter(Boolean).join('\n'),
+    };
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }

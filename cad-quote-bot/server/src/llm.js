@@ -296,14 +296,21 @@ const SCAD_RULES = `Write complete, self-contained OpenSCAD source for the speci
 - No include<>, use<>, import(), surface() or any file/network access. The file must stand alone.
 - Units are millimetres. Model the real part at 1:1.
 - Put every dimension in a named parameter block at the top of the file, with comments.
-- Set $fn between 48 and 120 (a single global $fn, never above 200).
+- Set a single global $fn between 32 and 64. Never higher: this renders on a small
+  shared CPU where facet count is the main cost.
+- It must render in a few seconds on one slow CPU core. Never use minkowski().
+  Avoid hull() over more than a handful of primitives, and keep the total number
+  of boolean operations modest — build the part from simple primitives and a
+  short list of unions and differences. Prefer a chamfer (a rotated cube or a
+  cylinder with two radii) over a swept fillet.
 - Produce ONE manifold solid: union everything, avoid coincident faces (overlap joined solids by
   at least 0.01 mm, and overshoot every cut by 0.1 mm on each open end).
 - Design it to actually manufacture: no unsupported overhangs beyond ~45 degrees on printed parts,
   minimum wall 1.6 mm for FDM / 1 mm for SLA / 1.5 mm for machined aluminium, fillet or chamfer
   stress corners, and add clearance (0.3 mm FDM, 0.1 mm CNC) on any mating feature.
 - Centre the part sensibly and stand it on the Z=0 plane so it previews and slices correctly.
-- The whole model must render in well under 60 seconds.
+- Prefer 2D profiles extruded with linear_extrude or rotate_extrude over stacks
+  of 3D booleans: they are far cheaper to render.
 - Do not emit echo() debug spam, animation, or anything that needs command-line -D arguments.`;
 
 export function generateScad(spec) {

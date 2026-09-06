@@ -14,6 +14,10 @@ export const config = {
   // Guards the /requests list of submitted quote requests. Unset = route off.
   adminKey: process.env.ADMIN_KEY || '',
 
+  // Put the real OpenSCAD error in the chat when a model fails to build.
+  // Useful while testing, off for customers.
+  showRenderErrors: /^(1|true|yes|on)$/i.test(String(process.env.SHOW_RENDER_ERRORS || '')),
+
   // Comma-separated list of sites allowed to embed the widget. "*" allows any
   // origin (fine while testing, tighten before you go live).
   allowedOrigins: list(process.env.ALLOWED_ORIGINS) .length ? list(process.env.ALLOWED_ORIGINS) : ['*'],
@@ -32,7 +36,10 @@ export const config = {
     bin: process.env.OPENSCAD_BIN || 'openscad',
     // Wrap in xvfb-run when the container has no GL context (Debian/Ubuntu images).
     useXvfb: bool(process.env.OPENSCAD_XVFB, true),
-    timeoutMs: int(process.env.OPENSCAD_TIMEOUT_MS, 90_000),
+    // Generous on purpose: a render that takes 2 seconds on a laptop can take
+    // a minute or more on a shared 0.1-CPU instance. The widget polls, so a
+    // slow render costs patience, not a failure.
+    timeoutMs: int(process.env.OPENSCAD_TIMEOUT_MS, 240_000),
     imgSize: process.env.OPENSCAD_IMGSIZE || '1400,1050',
     // Installed into the image by the Dockerfile. Outside the container the
     // scheme is missing, so renders fall back to a built-in one.

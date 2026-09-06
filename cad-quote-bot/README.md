@@ -376,7 +376,8 @@ It costs a few cents and takes several seconds.
 | Chat says **HTTP 502/503** | The instance is still starting (free instances cold-start for ~50s after sleeping), or it crashed — check the Render logs. |
 | Chat can't reach the server at all | `data-api` points somewhere wrong, or your site is HTTPS and `data-api` is HTTP. On the hosted demo page this is `PUBLIC_URL` / `RENDER_EXTERNAL_URL`. |
 | Chat restarts itself mid-conversation | Expected without a disk: the instance restarted and sessions live in ephemeral storage. Attach a disk to stop it. |
-| Spec arrives but the model never renders | Check `/diag` → `openscad`: it renders a real cube, so `stl: "FAILED — …"` carries the actual OpenSCAD error. STL export needs no display; only the preview image does, so `preview: FAILED` alone still leaves you with a working model. |
+| Spec arrives but the model never renders | **Open `/diag/last-render`** — it holds the last five failures with the OpenSCAD error, how long each took, and the exact `.scad` source that failed. Set `SHOW_RENDER_ERRORS=true` to put the error in the chat as well. A timeout means the model is too heavy for the instance (a free 0.1-CPU box is roughly 20× slower than a laptop); a parser error means the generated source was wrong. |
+| `/diag` itself says OpenSCAD failed | It renders a real cube, so `stl: "FAILED — …"` carries the actual error. STL export needs no display; only the preview image does, so `preview: FAILED` alone still leaves you with a working model. |
 | Embedded on your own site, requests blocked | `ALLOWED_ORIGINS` doesn't include your site's origin. |
 
 Server logs (Render → your service → Logs) carry the same detail: every failed
