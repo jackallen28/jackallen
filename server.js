@@ -96,6 +96,9 @@ function send(ws, payload) {
 
 function broadcastState(fx = null) {
   for (const c of clients) {
+    // A socket that has not passed the join handshake gets nothing at all —
+    // otherwise any disconnect elsewhere would push state to it.
+    if (c.role === 'pending') continue;
     send(c.ws, {
       type: 'state',
       state: game.snapshot(c.role === 'host' ? 'host' : c.team),

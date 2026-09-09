@@ -1,0 +1,23 @@
+{
+  "name": "mind-jeopardy",
+  "version": "1.0.0",
+  "description": "A Jeopardy-style buzzer game for the Year 9/10 Humanities unit 'Where is My Mind? Perception, Consciousness and Artificial Intelligence'",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/matcher.test.js && node test/playthrough.test.js && node test/deploy.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "express": "^5.2.1",
+    "ws": "^8.18.0"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
+  }
+}

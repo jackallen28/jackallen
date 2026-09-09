@@ -3,6 +3,11 @@
 A Family Feud–style buzzer game for the Year 9/10 Humanities unit
 **"Where is My Mind? Perception, Consciousness and Artificial Intelligence."**
 
+> There is a second, separate game for the same unit in
+> **[`jeopardy/`](jeopardy/)** — Mind Jeopardy, a six-category board with Final
+> Jeopardy, run from two windows (control screen + projector). It is a
+> standalone project with its own dependencies, tests and Render service.
+
 One teacher device hosts and projects the board. Two team computers join over
 the local network and buzz in with the space bar. Answers are typed and judged
 automatically, with the teacher able to overrule any call in one click.

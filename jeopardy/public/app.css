@@ -1,0 +1,238 @@
+/* Mind Jeopardy — shared styling for the host laptop, the projector and the
+   team consoles. Deliberately a different world from Mind Feud: deep blue
+   grid, gold serif numerals, everything square rather than rounded. */
+
+:root {
+  --blue-950: #04061c;
+  --blue-900: #070b33;
+  --blue-800: #0b1352;
+  --blue-700: #14206e;
+  --blue-600: #1d2d8f;
+  --edge: #2f45b0;
+  --gold: #ffcc33;
+  --gold-deep: #d99b00;
+  --cream: #f5f3ea;
+  --green: #3ad17f;
+  --red: #ff5566;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+  --sans: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  --display: 'Georgia', 'Times New Roman', serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: var(--sans);
+  color: var(--cream);
+  background: var(--blue-950);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: transform .07s ease, filter .15s ease;
+}
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+
+input, select {
+  font-family: inherit;
+  border-radius: 4px;
+  border: 2px solid var(--edge);
+  background: var(--blue-950);
+  color: var(--cream);
+  padding: .55rem .75rem;
+  font-size: 1rem;
+}
+input:focus, select:focus { outline: 3px solid var(--gold); outline-offset: 1px; }
+
+.hidden { display: none !important; }
+.muted { opacity: .6; }
+
+/* ---------- the grid ---------- */
+
+.grid {
+  display: grid;
+  gap: .35rem;
+  flex: 1;
+  min-height: 0;
+  padding: .35rem;
+}
+
+.cat {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: .5rem .35rem;
+  background: var(--blue-700);
+  border: 2px solid var(--blue-600);
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  line-height: 1.1;
+  font-size: clamp(.6rem, 1.15vw, 1.15rem);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, .5);
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  background: var(--blue-800);
+  border: 2px solid var(--blue-600);
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--gold);
+  font-size: clamp(1.1rem, 3.2vw, 3rem);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, .55);
+  transition: background .15s ease, transform .1s ease;
+}
+.cell.used { color: transparent; background: var(--blue-900); border-color: #16205a; }
+.cell.pickable { cursor: pointer; }
+.cell.pickable:hover { background: var(--blue-600); transform: scale(1.03); }
+
+/* ---------- clue takeover ---------- */
+
+.clue-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2rem;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: var(--blue-800);
+  text-align: center;
+}
+.clue-meta {
+  font-family: var(--display);
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-size: clamp(.7rem, 1.6vw, 1.2rem);
+}
+.clue-text {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.25;
+  font-size: clamp(1.1rem, 3.4vw, 3.2rem);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, .5);
+}
+.clue-answer {
+  font-family: var(--display);
+  color: var(--gold);
+  font-size: clamp(1.2rem, 3.6vw, 3rem);
+  font-weight: 700;
+  padding-top: .6rem;
+  border-top: 3px solid var(--edge);
+  animation: rise .4s ease;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- scores ---------- */
+
+.scores {
+  display: flex;
+  gap: .35rem;
+  padding: .35rem;
+  justify-content: center;
+}
+.score {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  padding: .45rem .3rem;
+  background: var(--blue-700);
+  border: 3px solid var(--blue-600);
+  border-bottom-width: 6px;
+}
+.score .nm {
+  font-size: clamp(.6rem, 1.2vw, .95rem);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.score .sc {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 3.4vw, 2.8rem);
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.score.picker { border-color: var(--gold); }
+.score.buzzed {
+  border-color: var(--gold);
+  background: var(--gold);
+  animation: flashbox .5s ease;
+}
+.score.buzzed .nm, .score.buzzed .sc { color: var(--blue-950); }
+.score.locked { opacity: .4; }
+@keyframes flashbox { from { transform: scale(1.06); } }
+
+/* ---------- clock ---------- */
+
+.clock {
+  font-family: var(--display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  text-align: center;
+  line-height: 1;
+}
+.clock.low { color: var(--red); animation: pulse 1s steps(2) infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
+
+.bar {
+  height: .5rem;
+  background: var(--blue-900);
+  overflow: hidden;
+}
+.bar > i {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width 1s linear;
+}
+.bar.low > i { background: var(--red); }
+
+/* ---------- flash ---------- */
+
+#flash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  pointer-events: none;
+  z-index: 90;
+  opacity: 0;
+}
+#flash.show { animation: flashIn 1.1s ease forwards; }
+#flash .inner {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 4.5vw, 3.6rem);
+  font-weight: 700;
+  text-align: center;
+  padding: .8rem 2rem;
+  max-width: 80vw;
+  border-radius: 6px;
+  box-shadow: 0 14px 50px rgba(0, 0, 0, .55);
+}
+#flash.good .inner { color: #04301c; background: var(--green); }
+#flash.bad .inner { color: #fff; background: var(--red); }
+#flash.warn .inner { color: #3a2600; background: var(--gold); }
+@keyframes flashIn {
+  0% { opacity: 0; transform: scale(.75); }
+  15% { opacity: 1; transform: scale(1.03); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}

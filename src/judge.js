@@ -96,10 +96,17 @@ function levenshtein(a, b) {
   return prev[n];
 }
 
-// How far off a typo may be before we stop calling it the same word.
+/**
+ * How far off a typo may be before we stop calling it the same word.
+ *
+ * Short words get no allowance at all: at two edits "gage" matches "game", so
+ * a team could be credited for naming a different answer entirely. Longer
+ * words can afford the latitude because there is more signal left over to be
+ * wrong about.
+ */
 function typoBudget(word) {
-  if (word.length <= 3) return 0;
-  if (word.length <= 5) return 1;
+  if (word.length <= 4) return 0;
+  if (word.length <= 6) return 1;
   if (word.length <= 9) return 2;
   return 3;
 }
