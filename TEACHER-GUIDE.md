@@ -4,7 +4,29 @@
 
 ---
 
-## Before the lesson (5 minutes, the day before)
+## Before the lesson
+
+There are two ways to run this. **Pick one.**
+
+### Option A — hosted on Render (nothing to install)
+
+If the game is deployed (see the README), you have two links:
+
+- **Host board** — `https://your-app.onrender.com/?token=...` → bookmark this,
+  open it, project it. It is the only link with the answers on it.
+- **Team computers** — `https://your-app.onrender.com/play` → the students type
+  the **game code** shown in huge type on your lobby screen.
+
+**Open the board two minutes before class, not as the bell goes.** Render's
+free plan puts the app to sleep after 15 minutes of quiet, and waking it takes
+about 50 seconds. Once a game is running it stays awake.
+
+**Between classes**, hit `Reset everything` in the panel. One deployment runs
+one game at a time — two classes at once need two deployments.
+
+Then skip to *The 30-minute plan* below.
+
+### Option B — from your own laptop (5 minutes, the day before)
 
 1. On your laptop, in this folder:
    ```bash
@@ -20,8 +42,13 @@
    Leave the tabs open.
 4. Press a key on the host screen once so the browser allows sound.
 
+There is no password on this option — anyone who can reach your laptop is
+already in the room.
+
 **If the school network blocks the team computers from reaching your laptop**,
-don't panic — see *No-network mode* at the bottom. The game still runs.
+don't panic — see *No-network mode* at the bottom. The game still runs. (This
+is also the usual reason to prefer Option A: a hosted game reaches the team
+computers through the normal internet, not the school LAN.)
 
 ---
 
@@ -29,7 +56,7 @@ don't panic — see *No-network mode* at the bottom. The game still runs.
 
 | Time | What happens | Your move |
 |---|---|---|
-| 0:00–0:03 | Teams pick names, rules explained | Lobby screen is up; type team names into the panel |
+| 0:00–0:03 | Teams pick names, rules explained | Lobby screen is up; read out the game code; type team names into the panel |
 | 0:03–0:08 | **Round 1** — Sensation, Perception & Illusion (×1) | `Start / Next Round`, then `Put Question Up` |
 | 0:08–0:13 | **Round 2** — Souls, Selves & Substances (×2) | `Start / Next Round`, then `Put Question Up` |
 | 0:13–0:19 | **Round 3** — Source Analysis & Significance (×2) | The PCASTLE board — the best round for the assessment |

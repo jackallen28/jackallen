@@ -8,13 +8,25 @@ let state = null;
 let me = { team: null, name: '' };
 let lastVersion = -1;
 let joined = false;
+let joinRequired = false;
+
+// A public deployment asks the class for the code on the projector.
+fetch('/api/config')
+  .then((r) => r.json())
+  .then((d) => {
+    joinRequired = Boolean(d.joinRequired);
+    $('codeInput').classList.toggle('hidden', !joinRequired);
+  })
+  .catch(() => {});
 
 /* ---------------- join ---------------- */
 
 const saved = JSON.parse(localStorage.getItem('mindfeud.me') || 'null');
 if (saved) {
   me.team = saved.team;
+  me.code = saved.code || '';
   $('nameInput').value = saved.name || '';
+  $('codeInput').value = me.code;
   selectTeam(saved.team);
 }
 
@@ -27,28 +39,49 @@ function selectTeam(team) {
 $('pickA').onclick = () => { unlock(); selectTeam('A'); };
 $('pickB').onclick = () => { unlock(); selectTeam('B'); };
 $('joinBtn').onclick = doJoin;
-$('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
+for (const id of ['nameInput', 'codeInput']) {
+  $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
+}
 
 function doJoin() {
   unlock();
-  if (!me.team) return bump('Pick a team first.');
+  $('joinErr').textContent = '';
+  if (!me.team) { $('joinErr').textContent = 'Pick a team first.'; return; }
+  if (joinRequired && !$('codeInput').value.trim()) {
+    $('joinErr').textContent = 'Enter the game code from the board.';
+    return;
+  }
+  me.code = $('codeInput').value.trim().toUpperCase();
   me.name = $('nameInput').value.trim() || `Team ${me.team}`;
   localStorage.setItem('mindfeud.me', JSON.stringify(me));
   joined = true;
+  connect();
+}
+
+/** Only swap to the game screen once the server has actually let us in. */
+function showGame() {
   $('join').classList.add('hidden');
   $('game').classList.remove('hidden');
-  connect();
 }
 
 /* ---------------- connection ---------------- */
 
 function connect() {
   ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
-  ws.onopen = () => ws.send(JSON.stringify({ type: 'join', role: 'player', team: me.team, name: me.name }));
+  ws.onopen = () => ws.send(JSON.stringify({
+    type: 'join', role: 'player', team: me.team, name: me.name, code: me.code || '',
+  }));
   ws.onmessage = (ev) => {
     const msg = JSON.parse(ev.data);
     if (msg.type === 'state') onState(msg.state, msg.fx);
-    else if (msg.type === 'toast') bump(msg.text, msg.tone === 'error' ? 'bad' : 'warn');
+    else if (msg.type === 'accepted') showGame();
+    else if (msg.type === 'denied') {
+      joined = false;
+      ws.close();
+      $('game').classList.add('hidden');
+      $('join').classList.remove('hidden');
+      $('joinErr').textContent = msg.reason;
+    } else if (msg.type === 'toast') bump(msg.text, msg.tone === 'error' ? 'bad' : 'warn');
   };
   // Reconnect quietly — a team should never have to think about the network.
   ws.onclose = () => { if (joined) setTimeout(connect, 1000); };

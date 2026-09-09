@@ -123,6 +123,43 @@
   }
   #nearmisses b { color: var(--gold); }
 
+  #gate {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    background: rgba(5, 11, 31, .97);
+    padding: 1.5rem;
+  }
+  .gate-card {
+    width: min(30rem, 100%);
+    background: var(--navy-800);
+    border: 3px solid var(--edge);
+    border-radius: 18px;
+    padding: 1.6rem;
+  }
+  .gate-card h2 { margin: 0 0 .5rem; color: var(--gold); }
+  .gate-card p { line-height: 1.5; opacity: .8; font-size: .9rem; }
+  .gate-card code { background: var(--navy-900); padding: .1rem .35rem; border-radius: 5px; }
+  .gate-card input { width: 100%; margin: .5rem 0 .7rem; }
+  #gateErr { color: var(--red); opacity: 1; min-height: 1.2rem; }
+
+  /* The game code, read off the projector by the whole class. */
+  #gameCode {
+    display: inline-block;
+    margin-top: 1.2rem;
+    padding: .5rem 1.6rem;
+    border-radius: 14px;
+    background: var(--gold);
+    color: var(--navy-900);
+    font-size: clamp(1.6rem, 6vw, 4rem);
+    font-weight: 900;
+    letter-spacing: .3em;
+    text-indent: .3em;
+  }
+  #gameCodeLabel { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; opacity: .7; margin-top: 1rem; }
+
   #toggle {
     position: fixed;
     top: .5rem; right: .5rem;
@@ -138,6 +175,19 @@
 <body>
 
 <button id="toggle" title="Hide/show the control panel (H)">☰ Panel</button>
+
+<div id="gate" class="hidden">
+  <div class="gate-card">
+    <h2>Host key</h2>
+    <p>This board shows every answer, so it is behind a key on a public deployment.
+       Find <code>HOST_TOKEN</code> in your Render dashboard under
+       <b>Environment</b>, or in the deploy logs.</p>
+    <input id="gateInput" placeholder="Paste the host key" autocomplete="off">
+    <button class="btn primary" id="gateBtn" style="width:100%;padding:.7rem;font-size:1rem">Open the board</button>
+    <p class="muted" id="gateErr"></p>
+    <p class="muted">Tip: once it works, bookmark the URL — it keeps the key in it.</p>
+  </div>
+</div>
 
 <div id="stage">
   <div class="scorebar">
@@ -160,6 +210,8 @@
       <div class="big" id="cardBig">MIND FEUD</div>
       <div class="sub" id="cardSub">Where is My Mind? — Perception, Consciousness &amp; AI</div>
       <div class="join-url" id="joinUrl"></div>
+      <div id="gameCodeLabel" class="hidden">Game code</div>
+      <div id="gameCode" class="hidden"></div>
       <div class="sub muted" id="rosterLine" style="margin-top:1rem"></div>
     </div>
   </div>

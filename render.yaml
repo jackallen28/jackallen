@@ -1,0 +1,41 @@
+# Render blueprint for Mind Feud.
+#
+# Deploy: push this repo to GitHub, then in Render choose
+# New → Blueprint and point it at the repo. Everything below is applied
+# automatically; the only thing you may want to add by hand afterwards is
+# ANTHROPIC_API_KEY (see below — the game works without it).
+
+services:
+  - type: web
+    name: mind-feud
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+
+    # The whole game lives in this process's memory — the board, the scores,
+    # whose turn it is. A second instance would be a second, separate game that
+    # half the class lands on. Never scale this above one.
+    numInstances: 1
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+
+      # Guards the host board, which shows every unrevealed answer.
+      # Render generates this once and keeps it stable across deploys.
+      # Read it in the dashboard: Environment → HOST_TOKEN.
+      - key: HOST_TOKEN
+        generateValue: true
+
+      # The short code the class types to join. Leave it generated and read it
+      # off the lobby screen, or set your own memorable one (e.g. MIND).
+      - key: JOIN_CODE
+        generateValue: true
+
+      # Optional. Without it the game uses its built-in fuzzy matcher, which
+      # handles typos, plurals and every alias in the question bank. Add it in
+      # the dashboard if you want Claude to catch unanticipated phrasings too.
+      - key: ANTHROPIC_API_KEY
+        sync: false

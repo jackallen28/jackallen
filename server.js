@@ -21,17 +21,67 @@ import { judgeBoardGuess, judgeRapidGuess, aiAvailable } from './src/judge.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
-const HOST_TOKEN = process.env.HOST_TOKEN || ''; // optional, keeps students off the host view
+
+/**
+ * Public deployments (Render) versus the teacher's own laptop.
+ *
+ * On a laptop on the school network, anyone who can reach the server is
+ * already in the room, so no passwords: the teacher opens the board and the
+ * two team machines join. On a public URL that assumption is gone — an
+ * unguarded host board hands out every answer on the internet — so both gates
+ * below switch themselves on automatically when a public host is detected.
+ */
+const IS_PUBLIC = Boolean(process.env.RENDER || process.env.PUBLIC_DEPLOY);
+const EXTERNAL_URL = (process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || '')
+  .replace(/\/$/, '');
+
+// Guards the host board (the screen that shows unrevealed answers).
+const HOST_TOKEN = process.env.HOST_TOKEN || (IS_PUBLIC ? randomToken(24) : '');
+
+// A short code the class types to join, so a stray visitor cannot buzz in.
+// Shown in huge type on the lobby screen — the teacher just reads it out.
+const JOIN_CODE = (process.env.JOIN_CODE || (IS_PUBLIC ? randomCode(4) : '')).toUpperCase();
+
+function randomToken(n) {
+  const alphabet = 'abcdefghijkmnopqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+}
+// No O/0, I/1 or similar — this gets read off a projector and typed by teenagers.
+function randomCode(n) {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+}
 
 const app = express();
+app.set('trust proxy', 1); // Render terminates TLS in front of us
 app.use(express.static(path.join(here, 'public')));
 app.get('/', (_req, res) => res.sendFile(path.join(here, 'public', 'host.html')));
 app.get('/play', (_req, res) => res.sendFile(path.join(here, 'public', 'play.html')));
 app.get('/health', (_req, res) => res.json({ ok: true, ai: aiAvailable() }));
-// The host screen shows these to the class — location.hostname on the teacher's
-// own machine is "localhost", which no student computer can reach.
-app.get('/api/join-urls', (_req, res) =>
-  res.json({ urls: lanAddresses().map((a) => `http://${a}:${PORT}/play`) }));
+
+/**
+ * What the two screens need before anyone has authenticated.
+ * Deliberately does NOT include the join code or the host token.
+ */
+app.get('/api/config', (req, res) => {
+  res.json({
+    playUrls: playUrls(req),
+    joinRequired: Boolean(JOIN_CODE),
+    hostTokenRequired: Boolean(HOST_TOKEN),
+    ai: aiAvailable(),
+  });
+});
+
+/**
+ * Where the class should point their browsers. On a laptop that is the LAN
+ * address (location.hostname would be "localhost", which no student machine
+ * can reach); on Render it is the public URL.
+ */
+function playUrls(req) {
+  if (EXTERNAL_URL) return [`${EXTERNAL_URL}/play`];
+  if (IS_PUBLIC && req) return [`${req.protocol}://${req.get('host')}/play`];
+  return lanAddresses().map((a) => `http://${a}:${PORT}/play`);
+}
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
@@ -52,6 +102,9 @@ function broadcastState(fx = null) {
       fx,
       you: { role: c.role, team: c.team, name: c.name },
       roster: roster(),
+      // Only the authenticated host learns the code, so the lobby screen can
+      // display it. It never travels to a player socket.
+      joinCode: c.role === 'host' ? JOIN_CODE : undefined,
     });
   }
 }
@@ -70,7 +123,8 @@ function toast(ws, text, tone = 'info') {
 }
 
 wss.on('connection', (ws) => {
-  const client = { ws, role: 'player', team: null, name: 'Player' };
+  // Nothing is granted until the join handshake succeeds.
+  const client = { ws, role: 'pending', team: null, name: 'Player' };
   clients.add(client);
 
   ws.on('message', async (raw) => {
@@ -101,16 +155,20 @@ async function handle(client, msg) {
     case 'join': {
       if (msg.role === 'host') {
         if (HOST_TOKEN && msg.token !== HOST_TOKEN) {
-          return toast(ws, 'Wrong host password.', 'error');
+          return send(ws, { type: 'denied', as: 'host', reason: 'Wrong or missing host key.' });
         }
         client.role = 'host';
         client.team = null;
         client.name = 'Host';
       } else {
+        if (JOIN_CODE && String(msg.code || '').trim().toUpperCase() !== JOIN_CODE) {
+          return send(ws, { type: 'denied', as: 'player', reason: 'Wrong game code.' });
+        }
         client.role = 'player';
         client.team = TEAMS.includes(msg.team) ? msg.team : 'A';
         client.name = String(msg.name || '').slice(0, 20) || `${client.team} player`;
       }
+      send(ws, { type: 'accepted', role: client.role });
       return broadcastState();
     }
 
@@ -295,21 +353,41 @@ function lanAddresses() {
   return out;
 }
 
-server.listen(PORT, () => {
-  const addrs = lanAddresses();
+server.listen(PORT, '0.0.0.0', () => {
+  const urls = playUrls(null);
   console.log('');
   console.log('  ┌─────────────────────────────────────────────┐');
   console.log('  │   MIND FEUD — "Where is My Mind?"           │');
   console.log('  └─────────────────────────────────────────────┘');
   console.log('');
-  console.log(`  Host board (project this):  http://localhost:${PORT}/`);
-  if (addrs.length) {
+
+  if (IS_PUBLIC) {
+    const base = EXTERNAL_URL || `(this service's URL)`;
+    console.log(`  Public deployment on port ${PORT}.`);
     console.log('');
-    console.log('  Team computers open ONE of these:');
-    for (const a of addrs) console.log(`      http://${a}:${PORT}/play`);
+    console.log(`  Host board (project this):  ${base}/?token=${HOST_TOKEN}`);
+    console.log(`  Team computers:             ${base}/play`);
+    console.log('');
+    console.log(`  GAME CODE for the class:    ${JOIN_CODE}`);
+    console.log('  (also shown in large type on the lobby screen)');
+    if (!process.env.HOST_TOKEN) {
+      console.log('');
+      console.log('  NOTE: HOST_TOKEN was not set, so one was generated for this boot and');
+      console.log('  will change on the next restart. Set HOST_TOKEN in the dashboard to');
+      console.log('  keep a stable host link you can bookmark.');
+    }
   } else {
-    console.log('\n  No network interface found — use single-device mode on the host screen.');
+    console.log(`  Host board (project this):  http://localhost:${PORT}/`);
+    if (urls.length) {
+      console.log('');
+      console.log('  Team computers open ONE of these:');
+      for (const u of urls) console.log(`      ${u}`);
+    } else {
+      console.log('\n  No network interface found — use single-device mode on the host screen.');
+    }
+    if (JOIN_CODE) console.log(`\n  Game code: ${JOIN_CODE}`);
   }
+
   console.log('');
   console.log(aiAvailable()
     ? '  Answer judging: local matcher + Claude for the odd phrasings.'

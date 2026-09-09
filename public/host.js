@@ -9,26 +9,36 @@ let roster = { host: 0, A: [], B: [] };
 let lastVersion = -1;
 let lastClock = null;
 let joinUrls = [];
+let gameCode = '';
+let hostToken = new URLSearchParams(location.search).get('token')
+  || sessionStorage.getItem('mindfeud.hostToken') || '';
 
-// The teacher opens the board on localhost; the class needs the LAN address.
-fetch('/api/join-urls')
+// The teacher opens the board on localhost; the class needs a reachable address
+// (the LAN IP on a laptop, the public URL on Render).
+fetch('/api/config')
   .then((r) => r.json())
-  .then((d) => { joinUrls = d.urls || []; if (state) render(); })
+  .then((d) => { joinUrls = d.playUrls || []; if (state) render(); })
   .catch(() => {});
 
 /* ---------------- connection ---------------- */
 
 function connect() {
   ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
-  ws.onopen = () => {
-    const token = new URLSearchParams(location.search).get('token') || '';
-    ws.send(JSON.stringify({ type: 'join', role: 'host', token }));
-  };
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'join', role: 'host', token: hostToken }));
   ws.onmessage = (ev) => {
     const msg = JSON.parse(ev.data);
     if (msg.type === 'state') {
+      if (msg.joinCode !== undefined) gameCode = msg.joinCode || '';
       roster = msg.roster || roster;
       onState(msg.state, msg.fx);
+    } else if (msg.type === 'accepted') {
+      sessionStorage.setItem('mindfeud.hostToken', hostToken);
+      $('gate').classList.add('hidden');
+    } else if (msg.type === 'denied') {
+      // A public deployment guards this screen — it shows every answer.
+      $('gate').classList.remove('hidden');
+      $('gateErr').textContent = hostToken ? msg.reason : '';
+      $('gateInput').focus();
     } else if (msg.type === 'toast') {
       flash(msg.text, msg.tone === 'error' ? 'bad' : 'warn');
     }
@@ -141,7 +151,12 @@ function renderTitle(s) {
     $('joinUrl').textContent = url;
     $('joinUrl').title = joinUrls.join('  ·  ');
     $('joinUrl').classList.remove('hidden');
+    $('gameCode').textContent = gameCode;
+    $('gameCode').classList.toggle('hidden', !gameCode);
+    $('gameCodeLabel').classList.toggle('hidden', !gameCode);
   } else {
+    $('gameCode').classList.add('hidden');
+    $('gameCodeLabel').classList.add('hidden');
     $('cardBig').textContent = s.round ? s.round.name.replace(/^Round \d+ — /, '') : '';
     $('cardSub').innerHTML = s.round
       ? `<b>Round ${s.round.index + 1}</b> · ${s.round.weeks} · <b>×${s.round.multiplier} points</b>`
@@ -323,6 +338,7 @@ document.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
 
+  if (btn.id === 'gateBtn') return submitToken();
   if (btn.id === 'toggle') return $('panel').classList.toggle('collapsed');
   if (btn.id === 'setA') return act('teamName', { team: 'A', name: $('teamAName').value });
   if (btn.id === 'setB') return act('teamName', { team: 'B', name: $('teamBName').value });
@@ -357,8 +373,13 @@ $('enableSpoiler').addEventListener('change', (e) =>
   act('setting', { key: 'enableSpoiler', value: e.target.checked }));
 $('soundOn').addEventListener('change', (e) => setEnabled(e.target.checked));
 
+$('gateInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); submitToken(); }
+});
+
 document.addEventListener('keydown', (e) => {
   if (e.target.matches('input, select, textarea')) return;
+  if (!$('gate').classList.contains('hidden')) return;
   unlock();
   const k = e.key.toLowerCase();
 
@@ -375,6 +396,18 @@ document.addEventListener('keydown', (e) => {
     return act('reveal', { index: Number(e.key) - 1, team: state?.control || null });
   }
 });
+
+function submitToken() {
+  const value = $('gateInput').value.trim();
+  if (!value) return;
+  hostToken = value;
+  // Put it in the URL so a refresh — or a bookmark — just works.
+  const url = new URL(location.href);
+  url.searchParams.set('token', value);
+  history.replaceState(null, '', url);
+  $('gateErr').textContent = '';
+  ws.send(JSON.stringify({ type: 'join', role: 'host', token: hostToken }));
+}
 
 /* ---------------- helpers ---------------- */
 

@@ -31,6 +31,57 @@ cp .env.example .env    # then: node --env-file=.env server.js
 
 ---
 
+## Hosting it on Render
+
+Push this repo to GitHub, then in Render choose **New → Blueprint** and point it
+at the repo. [`render.yaml`](render.yaml) configures everything: build, start,
+health check, Node 22, and both access codes.
+
+Then, in the Render dashboard under **Environment**:
+
+| Variable | What to do |
+|---|---|
+| `HOST_TOKEN` | Generated for you. **Copy it** — your board is `https://your-app.onrender.com/?token=<HOST_TOKEN>`. Bookmark that link. |
+| `JOIN_CODE` | Generated for you. Change it to something short and memorable (`MIND`, `YR9`) — the class types it. |
+| `ANTHROPIC_API_KEY` | Optional. Paste one if you want it; skip it and the local matcher runs the game. |
+
+Both codes are also printed in the deploy logs on every boot.
+
+### What the two codes do
+
+Once the game is on a public URL, two things need guarding, so the server turns
+both gates on automatically when it detects a public host (`RENDER` is set):
+
+- **The host board shows every unrevealed answer.** It is behind `HOST_TOKEN`.
+  A request without the key is refused *before any game state is sent* — the
+  answers never reach that browser at all, so there is nothing to read in the
+  page source.
+- **A stray visitor could otherwise join a team and buzz.** `/play` asks for the
+  short **game code**, which is displayed in huge type on your lobby screen. You
+  read it out; the class types it. It is never sent to an unauthenticated
+  browser, and it is case-insensitive because teenagers type in lowercase.
+
+Neither gate exists when you run on your own laptop — anyone who can reach the
+server there is already in the room.
+
+### Two things to know about Render's free plan
+
+**It sleeps after 15 minutes of inactivity**, and the first request after that
+takes about 50 seconds to wake. **Open the board a couple of minutes before
+class**, not as the bell goes. Once a game is running the websocket traffic
+keeps it awake, so it will not sleep mid-lesson.
+
+**One instance is one game.** The board, the scores and whose turn it is all
+live in that process's memory. `render.yaml` pins `numInstances: 1` — do not
+raise it, or half your class lands in a different game. It also means you
+cannot run two classes at once on one deployment; for a second simultaneous
+class, deploy a second service.
+
+To wipe the board between classes, use **Reset everything** in the host panel —
+a redeploy is not needed.
+
+---
+
 ## How the game was adapted from the real show
 
 You asked for a faster game. Here is what was changed and why, plus the parts
@@ -140,6 +191,7 @@ alias**, which catches a typo'd alias before you find it mid-lesson.
 ```bash
 node test/matcher.test.js      # 130 checks, offline, no API key needed
 node test/playthrough.test.js  # boots the server, plays a full game over websockets
+node test/deploy.test.js       # boots it as Render would, and tries to break in
 ```
 
 The playthrough test covers the things that actually break in a live game: the
@@ -147,6 +199,13 @@ buzzer race between two teams, whether the team that lost the race is refused,
 turn passing on a miss, whether a team screen can see unrevealed answers (it
 cannot — the server strips them), the clock running down, and the spoiler pile
 being handed to the right team.
+
+The deploy test boots the server the way Render does and then attacks it: a
+host with no key, a host with a wrong key, a player with no code, a player with
+a wrong code. It checks each is refused, that a refused socket receives no game
+state and cannot buzz, answer or reset the game, that the public config
+endpoint leaks neither code, and that an accepted player still cannot see
+unrevealed answers.
 
 ---
 
@@ -160,11 +219,13 @@ src/questions.js       the question bank — this is the file you will edit
 public/host.html/.js   the projected board and the teacher's control panel
 public/play.html/.js   the team console
 public/sfx.js          all sounds, synthesised in-browser (no audio files)
-test/                  offline matcher checks + a full websocket playthrough
+test/                  matcher checks, a full playthrough, and deployment gates
+render.yaml            Render blueprint — build, health check, both access codes
 ```
 
 State lives on the server, so a team refreshing their tab mid-round loses
 nothing, and both consoles reconnect silently if the wifi hiccups.
 
-Set `HOST_TOKEN=something` to require `?token=something` on the host board, if
-you are worried about students opening the answer screen.
+Set `HOST_TOKEN` and `JOIN_CODE` yourself to switch the gates on locally too —
+useful if you want to test the hosted behaviour before deploying. Setting
+`PUBLIC_DEPLOY=true` simulates Render's environment entirely.
