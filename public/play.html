@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mind Feud — Team Console</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%B4%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/app.css">
+<style>
+  body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  #join { flex: 1; display: grid; place-items: center; padding: 1.5rem; text-align: center; }
+  #join h1 { font-size: clamp(1.8rem, 6vw, 3.4rem); margin: 0 0 .3rem; color: var(--gold); }
+  #join p { opacity: .75; margin: 0 0 1.6rem; }
+  .team-pick { display: flex; gap: 1rem; margin-bottom: 1.2rem; }
+  .team-pick button {
+    flex: 1;
+    padding: 1.4rem 1rem;
+    font-size: 1.3rem;
+    font-weight: 800;
+    background: var(--navy-700);
+    color: var(--cream);
+    border: 4px solid var(--edge);
+  }
+  .team-pick button[data-team="A"].sel { border-color: var(--teamA); background: rgba(63,169,255,.2); }
+  .team-pick button[data-team="B"].sel { border-color: var(--teamB); background: rgba(255,122,69,.2); }
+  #join input { width: 100%; font-size: 1.1rem; text-align: center; margin-bottom: 1rem; }
+  #joinBtn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    background: var(--gold);
+    color: var(--navy-900);
+  }
+  .card { width: min(30rem, 100%); }
+
+  #game { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+  #status {
+    padding: .5rem 1rem;
+    text-align: center;
+    font-size: clamp(.9rem, 2.6vw, 1.3rem);
+    font-weight: 700;
+    background: rgba(255,255,255,.05);
+    border-bottom: 2px solid var(--edge);
+  }
+
+  #questionBox {
+    padding: .8rem 1rem;
+    font-size: clamp(.9rem, 2.4vw, 1.35rem);
+    line-height: 1.35;
+    font-weight: 600;
+    border-left: 6px solid var(--gold);
+    margin: .6rem 1rem;
+    background: rgba(255,255,255,.05);
+    border-radius: 12px;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  #buzzer {
+    flex: 1;
+    min-height: 8rem;
+    margin: .6rem 1rem;
+    border-radius: 24px;
+    border: 6px solid var(--edge);
+    background: linear-gradient(180deg, var(--navy-600), var(--navy-800));
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: clamp(1.4rem, 7vw, 3.4rem);
+    font-weight: 900;
+    letter-spacing: .04em;
+    color: var(--cream);
+    width: calc(100% - 2rem);
+  }
+  #buzzer.live {
+    background: linear-gradient(180deg, #e02b3c, #a4111f);
+    border-color: #ff8a94;
+    color: #fff;
+    animation: heartbeat 1.1s ease-in-out infinite;
+  }
+  #buzzer.ours {
+    background: linear-gradient(180deg, #1f8f52, #0d5c33);
+    border-color: var(--green);
+  }
+  #buzzer.locked { opacity: .5; }
+  /* Once they have the board, shrink the buzzer so the keyboard is the focus. */
+  #buzzer.typing { flex: 0 0 auto; min-height: 0; padding: .9rem; font-size: clamp(1rem, 3.4vw, 1.6rem); }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); box-shadow: 0 0 46px rgba(224,43,60,.6); }
+  }
+  #buzzer small { display: block; font-size: .3em; font-weight: 600; opacity: .85; margin-top: .5rem; letter-spacing: .1em; }
+
+  #answerArea { padding: .6rem 1rem 1rem; margin-top: auto; }
+  #answerRow { display: flex; gap: .5rem; }
+  #answerInput { flex: 1; font-size: clamp(1rem, 3.6vw, 1.5rem); padding: .8rem 1rem; }
+  #sendBtn {
+    padding: .8rem 1.4rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    background: var(--gold);
+    color: var(--navy-900);
+  }
+  #feedback {
+    text-align: center;
+    min-height: 1.8rem;
+    margin-top: .5rem;
+    font-weight: 700;
+    font-size: clamp(.85rem, 2.4vw, 1.1rem);
+  }
+  #feedback.good { color: var(--green); }
+  #feedback.bad { color: var(--red); }
+  #feedback.warn { color: var(--gold); }
+
+  .mini-board {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .35rem;
+    padding: 0 1rem .6rem;
+  }
+  .mini {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .35rem .6rem;
+    border-radius: 9px;
+    border: 2px solid var(--edge);
+    background: var(--navy-700);
+    font-size: clamp(.7rem, 2vw, .95rem);
+    min-height: 2.4rem;
+  }
+  .mini .n {
+    width: 1.5rem; height: 1.5rem; flex: 0 0 auto;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--gold); color: var(--navy-900);
+    font-weight: 800; font-size: .8rem;
+  }
+  .mini .t { flex: 1; line-height: 1.2; }
+  .mini .p { font-weight: 800; }
+  .mini.closed .t, .mini.closed .p { visibility: hidden; }
+  .mini.closed { justify-content: center; }
+  .mini.open[data-by="A"] { border-color: var(--teamA); }
+  .mini.open[data-by="B"] { border-color: var(--teamB); }
+  .mini.missed { opacity: .55; border-color: #4a5570; }
+  .mini.missed .n { background: #4a5570; color: #cfd6e6; }
+
+  #clockRow { text-align: center; padding: .2rem 0; }
+  #miniClock { font-size: clamp(1.6rem, 8vw, 3rem); font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div id="join">
+  <div class="card">
+    <h1>MIND FEUD</h1>
+    <p>Where is My Mind? — pick your side.</p>
+    <div class="team-pick">
+      <button data-team="A" id="pickA">TEAM A</button>
+      <button data-team="B" id="pickB">TEAM B</button>
+    </div>
+    <input id="nameInput" placeholder="Who is on the keyboard?" maxlength="20" autocomplete="off">
+    <button id="joinBtn">JOIN THE GAME</button>
+  </div>
+</div>
+
+<div id="game" class="hidden">
+  <div class="scorebar" style="padding:.5rem 1rem">
+    <div class="team-score" data-team="A" id="scoreA">
+      <div class="label" id="nameA">Team A</div>
+      <div class="value" id="valA">0</div>
+    </div>
+    <div class="centre-badge">
+      <div class="multiplier" id="multiplier">—</div>
+      <div class="sub">points</div>
+    </div>
+    <div class="team-score" data-team="B" id="scoreB">
+      <div class="label" id="nameB">Team B</div>
+      <div class="value" id="valB">0</div>
+    </div>
+  </div>
+
+  <div id="status">Waiting for the host…</div>
+  <div id="clockRow" class="hidden"><div id="miniClock">0:00</div></div>
+  <div id="questionBox" class="hidden"></div>
+  <div class="mini-board" id="miniBoard"></div>
+
+  <button id="buzzer" class="locked">BUZZERS LOCKED<small>press SPACE when they open</small></button>
+
+  <div id="answerArea">
+    <div id="answerRow">
+      <input id="answerInput" placeholder="Type your answer, then Enter" autocomplete="off" disabled>
+      <button id="sendBtn" disabled>SEND</button>
+    </div>
+    <div id="feedback"></div>
+  </div>
+</div>
+
+<div id="flash"><div class="inner"></div></div>
+
+<script type="module" src="/play.js"></script>
+</body>
+</html>

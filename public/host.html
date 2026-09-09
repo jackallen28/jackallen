@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mind Feud — Host Board</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/app.css">
+<style>
+  body { display: flex; height: 100vh; overflow: hidden; }
+
+  #stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow-y: auto;
+  }
+  /* The board is the show — let it take the whole projector. */
+  #gameview { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  #gameview .board { flex: 1; align-content: stretch; }
+  #finalview { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+  #panel {
+    width: 21rem;
+    flex: 0 0 21rem;
+    background: #060d22;
+    border-left: 3px solid var(--edge);
+    overflow-y: auto;
+    padding: .8rem;
+    font-size: .82rem;
+  }
+  #panel.collapsed { display: none; }
+  #panel h3 {
+    margin: 1rem 0 .4rem;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border-bottom: 1px solid var(--edge);
+    padding-bottom: .25rem;
+  }
+  #panel h3:first-child { margin-top: 0; }
+  .row { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .4rem; }
+  .row > * { flex: 1; min-width: 0; }
+  .btn {
+    background: var(--navy-600);
+    color: var(--cream);
+    border: 2px solid var(--edge);
+    padding: .45rem .5rem;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.35); }
+  .btn.primary { background: var(--gold); color: var(--navy-900); border-color: var(--gold-deep); }
+  .btn.a { border-color: var(--teamA); }
+  .btn.b { border-color: var(--teamB); }
+  .btn.danger { border-color: var(--red); }
+  .btn.small { padding: .25rem .35rem; font-size: .7rem; }
+
+  .qbtn { text-align: left; line-height: 1.25; padding: .4rem .5rem; }
+  .qbtn.used { opacity: .45; }
+
+  #log { list-style: none; margin: 0; padding: 0; }
+  #log li {
+    padding: .35rem .45rem;
+    border-left: 3px solid var(--edge);
+    margin-bottom: .25rem;
+    background: rgba(255,255,255,.03);
+    line-height: 1.3;
+  }
+  #log li.correct { border-color: var(--green); }
+  #log li.wrong { border-color: var(--red); }
+  #log li.nearMiss { border-color: var(--gold); }
+  #log .who { font-weight: 700; }
+  #log .why { opacity: .55; font-size: .72rem; font-style: italic; }
+
+  .muted { opacity: .6; }
+  .kbd {
+    display: inline-block;
+    padding: .05rem .35rem;
+    border: 1px solid var(--edge);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    font-size: .7rem;
+    background: var(--navy-900);
+  }
+
+  #titlecard {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  #titlecard .big {
+    font-size: clamp(1.8rem, 5.5vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--gold);
+    text-shadow: 0 8px 30px rgba(0,0,0,.5);
+  }
+  #titlecard .sub { font-size: clamp(.9rem, 2vw, 1.5rem); opacity: .8; margin-top: 1rem; line-height: 1.5; }
+
+  .join-url {
+    display: inline-block;
+    margin-top: 1.4rem;
+    padding: .7rem 1.4rem;
+    border: 3px dashed var(--gold);
+    border-radius: 14px;
+    font-size: clamp(1rem, 3vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: .02em;
+  }
+
+  #nearmisses {
+    margin: 0 1rem .8rem;
+    padding: .6rem 1rem;
+    border-radius: 12px;
+    background: rgba(255,194,51,.12);
+    border-left: 5px solid var(--gold);
+    font-size: clamp(.8rem, 1.6vw, 1.1rem);
+  }
+  #nearmisses b { color: var(--gold); }
+
+  #toggle {
+    position: fixed;
+    top: .5rem; right: .5rem;
+    z-index: 100;
+    background: rgba(0,0,0,.5);
+    color: var(--cream);
+    border: 1px solid var(--edge);
+    padding: .3rem .6rem;
+    font-size: .75rem;
+  }
+</style>
+</head>
+<body>
+
+<button id="toggle" title="Hide/show the control panel (H)">☰ Panel</button>
+
+<div id="stage">
+  <div class="scorebar">
+    <div class="team-score" data-team="A" id="scoreA">
+      <div class="label" id="nameA">Team A</div>
+      <div class="value" id="valA">0</div>
+    </div>
+    <div class="centre-badge">
+      <div class="multiplier" id="multiplier">—</div>
+      <div class="sub" id="roundLabel">Lobby</div>
+    </div>
+    <div class="team-score" data-team="B" id="scoreB">
+      <div class="label" id="nameB">Team B</div>
+      <div class="value" id="valB">0</div>
+    </div>
+  </div>
+
+  <div id="titlecard">
+    <div>
+      <div class="big" id="cardBig">MIND FEUD</div>
+      <div class="sub" id="cardSub">Where is My Mind? — Perception, Consciousness &amp; AI</div>
+      <div class="join-url" id="joinUrl"></div>
+      <div class="sub muted" id="rosterLine" style="margin-top:1rem"></div>
+    </div>
+  </div>
+
+  <div id="gameview" class="hidden">
+    <div class="prompt" id="prompt"></div>
+    <div class="strikes" id="strikes"></div>
+    <div class="board" id="board"></div>
+    <div id="nearmisses" class="hidden"></div>
+  </div>
+
+  <div id="finalview" class="hidden" style="padding:1rem;text-align:center">
+    <div class="clock" id="clock">0:00</div>
+    <div class="prompt" id="rapidPrompt" style="text-align:left"></div>
+    <div class="sub" id="finalStats" style="font-size:clamp(1rem,2.4vw,1.8rem);font-weight:700"></div>
+  </div>
+</div>
+
+<div id="panel">
+  <h3>Game</h3>
+  <div class="row">
+    <button class="btn primary" data-act="startRound">Start / Next Round</button>
+  </div>
+  <div class="row">
+    <button class="btn" data-act="openQuestion">Put Question Up</button>
+    <button class="btn" data-act="reopenBuzzers">Re-open Buzzers</button>
+  </div>
+  <div class="row">
+    <button class="btn a" data-act="giveControl" data-team="A">Give A control</button>
+    <button class="btn b" data-act="giveControl" data-team="B">Give B control</button>
+  </div>
+  <div class="row">
+    <button class="btn" data-act="endRound">End Round &amp; Reveal</button>
+  </div>
+
+  <h3>Reveal by hand <span class="muted">(shouted it, mistyped it)</span></h3>
+  <div id="revealGrid"></div>
+
+  <h3>Final round</h3>
+  <div class="row">
+    <button class="btn primary" data-act="startFinal">Call Up Leaders</button>
+  </div>
+  <div class="row">
+    <button class="btn a small" data-act="startFinal" data-team="A">Force A</button>
+    <button class="btn b small" data-act="startFinal" data-team="B">Force B</button>
+  </div>
+  <div class="row">
+    <button class="btn primary" data-act="startFinalClock">▶ Start Clock</button>
+    <button class="btn" data-act="startSpoilerClock">▶ Spoiler Clock</button>
+  </div>
+  <div class="row">
+    <button class="btn small" data-act="markRapid" data-correct="1">✓ Mark correct</button>
+    <button class="btn small" data-act="skipRapid">↷ Skip</button>
+    <button class="btn small danger" data-act="endRapid">■ Stop</button>
+  </div>
+
+  <h3>Scores</h3>
+  <div class="row">
+    <button class="btn a small" data-act="adjust" data-team="A" data-delta="-10">A −10</button>
+    <button class="btn a small" data-act="adjust" data-team="A" data-delta="10">A +10</button>
+    <button class="btn b small" data-act="adjust" data-team="B" data-delta="-10">B −10</button>
+    <button class="btn b small" data-act="adjust" data-team="B" data-delta="10">B +10</button>
+  </div>
+  <div class="row">
+    <input id="teamAName" placeholder="Team A name">
+    <button class="btn small" id="setA">Set</button>
+  </div>
+  <div class="row">
+    <input id="teamBName" placeholder="Team B name">
+    <button class="btn small" id="setB">Set</button>
+  </div>
+
+  <h3>Questions</h3>
+  <div id="questionList"></div>
+
+  <h3>Settings</h3>
+  <div class="row">
+    <label style="flex:1">Miss limit
+      <input id="missLimit" type="number" min="1" max="12" style="width:100%">
+    </label>
+  </div>
+  <div class="row" style="align-items:center">
+    <label style="flex:2"><input type="checkbox" id="buzzToReclaim"> Re-buzz for control after every miss</label>
+  </div>
+  <div class="row" style="align-items:center">
+    <label style="flex:2"><input type="checkbox" id="enableSpoiler" checked> Spoiler round for the trailing team</label>
+  </div>
+  <div class="row" style="align-items:center">
+    <label style="flex:2"><input type="checkbox" id="soundOn" checked> Sound</label>
+  </div>
+
+  <h3>No-network mode</h3>
+  <p class="muted" style="margin:.2rem 0 .5rem;line-height:1.4">
+    If the team computers cannot reach this server, run the whole game from here:
+    <span class="kbd">A</span> buzzes for Team A, <span class="kbd">L</span> for Team B,
+    then reveal answers by hand above.
+  </p>
+
+  <h3>Feed</h3>
+  <ul id="log"></ul>
+
+  <h3 style="margin-top:1.2rem">Danger</h3>
+  <div class="row">
+    <button class="btn danger small" data-act="finish">End game</button>
+    <button class="btn danger small" id="resetBtn">Reset everything</button>
+  </div>
+</div>
+
+<div id="flash"><div class="inner"></div></div>
+
+<script type="module" src="/host.js"></script>
+</body>
+</html>
