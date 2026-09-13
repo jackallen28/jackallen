@@ -1,0 +1,9 @@
+# PARTICIPANT WRITING SAMPLES — PLACEHOLDER
+#
+# Only used if classroom/ is missing or BOT_PERSONA is set. The classroom pack is
+# the main route; this file is the fallback.
+#
+# Paste real messages your participants write, one per line, in whichever language
+# they write them. Anonymise first. Lines starting with # are ignored.
+#
+# (to be supplied)

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Human or Not? — Teacher</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎛️</text></svg>">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<!-- Passcode -->
+<section id="screen-auth" class="wrap">
+  <div class="card" style="max-width:400px;margin:12vh auto;">
+    <h1>Teacher console</h1>
+    <p class="muted small">Enter the teacher passcode to open the control panel.</p>
+    <div class="field">
+      <label for="passcode">Passcode</label>
+      <input id="passcode" type="password" autocomplete="current-password">
+    </div>
+    <button id="auth-btn" style="width:100%">Unlock</button>
+    <div id="auth-error" class="error"></div>
+  </div>
+</section>
+
+<section id="screen-dash" class="wrap hidden">
+
+  <div class="stagebar">
+    <div>
+      <h1 style="margin:0">Human or Not?</h1>
+      <div class="small muted" id="join-line">Students join at <strong id="join-url"></strong></div>
+    </div>
+    <div class="barright">
+      <ol class="steps" id="steps">
+        <li data-step="setup">Set up</li>
+        <li data-step="lobby">Log in</li>
+        <li data-step="running">Chat</li>
+        <li data-step="reveal">Reveal</li>
+        <li data-step="scores">Scores</li>
+        <li data-step="report">Report</li>
+      </ol>
+      <div class="langtoggle" role="group" aria-label="Report language">
+        <span class="lbl">Report</span>
+        <button type="button" class="seg on" data-report-lang="en">EN</button>
+        <button type="button" class="seg" data-report-lang="zh">中文</button>
+      </div>
+      <button id="reset-btn" class="ghost small" title="Wipe everything and go back to the start">↺ Reset</button>
+    </div>
+  </div>
+
+  <div id="bot-warning" class="card hidden" style="border-color:#5a4515;background:#2a2210;margin-bottom:16px;">
+    <strong class="pill ai">Heads up</strong>
+    <span class="small">No <code>ANTHROPIC_API_KEY</code> is set on the server, so AI partners will send simple scripted replies instead of real Claude responses.</span>
+  </div>
+  <div id="dash-error" class="error"></div>
+
+  <!-- ============================ 1. SET UP ============================ -->
+  <div id="stage-setup">
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Class login list</h2>
+      <p class="small muted">Upload a CSV of the logins you handed out. Four letters then four numbers,
+        paired with the student number, for example <code>WXYZ1234,Student 07</code>. A header row is fine
+        and the columns can be either way round.</p>
+      <div class="row">
+        <div class="shrink"><button id="roster-btn" class="ghost">Choose CSV…</button></div>
+        <div class="shrink"><button id="roster-clear" class="ghost small hidden">Clear list</button></div>
+        <div><div class="small" id="roster-status">No list uploaded — any correctly formatted login will work.</div></div>
+      </div>
+      <input id="roster-file" type="file" accept=".csv,text/csv,text/plain" class="hidden">
+      <div id="roster-issues" class="small" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Round settings</h2>
+      <div class="row">
+        <div>
+          <label for="duration">Round length</label>
+          <select id="duration">
+            <option value="60">1 minute</option>
+            <option value="120" selected>2 minutes</option>
+            <option value="180">3 minutes</option>
+            <option value="300">5 minutes</option>
+          </select>
+        </div>
+        <div>
+          <label for="ratio">Share paired with AI — <span id="ratio-label">50%</span></label>
+          <input id="ratio" type="range" min="0" max="100" step="10" value="50" style="padding:0">
+        </div>
+      </div>
+
+      <div class="mix">
+        <div class="mix-head">
+          <label style="margin:0">Which models the AI partners use</label>
+          <span class="small muted" id="mix-summary"></span>
+        </div>
+        <div id="model-mix"></div>
+        <p class="small muted" id="mix-warning" style="margin:8px 0 0"></p>
+        <p class="small muted" id="voice-note" style="margin:8px 0 0"></p>
+      <p class="small muted" id="translation-note" style="margin:8px 0 0"></p>
+      </div>
+
+      <div class="mix" id="persona-block">
+        <div class="mix-head">
+          <label style="margin:0">Which student personas the bots play</label>
+          <span class="small muted" id="persona-summary"></span>
+        </div>
+        <div id="persona-pick"></div>
+        <p class="small muted" id="persona-warning" style="margin:8px 0 0"></p>
+      </div>
+    </div>
+
+    <div class="center">
+      <button id="open-btn" class="big">Open the room →</button>
+      <p class="small muted" style="margin-top:10px">Students cannot log in until you do this.</p>
+    </div>
+  </div>
+
+  <!-- ============================ 2. LOG IN ============================ -->
+  <div id="stage-lobby" class="hidden">
+    <div class="card center" style="margin-bottom:16px;">
+      <h2 style="margin:0">Students are logging in</h2>
+      <p class="muted" style="margin:6px 0 0">Go to <strong id="join-url-2"></strong> and enter your login.</p>
+      <div class="bignum" id="lobby-count">0</div>
+      <div class="small muted" id="lobby-of"></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="code-grid" id="code-grid"></div>
+      <p class="muted small" id="lobby-empty">Nobody has logged in yet.</p>
+    </div>
+    <div class="center">
+      <button id="begin-btn" class="big" disabled>Begin the round →</button>
+      <p class="small muted" style="margin-top:10px">Anyone who logs in after this sits the round out.</p>
+    </div>
+  </div>
+
+  <!-- ============================ 3. CHAT ============================ -->
+  <div id="stage-running" class="hidden">
+    <div class="card center">
+      <div class="small muted" style="text-transform:uppercase;letter-spacing:.08em">Time remaining</div>
+      <div id="big-clock" class="bigclock">2:00</div>
+      <div class="stat-row" style="max-width:640px;margin:18px auto 0">
+        <div class="stat"><div class="n" id="run-students">0</div><div class="k">In the round</div></div>
+        <div class="stat"><div class="n" id="run-messages">0</div><div class="k">Messages sent</div></div>
+      </div>
+      <p style="margin-top:22px"><button id="end-btn" class="ghost">End early</button></p>
+    </div>
+  </div>
+
+  <!-- ============================ 4. ANSWERING ============================ -->
+  <div id="stage-answering" class="hidden">
+    <div class="card center">
+      <h2 style="margin:0">Time's up — students are answering</h2>
+      <p class="muted">Each student is choosing whether they were talking to a classmate or an AI.</p>
+      <div class="bignum" id="answered-count">0/0</div>
+      <p style="margin-top:18px"><button id="reveal-btn" class="big">Reveal the answers →</button></p>
+    </div>
+  </div>
+
+  <!-- ============================ 5. REVEAL ============================ -->
+  <div id="stage-reveal" class="hidden">
+    <div class="center" style="margin-bottom:18px">
+      <h1 style="margin:0">Who was talking to whom</h1>
+      <p class="muted">Green pairs were two real students. Amber means the partner was never human.</p>
+    </div>
+    <div class="pairs" id="pairs"></div>
+    <div class="center" style="margin-top:24px">
+      <button id="to-scores-btn" class="big">Who guessed right? →</button>
+    </div>
+  </div>
+
+  <!-- ============================ 6. SCORES ============================ -->
+  <div id="stage-scores" class="hidden">
+    <div class="center" style="margin-bottom:18px">
+      <h1 style="margin:0">Who worked it out</h1>
+    </div>
+    <div class="stat-row" style="margin-bottom:18px">
+      <div class="stat"><div class="n" id="sc-correct">0</div><div class="k">Got it right</div></div>
+      <div class="stat"><div class="n" id="sc-wrong">0</div><div class="k">Fooled</div></div>
+      <div class="stat"><div class="n" id="sc-accuracy">—</div><div class="k">Class accuracy</div></div>
+      <div class="stat"><div class="n" id="sc-human">—</div><div class="k">Right about peers</div></div>
+      <div class="stat"><div class="n" id="sc-ai">—</div><div class="k">Right about AI</div></div>
+    </div>
+    <div class="scoregrid" id="scoregrid"></div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>By model</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Model</th><th>Students</th><th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th><th>Est. cost</th></tr></thead>
+        <tbody id="model-body"></tbody>
+      </table></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>By persona</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Persona</th><th>Students</th><th>Believed human</th><th>Spotted as AI</th><th>Fooled rate</th></tr></thead>
+        <tbody id="persona-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="center" style="margin-top:24px">
+      <button id="to-report-btn" class="big">Get the report →</button>
+    </div>
+  </div>
+
+  <!-- ============================ 7. REPORT ============================ -->
+  <div id="stage-report" class="hidden">
+    <div class="card center" style="max-width:620px;margin:0 auto">
+      <h1 style="margin:0">Download the round</h1>
+      <p class="muted">One file with everything: the full report, a spreadsheet of results,
+        and every transcript.</p>
+      <p style="margin:26px 0 10px"><button id="zip-btn" class="big">⬇ Download everything</button></p>
+      <div class="small muted" id="zip-note"></div>
+      <p class="small muted" style="margin-top:22px">
+        Nothing is saved on the server. Once you start over, this round is gone.
+      </p>
+      <p style="margin-top:20px"><button id="to-startover-btn" class="ghost">Finished — go to start over →</button></p>
+    </div>
+  </div>
+
+  <!-- ============================ 8. START OVER ============================ -->
+  <div id="stage-startover" class="hidden">
+    <div class="card center" style="max-width:560px;margin:0 auto">
+      <h1 style="margin:0">Start over</h1>
+      <p class="muted">This wipes every login, student number, message and result, and returns
+        to a blank set-up screen ready for the next class.</p>
+      <div id="download-warning" class="small" style="color:var(--ai);margin:14px 0"></div>
+      <p style="margin-top:18px"><button id="startover-btn" class="big danger-solid">Wipe everything and start over</button></p>
+      <p style="margin-top:10px"><button id="back-report-btn" class="ghost small">← back to the report</button></p>
+    </div>
+  </div>
+
+</section>
+
+<!-- Confirmation dialog, used for anything destructive -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-card">
+    <h2 id="modal-title">Are you sure?</h2>
+    <p id="modal-body" class="muted"></p>
+    <div id="modal-warn" class="small hidden"></div>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="ghost">Cancel</button>
+      <button id="modal-confirm" class="danger-solid">Yes, I'm sure</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/teacher.js"></script>
+</body>
+</html>

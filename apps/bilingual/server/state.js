@@ -1,0 +1,862 @@
+import { EventEmitter } from 'node:events';
+import { buildConversations } from './pairing.js';
+import { botReply, drawWpm, replyTiming } from './bot.js';
+import { estimateCost, modelLabel, normaliseMix } from './models.js';
+import { isKnownPersona, personaCatalog, personaLabel } from './classroom.js';
+import { isValidLogin, normaliseLogin, parseRoster } from './roster.js';
+import { DEFAULT_LANGUAGE, isLanguage, translate } from './translate.js';
+
+export const PHASES = {
+  SETUP: 'setup',     // teacher configuring; students cannot log in yet
+  LOBBY: 'lobby',     // students joining, waiting for the teacher
+  ACTIVE: 'active',   // the chat window is open and the clock is running
+  GUESS: 'guess',     // time is up, students are voting human vs AI
+  RESULTS: 'results', // everyone has voted (or the teacher moved on)
+};
+
+const MAX_MESSAGE_LENGTH = 300;
+const MIN_MESSAGE_INTERVAL_MS = 400;
+const MAX_MESSAGES_PER_STUDENT = 120;
+const BOT_OPENERS = {
+  en: ['hey', 'hi', 'hey there', 'hello', 'hi there'],
+  zh: ['你好', '嗨', '在吗', '哈喽', '你好呀'],
+};
+
+/** A single classroom run. One instance per server process. */
+export class Session extends EventEmitter {
+  constructor() {
+    super();
+    this.phase = PHASES.SETUP;
+    this.students = new Map();      // login -> student record
+    this.roster = new Map();        // login -> student number/label
+    this.rosterIssues = { errors: [], duplicates: [] };
+    this.conversations = new Map(); // convId -> conversation record
+    this.roundNumber = 0;
+    this.durationSec = 120;
+    this.aiRatio = 0.5;
+    this.modelMix = normaliseMix(null);
+    this.personaMix = defaultPersonaMix();
+    this.startedAt = null;
+    this.endedAt = null;
+    this.endsAt = null;
+    this.roundTimer = null;
+    this.usedLiveBot = false;
+  }
+
+  // ------------------------------------------------------------------ roster
+
+  /** Replace the class login list from an uploaded CSV. */
+  setRoster(csvText) {
+    if (this.phase !== PHASES.SETUP) {
+      return { ok: false, error: 'Upload the login list before opening the room.' };
+    }
+    const { entries, errors, duplicates } = parseRoster(csvText);
+    if (entries.length === 0) {
+      return { ok: false, error: 'No valid logins found. Each needs four letters then four numbers.' };
+    }
+    this.roster = new Map(entries.map((entry) => [entry.login, entry.student]));
+    this.rosterIssues = { errors, duplicates };
+    this.emit('roster');
+    return { ok: true, count: entries.length, errors, duplicates };
+  }
+
+  clearRoster() {
+    this.roster.clear();
+    this.rosterIssues = { errors: [], duplicates: [] };
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  /** Open the room so students can log in. */
+  openLobby() {
+    if (this.phase !== PHASES.SETUP) return { ok: false, error: 'The room is already open.' };
+    this.phase = PHASES.LOBBY;
+    this.emit('phase');
+    return { ok: true };
+  }
+
+  // ---------------------------------------------------------------- students
+
+  /** Join or reconnect. Returns {ok, error?}. */
+  join(rawLogin, socketId, lang = DEFAULT_LANGUAGE) {
+    const code = normaliseLogin(rawLogin);
+    const language = isLanguage(lang) ? lang : DEFAULT_LANGUAGE;
+    if (!isValidLogin(code)) {
+      return { ok: false, error: 'Logins are four letters then four numbers, like WXYZ1234.' };
+    }
+    if (this.phase === PHASES.SETUP) {
+      return { ok: false, error: 'The activity has not opened yet. Wait for your teacher.' };
+    }
+    // With a list uploaded, only those logins work. Without one, any well-formed
+    // login is accepted so the activity still runs if the upload is forgotten.
+    if (this.roster.size > 0 && !this.roster.has(code)) {
+      return { ok: false, error: 'That login is not on the class list. Check the card you were given.' };
+    }
+
+    const existing = this.students.get(code);
+    if (existing) {
+      // Treat a repeat join as a reconnect (refresh, dropped wifi, new tab).
+      existing.socketId = socketId;
+      existing.connected = true;
+      // A participant may switch language on the sign-in screen and rejoin.
+      existing.lang = language;
+      this.emit('roster');
+      // The canonical login goes back to the caller: a student who typed it in
+      // lower case must be tracked under the same key as everyone else.
+      return { ok: true, reconnected: true, code };
+    }
+
+    this.students.set(code, {
+      code,
+      student: this.roster.get(code) || code,
+      lang: language,
+      socketId,
+      connected: true,
+      joinedAt: Date.now(),
+      convId: null,
+      guess: null,
+      guessedAt: null,
+      sent: 0,
+      lastSentAt: 0,
+    });
+    this.emit('roster');
+    return { ok: true, reconnected: false, code };
+  }
+
+  /** Mark a student offline without dropping their round data. */
+  disconnect(socketId) {
+    for (const student of this.students.values()) {
+      if (student.socketId === socketId) {
+        student.connected = false;
+        student.socketId = null;
+        this.emit('roster');
+        return student.code;
+      }
+    }
+    return null;
+  }
+
+  /** Remove a student entirely (teacher action). */
+  remove(code) {
+    const student = this.students.get(code);
+    if (!student) return false;
+    if (student.convId) {
+      const conv = this.conversations.get(student.convId);
+      if (conv) conv.members = conv.members.filter((m) => m !== code);
+    }
+    this.students.delete(code);
+    this.emit('roster');
+    return true;
+  }
+
+  getByCode(code) {
+    return this.students.get(code) || null;
+  }
+
+  codeForSocket(socketId) {
+    for (const student of this.students.values()) {
+      if (student.socketId === socketId) return student.code;
+    }
+    return null;
+  }
+
+  // ------------------------------------------------------------------- round
+
+  /** Pair everyone currently in the lobby and start the clock. */
+  start({ durationSec = 120, aiRatio = 0.5, modelMix = null, personaMix = null } = {}) {
+    if (this.phase === PHASES.ACTIVE) {
+      return { ok: false, error: 'A round is already running.' };
+    }
+    if (this.phase === PHASES.SETUP) {
+      return { ok: false, error: 'Open the room and let students log in first.' };
+    }
+    const codes = [...this.students.keys()];
+    if (codes.length === 0) {
+      return { ok: false, error: 'No students have joined yet.' };
+    }
+
+    this.clearTimers();
+    this.durationSec = Math.max(15, Math.min(900, Math.round(durationSec)));
+    this.aiRatio = Math.max(0, Math.min(1, aiRatio));
+    // Unknown model ids are dropped here, so the browser can never choose the spend.
+    this.modelMix = normaliseMix(modelMix);
+    this.personaMix = normalisePersonaMix(personaMix);
+    this.roundNumber += 1;
+    this.usedLiveBot = false;
+    this.conversations.clear();
+
+    for (const student of this.students.values()) {
+      student.convId = null;
+      student.guess = null;
+      student.guessedAt = null;
+      student.sent = 0;
+      student.lastSentAt = 0;
+    }
+
+    for (const spec of buildConversations(codes, this.aiRatio, this.modelMix, this.personaMix)) {
+      const conv = {
+        ...spec,
+        // One typing speed per conversation, kept for the whole round: a person
+        // does not type at a different pace from one message to the next.
+        wpm: drawWpm(),
+        messages: [],
+        botTurns: 0,
+        liveTurns: 0,
+        tokensIn: 0,
+        tokensOut: 0,
+        botBusy: false,
+        botAgain: false,
+        botTimer: null,
+        replyTimer: null,
+        openerTimer: null,
+      };
+      this.conversations.set(conv.id, conv);
+      for (const code of conv.members) {
+        const student = this.students.get(code);
+        if (student) student.convId = conv.id;
+      }
+    }
+
+    this.phase = PHASES.ACTIVE;
+    this.startedAt = Date.now();
+    this.endedAt = null;
+    this.endsAt = Date.now() + this.durationSec * 1000;
+    this.roundTimer = setTimeout(() => this.endRound(), this.durationSec * 1000);
+
+    // Bots open the conversation if the student hasn't said anything yet, so
+    // nobody sits in front of a silent window.
+    for (const conv of this.conversations.values()) {
+      if (conv.type !== 'ai') continue;
+      conv.openerTimer = setTimeout(() => {
+        if (this.phase !== PHASES.ACTIVE || conv.messages.length > 0) return;
+        const lang = this.students.get(conv.members[0])?.lang || DEFAULT_LANGUAGE;
+        const openers = BOT_OPENERS[lang] || BOT_OPENERS[DEFAULT_LANGUAGE];
+        const opener = openers[Math.floor(Math.random() * openers.length)];
+        this.deliverBotMessage(conv, opener);
+      }, 2500 + Math.random() * 5000);
+    }
+
+    this.emit('phase');
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  /** Time is up: freeze the chats and move students to the guess screen. */
+  endRound() {
+    if (this.phase !== PHASES.ACTIVE) return { ok: false, error: 'No round running.' };
+    this.clearTimers();
+    this.phase = PHASES.GUESS;
+    this.endedAt = Date.now();
+    this.endsAt = null;
+    this.emit('phase');
+    return { ok: true };
+  }
+
+  /** Close voting and show the reveal. */
+  showResults() {
+    if (this.phase === PHASES.LOBBY) return { ok: false, error: 'No round to reveal.' };
+    this.clearTimers();
+    this.phase = PHASES.RESULTS;
+    this.endsAt = null;
+    this.emit('phase');
+    return { ok: true };
+  }
+
+  /**
+   * Back to the lobby.
+   * @param {boolean} keepStudents  keep the roster for another round
+   */
+  reset({ keepStudents = true } = {}) {
+    this.clearTimers();
+    this.conversations.clear();
+    this.phase = PHASES.LOBBY;
+    this.endsAt = null;
+
+    if (keepStudents) {
+      for (const student of this.students.values()) {
+        student.convId = null;
+        student.guess = null;
+        student.guessedAt = null;
+        student.sent = 0;
+        student.lastSentAt = 0;
+      }
+    } else {
+      this.students.clear();
+    }
+
+    this.emit('phase');
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  /**
+   * Start over: back to a blank setup screen.
+   *
+   * Wipes every login, student number, transcript and result. Nothing was ever
+   * written to disk, so once this runs the round is genuinely gone — download the
+   * report first.
+   */
+  startOver() {
+    this.clearTimers();
+    this.conversations.clear();
+    this.students.clear();
+    this.roster.clear();
+    this.rosterIssues = { errors: [], duplicates: [] };
+    this.phase = PHASES.SETUP;
+    this.endsAt = null;
+    this.startedAt = null;
+    this.endedAt = null;
+    this.roundNumber = 0;
+    this.usedLiveBot = false;
+    this.emit('phase');
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  clearTimers() {
+    if (this.roundTimer) clearTimeout(this.roundTimer);
+    this.roundTimer = null;
+    for (const conv of this.conversations.values()) {
+      for (const key of ['botTimer', 'replyTimer', 'openerTimer']) {
+        if (conv[key]) clearTimeout(conv[key]);
+        conv[key] = null;
+      }
+      conv.botBusy = false;
+      conv.botAgain = false;
+    }
+  }
+
+  // ----------------------------------------------------------------- chatting
+
+  /** Handle an inbound student message. Returns {ok, error?}. */
+  sendMessage(code, rawText) {
+    if (this.phase !== PHASES.ACTIVE) return { ok: false, error: 'The chat is closed.' };
+
+    const student = this.students.get(code);
+    if (!student || !student.convId) return { ok: false, error: 'You are not in this round.' };
+
+    const text = String(rawText || '').replace(/\s+/g, ' ').trim().slice(0, MAX_MESSAGE_LENGTH);
+    if (!text) return { ok: false, error: 'Empty message.' };
+
+    const now = Date.now();
+    if (now - student.lastSentAt < MIN_MESSAGE_INTERVAL_MS) {
+      return { ok: false, error: 'Slow down a little.' };
+    }
+    if (student.sent >= MAX_MESSAGES_PER_STUDENT) {
+      return { ok: false, error: 'Message limit reached.' };
+    }
+    student.lastSentAt = now;
+    student.sent += 1;
+
+    const conv = this.conversations.get(student.convId);
+    if (!conv) return { ok: false, error: 'Conversation not found.' };
+
+    const message = { sender: code, text, ts: now };
+    conv.messages.push(message);
+    this.fanOut(conv, message);
+
+    if (conv.type === 'ai') this.scheduleBotTurn(conv);
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  /** Relay a typing indicator to the human partner only. */
+  setTyping(code, isTyping) {
+    if (this.phase !== PHASES.ACTIVE) return;
+    const student = this.students.get(code);
+    if (!student || !student.convId) return;
+    const conv = this.conversations.get(student.convId);
+    if (!conv || conv.type !== 'human') return;
+    for (const member of conv.members) {
+      if (member !== code) this.emit('typing', member, Boolean(isTyping));
+    }
+  }
+
+  /**
+   * Push a message to everyone in a conversation, from each one's point of view,
+   * translating it for any recipient who chose the other language.
+   *
+   * Deliveries are chained per conversation so that a slow translation cannot let a
+   * later message overtake an earlier one.
+   */
+  fanOut(conv, message) {
+    conv.delivery = (conv.delivery || Promise.resolve())
+      .then(() => this.deliverToMembers(conv, message))
+      .catch((err) => console.warn('[state] delivery failed:', err.message));
+  }
+
+  async deliverToMembers(conv, message) {
+    // The AI partner writes in its partner's language already, so only messages
+    // typed by a person are ever translated.
+    const senderLang = message.sender === 'bot'
+      ? null
+      : this.students.get(message.sender)?.lang;
+
+    for (const member of conv.members) {
+      if (message.sender === member) {
+        this.emit('message', member, { mine: true, text: message.text, ts: message.ts });
+        continue;
+      }
+
+      const recipient = this.students.get(member);
+      let text = message.text;
+      if (senderLang && recipient && recipient.lang !== senderLang) {
+        const result = await translate(message.text, senderLang, recipient.lang);
+        text = result.text;
+      }
+      this.emit('message', member, { mine: false, text, ts: message.ts });
+    }
+  }
+
+  // --------------------------------------------------------------------- bot
+
+  scheduleBotTurn(conv) {
+    if (conv.openerTimer) {
+      clearTimeout(conv.openerTimer);
+      conv.openerTimer = null;
+    }
+    if (conv.botBusy) {
+      conv.botAgain = true;
+      return;
+    }
+    if (conv.botTimer) clearTimeout(conv.botTimer);
+    // Short settle window so a burst of quick messages gets one reply, not three.
+    conv.botTimer = setTimeout(() => this.runBotTurn(conv), 900 + Math.random() * 800);
+  }
+
+  /** Convert stored messages into alternating API turns. */
+  historyFor(conv) {
+    const history = [];
+    for (const message of conv.messages) {
+      const role = message.sender === 'bot' ? 'assistant' : 'user';
+      const last = history[history.length - 1];
+      if (last && last.role === role) last.content += `\n${message.text}`;
+      else history.push({ role, content: message.text });
+    }
+    // The API needs the exchange to open on a user turn.
+    while (history.length && history[0].role === 'assistant') history.shift();
+    return history;
+  }
+
+  async runBotTurn(conv) {
+    if (this.phase !== PHASES.ACTIVE) return;
+    conv.botTimer = null;
+    conv.botBusy = true;
+    conv.botAgain = false;
+
+    try {
+      const history = this.historyFor(conv);
+      if (history.length === 0) return;
+
+      // No typing indicator yet: this stretch is reading and thinking, and the
+      // API call itself is part of it.
+      const startedAt = Date.now();
+      const partnerLang = this.students.get(conv.members[0])?.lang || DEFAULT_LANGUAGE;
+      const { text, live, usage } = await botReply(history, conv.model, conv.persona, partnerLang);
+      if (this.phase !== PHASES.ACTIVE) return;
+      conv.botTurns += 1;
+      conv.tokensIn += usage?.inputTokens || 0;
+      conv.tokensOut += usage?.outputTokens || 0;
+      if (live) {
+        conv.liveTurns += 1;
+        this.usedLiveBot = true;
+      }
+
+      const { thinkMs, typeMs } = replyTiming(text, conv.wpm);
+      await this.pause(conv, Math.max(0, thinkMs - (Date.now() - startedAt)));
+      if (this.phase !== PHASES.ACTIVE) return;
+
+      // Only now does the other side see "typing", and it lasts as long as this
+      // conversation's pace says the message would take to type.
+      this.emitTypingToMembers(conv, true);
+      await this.pause(conv, typeMs);
+      if (this.phase !== PHASES.ACTIVE) return;
+
+      this.deliverBotMessage(conv, text);
+    } catch (err) {
+      console.warn('[state] bot turn failed:', err.message);
+    } finally {
+      this.emitTypingToMembers(conv, false);
+      conv.botBusy = false;
+      conv.replyTimer = null;
+      const last = conv.messages[conv.messages.length - 1];
+      if (conv.botAgain && last && last.sender !== 'bot' && this.phase === PHASES.ACTIVE) {
+        this.scheduleBotTurn(conv);
+      }
+    }
+  }
+
+  /** Cancellable wait, so a reset or the end of the round stops it. */
+  pause(conv, ms) {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      conv.replyTimer = setTimeout(resolve, ms);
+    });
+  }
+
+  deliverBotMessage(conv, text) {
+    const message = { sender: 'bot', text, ts: Date.now() };
+    conv.messages.push(message);
+    this.fanOut(conv, message);
+  }
+
+  emitTypingToMembers(conv, isTyping) {
+    for (const member of conv.members) this.emit('typing', member, isTyping);
+  }
+
+  // ------------------------------------------------------------------ guesses
+
+  submitGuess(code, guess) {
+    if (this.phase !== PHASES.GUESS && this.phase !== PHASES.RESULTS) {
+      return { ok: false, error: 'Not time to guess yet.' };
+    }
+    if (guess !== 'human' && guess !== 'ai') {
+      return { ok: false, error: 'Pick human or AI.' };
+    }
+    const student = this.students.get(code);
+    if (!student || !student.convId) return { ok: false, error: 'You were not in this round.' };
+    if (student.guess) return { ok: false, error: 'You have already answered.' };
+
+    student.guess = guess;
+    student.guessedAt = Date.now();
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  // -------------------------------------------------------------------- views
+
+  /** What one student's screen needs. */
+  studentView(code) {
+    const student = this.students.get(code);
+    if (!student) return { phase: 'signin' };
+
+    const conv = student.convId ? this.conversations.get(student.convId) : null;
+    const inRound = Boolean(conv);
+
+    const view = {
+      phase: this.phase,
+      code,
+      student: student.student,
+      inRound,
+      roundNumber: this.roundNumber,
+      endsAt: this.endsAt,
+      durationSec: this.durationSec,
+      waitingCount: this.students.size,
+      guess: student.guess,
+      transcript: conv
+        ? conv.messages.map((m) => ({ mine: m.sender === code, text: m.text, ts: m.ts }))
+        : [],
+    };
+
+    // Class-wide numbers appear only after the teacher reveals, so nothing leaks
+    // while people are still deciding.
+    if (this.phase === PHASES.RESULTS) view.classSummary = this.classSummary();
+
+    // The answer is only ever sent once the student has locked in a guess.
+    if (conv && student.guess && (this.phase === PHASES.GUESS || this.phase === PHASES.RESULTS)) {
+      view.reveal = {
+        partnerType: conv.type,
+        correct: student.guess === conv.type,
+      };
+    }
+    return view;
+  }
+
+  /**
+   * Aggregate class results, safe to show every participant.
+   *
+   * Deliberately counts only — no individual result, no partner, no transcript.
+   * Participants see how the room did, never how a named colleague did.
+   */
+  classSummary() {
+    const inRound = [...this.students.values()].filter((s) => s.convId);
+    const answered = inRound.filter((s) => s.guess);
+
+    const tally = (list) => {
+      const correct = list.filter((s) => {
+        const conv = this.conversations.get(s.convId);
+        return conv && s.guess === conv.type;
+      }).length;
+      return {
+        answered: list.length,
+        correct,
+        accuracy: list.length ? Math.round((correct / list.length) * 100) : null,
+      };
+    };
+
+    const facedAi = answered.filter((s) => this.conversations.get(s.convId)?.type === 'ai');
+    const facedPeer = answered.filter((s) => this.conversations.get(s.convId)?.type === 'human');
+
+    return {
+      participants: inRound.length,
+      overall: tally(answered),
+      vsAi: tally(facedAi),
+      vsPeer: tally(facedPeer),
+    };
+  }
+
+  /** What the teacher dashboard needs. */
+  teacherView() {
+    const students = [...this.students.values()]
+      .sort((a, b) => a.code.localeCompare(b.code))
+      .map((student) => {
+        const conv = student.convId ? this.conversations.get(student.convId) : null;
+        const partner = conv
+          ? conv.type === 'ai'
+            ? modelLabel(conv.model)
+            : conv.members.find((m) => m !== student.code) || 'unpaired'
+          : null;
+        return {
+          code: student.code,
+          student: student.student,
+          lang: student.lang,
+          connected: student.connected,
+          joinedAt: student.joinedAt,
+          inRound: Boolean(conv),
+          partnerType: conv ? conv.type : null,
+          model: conv && conv.type === 'ai' ? conv.model : null,
+          modelLabel: conv && conv.type === 'ai' ? modelLabel(conv.model) : null,
+          persona: conv && conv.type === 'ai' ? conv.persona : null,
+          personaLabel: conv && conv.type === 'ai' && conv.persona
+            ? `${conv.persona} — ${personaLabel(conv.persona)}`
+            : null,
+          partner,
+          messagesSent: student.sent,
+          guess: student.guess,
+          correct: conv && student.guess ? student.guess === conv.type : null,
+        };
+      });
+
+    const inRound = students.filter((s) => s.inRound);
+    const answered = inRound.filter((s) => s.guess);
+    const correct = answered.filter((s) => s.correct);
+    const humanSide = answered.filter((s) => s.partnerType === 'human');
+    const aiSide = answered.filter((s) => s.partnerType === 'ai');
+
+    return {
+      phase: this.phase,
+      roundNumber: this.roundNumber,
+      endsAt: this.endsAt,
+      durationSec: this.durationSec,
+      aiRatio: this.aiRatio,
+      modelMix: this.modelMix,
+      personaMix: this.personaMix,
+      usedLiveBot: this.usedLiveBot,
+      roster: {
+        size: this.roster.size,
+        errors: this.rosterIssues.errors,
+        duplicates: this.rosterIssues.duplicates,
+        loggedIn: [...this.students.keys()].filter((login) => this.roster.has(login)).length,
+      },
+      students,
+      byModel: this.modelBreakdown(),
+      byPersona: this.personaBreakdown(),
+      pairs: this.revealPairs(),
+      stats: {
+        joined: students.length,
+        connected: students.filter((s) => s.connected).length,
+        paired: inRound.length,
+        withAi: inRound.filter((s) => s.partnerType === 'ai').length,
+        withHuman: inRound.filter((s) => s.partnerType === 'human').length,
+        answered: answered.length,
+        correct: correct.length,
+        accuracy: answered.length ? Math.round((correct.length / answered.length) * 100) : null,
+        humanAccuracy: humanSide.length
+          ? Math.round((humanSide.filter((s) => s.correct).length / humanSide.length) * 100)
+          : null,
+        aiAccuracy: aiSide.length
+          ? Math.round((aiSide.filter((s) => s.correct).length / aiSide.length) * 100)
+          : null,
+      },
+    };
+  }
+
+  /**
+   * Per-model results.
+   *
+   * The headline number for a teacher is `foolRate`: of the students who faced
+   * this model and answered, how many believed it was a classmate.
+   */
+  modelBreakdown() {
+    const rows = new Map();
+
+    for (const conv of this.conversations.values()) {
+      if (conv.type !== 'ai') continue;
+      const id = conv.model || 'unknown';
+      if (!rows.has(id)) {
+        rows.set(id, {
+          id,
+          label: modelLabel(id),
+          students: 0,
+          answered: 0,
+          caught: 0,
+          fooled: 0,
+          studentMessages: 0,
+          botTurns: 0,
+          liveTurns: 0,
+          tokensIn: 0,
+          tokensOut: 0,
+        });
+      }
+      const row = rows.get(id);
+      row.tokensIn += conv.tokensIn;
+      row.tokensOut += conv.tokensOut;
+      row.botTurns += conv.botTurns;
+      row.liveTurns += conv.liveTurns;
+
+      for (const code of conv.members) {
+        const student = this.students.get(code);
+        if (!student) continue;
+        row.students += 1;
+        row.studentMessages += student.sent;
+        if (student.guess) {
+          row.answered += 1;
+          if (student.guess === 'ai') row.caught += 1;
+          else row.fooled += 1;
+        }
+      }
+    }
+
+    return [...rows.values()].map((row) => ({
+      ...row,
+      foolRate: row.answered ? Math.round((row.fooled / row.answered) * 100) : null,
+      costUsd: Number(estimateCost(row.id, row.tokensIn, row.tokensOut).toFixed(4)),
+    }));
+  }
+
+  /**
+   * Per-persona results, the same shape as the model breakdown. Which persona
+   * survived contact with the class is the question the pack is built around.
+   */
+  personaBreakdown() {
+    const rows = new Map();
+
+    for (const conv of this.conversations.values()) {
+      if (conv.type !== 'ai' || !conv.persona) continue;
+      const id = conv.persona;
+      if (!rows.has(id)) {
+        rows.set(id, {
+          id,
+          label: personaLabel(id),
+          students: 0,
+          answered: 0,
+          caught: 0,
+          fooled: 0,
+          studentMessages: 0,
+          botTurns: 0,
+        });
+      }
+      const row = rows.get(id);
+      row.botTurns += conv.botTurns;
+
+      for (const code of conv.members) {
+        const student = this.students.get(code);
+        if (!student) continue;
+        row.students += 1;
+        row.studentMessages += student.sent;
+        if (student.guess) {
+          row.answered += 1;
+          if (student.guess === 'ai') row.caught += 1;
+          else row.fooled += 1;
+        }
+      }
+    }
+
+    return [...rows.values()].map((row) => ({
+      ...row,
+      foolRate: row.answered ? Math.round((row.fooled / row.answered) * 100) : null,
+    }));
+  }
+
+  /**
+   * The pairings as pairs rather than as rows, for the reveal screen the class
+   * actually looks at: who was talking to whom, and which ones were never human.
+   */
+  revealPairs() {
+    return [...this.conversations.values()].map((conv) => ({
+      id: conv.id,
+      type: conv.type,
+      modelLabel: conv.type === 'ai' ? modelLabel(conv.model) : null,
+      personaLabel: conv.persona ? `${conv.persona} — ${personaLabel(conv.persona)}` : null,
+      messages: conv.messages.length,
+      members: conv.members.map((login) => {
+        const student = this.students.get(login);
+        return {
+          login,
+          student: student?.student || login,
+          guess: student?.guess || null,
+          correct: student?.guess ? student.guess === conv.type : null,
+        };
+      }),
+    }));
+  }
+
+  /** Full transcripts, for the teacher to review after the reveal. */
+  transcripts() {
+    return [...this.conversations.values()].map((conv) => ({
+      id: conv.id,
+      type: conv.type,
+      model: conv.model || null,
+      persona: conv.persona || null,
+      personaLabel: conv.persona ? `${conv.persona} — ${personaLabel(conv.persona)}` : null,
+      modelLabel: conv.type === 'ai' ? modelLabel(conv.model) : null,
+      members: conv.members,
+      memberLabels: conv.members.map((login) => this.students.get(login)?.student || login),
+      botTurns: conv.botTurns,
+      liveTurns: conv.liveTurns,
+      tokensIn: conv.tokensIn,
+      tokensOut: conv.tokensOut,
+      messages: conv.messages.map((m) => ({
+        // Student numbers read better in a debrief than raw logins.
+        sender: m.sender === 'bot'
+          ? modelLabel(conv.model)
+          : this.students.get(m.sender)?.student || m.sender,
+        isBot: m.sender === 'bot',
+        text: m.text,
+        ts: m.ts,
+      })),
+    }));
+  }
+
+  /** Everything the downloadable teacher report needs, in one object. */
+  reportData() {
+    const view = this.teacherView();
+    return {
+      generatedAt: Date.now(),
+      roundNumber: this.roundNumber,
+      durationSec: this.durationSec,
+      startedAt: this.startedAt,
+      endedAt: this.endedAt,
+      aiRatio: this.aiRatio,
+      modelMix: this.modelMix,
+      personaMix: this.personaMix,
+      usedLiveBot: this.usedLiveBot,
+      stats: view.stats,
+      byModel: view.byModel,
+      byPersona: view.byPersona,
+      pairs: view.pairs,
+      // The report module reads this list under its own name.
+      participants: view.students,
+      students: view.students,
+      transcripts: this.transcripts(),
+    };
+  }
+}
+
+
+/** All personas from the pack, equally weighted. */
+export function defaultPersonaMix() {
+  const mix = {};
+  for (const persona of personaCatalog) mix[persona.id] = 1;
+  return mix;
+}
+
+/** Drop anything the pack does not define, and fall back to all of them. */
+export function normalisePersonaMix(mix) {
+  const cleaned = {};
+  for (const [id, weight] of Object.entries(mix || {})) {
+    const value = Number(weight);
+    if (isKnownPersona(id) && Number.isFinite(value) && value > 0) cleaned[id] = value;
+  }
+  return Object.keys(cleaned).length ? cleaned : defaultPersonaMix();
+}
