@@ -158,10 +158,17 @@ function queueTeacherPush() {
   });
 }
 
+/** What an un-joined page needs to render its sign-in screen correctly. */
+function sessionConfig() {
+  return { joinMode: session.joinMode, phase: session.phase };
+}
+
 session.on('roster', queueTeacherPush);
 session.on('phase', () => {
   pushAllStudents();
   queueTeacherPush();
+  // Reaches pages that have not joined yet, which the per-student push cannot.
+  io.emit('session:config', sessionConfig());
 });
 session.on('message', (code, payload) => socketFor(code)?.emit('chat:message', payload));
 session.on('typing', (code, isTyping) => socketFor(code)?.emit('chat:typing', isTyping));
@@ -170,6 +177,7 @@ session.on('typing', (code, isTyping) => socketFor(code)?.emit('chat:typing', is
 
 io.on('connection', (socket) => {
   let role = null; // 'student' | 'teacher'
+  socket.emit('session:config', sessionConfig());
 
   // -- student ---------------------------------------------------------------
 
@@ -222,6 +230,7 @@ io.on('connection', (socket) => {
       languages: Object.values(LANGUAGES).map((l) => ({ code: l.code, label: l.label, native: l.native })),
       reportLanguages: REPORT_LANGUAGES,
       translation: isTranslationConfigured(),
+      joinMode: session.joinMode,
       classroomPack: usingClassroomPack,
       voiceSamples: voiceSampleCount,
       joinUrls: cachedJoinUrls,
@@ -248,6 +257,11 @@ io.on('connection', (socket) => {
     })
   ));
 
+  socket.on('teacher:joinMode', teacherOnly((payload) => {
+    const result = session.setJoinMode(payload?.mode);
+    if (result.ok) io.emit('session:config', sessionConfig());
+    return result;
+  }));
   socket.on('teacher:roster', teacherOnly((payload) => session.setRoster(payload?.csv)));
   socket.on('teacher:clearRoster', teacherOnly(() => session.clearRoster()));
   socket.on('teacher:openLobby', teacherOnly(() => session.openLobby()));

@@ -101,3 +101,32 @@ export function parseRoster(text) {
 
   return { entries, errors, duplicates };
 }
+
+/**
+ * Free-entry identity, used when the facilitator turns off assigned logins.
+ *
+ * Names are matched case- and space-insensitively so "Li Wei" and "li  wei" are the
+ * same person coming back, while the display keeps whatever they actually typed.
+ */
+export const MAX_NAME_LENGTH = 24;
+
+export function normaliseName(value) {
+  return String(value ?? '')
+    // Strip control characters and the invisible formatting ones, which otherwise
+    // let two visually identical names occupy different slots.
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028\u2029\ufeff]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_NAME_LENGTH);
+}
+
+/** The key a name is stored under. Case folding is locale-independent on purpose. */
+export function nameKey(value) {
+  return normaliseName(value).toLocaleLowerCase('en');
+}
+
+export function isValidName(value) {
+  const name = normaliseName(value);
+  // One character is enough - a single CJK character is a perfectly good name.
+  return name.length >= 1 && name.length <= MAX_NAME_LENGTH;
+}

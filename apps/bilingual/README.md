@@ -42,6 +42,32 @@ gets an aggregate-only screen: how many took part, what share identified their
 partner correctly, and the split against AI and against people. No individual result
 for anyone, including themselves beyond their own reveal.
 
+## How participants identify themselves
+
+The first card on the set-up screen offers two ways in, and the choice is locked
+once the room opens.
+
+**Assigned logins** (the default). You hand out cards beforehand and upload the
+CSV; only those logins are accepted. Nobody types a name, so no personal
+information enters the activity at all.
+
+**Participants type a name.** No cards, no list. Everyone chooses what to be
+called when they arrive. The login list card disappears, because it has nothing
+to do.
+
+Names are matched case- and space-insensitively, so `Li Wei`, `li  wei` and
+`  LI WEI ` are the same person coming back after a refresh, while the display
+keeps whatever they actually typed. A name already in use by someone still
+connected is refused rather than treated as a reconnect, so two people cannot end
+up sharing one conversation. Chinese names work as identities exactly as English
+ones do.
+
+**Chat partners never see the name.** It appears on your screens and in the
+report, nowhere else — the conversation stays anonymous, which is the point of
+the activity. The console says so in an amber note whenever name entry is on,
+because switching it on does change what personal information the activity holds.
+The participant's own screen asks for "a first name or nickname".
+
 ## A caveat worth understanding before you run it
 
 Machine translation flattens voice. A colleague's blunt, typo-ridden message arrives

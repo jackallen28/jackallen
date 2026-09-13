@@ -19,6 +19,16 @@ window.HON_I18N = (() => {
       joinBtn: 'Join',
       changeLanguage: 'Change language',
       errFormat: 'Four letters then four numbers, like WXYZ1234.',
+      errLoginFormat: 'Four letters then four numbers, like WXYZ1234.',
+      errNotOnList: 'That login is not on the list. Check the card you were given.',
+      errNameFormat: 'Enter a name, up to 24 characters.',
+      errNameTaken: 'Someone is already using that name. Try another one.',
+      errNotOpen: 'The activity has not opened yet. Wait for your facilitator.',
+
+      nameLead: 'Type the name you want to be known by.',
+      nameLabel: 'Your name',
+      namePlaceholder: 'Your name',
+      nameHint: 'A first name or nickname is enough. Your partner will not see it.',
       errReset: 'The facilitator reset the activity. Wait for the next round.',
       errRemoved: 'You were removed from the room.',
 
@@ -85,6 +95,16 @@ window.HON_I18N = (() => {
       joinBtn: '加入',
       changeLanguage: '更改语言',
       errFormat: '四个字母加四个数字，例如 WXYZ1234。',
+      errLoginFormat: '四个字母加四个数字，例如 WXYZ1234。',
+      errNotOnList: '该登录码不在名单上，请核对你拿到的卡片。',
+      errNameFormat: '请输入名字，最多 24 个字符。',
+      errNameTaken: '已经有人在使用这个名字，请换一个。',
+      errNotOpen: '活动尚未开始，请等待主持人。',
+
+      nameLead: '请输入你希望使用的名字。',
+      nameLabel: '你的名字',
+      namePlaceholder: '你的名字',
+      nameHint: '写名字或昵称即可。你的聊天对象看不到它。',
       errReset: '主持人重置了活动，请等待下一轮。',
       errRemoved: '你已被移出房间。',
 

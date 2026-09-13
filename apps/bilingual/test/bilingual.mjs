@@ -29,8 +29,10 @@ check('roster uploads', (await emit(teacher, 'teacher:roster', { csv })).ok);
 check('room opens', (await emit(teacher, 'teacher:openLobby', {})).ok);
 await sleep(150);
 
-// Two pick English, two pick Chinese.
-const LANGS = { AAAA0001: 'en', BBBB0002: 'zh', CCCC0003: 'en', DDDD0004: 'zh' };
+// Three English, one Chinese. However the shuffle falls, the Chinese participant
+// must land in a mixed pair and the remaining pair must share a language — so both
+// branches below are exercised on every run rather than whenever the shuffle obliges.
+const LANGS = { AAAA0001: 'en', BBBB0002: 'zh', CCCC0003: 'en', DDDD0004: 'en' };
 const people = {};
 for (const code of CODES) {
   const sock = io(URL);
@@ -90,6 +92,7 @@ for (const pair of pairs) {
   }
 }
 check('a mixed-language pair was exercised', mixedChecked);
+check('a same-language pair was exercised', sameChecked);
 
 check('senders always see their own words',
   CODES.every((c) => people[c].msgs.filter((m) => m.mine)
@@ -130,6 +133,81 @@ check('csv records each chosen language',
   en.csv.includes(',zh,') && en.csv.includes(',en,'));
 check('transcripts follow the report language',
   zh.zipBase64 && Buffer.from(zh.zipBase64, 'base64').toString('utf8').includes('对话记录'));
+
+// --- free-entry names instead of assigned logins
+check('join mode defaults to codes', tState?.joinMode === 'code', tState?.joinMode);
+check('mode is locked once the room is open',
+  !(await emit(teacher, 'teacher:joinMode', { mode: 'name' })).ok);
+
+check('start over', (await emit(teacher, 'teacher:startOver', {})).ok);
+await sleep(250);
+check('unknown mode rejected', !(await emit(teacher, 'teacher:joinMode', { mode: 'telepathy' })).ok);
+check('switch to name entry', (await emit(teacher, 'teacher:joinMode', { mode: 'name' })).ok);
+await sleep(150);
+check('console reports the new mode', tState?.joinMode === 'name', tState?.joinMode);
+
+// An un-joined page is told which sign-in to render.
+const watcher = io(URL);
+const config = await new Promise((r) => watcher.on('session:config', r));
+check('sign-in pages are told the mode', config?.joinMode === 'name', JSON.stringify(config));
+
+check('room opens', (await emit(teacher, 'teacher:openLobby', {})).ok);
+await sleep(150);
+
+const named = {};
+for (const [name, lang] of [['Li Wei', 'zh'], ['Sam', 'en'], ['张老师', 'zh']]) {
+  const sock = io(URL);
+  await new Promise((r) => sock.on('connect', r));
+  const res = await emit(sock, 'student:join', { code: name, lang });
+  check(`join as "${name}"`, res.ok === true, res.error || '');
+  named[name] = sock;
+}
+await sleep(250);
+check('names are what the console shows',
+  ['Li Wei', 'Sam', '张老师'].every((n) => tState.students.some((s) => s.student === n)),
+  tState.students.map((s) => s.student).join(' | '));
+
+// A second person cannot take a name that is in use.
+const clash = io(URL);
+await new Promise((r) => clash.on('connect', r));
+const taken = await emit(clash, 'student:join', { code: 'li  WEI', lang: 'en' });
+check('a name in use is refused', taken.ok === false && taken.code === 'nameTaken', taken.error || '');
+check('refusals carry a code the app can translate', typeof taken.code === 'string');
+// Still open on purpose: closing it first would leave this ack unanswered forever.
+check('an empty name is refused',
+  !(await emit(clash, 'student:join', { code: '   ', lang: 'en' })).ok);
+clash.close();
+check('three participants, not four', tState.students.length === 3, String(tState.students.length));
+
+// Same name, different spacing and case, after dropping off — that is a reconnect.
+named['Li Wei'].close();
+await sleep(300);
+const again = io(URL);
+await new Promise((r) => again.on('connect', r));
+const rejoin = await emit(again, 'student:join', { code: '  li wei  ', lang: 'zh' });
+check('the same person can come back', rejoin.ok === true, rejoin.error || '');
+await sleep(200);
+check('coming back does not create a duplicate',
+  tState.students.length === 3, String(tState.students.length));
+check('the name keeps its original spelling',
+  tState.students.some((s) => s.student === 'Li Wei'),
+  tState.students.map((s) => s.student).join(' | '));
+
+// Names carry through to the report.
+check('name round starts',
+  (await emit(teacher, 'teacher:start', { durationSec: 15, aiRatio: 1 })).ok);
+await sleep(400);
+await emit(teacher, 'teacher:end', {});
+await sleep(200);
+await emit(teacher, 'teacher:results', {});
+await sleep(300);
+const namedReport = await emit(teacher, 'teacher:report', { lang: 'en' });
+check('the report names the participants',
+  namedReport.ok && namedReport.html.includes('张老师') && namedReport.csv.includes('Li Wei'));
+
+again.close();
+for (const sock of Object.values(named)) sock.close();
+watcher.close();
 
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : failures + ' CHECK(S) FAILED'}`);
 teacher.close();

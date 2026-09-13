@@ -57,6 +57,21 @@
   <!-- ============================ 1. SET UP ============================ -->
   <div id="stage-setup">
     <div class="card" style="margin-bottom:16px;">
+      <h2>How participants join</h2>
+      <div class="joinmode">
+        <button type="button" class="modebtn on" data-join-mode="code">
+          <span class="name">Assigned logins</span>
+          <span class="blurb">You hand out cards beforehand. Upload the list below so only those logins work.</span>
+        </button>
+        <button type="button" class="modebtn" data-join-mode="name">
+          <span class="name">Participants type a name</span>
+          <span class="blurb">No cards, no list. Everyone chooses what to be called when they arrive.</span>
+        </button>
+      </div>
+      <p class="small" id="joinmode-note" style="margin:12px 0 0"></p>
+    </div>
+
+    <div class="card" id="roster-card" style="margin-bottom:16px;">
       <h2>Class login list</h2>
       <p class="small muted">Upload a CSV of the logins you handed out. Four letters then four numbers,
         paired with the student number, for example <code>WXYZ1234,Student 07</code>. A header row is fine

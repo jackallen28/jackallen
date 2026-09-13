@@ -218,6 +218,27 @@
     $('open-btn').disabled = Object.keys(currentMix()).length === 0;
   }
 
+  // ------------------------------------------------------------- join mode
+
+  for (const button of document.querySelectorAll('[data-join-mode]')) {
+    button.addEventListener('click', () => {
+      command('teacher:joinMode', { mode: button.dataset.joinMode });
+    });
+  }
+
+  function renderJoinMode(mode) {
+    const byName = mode === 'name';
+    for (const button of document.querySelectorAll('[data-join-mode]')) {
+      button.classList.toggle('on', button.dataset.joinMode === mode);
+    }
+    // The login list is meaningless when nobody is issued a login.
+    $('roster-card').classList.toggle('hidden', byName);
+    $('joinmode-note').innerHTML = byName
+      ? '<strong>Names appear on your screens and in the report.</strong> Ask for first names or nicknames only — chat partners never see them, but you will.'
+      : 'Participants enter the login from their card. Without a list uploaded, any correctly formatted login is accepted.';
+    $('joinmode-note').style.color = byName ? 'var(--ai)' : 'var(--muted)';
+  }
+
   // --------------------------------------------------------- report language
 
   for (const button of document.querySelectorAll('[data-report-lang]')) {
@@ -393,6 +414,7 @@
     endsAt = latest.endsAt;
     if (stage === 'running') startClock(); else stopClock();
 
+    renderJoinMode(latest.joinMode);
     renderRosterStatus();
     renderLobby();
     renderRunning();

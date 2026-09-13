@@ -21,9 +21,29 @@
   let typingTimeout = null;
   let typingSent = false;
   let renderedCount = 0;
+  // 'code' = logins issued on cards, 'name' = participants type their own name.
+  let joinMode = 'code';
 
   function show(name) {
     for (const [key, el] of Object.entries(screens)) el.classList.toggle('hidden', key !== name);
+  }
+
+  socket.on('session:config', (config) => {
+    joinMode = config?.joinMode === 'name' ? 'name' : 'code';
+    refreshSignin();
+  });
+
+  /** Point the one sign-in field at whichever identity the facilitator chose. */
+  function refreshSignin() {
+    const byName = joinMode === 'name';
+    $('signin-lead').textContent = t(byName ? 'nameLead' : 'signinLead');
+    $('code-label').textContent = t(byName ? 'nameLabel' : 'loginLabel');
+    $('name-hint').textContent = byName ? t('nameHint') : '';
+    codeInput.placeholder = byName ? t('namePlaceholder') : 'WXYZ1234';
+    codeInput.maxLength = byName ? 24 : 8;
+    codeInput.style.textTransform = byName ? 'none' : 'uppercase';
+    codeInput.style.letterSpacing = byName ? 'normal' : '.28em';
+    codeInput.style.fontSize = byName ? '1.2rem' : '1.6rem';
   }
 
   // ----------------------------------------------------------- language gate
@@ -35,6 +55,7 @@
   function chooseLanguage(lang) {
     myLang = applyLanguage(lang);
     sessionStorage.setItem('hon-lang', myLang);
+    refreshSignin();
     show('signin');
     $('code').focus();
   }
@@ -46,6 +67,7 @@
   const codeInput = $('code');
 
   codeInput.addEventListener('input', () => {
+    if (joinMode === 'name') return;
     const cleaned = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     const letters = cleaned.slice(0, 4).replace(/[^A-Z]/g, '');
     const digits = cleaned.slice(letters.length).replace(/\D/g, '').slice(0, 4);
@@ -55,14 +77,20 @@
   $('join-btn').addEventListener('click', () => join());
 
   function join(code = codeInput.value.trim()) {
-    if (!/^[A-Z]{4}\d{4}$/.test(code.toUpperCase())) {
+    if (joinMode === 'name') {
+      if (!code) { $('signin-error').textContent = t('errNameFormat'); return; }
+    } else if (!/^[A-Z]{4}\d{4}$/.test(code.toUpperCase())) {
       $('signin-error').textContent = t('errFormat');
       return;
     }
     $('signin-error').textContent = '';
     socket.emit('student:join', { code, lang: myLang }, (res) => {
       if (!res?.ok) {
-        $('signin-error').textContent = res?.error || t('errFormat');
+        // The server sends a code so the message can be shown in the participant's
+        // own language; its English text is the fallback.
+        const key = res?.code && `err${res.code.charAt(0).toUpperCase()}${res.code.slice(1)}`;
+        const translated = key && t(key) !== key ? t(key) : null;
+        $('signin-error').textContent = translated || res?.error || t('errFormat');
         return;
       }
       myCode = res.code || code.toUpperCase();
@@ -249,6 +277,7 @@
     const savedLang = myLang || sessionStorage.getItem('hon-lang');
     if (savedLang) {
       myLang = applyLanguage(savedLang);
+      refreshSignin();
       show('signin');
     }
     const saved = myCode || sessionStorage.getItem('hon-code');
@@ -259,6 +288,6 @@
 
   // First paint: the language gate, unless this browser already chose one.
   const remembered = sessionStorage.getItem('hon-lang');
-  if (remembered) { myLang = applyLanguage(remembered); show('signin'); }
+  if (remembered) { myLang = applyLanguage(remembered); refreshSignin(); show('signin'); }
   else show('language');
 })();

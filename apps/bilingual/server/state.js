@@ -3,7 +3,7 @@ import { buildConversations } from './pairing.js';
 import { botReply, drawWpm, replyTiming } from './bot.js';
 import { estimateCost, modelLabel, normaliseMix } from './models.js';
 import { isKnownPersona, personaCatalog, personaLabel } from './classroom.js';
-import { isValidLogin, normaliseLogin, parseRoster } from './roster.js';
+import { isValidLogin, isValidName, nameKey, normaliseLogin, normaliseName, parseRoster } from './roster.js';
 import { DEFAULT_LANGUAGE, isLanguage, translate } from './translate.js';
 
 export const PHASES = {
@@ -29,6 +29,9 @@ export class Session extends EventEmitter {
     this.phase = PHASES.SETUP;
     this.students = new Map();      // login -> student record
     this.roster = new Map();        // login -> student number/label
+    // 'code'  participants enter a login issued on a card
+    // 'name'  participants type whatever name they want to be known by
+    this.joinMode = 'code';
     this.rosterIssues = { errors: [], duplicates: [] };
     this.conversations = new Map(); // convId -> conversation record
     this.roundNumber = 0;
@@ -60,6 +63,46 @@ export class Session extends EventEmitter {
     return { ok: true, count: entries.length, errors, duplicates };
   }
 
+  /** Assigned logins, or free-entry names. Locked once the room is open. */
+  setJoinMode(mode) {
+    if (mode !== 'code' && mode !== 'name') {
+      return { ok: false, error: 'Unknown join mode.' };
+    }
+    if (this.phase !== PHASES.SETUP) {
+      return { ok: false, error: 'Choose how participants join before opening the room.' };
+    }
+    this.joinMode = mode;
+    this.emit('phase');
+    this.emit('roster');
+    return { ok: true, joinMode: mode };
+  }
+
+  /**
+   * Turn whatever the participant typed into the key they are stored under and the
+   * label shown to the facilitator.
+   *
+   * Returns a `code` alongside the message so the participant app, which runs in two
+   * languages, can show its own translation rather than this English fallback.
+   */
+  resolveIdentity(raw) {
+    if (this.joinMode === 'name') {
+      if (!isValidName(raw)) {
+        return { code: 'nameFormat', error: 'Enter a name, up to 24 characters.' };
+      }
+      const label = normaliseName(raw);
+      return { key: nameKey(raw), label };
+    }
+
+    const login = normaliseLogin(raw);
+    if (!isValidLogin(login)) {
+      return { code: 'loginFormat', error: 'Logins are four letters then four numbers, like WXYZ1234.' };
+    }
+    if (this.roster.size > 0 && !this.roster.has(login)) {
+      return { code: 'notOnList', error: 'That login is not on the class list. Check the card you were given.' };
+    }
+    return { key: login, label: this.roster.get(login) || login };
+  }
+
   clearRoster() {
     this.roster.clear();
     this.rosterIssues = { errors: [], duplicates: [] };
@@ -78,22 +121,23 @@ export class Session extends EventEmitter {
   // ---------------------------------------------------------------- students
 
   /** Join or reconnect. Returns {ok, error?}. */
-  join(rawLogin, socketId, lang = DEFAULT_LANGUAGE) {
-    const code = normaliseLogin(rawLogin);
+  join(rawIdentity, socketId, lang = DEFAULT_LANGUAGE) {
     const language = isLanguage(lang) ? lang : DEFAULT_LANGUAGE;
-    if (!isValidLogin(code)) {
-      return { ok: false, error: 'Logins are four letters then four numbers, like WXYZ1234.' };
-    }
+
     if (this.phase === PHASES.SETUP) {
-      return { ok: false, error: 'The activity has not opened yet. Wait for your teacher.' };
-    }
-    // With a list uploaded, only those logins work. Without one, any well-formed
-    // login is accepted so the activity still runs if the upload is forgotten.
-    if (this.roster.size > 0 && !this.roster.has(code)) {
-      return { ok: false, error: 'That login is not on the class list. Check the card you were given.' };
+      return { ok: false, code: 'notOpen', error: 'The activity has not opened yet. Wait for your facilitator.' };
     }
 
+    const identity = this.resolveIdentity(rawIdentity);
+    if (identity.error) return { ok: false, code: identity.code, error: identity.error };
+    const code = identity.key;
+
     const existing = this.students.get(code);
+    // In name mode a name already in use by someone still connected is a clash, not
+    // a reconnect — two people would otherwise share one conversation.
+    if (this.joinMode === 'name' && existing && existing.connected && existing.socketId !== socketId) {
+      return { ok: false, code: 'nameTaken', error: 'Someone is already using that name. Try another.' };
+    }
     if (existing) {
       // Treat a repeat join as a reconnect (refresh, dropped wifi, new tab).
       existing.socketId = socketId;
@@ -108,7 +152,7 @@ export class Session extends EventEmitter {
 
     this.students.set(code, {
       code,
-      student: this.roster.get(code) || code,
+      student: identity.label,
       lang: language,
       socketId,
       connected: true,
@@ -642,6 +686,7 @@ export class Session extends EventEmitter {
       modelMix: this.modelMix,
       personaMix: this.personaMix,
       usedLiveBot: this.usedLiveBot,
+      joinMode: this.joinMode,
       roster: {
         size: this.roster.size,
         errors: this.rosterIssues.errors,

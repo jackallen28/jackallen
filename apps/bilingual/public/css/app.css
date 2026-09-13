@@ -530,3 +530,24 @@ html.lang-zh .bubble { letter-spacing: .01em; }
   border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
 }
 .langtoggle .seg.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ------------------------------------------------------------- join mode */
+
+.joinmode { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px; }
+
+.modebtn {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 15px 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+.modebtn:hover { border-color: var(--accent); }
+.modebtn.on { border-color: var(--accent); background: #1b2436; }
+.modebtn .name { font-weight: 650; }
+.modebtn .blurb { font-size: .8rem; color: var(--muted); line-height: 1.45; }
+.modebtn.on .name::after { content: " ✓"; color: var(--accent); }
