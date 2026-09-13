@@ -11,12 +11,9 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "start:bilingual": "node apps/bilingual/server/index.js",
-    "dev:bilingual": "node --watch apps/bilingual/server/index.js",
     "test": "node test/run.mjs && node test/bot-mock.mjs",
     "test:e2e": "node test/run.mjs",
-    "test:bot": "node test/bot-mock.mjs",
-    "test:bilingual": "node apps/bilingual/test/run.mjs"
+    "test:bot": "node test/bot-mock.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

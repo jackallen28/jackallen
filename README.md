@@ -279,6 +279,17 @@ points the Anthropic SDK at a local stand-in and asserts the exact request shape
 per model, token accounting, the markdown stripping, the refusal path, and the
 offline fallback.
 
+## The bilingual edition
+
+A version of this activity for groups working across English and Chinese —
+participants pick a language, messages are translated between them, and the
+report can be produced in either — lives in its own repository:
+
+**https://github.com/jackallen28/human-or-not-bilingual**
+
+It was copied from this one and shares no code with it, so changes here do not
+reach it and changes there do not reach this.
+
 ## Deploying
 
 Hosting it removes every local-network problem at once: no Node install on the
