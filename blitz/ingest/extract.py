@@ -59,7 +59,12 @@ def open_pdf(path: str | Path) -> fitz.Document:
 
 
 def read_page(doc: fitz.Document, index: int, page_offset: int = 0) -> PageContent:
-    page = doc[index]
+    return read_page_content(doc[index], index=index, page_offset=page_offset)
+
+
+def read_page_content(page, index: int | None = None,
+                      page_offset: int = 0) -> PageContent:
+    index = page.number if index is None else index
     raw = page.get_text("blocks")
     blocks = [
         Block(text=b[4].strip(), x0=b[0], y0=b[1], x1=b[2], y1=b[3], block_no=int(b[5]))

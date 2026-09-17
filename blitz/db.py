@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS question (
     subject_id    TEXT NOT NULL,
     source_id     TEXT NOT NULL REFERENCES source(id) ON DELETE CASCADE,
     question_type TEXT NOT NULL,         -- a QuestionType.id from the study design
-    body          TEXT NOT NULL,
+    body          TEXT NOT NULL,        -- stem and parts joined; used for search
+    stem          TEXT,                  -- the shared scenario, without the parts
+    parts         TEXT,                  -- JSON list of "a. …", "b. …" sub-parts
     options       TEXT,                  -- JSON list for multiple choice, else NULL
     answer        TEXT,                  -- worked solution text
     answer_figure TEXT,                  -- crop of the printed solution, if any
@@ -43,6 +45,13 @@ CREATE TABLE IF NOT EXISTS question (
     difficulty    INTEGER,               -- 1 easy .. 5 hard
     figure_path   TEXT,                  -- crop of the question's diagram, if any
     figure_caption TEXT,
+    -- 'text'  : print body/options as text (the normal case)
+    -- 'crop'  : the text could not be faithfully reconstructed (stacked
+    --           fractions, equation-editor glyphs), so print the page image
+    --           instead and keep the text only for search and tagging.
+    render_mode   TEXT NOT NULL DEFAULT 'text',
+    answer_mode   TEXT NOT NULL DEFAULT 'text',
+    provenance    TEXT,                  -- e.g. "VCAA 2019 SA Q14"
     pdf_page      INTEGER,               -- 0-based page index in the source PDF
     printed_page  TEXT,                  -- page number as printed in the book
     citation      TEXT,                  -- human-readable, printed on the sheet

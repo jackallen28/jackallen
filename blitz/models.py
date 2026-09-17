@@ -38,6 +38,8 @@ class Question:
     subject_id: str
     question_type: str
     body: str
+    stem: str | None = None
+    parts: list[str] = field(default_factory=list)
     options: list[str] | None = None
     answer: str | None = None
     answer_figure: str | None = None
@@ -50,6 +52,9 @@ class Question:
     source_kind: str = ""
     generated: bool = False
     verified: bool = False
+    render_mode: str = "text"      # 'text' or 'crop' — see db.py
+    answer_mode: str = "text"
+    provenance: str | None = None
     kk_ids: list[str] = field(default_factory=list)
 
     @classmethod
@@ -61,6 +66,8 @@ class Question:
             subject_id=d["subject_id"],
             question_type=d["question_type"],
             body=d["body"],
+            stem=d.get("stem"),
+            parts=json.loads(d["parts"]) if d.get("parts") else [],
             options=json.loads(opts) if opts else None,
             answer=d.get("answer"),
             answer_figure=d.get("answer_figure"),
@@ -73,12 +80,20 @@ class Question:
             source_kind=d.get("source_kind") or "",
             generated=bool(d.get("generated")),
             verified=bool(d.get("verified")),
+            render_mode=d.get("render_mode") or "text",
+            answer_mode=d.get("answer_mode") or "text",
+            provenance=d.get("provenance"),
             kk_ids=kk_ids or [],
         )
 
     @property
     def has_figure(self) -> bool:
         return bool(self.figure_path)
+
+    @property
+    def is_cropped(self) -> bool:
+        """True when the sheet must show the page image rather than the text."""
+        return self.render_mode == "crop" and bool(self.figure_path)
 
 
 @dataclass

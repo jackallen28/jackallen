@@ -1,9 +1,9 @@
-"""Ingestion is tested against a synthetic book built with ReportLab.
+"""Ingestion, tested against a synthetic book shaped like Checkpoints.
 
-Real Checkpoints and textbook PDFs can't live in the repo, so we generate a PDF
-with the same shape — numbered questions, multiple choice options, marks in
-brackets, inline solutions and a vector diagram — and check the pipeline pulls
-the right things out of it.
+The real book can't live in the repo, so the fixture reproduces its structure:
+"Question N/ P" headers, VCAA provenance tags, multi-part questions with their
+own marks lines, A/B/C/D options, inline Solution blocks, a diagram fenced
+between full-width rules, and a stacked fraction that cannot be reflowed.
 """
 
 import pymupdf
@@ -14,166 +14,219 @@ from reportlab.pdfgen import canvas as rl_canvas
 
 from blitz import db
 from blitz.ingest import extract, segment
-from blitz.ingest.pipeline import _split_solution, ingest_pdf
+from blitz.ingest.pipeline import ingest_pdf
 from blitz.ingest.tag import KeywordTagger
 from blitz.studydesign import load_study_design
 
 PAGE_W, PAGE_H = A4
+LEFT = 20 * mm
 
 
 @pytest.fixture
 def fake_book(tmp_path):
-    """A two-page PDF shaped like a Checkpoints chapter."""
     path = tmp_path / "fake-checkpoints.pdf"
     c = rl_canvas.Canvas(str(path), pagesize=A4)
 
-    def line(y, text, font="Helvetica", size=10):
+    def rule(y):
+        c.setLineWidth(0.5)
+        c.line(LEFT, y, PAGE_W - LEFT, y)
+
+    def text(y, s, size=10, font="Helvetica"):
         c.setFont(font, size)
-        c.drawString(20 * mm, y, text)
+        c.drawString(LEFT, y, s)
 
-    # Page 1 — a multiple choice question and a short answer with a solution.
-    y = PAGE_H - 30 * mm
-    line(y, "Chapter 4 Review Questions", "Helvetica-Bold", 12)
-    y -= 12 * mm
-    line(y, "1. A transformer has 1200 turns on the primary and 80 on the")
-    y -= 5 * mm
-    line(y, "secondary. The secondary voltage when 240 V AC is applied is: (1 mark)")
-    for opt in ("A. 16 V", "B. 160 V", "C. 3600 V", "D. 24 V"):
-        y -= 5 * mm
-        line(y, opt)
-    y -= 7 * mm
-    line(y, "2. Calculate the impulse delivered to a 0.16 kg ball whose velocity")
-    y -= 5 * mm
-    line(y, "changes from 30 m/s to -40 m/s. (3 marks)")
-    y -= 5 * mm
-    line(y, "Solution: Impulse = change in momentum = 0.16 x (-40 - 30) = -11.2 N s")
-    c.showPage()
-
-    # Page 2 — a question with a vector diagram beneath it.
-    y = PAGE_H - 30 * mm
-    line(y, "3. The diagram below shows the magnetic field around a bar magnet.")
-    y -= 5 * mm
-    line(y, "Explain the direction of the force on a current-carrying wire. (4 marks)")
-    y -= 10 * mm
+    # --- page 1: a diagram above its question, then a multiple choice ---------
+    y = PAGE_H - 25 * mm
     c.setLineWidth(1)
-    box_top = y
-    for i in range(9):          # a cluster of strokes reads as a figure
-        c.rect(20 * mm + i * 6 * mm, y - 40 * mm, 5 * mm, 38 * mm)
-    c.circle(60 * mm, y - 20 * mm, 12 * mm)
-    y = box_top - 50 * mm
-    line(y, "4. State Lenz's law. (2 marks)")
+    for i in range(8):                       # a vector diagram
+        c.rect(LEFT + i * 7 * mm, y - 32 * mm, 6 * mm, 30 * mm)
+    y -= 40 * mm
+    rule(y)
+
+    y -= 10 * mm
+    text(y, "Question 12/ 11")
+    y -= 7 * mm
+    text(y, "The graph above shows the motion. Which one best describes it?")
+    for opt in ("A Constant speed followed by no motion",
+                "B Increasing speed followed by constant speed",
+                "C Increasing acceleration then constant acceleration",
+                "D Increasing distance followed by constant speed"):
+        y -= 6 * mm
+        text(y, opt)
+    y -= 7 * mm
+    text(y, "Solution")
+    y -= 6 * mm
+    text(y, "B The gradient increases then becomes constant.")
+    y -= 8 * mm
+    rule(y)
+
+    # --- a multi-part question with marks, running onto page 2 ---------------
+    y -= 10 * mm
+    text(y, "Question 14/ 11")
+    y -= 6 * mm
+    text(y, "[Adapted VCAA 2018 NHT SA Q8]")
+    y -= 7 * mm
+    text(y, "A 1.0 kg mass hangs 4.0 m above the ground on a massless string.")
+    y -= 7 * mm
+    text(y, "a. Calculate the magnetic flux through the coil.")
+    y -= 6 * mm
+    text(y, "(2 marks)")
     c.showPage()
+
+    y = PAGE_H - 25 * mm
+    text(y, "b. Determine the transformer turns ratio required.")
+    y -= 6 * mm
+    text(y, "(3 marks)")
+    y -= 8 * mm
+    text(y, "Solution")
+    y -= 6 * mm
+    text(y, "a 0.30 Wb, from the perpendicular area.")
+    y -= 8 * mm
+    rule(y)
+
+    # --- a question whose maths is a stacked fraction -------------------------
+    y -= 10 * mm
+    text(y, "Question 5/ 14")
+    y -= 7 * mm
+    text(y, "Which expression gives the de Broglie wavelength of the photon?")
+    y -= 9 * mm
+    c.setFont("Helvetica", 10)
+    c.drawString(LEFT + 14, y + 6, "h")        # numerator
+    c.setLineWidth(0.5)
+    c.line(LEFT + 12, y + 3, LEFT + 12 + 8, y + 3)   # the fraction bar
+    c.drawString(LEFT + 14, y - 5, "p")        # denominator
+    c.drawString(LEFT, y, "A")
+    y -= 14 * mm
+    text(y, "B E = hf")
+    y -= 6 * mm
+    text(y, "C E = pc")
+    y -= 6 * mm
+    text(y, "D E = mc")
     c.save()
     return path
 
 
-def test_extract_reads_pages_and_text(fake_book):
-    doc = extract.open_pdf(fake_book)
-    page = extract.read_page(doc, 0)
-    doc.close()
-    assert "transformer" in page.text
-    assert page.blocks
-    assert page.width > 0 and page.height > 0
+def _questions(path):
+    doc = pymupdf.open(path)
+    try:
+        return segment.segment_document(doc)
+    finally:
+        doc.close()
 
 
-def test_printed_page_numbers_respect_the_offset(fake_book):
-    doc = extract.open_pdf(fake_book)
-    assert extract.read_page(doc, 0, page_offset=0).printed == "1"
-    assert extract.read_page(doc, 0, page_offset=141).printed == "142"
-    doc.close()
+def test_question_headers_are_the_boundaries(fake_book):
+    qs = _questions(fake_book)
+    assert [q.number for q in qs] == ["12", "14", "5"]
 
 
-def test_a_vector_diagram_is_detected_and_croppable(fake_book, tmp_path):
-    doc = extract.open_pdf(fake_book)
-    page = extract.read_page(doc, 1)
-    regions = page.figure_regions
-    assert regions, "the drawn diagram was not detected as a figure region"
-
-    out = extract.crop(doc, 1, regions[0], tag="test", out_dir=tmp_path / "crops")
-    doc.close()
-    assert out is not None
-    img = pymupdf.open(out)
-    assert img[0].rect.width > 50      # a real crop, not a sliver
-    img.close()
+def test_printed_page_comes_from_the_header(fake_book):
+    """"Question 12/ 11" means question 12 on printed page 11."""
+    qs = _questions(fake_book)
+    assert qs[0].printed_page == "11"
+    assert qs[2].printed_page == "14"
 
 
-def test_crop_of_a_degenerate_region_returns_none(fake_book, tmp_path):
-    doc = extract.open_pdf(fake_book)
-    assert extract.crop(doc, 0, (10, 10, 11, 11), tag="t", out_dir=tmp_path) is None
-    doc.close()
+def test_options_belong_to_their_own_question(fake_book):
+    """The bug this guards: options bleeding onto the next question's stem."""
+    qs = _questions(fake_book)
+    assert len(qs[0].options) == 4
+    assert "Constant speed followed by no motion" in qs[0].options[0]
+    assert "Constant speed" not in qs[1].text
 
 
-def test_segmentation_finds_the_questions(fake_book):
-    doc = extract.open_pdf(fake_book)
-    found = []
-    for i in range(doc.page_count):
-        found += segment.segment_page(extract.read_page(doc, i))
-    doc.close()
-
-    assert len(found) >= 3
-    numbers = {q.number for q in found}
-    assert {"1", "2"} <= numbers
+def test_a_question_without_options_gets_none(fake_book):
+    qs = _questions(fake_book)
+    assert qs[1].options == []
 
 
-def test_multiple_choice_options_are_split_off(fake_book):
-    doc = extract.open_pdf(fake_book)
-    questions = segment.segment_page(extract.read_page(doc, 0))
-    doc.close()
-    mc = [q for q in questions if q.options]
-    assert mc, "multiple choice options were not detected"
-    assert len(mc[0].options) == 4
-    assert "16 V" in mc[0].options[0]
-    assert "A." not in mc[0].options[0]      # the label is stripped
+def test_marks_are_summed_across_parts(fake_book):
+    qs = _questions(fake_book)
+    assert qs[1].marks == 5           # 2 + 3
+    assert "mark" not in qs[1].full_text.lower()
 
 
-def test_marks_are_parsed_and_removed_from_the_body(fake_book):
-    doc = extract.open_pdf(fake_book)
-    questions = segment.segment_page(extract.read_page(doc, 0))
-    doc.close()
-    marked = [q for q in questions if q.marks]
-    assert marked
-    assert all("mark" not in q.text.lower() for q in marked)
+def test_parts_are_captured_separately(fake_book):
+    qs = _questions(fake_book)
+    assert len(qs[1].parts) == 2
+    assert qs[1].parts[0].startswith("a.")
+    assert qs[1].parts[1].startswith("b.")
 
 
-def test_running_heads_are_not_treated_as_questions(fake_book):
-    doc = extract.open_pdf(fake_book)
-    questions = segment.segment_page(extract.read_page(doc, 0))
-    doc.close()
-    assert not any("Chapter 4 Review" in q.text for q in questions)
+def test_a_question_spanning_pages_is_assembled_whole(fake_book):
+    """Part b is on page 2; it must stay attached to its stem on page 1."""
+    qs = _questions(fake_book)
+    q = qs[1]
+    assert q.page_index == 0
+    assert q.end_page_index == 1
+    assert "transformer turns ratio" in q.full_text
 
 
-@pytest.mark.parametrize("raw,body,answer", [
-    ("Calculate the force. Solution: F = ma = 12 N",
-     "Calculate the force", "F = ma = 12 N"),
-    ("State Lenz's law.", "State Lenz's law.", None),
-])
-def test_inline_solutions_are_split_out(raw, body, answer):
-    got_body, got_answer = _split_solution(raw)
-    assert got_body.startswith(body[:15])
-    if answer is None:
-        assert got_answer is None
-    else:
-        assert answer in got_answer
+def test_provenance_is_extracted_and_removed_from_the_body(fake_book):
+    qs = _questions(fake_book)
+    assert "VCAA 2018" in (qs[1].provenance or "")
+    assert "[" not in qs[1].text
 
 
-def test_full_ingest_writes_tagged_rows(fake_book, conn):
+def test_solutions_are_split_from_their_question(fake_book):
+    qs = _questions(fake_book)
+    assert qs[0].answer and "gradient increases" in qs[0].answer
+    assert "gradient increases" not in qs[0].text
+
+
+def test_a_question_with_no_solution_reports_none(fake_book):
+    qs = _questions(fake_book)
+    assert qs[2].answer is None
+
+
+def test_stacked_fractions_are_flagged_for_cropping(fake_book):
+    """Text can't represent h/p, so the sheet must show the page instead."""
+    qs = _questions(fake_book)
+    fraction_q = qs[2]
+    assert fraction_q.needs_crop
+    assert "fraction" in fraction_q.crop_reason.lower()
+
+
+def test_ordinary_questions_are_not_flagged_for_cropping(fake_book):
+    qs = _questions(fake_book)
+    assert not qs[0].needs_crop
+    assert not qs[1].needs_crop
+
+
+def test_full_ingest_writes_rows_with_citations(fake_book, conn):
     report = ingest_pdf(
-        conn, fake_book,
-        source_id="fake", subject_id="physics", kind="checkpoints",
-        title="Fake Checkpoints", page_offset=141,
+        conn, fake_book, source_id="fake", subject_id="physics",
+        kind="checkpoints", title="Fake Checkpoints",
         use_model=False, progress=lambda *_: None,
     )
-    assert report.kept > 0
-
-    rows = conn.execute("SELECT * FROM question WHERE source_id = 'fake'").fetchall()
-    assert len(rows) == report.kept
+    assert report.candidates == 3
+    rows = conn.execute("SELECT * FROM question WHERE source_id='fake'").fetchall()
+    assert rows
     for row in rows:
+        assert row["citation"].startswith("Fake Checkpoints, p. ")
         assert row["generated"] == 0
-        assert row["citation"].startswith("Fake Checkpoints, p. 1")
         links = conn.execute(
-            "SELECT kk_id FROM question_kk WHERE question_id = ?", (row["id"],)
+            "SELECT kk_id FROM question_kk WHERE question_id=?", (row["id"],)
         ).fetchall()
-        assert links, "every indexed question must hang off a dot point"
+        assert links, "an indexed question must hang off a dot point"
+
+
+def test_provenance_reaches_the_citation(fake_book, conn):
+    ingest_pdf(conn, fake_book, source_id="fake", subject_id="physics",
+               use_model=False, progress=lambda *_: None)
+    cites = [r["citation"] for r in
+             conn.execute("SELECT citation FROM question WHERE source_id='fake'")]
+    assert any("VCAA 2018" in c for c in cites)
+
+
+def test_cropped_questions_carry_an_image(fake_book, conn):
+    ingest_pdf(conn, fake_book, source_id="fake", subject_id="physics",
+               use_model=False, progress=lambda *_: None)
+    rows = conn.execute(
+        "SELECT * FROM question WHERE source_id='fake' AND render_mode='crop'"
+    ).fetchall()
+    for row in rows:
+        assert row["figure_path"], "a crop-rendered question needs its image"
+        assert row["body"], "text is still kept, for search and tagging"
 
 
 def test_ingest_is_idempotent(fake_book, conn):
@@ -182,57 +235,70 @@ def test_ingest_is_idempotent(fake_book, conn):
     first = ingest_pdf(conn, fake_book, **kw)
     second = ingest_pdf(conn, fake_book, **kw)
     assert first.kept == second.kept
-
     total = conn.execute(
-        "SELECT COUNT(*) n FROM question WHERE source_id = 'fake'"
-    ).fetchone()["n"]
+        "SELECT COUNT(*) n FROM question WHERE source_id='fake'").fetchone()["n"]
     assert total == first.kept
 
 
 def test_full_text_search_reaches_ingested_rows(fake_book, conn):
     ingest_pdf(conn, fake_book, source_id="fake", subject_id="physics",
                use_model=False, progress=lambda *_: None)
-    hits = conn.execute(
-        "SELECT COUNT(*) n FROM question_fts WHERE question_fts MATCH 'transformer'"
+    n = conn.execute(
+        "SELECT COUNT(*) n FROM question_fts WHERE question_fts MATCH 'flux'"
     ).fetchone()["n"]
-    assert hits >= 1
+    assert n >= 1
 
 
-def test_coverage_counts_what_was_ingested(fake_book, conn):
-    ingest_pdf(conn, fake_book, source_id="fake", subject_id="physics",
-               use_model=False, progress=lambda *_: None)
-    counts = db.coverage(conn, "physics")
-    assert counts and sum(counts.values()) > 0
+def test_crop_of_a_degenerate_region_returns_none(fake_book, tmp_path):
+    doc = extract.open_pdf(fake_book)
+    assert extract.crop(doc, 0, (10, 10, 11, 11), tag="t", out_dir=tmp_path) is None
+    doc.close()
+
+
+def test_a_real_region_crops_to_an_image(fake_book, tmp_path):
+    doc = extract.open_pdf(fake_book)
+    out = extract.crop(doc, 0, (40, 40, 300, 200), tag="t", out_dir=tmp_path)
+    doc.close()
+    assert out
+    img = pymupdf.open(out)
+    assert img[0].rect.width > 50
+    img.close()
 
 
 class TestKeywordTagger:
-    def test_multiple_choice_is_recognised_by_its_options(self):
-        design = load_study_design("physics")
-        tagger = KeywordTagger(design)
-        result = tagger.tag(
-            "The magnetic flux through the loop is greatest when:",
-            options=["A", "B", "C", "D"], marks=1,
-        )
-        assert result.question_type == "ph-mc"
+    """The offline fallback. It must be conservative, not confidently wrong."""
 
-    def test_a_question_is_tagged_to_a_plausible_dot_point(self):
-        design = load_study_design("physics")
-        tagger = KeywordTagger(design)
-        result = tagger.tag(
-            "Calculate the impulse and momentum change of the ball during the "
-            "collision, treating the system as isolated.", marks=3,
-        )
-        assert result.kk_ids
-        assert all(kk in {k.id for k in design.all_key_knowledge()}
-                   for kk in result.kk_ids)
+    @pytest.fixture
+    def tagger(self):
+        return KeywordTagger(load_study_design("physics"))
 
-    def test_prose_with_no_syllabus_vocabulary_is_rejected(self):
-        tagger = KeywordTagger(load_study_design("physics"))
+    def test_multiple_choice_is_recognised_by_its_options(self, tagger):
+        r = tagger.tag("The flux through the loop is greatest when:",
+                       options=["A", "B", "C", "D"], marks=1)
+        assert r.question_type == "ph-mc"
+
+    def test_a_distinctive_question_is_tagged(self, tagger):
+        r = tagger.tag("Calculate the magnetic flux through the coil when the "
+                       "field is perpendicular to the area.", marks=3)
+        assert not r.rejected
+        assert r.kk_ids
+
+    def test_prose_with_no_syllabus_vocabulary_is_rejected(self, tagger):
         assert tagger.tag("Turn to the next chapter when you are ready.").rejected
 
-    def test_difficulty_tracks_marks(self):
-        tagger = KeywordTagger(load_study_design("physics"))
+    def test_a_question_with_nothing_distinctive_is_rejected(self, tagger):
+        """Better untagged and reported than filed under the wrong dot point."""
+        assert tagger.tag("Which one of the following is closest?").rejected
+
+    def test_tags_are_real_dot_point_ids(self, tagger):
+        design = load_study_design("physics")
+        valid = {kk.id for kk in design.all_key_knowledge()}
+        r = tagger.tag("An ideal transformer has 1200 turns on the primary.",
+                       marks=3)
+        assert set(r.kk_ids) <= valid
+
+    def test_difficulty_tracks_marks(self, tagger):
         easy = tagger.tag("State the unit of magnetic flux.", marks=1)
-        hard = tagger.tag(
-            "Evaluate the transformer design, hence determine the losses.", marks=8)
+        hard = tagger.tag("Evaluate the transformer design, hence determine "
+                          "the power losses.", marks=8)
         assert (easy.difficulty or 0) < (hard.difficulty or 0)

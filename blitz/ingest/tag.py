@@ -29,6 +29,15 @@ _STOP = {
     "between", "within", "into", "when", "which", "these", "those", "than",
     "student", "students", "following", "shown", "figure", "diagram", "above",
     "below", "question", "questions", "marks", "mark", "answer", "give",
+    # Number words and exam boilerplate. These are rare *among dot points*, so
+    # IDF rates them highly, but they carry no topic at all — "one" (from "one
+    # dimension") was enough to file "Which one of the following is closest?"
+    # under conservation of momentum.
+    "one", "two", "three", "four", "first", "second", "third", "next",
+    "closest", "best", "correct", "true", "false", "most", "least", "some",
+    "given", "shows", "show", "describes", "describe", "consider", "considered",
+    "turn", "ready", "chapter", "you", "your", "they",
+    "only", "also", "then", "there", "here", "what", "how", "why", "where",
 }
 
 
@@ -47,45 +56,101 @@ def _tokens(text: str) -> set[str]:
 
 
 class KeywordTagger:
-    """Bag-of-words overlap against each dot point. Cheap, offline, approximate."""
+    """Offline tagger: IDF-weighted term overlap against each dot point.
 
-    def __init__(self, design: StudyDesign, threshold: float = 0.06):
+    Plain overlap does not work here. Study design dot points share a lot of
+    vocabulary — "investigate", "apply", "theoretically", "analyse" appear in
+    dozens of them, and "speed" appears both in kinematics and in "all
+    electromagnetic waves travel at the same speed, c". Matching on those put
+    projectile questions under special relativity.
+
+    So terms are weighted by how rare they are across the dot points: a term in
+    one dot point is strong evidence, a term in thirty is noise. A question is
+    only tagged when it matches something genuinely distinctive, and is left
+    untagged otherwise — a question filed under the wrong dot point is worse
+    than one that is missing, because it silently corrupts every sheet built
+    from that dot point.
+    """
+
+    # Minimum share of the best possible score before a match is believed.
+    THRESHOLD = 0.30
+    # A match must include at least one term this distinctive (idf), or it is
+    # just common vocabulary lining up.
+    DISTINCTIVE_IDF = 1.15
+    # One shared word is never enough on its own, however rare it looks. A real
+    # topic match brings its whole vocabulary with it: a transformer question
+    # says "transformer", "turns", "primary" and "secondary", not just one of
+    # them. A single hit is a coincidence.
+    MIN_SHARED_TERMS = 2
+    # Very short questions ("Which one is closest?") carry no topic, and belong
+    # to the stem or figure above them rather than to any dot point.
+    MIN_QUESTION_TERMS = 4
+
+    def __init__(self, design: StudyDesign, threshold: float | None = None):
         self.design = design
-        self.threshold = threshold
+        self.threshold = self.THRESHOLD if threshold is None else threshold
         self._vocab = {
             kk.id: _tokens(f"{kk.text} {kk.label or ''}")
             for kk in design.all_key_knowledge()
         }
+        self._idf = _idf(list(self._vocab.values()))
         self._type_cues = _type_cues(design)
+
+    def _score(self, kk_id: str, toks: set[str]) -> tuple[float, float]:
+        vocab = self._vocab.get(kk_id) or set()
+        shared = toks & vocab
+        if len(shared) < self.MIN_SHARED_TERMS:
+            return 0.0, 0.0
+        earned = sum(self._idf.get(t, 0.0) for t in shared)
+        available = sum(self._idf.get(t, 0.0) for t in vocab) or 1.0
+        best_term = max(self._idf.get(t, 0.0) for t in shared)
+        # Normalise by what this dot point could possibly award, so a long dot
+        # point isn't automatically the best match for everything.
+        return earned / (available ** 0.55), best_term
 
     def tag(self, text: str, options: list[str] | None = None,
             marks: int | None = None) -> TagResult:
-        toks = _tokens(text)
+        haystack = " ".join([text or "", *(options or [])])
+        toks = _tokens(haystack)
         if not toks:
             return TagResult(rejected=True, reason="no usable text")
+        if len(toks) < self.MIN_QUESTION_TERMS:
+            return TagResult(
+                question_type=self.guess_type(haystack, options, marks),
+                difficulty=_guess_difficulty(haystack, marks),
+                rejected=True,
+                reason="too little content to place",
+            )
 
-        scored: list[tuple[float, str]] = []
-        for kk_id, vocab in self._vocab.items():
-            if not vocab:
-                continue
-            overlap = len(toks & vocab)
-            if not overlap:
-                continue
-            # Jaccard-ish, biased toward covering the dot point's own vocabulary.
-            score = overlap / (len(vocab) ** 0.5 * len(toks) ** 0.25)
-            scored.append((score, kk_id))
-
+        scored = []
+        for kk_id in self._vocab:
+            score, best_term = self._score(kk_id, toks)
+            if score > 0:
+                scored.append((score, best_term, kk_id))
         scored.sort(reverse=True)
-        best = [kk for s, kk in scored if s >= self.threshold][:3]
-        confidence = min(scored[0][0], 1.0) if scored else 0.0
 
+        keep = [
+            (score, kk_id) for score, best_term, kk_id in scored[:3]
+            if score >= self.threshold and best_term >= self.DISTINCTIVE_IDF
+        ]
+        question_type = self.guess_type(haystack, options, marks)
+        if not keep:
+            return TagResult(
+                question_type=question_type,
+                difficulty=_guess_difficulty(haystack, marks),
+                rejected=True,
+                reason="no dot point matched distinctively",
+            )
+
+        # Drop weak runners-up: a second dot point only rides along if it is
+        # close to the best one.
+        best = keep[0][0]
+        kk_ids = [kk for score, kk in keep if score >= best * 0.7]
         return TagResult(
-            kk_ids=best,
-            question_type=self.guess_type(text, options, marks),
-            difficulty=_guess_difficulty(text, marks),
-            confidence=confidence,
-            rejected=not best,
-            reason="" if best else "no dot point matched",
+            kk_ids=kk_ids,
+            question_type=question_type,
+            difficulty=_guess_difficulty(haystack, marks),
+            confidence=min(best, 1.0),
         )
 
     def guess_type(self, text: str, options: list[str] | None,
@@ -103,14 +168,25 @@ class KeywordTagger:
                 best, best_hits = qt_id, hits
         if best:
             return best
-        # Fall back on marks: long answers are extended responses.
         if marks and marks >= 6:
             heavy = [qt for qt in self.design.question_types
                      if qt.typical_marks and max(qt.typical_marks) >= 6]
             if heavy:
                 return heavy[0].id
-        return self.design.question_types[1].id if len(
-            self.design.question_types) > 1 else None
+        types = self.design.question_types
+        return types[1].id if len(types) > 1 else (types[0].id if types else None)
+
+
+def _idf(vocabs: list[set[str]]) -> dict[str, float]:
+    """Inverse document frequency of every term across the dot points."""
+    import math
+
+    n = max(len(vocabs), 1)
+    df: dict[str, int] = {}
+    for vocab in vocabs:
+        for term in vocab:
+            df[term] = df.get(term, 0) + 1
+    return {term: math.log(n / count) for term, count in df.items()}
 
 
 def _type_cues(design: StudyDesign) -> dict[str, list[str]]:

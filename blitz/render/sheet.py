@@ -43,6 +43,8 @@ PAGE_W, PAGE_H = A4
 MARGIN = 12 * mm
 GUTTER = 6 * mm
 QUESTION_PAGES = 2
+# How many dot points the masthead checklist names before it says "and N more".
+CHECKLIST_MAX = 12
 
 
 @dataclass
@@ -190,12 +192,26 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
     """One question as a block that won't be split across columns if it's short."""
     marks = f' <font color="#6b7280">({q.marks} mark{"s" if q.marks != 1 else ""})</font>' if q.marks else ""
     flag = ' <font color="#8a6d1f">°</font>' if q.generated else ""
+
+    # A multi-part question reads as one wall of text if its parts are inlined.
+    # Given a stem, the parts get their own indented lines, as in the book.
+    head = q.stem if (q.stem and q.parts) else q.body
+    tail = "" if (q.stem and q.parts) else f"{marks}{flag}"
     parts: list = [
         Paragraph(
-            f'<b><font color="#1f4fd8">{n}.</font></b> {_esc(q.body)}{marks}{flag}',
+            f'<b><font color="#1f4fd8">{n}.</font></b> {_esc(head)}{tail}',
             ss["Question"],
         )
     ]
+    for i, part in enumerate(q.parts):
+        last = i == len(q.parts) - 1
+        parts.append(Spacer(1, 1.5))
+        parts.append(Paragraph(
+            _esc(part) + (f"{marks}{flag}" if last else ""), ss["Part"]))
+        if not q.options:
+            parts.append(RuledSpace(
+                col_w - 10, max(1, lines_for_marks(q.marks, q.question_type)
+                                // max(len(q.parts), 1))))
 
     fig = _figure(q.figure_path, col_w)
     if fig is not None:
@@ -234,22 +250,38 @@ def _header(ctx: _Ctx, ss, width: float) -> list:
 
     # The checklist: exactly which dot points this sheet covers. This is the bit
     # that makes the sheet auditable against the study design.
+    #
+    # Only the dot points that actually got a question are listed. Listing the
+    # whole selection was fine when dot points were short hand-written labels,
+    # but a real VCAA area of study has 28 of them and the list overflowed the
+    # masthead — which silently dropped the checklist altogether.
     covered: list[str] = []
+    unverified = False
     for kk_id in plan.spec.kk_ids:
+        if kk_id in plan.uncovered_kk_ids:
+            continue
         try:
             kk = design.key_knowledge(kk_id)
         except KeyError:
             continue
-        mark = "☐" if kk_id not in plan.uncovered_kk_ids else "—"
         star = "" if kk.verified else " *"
-        covered.append(f"{mark} {_esc(kk.display)}{star}")
+        unverified = unverified or not kk.verified
+        covered.append(f"☐ {_esc(kk.display)}{star}")
+
     if covered:
+        shown, extra = covered[:CHECKLIST_MAX], len(covered) - CHECKLIST_MAX
+        line = '<b>This sheet covers:</b> &nbsp;' + " &nbsp;·&nbsp; ".join(shown)
+        if extra > 0:
+            line += f" &nbsp;·&nbsp; <i>and {extra} more</i>"
+        out.append(Paragraph(line, ss["Checklist"]))
+    skipped = len(plan.uncovered_kk_ids)
+    if skipped:
         out.append(Paragraph(
-            '<b>This sheet covers:</b> &nbsp;' + " &nbsp;·&nbsp; ".join(covered),
+            f"<i>{skipped} selected dot point(s) had no room on this sheet.</i>",
             ss["Checklist"],
         ))
 
-    if not design.fully_verified:
+    if unverified:
         out.append(Spacer(1, 2))
         out.append(Paragraph(
             "* wording not yet imported from the official VCAA study design — "

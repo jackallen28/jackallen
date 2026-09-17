@@ -47,6 +47,10 @@ def stylesheet() -> StyleSheet1:
         alignment=TA_LEFT,
     ))
     ss.add(ParagraphStyle(
+        "Part", parent=ss["Question"], leftIndent=10, spaceBefore=1,
+        spaceAfter=0.5,
+    ))
+    ss.add(ParagraphStyle(
         "Citation", fontName=oblique, fontSize=6.5, leading=8,
         textColor=MUTED, spaceAfter=5,
     ))

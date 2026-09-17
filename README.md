@@ -12,17 +12,47 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 
 ## Status
 
-Working end to end on the sample question bank. Two things are still stubs and
-both need files only you can supply:
-
 | Thing | State |
 |---|---|
-| Study designs | **Draft.** Reconstructed by hand, every dot point flagged `verified: false`. `blitz import-study-design` replaces them from the VCAA PDF. |
-| Question corpus | **Sample only.** 54 questions written for this repo. `blitz ingest` builds the real index from your books. |
+| Physics study design | **Imported from the VCAA PDF.** 71 dot points, VCAA's own wording. |
+| Business Management study design | **Draft.** Reconstructed by hand, flagged `verified: false`. Send the PDF and `blitz import-study-design` replaces it. |
+| Physics questions | Tested against a real Checkpoints extract: 73 questions, figures cropped, solutions attached. |
+| Business Management questions | **Sample only** — 24 questions written for this repo. |
+| Tagging | **The weak link.** See below. |
 
-Until you import a real study design, every sheet prints an "unverified" banner
-and marks the affected dot points with `*`. That is deliberate — a revision tool
-that quietly invents syllabus wording is worse than no tool.
+A subject whose study design is still a draft prints an "unverified" banner on
+every sheet and marks the affected dot points with `*`. A revision tool that
+quietly invents syllabus wording is worse than no tool.
+
+### Tagging accuracy — read this before trusting a sheet
+
+Filing each question under the right dot point is what makes the selection UI
+mean anything, and the offline keyword tagger is not good at it. Measured
+against a real Checkpoints extract (`python evals/tagging_eval.py <pdf>`),
+scoring whether a question lands in the right *area of study*:
+
+| | keyword tagger |
+|---|---|
+| coverage | 86% of questions tagged |
+| precision, Unit 4 AOS 1 (photoelectric, matter waves) | **96%** |
+| precision, Unit 3 AOS 1 (motion) | **27%** |
+| precision, overall | 79% |
+
+The overall figure flatters it. Photoelectric questions say "photon",
+"de Broglie", "diffraction" — words that appear in the study design. Motion
+questions say "car", "ball", "motorbike", "baseball player", which appear
+nowhere in it. The study design describes concepts; questions describe
+scenarios, and bag-of-words cannot bridge that.
+
+So the keyword tagger is a fallback that gets the tool running offline, not a
+serious tagger. **Set `ANTHROPIC_API_KEY` and `pip install -e '.[tag]'` before
+ingesting a real book.** The model reads each question in context and is the
+intended path; the eval harness scores it too (`--model`), though that has not
+yet been run — this environment had no API key.
+
+The tagger is deliberately conservative: a question it cannot place is left
+untagged and reported, rather than filed somewhere plausible. A question under
+the wrong dot point silently corrupts every sheet built from it.
 
 ## Quick start
 
@@ -77,12 +107,35 @@ substantially more accurate; otherwise it falls back to keyword matching. Either
 way this is the **only** step that touches a model. Once the index is built,
 generating sheets is fully offline and instant.
 
+## Two things the real books taught us
+
+**PyMuPDF reads superscripts out of order.** In Checkpoints, the "⁻¹" in
+"10 m s⁻¹" is set about 1.3pt above the baseline, so it lands on its own y-row
+and is emitted *before* the sentence it belongs to: `10 m s⁻¹ at t = 2.6 s`
+comes back as `10 m s at t = −1 2.6 s`. Physics questions are full of units, so
+this corrupted nearly every one. `ingest/textflow.py` regroups spans into visual
+lines by baseline proximity and re-attaches scripts at the x position they
+actually occupy. Word spacing is positional too — "t = 4.9" is three spans
+nudged apart with no space character anywhere — so gaps, not characters, decide
+where spaces go.
+
+**Some maths cannot be turned back into text at all.** A stacked fraction
+extracts as "h" on one line and "p" on the next; the bar between them is drawn,
+not typed, so nothing in the characters says it was ever a fraction. `λ = h/p`
+flattens to `λ = hp`, and `E_k,max = hc/λ − W` to `Ekmax = hcλ − W` — wrong, and
+confidently so. These are found by detecting the fraction bar (a short drawn
+rule) and flagged `needs_crop`: the sheet shows an image of the real page
+instead, and the text is kept only for search and tagging. In the sample
+extract that was 2 questions and 22 worked solutions — a third of the
+solutions. A mangled worked solution is worse than a mangled question, so
+questions and solutions are checked and cropped independently.
+
 ## How a sheet gets built
 
 ```
 study design (YAML)          your PDFs
       │                          │
-      │                     ingest: extract → segment → crop → tag
+      │            ingest: textflow → segment → crop → tag
       │                          │
       └──────────┬───────────────┘
                  ▼
@@ -150,8 +203,23 @@ python -m pytest
 ```
 
 The ingest and importer tests build synthetic PDFs shaped like a Checkpoints
-chapter and a VCAA study design, so the pipeline is exercised without any
-licensed material in the repo.
+chapter and a VCAA study design — including the superscript, positional-spacing
+and stacked-fraction traps found in the real files — so the pipeline is
+exercised without any licensed material in the repo.
+
+`evals/tagging_eval.py` scores tagging against a real Checkpoints PDF. Ground
+truth comes from the book itself: Checkpoints prints the page each question sits
+on ("Question 12/ 11") and pages cluster by chapter, so page numbers map onto
+areas of study with no hand-annotation to drift.
+
+### A note on dot point ids
+
+Dot point ids are positional (`physics-u3-aos1-kk03`), so re-importing a study
+design can leave every id valid while changing what it means. This bit once: after
+the real VCAA Physics design was imported, a cricket-ball impulse question was
+still "valid" but now pointed at satellite motion, and nothing raised. The
+sample banks now record a fingerprint of the design they were written against
+and refuse to load against a different one.
 
 ## A note on your books
 

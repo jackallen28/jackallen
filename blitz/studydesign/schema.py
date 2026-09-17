@@ -13,7 +13,35 @@ unverified content so you never revise against wording the tool invented.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+
+# The stock openers VCAA uses on most dot points, which carry no topic.
+_OPENER = re.compile(
+    r"^(?:investigate|analyse|analyze|apply|explain|describe|identify|model|"
+    r"calculate|compare|interpret|discuss|distinguish|evaluate)"
+    r"(?:\s+and\s+(?:apply|analyse|analyze|explain|compare|evaluate))?"
+    r"(?:\s+(?:theoretically|practically|qualitatively|quantitatively|and))*"
+    r"\s+(?:the|that|a|an)?\s*",
+    re.IGNORECASE,
+)
+
+
+def shorten(text: str, words: int = 7) -> str:
+    """Trim a study design dot point to something that fits on one line."""
+    trimmed = _OPENER.sub("", text.strip(), count=1).strip()
+    trimmed = trimmed or text.strip()
+    # Cut at the first list marker or clause break, which is usually where the
+    # dot point stops naming its topic and starts enumerating.
+    for marker in (":", ";", " - ", ", including"):
+        head = trimmed.split(marker)[0]
+        if len(head) >= 12:
+            trimmed = head
+    parts = trimmed.split()
+    out = " ".join(parts[:words])
+    if len(parts) > words:
+        out += "\u2026"
+    return out[:1].upper() + out[1:] if out else text[:40]
 
 
 @dataclass(frozen=True)
@@ -28,7 +56,17 @@ class KeyKnowledge:
 
     @property
     def display(self) -> str:
-        return self.label or self.text
+        """A short name for tight spaces: the checklist, warnings, the UI.
+
+        VCAA writes dot points as whole sentences, most of them opening with the
+        same stock phrase ("investigate and apply theoretically and practically
+        the …"). Printed verbatim they overflow the sheet's masthead and read as
+        near-identical. So the boilerplate opener is stripped and the first real
+        clause kept.
+        """
+        if self.label:
+            return self.label
+        return shorten(self.text)
 
 
 @dataclass(frozen=True)

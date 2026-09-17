@@ -2,6 +2,10 @@
 # These are written for this project, not taken from any book, and every one is
 # marked generated: true so it prints with a ° and can be excluded entirely
 # (uncheck "fill gaps with generated questions" in the UI, or pass --no-generated).
+# Guards against a study design re-import silently changing what these
+# dot-point ids mean. Recompute with blitz.corpus.sample.fingerprint().
+study_design_fingerprint: 4056dc976d3a
+
 source:
   id: bm-sample
   kind: generated

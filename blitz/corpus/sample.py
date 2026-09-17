@@ -16,13 +16,36 @@ from pathlib import Path
 import yaml
 
 from ..db import insert_question, upsert_source
-from ..studydesign import load_study_design
+from ..studydesign import StudyDesign, load_study_design
 
 CORPUS_DIR = Path(__file__).resolve().parent
 
 
 def sample_files() -> list[Path]:
     return sorted(CORPUS_DIR.glob("sample_*.yaml"))
+
+
+def fingerprint(design: StudyDesign) -> str:
+    """A short hash of the study design's dot points.
+
+    Dot point ids are positional (``...-aos1-kk03``), so re-importing a study
+    design can leave every id still valid while silently changing what it means.
+    That happened once already: after the real VCAA Physics design was imported,
+    a cricket-ball impulse question was still "valid" but now pointed at
+    satellite motion. Nothing raised, and every sheet built from it would have
+    been quietly wrong.
+
+    So the sample bank records the design it was written against, and refuses to
+    load against a different one.
+    """
+    payload = "|".join(
+        f"{kk.id}:{kk.text[:40]}" for kk in design.all_key_knowledge()
+    )
+    return hashlib.sha1(payload.encode()).hexdigest()[:12]
+
+
+class StaleSampleBank(RuntimeError):
+    """The sample bank was written against a different study design."""
 
 
 def load_sample(conn: sqlite3.Connection, subject_id: str) -> int:
@@ -37,6 +60,18 @@ def load_sample(conn: sqlite3.Connection, subject_id: str) -> int:
 
     with path.open(encoding="utf-8") as fh:
         doc = yaml.safe_load(fh)
+
+    expected = doc.get("study_design_fingerprint")
+    actual = fingerprint(design)
+    if expected and expected != actual:
+        raise StaleSampleBank(
+            f"{path.name} was written against a different {subject_id} study "
+            f"design (fingerprint {expected}, now {actual}).\n"
+            "Dot point ids are positional, so these questions may now point at "
+            "the wrong dot points. Re-check each 'kk:' against the current "
+            f"design and set study_design_fingerprint to {actual}, or delete "
+            "the sample bank now that you have real questions indexed."
+        )
 
     src = doc["source"]
     upsert_source(

@@ -1,189 +1,443 @@
 # VCE Physics — Units 3 & 4
-#
-# STATUS: DRAFT. Every dot point below is `verified: false`. The wording was
-# reconstructed from memory of the study design, NOT copied from the VCAA
-# document, and the Unit 4 area-of-study split in particular needs checking.
-# Replace it with the real thing before relying on it:
-#
-#     blitz import-study-design sources/vcaa/physics-sd.pdf --subject physics
-#
-# The importer rewrites this file from the PDF and sets verified: true. Until
-# then the UI shows an "unverified study design" banner on every sheet.
-
+# Imported from physics-sd.pdf. Dot point wording is VCAA's.
+# question_types and command_terms below are this tool's own editorial
+# data and are preserved across imports.
 subject_id: physics
 subject_name: VCE Physics
-accreditation: ""        # set by the importer from the PDF cover page
-source: "DRAFT — not yet imported from the VCAA study design"
-
+accreditation: 'Unit 1 and 2: 2023; Units 3 and 4 2024'
+source: Imported from physics-sd.pdf
 units:
-  - number: 3
-    title: How do fields explain motion and electricity?
-    areas_of_study:
-      - number: 1
-        title: How do physicists explain motion in two dimensions?
-        outcome: >-
-          On completion of this unit the student should be able to investigate
-          motion and related energy transformations experimentally, and analyse
-          motion using Newton's laws of motion in one and two dimensions.
-        key_knowledge:
-          - text: "Newton's three laws of motion in situations where two or more coplanar forces act along a straight line and in two dimensions"
-            label: Newton's laws
-          - text: "the vector nature of force, and the resolution of forces into components including on inclined planes"
-            label: Force vectors and inclines
-          - text: "impulse and momentum in an isolated system, including the impulse-momentum theorem and conservation of momentum in one dimension"
-            label: Impulse and momentum
-          - text: "elastic and inelastic collisions with reference to conservation of kinetic energy"
-            label: Elastic vs inelastic collisions
-          - text: "work done by a constant force, and the relationship between work, force and displacement"
-            label: Work
-          - text: "kinetic energy, gravitational potential energy near the Earth's surface, and strain potential energy as the area under a force-distance graph"
-            label: Energy stores
-          - text: "the conservation of mechanical energy in isolated systems"
-            label: Conservation of energy
-          - text: "projectile motion near the Earth's surface, including the independence of horizontal and vertical components, with air resistance considered qualitatively"
-            label: Projectile motion
-          - text: "uniform circular motion in a horizontal plane, including centripetal acceleration and net force"
-            label: Circular motion
-          - text: "banked tracks and circular motion in a vertical plane at the highest and lowest points"
-            label: Banked and vertical circles
-      - number: 2
-        title: How do things move without contact?
-        outcome: >-
-          On completion of this unit the student should be able to analyse
-          gravitational, electric and magnetic fields, and apply these to
-          explain the operation of motors and the orbits of satellites.
-        key_knowledge:
-          - text: "fields as a model to explain forces acting at a distance, including gravitational, electric and magnetic fields"
-            label: The field model
-          - text: "the direction and shape of gravitational, electric and magnetic field lines, including the direction of force on a positive test charge or small mass"
-            label: Field lines
-          - text: "Newton's law of universal gravitation and the gravitational field of a point mass"
-            label: Universal gravitation
-          - text: "Coulomb's law and the electric field of a point charge"
-            label: Coulomb's law
-          - text: "the magnitude and direction of the force on a current-carrying conductor in a magnetic field"
-            label: Force on a conductor
-          - text: "the qualitative and quantitative treatment of the field between charged parallel plates, including work done on a charge"
-            label: Parallel plates
-          - text: "the use of gravitational field and energy to analyse satellite motion, including the area under a force-distance graph as energy change"
-            label: Satellite motion and energy
-          - text: "circular orbits of satellites about the Earth and the relationship between period and radius"
-            label: Orbits
-          - text: "the qualitative description of apparent weightlessness in orbit"
-            label: Apparent weightlessness
-      - number: 3
-        title: How are fields used to move electrical energy?
-        outcome: >-
-          On completion of this unit the student should be able to analyse and
-          evaluate the generation, transmission and use of electricity with
-          reference to electromagnetic induction.
-        key_knowledge:
-          - text: "magnetic flux and the factors that determine it, including field strength and the area and orientation of a loop"
-            label: Magnetic flux
-          - text: "generation of an EMF by a changing magnetic flux, including Faraday's law and Lenz's law"
-            label: Faraday's and Lenz's laws
-          - text: "the qualitative and quantitative analysis of EMF-versus-time graphs for a rotating loop"
-            label: EMF graphs
-          - text: "the operation of AC generators and DC generators, including the role of slip rings and commutators"
-            label: Generators
-          - text: "the operation of DC motors, including the role of the commutator"
-            label: DC motors
-          - text: "peak, peak-to-peak and RMS values of AC voltage and current"
-            label: RMS values
-          - text: "the operation of an ideal transformer, including the turns ratio and conservation of power"
-            label: Transformers
-          - text: "power transmission losses in lines and the reasons for transmitting at high voltage"
-            label: Transmission losses
-  - number: 4
-    title: How have creative ideas and investigations revolutionised thinking in physics?
-    areas_of_study:
-      - number: 1
-        title: How has understanding about the physical world changed?
-        outcome: >-
-          On completion of this unit the student should be able to analyse and
-          apply models of light and matter, and describe the relationship
-          between light, matter and special relativity.
-        key_knowledge:
-          - text: "the wave model of light, including the evidence from Young's double slit experiment and the relationship between path difference and interference"
-            label: Wave model and interference
-          - text: "diffraction and the significance of the ratio of wavelength to aperture size"
-            label: Diffraction
-          - text: "the particle-like nature of light as evidenced by the photoelectric effect, including threshold frequency, work function and stopping voltage"
-            label: Photoelectric effect
-          - text: "the limitations of the wave model in explaining the photoelectric effect"
-            label: Limits of the wave model
-          - text: "the wave-like nature of matter, including de Broglie wavelength and electron diffraction patterns"
-            label: Matter waves
-          - text: "the quantised energy levels of the atom and the production of atomic absorption and emission line spectra"
-            label: Atomic spectra
-          - text: "Einstein's two postulates of special relativity and the constancy of the speed of light for all inertial observers"
-            label: Postulates of relativity
-          - text: "proper time, proper length, time dilation and length contraction, and the evidence from muon decay"
-            label: Time dilation and length contraction
-          - text: "relativistic energy, including rest energy and the mass-energy relationship"
-            label: Relativistic energy
-      - number: 2
-        title: How is scientific inquiry used to investigate the physical world?
-        outcome: >-
-          On completion of this unit the student should be able to design and
-          conduct a scientific investigation related to the physical world, and
-          present methodologies, findings and conclusions in a scientific poster.
-        key_knowledge:
-          - text: "the distinction between independent, dependent and controlled variables"
-            label: Variables
-          - text: "the characteristics of scientific methodologies and techniques of primary quantitative data generation"
-            label: Methodology
-          - text: "accuracy, precision, repeatability, reproducibility and validity of measurements"
-            label: Measurement quality
-          - text: "systematic and random errors, outliers, and the effect of uncertainty on a result"
-            label: Errors and uncertainty
-          - text: "the use of appropriate graphical representations, including linearisation and the interpretation of gradients and intercepts"
-            label: Graphing and linearisation
-          - text: "the nature of evidence supporting or refuting a hypothesis, and the identification of limitations in conclusions"
-            label: Evidence and conclusions
-
+- id: physics-u3
+  number: 3
+  title: How do fields explain motion and electricity?
+  areas_of_study:
+  - id: physics-u3-aos1
+    number: 1
+    title: How do physicists explain motion in two dimensions?
+    outcome: On completion of this unit the student should be able to investigate motion and related energy
+      transformations experimentally, and analyse motion using Newton’s laws of motion in one and two
+      dimensions
+    key_knowledge:
+    - id: physics-u3-aos1-kk01
+      text: investigate and apply theoretically and practically Newton’s three laws of motion in situations
+        where two or more coplanar forces act along a straight line and in two dimensions
+      verified: true
+    - id: physics-u3-aos1-kk02
+      text: 'investigate and analyse theoretically and practically the uniform circular motion of an object
+        moving in a horizontal plane: 5, including: - a vehicle moving around a circular road - a vehicle
+        moving around a banked track - an object on the end of a string'
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos1-kk03
+      text: model natural and artificial satellite motion as uniform circular motion
+      verified: true
+    - id: physics-u3-aos1-kk04
+      text: investigate and apply theoretically Newton’s second law to circular motion in a vertical plane
+        (forces at the highest and lowest positions only)
+      verified: true
+    - id: physics-u3-aos1-kk05
+      text: investigate and analyse theoretically and practically the motion of projectiles near Earth’s
+        surface, including a qualitative description of the effects of air resistance
+      verified: true
+    - id: physics-u3-aos1-kk06
+      text: investigate and apply theoretically and practically the laws of energy and momentum conservation
+        in isolated systems in one dimension Relationships between force, energy and mass
+      verified: true
+    - id: physics-u3-aos1-kk07
+      text: 'investigate and analyse theoretically and practically impulse in an isolated system for collisions
+        between objects moving in a straight line: FΔt = mΔv'
+      verified: true
+    - id: physics-u3-aos1-kk08
+      text: 'investigate and apply theoretically and practically the concept of work done by a force using:
+        - work done = force × displacement - work done = area under force vs distance graph (one dimensional
+        only)'
+      verified: true
+    - id: physics-u3-aos1-kk09
+      text: 'analyse transformations of energy between kinetic energy, elastic potential energy, gravitational
+        potential energy and energy dissipated to the environment (considered as a combination of heat,
+        sound and deformation of material): - kinetic energy at low speeds,; elastic and inelastic collisions
+        with reference to conservation of kinetic energy - elastic potential energy: area under force-distance
+        graph including ideal springs obeying Hooke’s Law, - gravitational potential energy: Eg = mgΔh
+        or from area under a force-distance graph and area under a field-distance graph multiplied by
+        mass'
+      verified: true
+      has_formula: true
+    key_skills: []
+  - id: physics-u3-aos2
+    number: 2
+    title: How do things move without contact?
+    outcome: On completion of this unit the student should be able to analyse gravitational, electric
+      and magnetic fields, and apply these to explain the operation of motors and particle accelerators,
+      and the orbits of satellites
+    key_knowledge:
+    - id: physics-u3-aos2-kk01
+      text: describe gravitation, magnetism and electricity using a field model
+      verified: true
+    - id: physics-u3-aos2-kk02
+      text: investigate and compare theoretically and practically gravitational, magnetic and electric
+        fields, including directions and shapes of fields, attractive and repulsive effects, and the existence
+        of dipoles and monopoles
+      verified: true
+    - id: physics-u3-aos2-kk03
+      text: 'investigate and compare theoretically and practically gravitational fields and electrical
+        fields about a point mass or charge (positive or negative) with reference to: - the direction
+        of the field - the shape of the field - the use of the inverse square law to determine the magnitude
+        of the field - potential energy changes (qualitative) associated with a point mass or charge moving
+        in the field'
+      verified: true
+    - id: physics-u3-aos2-kk04
+      text: investigate and apply theoretically and practically a field model to magnetic phenomena, including
+        shapes and directions of fields produced by bar magnets, and by current-carrying wires, loops
+        and solenoids
+      verified: true
+    - id: physics-u3-aos2-kk05
+      text: identify fields as static or changing, and as uniform or non-uniform
+      verified: true
+    - id: physics-u3-aos2-kk06
+      text: 'analyse the use of an electric field to accelerate a charge, including: - electric field
+        and electric force concepts'
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos2-kk07
+      text: 'analyse the use of a magnetic field to change the path of a charged particle, including:
+        - the magnitude and direction of the force applied to an electron beam by a magnetic field: F
+        = qvB, in cases where the directions of v and B are perpendicular or parallel - the radius of
+        the path followed by an electron in a magnetic field, where v << c'
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos2-kk08
+      text: 'analyse the use of gravitational fields to accelerate mass, including: - gravitational field
+        and gravitational force concepts'
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos2-kk09
+      text: analyse the change in gravitational potential energy from area under a force vs distance graph
+        and area under a field vs distance graph multiplied by mass
+      verified: true
+    - id: physics-u3-aos2-kk10
+      text: apply the concepts of force due to gravity and normal force including in relation to satellites
+        in orbit where the orbits are assumed to be uniform and circular
+      verified: true
+    - id: physics-u3-aos2-kk11
+      text: model satellite motion (artificial, Moon, planet) as uniform circular orbital motion
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos2-kk12
+      text: describe the interaction of two fields, allowing that electric charges, magnetic poles and
+        current carrying conductors can either attract or repel, whereas masses only attract each other
+      verified: true
+    - id: physics-u3-aos2-kk13
+      text: investigate and analyse theoretically and practically the force on a current carrying conductor
+        due to an external magnetic field, F = nIlB, where the directions of I and B are either perpendicular
+        or parallel to each other
+      verified: true
+    - id: physics-u3-aos2-kk14
+      text: investigate and analyse theoretically and practically the operation of simple DC motors consisting
+        of one coil, containing a number of loops of wire, which is free to rotate about an axis in a
+        uniform magnetic field and including the use of a split ring commutator
+      verified: true
+    - id: physics-u3-aos2-kk15
+      text: investigate, qualitatively, the effect of current, external magnetic field and the number
+        of loops of wire on the torque of a simple motor
+      verified: true
+    - id: physics-u3-aos2-kk16
+      text: model the acceleration of particles in a particle accelerator (including synchrotrons) as
+        uniform circular motion (limited to linear acceleration by a uniform electric field and direction
+        change by a uniform magnetic field)
+      verified: true
+    key_skills: []
+  - id: physics-u3-aos3
+    number: 3
+    title: How are fields used in electricity generation?
+    outcome: On completion of this unit the student should be able to analyse and evaluate an electricity
+      generation and distribution system
+    key_knowledge:
+    - id: physics-u3-aos3-kk01
+      text: 'calculate magnetic flux when the magnetic field is perpendicular to the area, and describe
+        the qualitative effect of differing angles between the area and the field: ΦO ='
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos3-kk02
+      text: 'investigate and analyse theoretically and practically the generation of electromotive force
+        (emf) including AC voltage and calculations using induced emf, with reference to: - rate of change
+        of magnetic flux - number of loops through which the flux passes - direction of induced emf in
+        a coil'
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos3-kk03
+      text: explain the production of DC voltage in DC generators and AC voltage in alternators, including
+        the use of split ring commutators and slip rings respectively
+      verified: true
+    - id: physics-u3-aos3-kk04
+      text: describe the production of electricity using photovoltaic cells and the need for an inverter
+        to convert power from DC to AC for use in the home (not including details of semiconductors action
+        or inverter circuitry)
+      verified: true
+    - id: physics-u3-aos3-kk05
+      text: compare sinusoidal AC voltages produced as a result of the uniform rotation of a loop in a
+        constant magnetic field with reference to frequency, period, amplitude, peak-to-peak voltage (Vp–p
+        ) and peak-to- peak current (Ip–p )
+      verified: true
+    - id: physics-u3-aos3-kk06
+      text: compare alternating voltage expressed as the root-mean-square (rms) to a constant DC voltage
+        developing the same power in a resistive component
+      verified: true
+    - id: physics-u3-aos3-kk07
+      text: analyse transformer action with reference to electromagnetic induction for an ideal transformer,
+        =, =
+      verified: true
+      has_formula: true
+    - id: physics-u3-aos3-kk08
+      text: analyse the supply of power by considering transmission losses across transmission lines
+      verified: true
+    key_skills: []
+- id: physics-u4
+  number: 4
+  title: How have creative ideas and investigation revolutionised thinking in physics?
+  areas_of_study:
+  - id: physics-u4-aos1
+    number: 1
+    title: How has understanding about the physical world changed?
+    outcome: On completion of this unit the student should be able to analyse and apply models that explain
+      the nature of light and matter, and use special relativity to explain observations made when objects
+      are moving at speeds approaching the speed of light
+    key_knowledge:
+    - id: physics-u4-aos1-kk01
+      text: describe light as a transverse electromagnetic wave which is produced by the acceleration
+        of charges, which in turn produces changing electric fields and associated changing magnetic fields
+      verified: true
+    - id: physics-u4-aos1-kk02
+      text: identify that all electromagnetic waves travel at the same speed, c, in a vacuum
+      verified: true
+    - id: physics-u4-aos1-kk03
+      text: explain the formation of a standing wave resulting from the superposition of a travelling
+        wave and its reflection
+      verified: true
+    - id: physics-u4-aos1-kk04
+      text: analyse the formation of standing waves (only those with nodes at both ends is required)
+      verified: true
+    - id: physics-u4-aos1-kk05
+      text: investigate and explain theoretically and practically diffraction as the directional spread
+        of various frequencies with reference to different gap width or obstacle size, including the qualitative
+        effect of changing the S T ratio, and apply this to limitations of imaging using electromagnetic
+        waves
+      verified: true
+    - id: physics-u4-aos1-kk06
+      text: 'explain the results of Young’s double slit experiment with reference to: - evidence for the
+        wave-like nature of light - constructive and destructive interference of coherent waves in terms
+        of path differences: nλ and 5,6, where n = 0,1, 2,… - effect of wavelength, distance of screen
+        and slit separation on interference patterns: Δ'
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk07
+      text: apply the quantised energy of photons
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk08
+      text: 'analyse the photoelectric effect with reference to: - evidence for the particle-like nature
+        of light - experimental data in the form of graphs of photocurrent versus electrode potential,
+        and of kinetic energy of electrons versus frequency - kinetic energy of emitted photoelectrons,
+        using energy units of joule and electron-volt - effects of intensity of incident irradiation on
+        the emission of photoelectrons'
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk09
+      text: describe the limitation of the wave model of light in explaining experimental results related
+        to the photoelectric effect Matter as particles or waves
+      verified: true
+    - id: physics-u4-aos1-kk10
+      text: interpret electron diffraction patterns as evidence for the wave-like nature of matter
+      verified: true
+    - id: physics-u4-aos1-kk11
+      text: distinguish between the diffraction patterns produced by photons and electrons
+      verified: true
+    - id: physics-u4-aos1-kk12
+      text: calculate the de Broglie wavelength of matter
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk13
+      text: discuss the importance of the idea of quantisation in the development of knowledge about light
+        and in explaining the nature of atoms
+      verified: true
+    - id: physics-u4-aos1-kk14
+      text: compare the momentum of photons and of matter of the same wavelength including calculations
+        using
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk15
+      text: explain the production of atomic absorption and emission line spectra, including those from
+        metal vapour lamps
+      verified: true
+    - id: physics-u4-aos1-kk16
+      text: 'interpret spectra and calculate the energy of absorbed or emitted photons: E = hf'
+      verified: true
+    - id: physics-u4-aos1-kk17
+      text: analyse the emission or absorption of a photon by an atom in terms of a change in the electron
+        energy state of the atom, with the difference in the states’ energies being equal to the photon
+        energy
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk18
+      text: interpret the single photon and the electron double slit experiment as evidence for the dual
+        nature of light and matter Einstein’s special theory of relativity
+      verified: true
+    - id: physics-u4-aos1-kk19
+      text: describe the limitation of classical mechanics when considering motion approaching the speed
+        of light
+      verified: true
+    - id: physics-u4-aos1-kk20
+      text: 'describe Einstein’s two postulates for his special theory of relativity that: - the laws
+        of physics are the same in all inertial (non-accelerated) frames of reference - the speed of light
+        has a constant value for all observers regardless of their motion or the motion of the source'
+      verified: true
+    - id: physics-u4-aos1-kk21
+      text: interpret the null result of the Michelson-Morley experiment as evidence in support of Einstein’s
+        special theory of relativity
+      verified: true
+    - id: physics-u4-aos1-kk22
+      text: compare Einstein’s special theory of relativity with the principles of classical physics
+      verified: true
+    - id: physics-u4-aos1-kk23
+      text: describe proper time (t0 ) as the time interval between two events in a reference frame where
+        the two events occur at the same point in space
+      verified: true
+    - id: physics-u4-aos1-kk24
+      text: describe proper length (L0 ) as the length that is measured in the frame of reference in which
+        objects are at rest
+      verified: true
+    - id: physics-u4-aos1-kk25
+      text: model mathematically time dilation and length contraction at speeds approaching c using the
+        equations
+      verified: true
+      has_formula: true
+    - id: physics-u4-aos1-kk26
+      text: 'explain and analyse examples of special relativity including that: - muons can reach Earth
+        even though their half-lives would suggest that they should decay in the upper atmosphere - particle
+        accelerator lengths must be designed to take the effects of special relativity into account -
+        time signals from GPS satellites must be corrected for the effects of special relativity due to
+        their orbital velocity'
+      verified: true
+    - id: physics-u4-aos1-kk27
+      text: 'interpret Einstein’s prediction by showing that the total ‘mass-energy’ of an object is given
+        by: Etot = Ek + E0 = γmc2 where E0 = mc2, and where kinetic energy can be calculated by: Ek =
+        (γ – 1)mc2'
+      verified: true
+    - id: physics-u4-aos1-kk28
+      text: apply the energy-mass relationship to mass conversion in the Sun, to positron-electron annihilation
+        and to nuclear transformations in particle accelerators (details of the particular nuclear processes
+        are not required)
+      verified: true
+    key_skills: []
+  - id: physics-u4-aos2
+    number: 2
+    title: How is scientific inquiry used to investigate fields, motion or light?
+    outcome: On completion of this unit the student should be able to design and conduct a scientific
+      investigation related to fields, motion or light, and present an aim, methodology and method, results,
+      discussion and a conclusion in a scientific poster
+    key_knowledge:
+    - id: physics-u4-aos2-kk01
+      text: identify the physics concepts specific to the investigation and explain their significance,
+        including definitions of key terms and physics representations
+      verified: true
+    - id: physics-u4-aos2-kk02
+      text: 'explain the characteristics of the selected scientific methodology and method including:
+        techniques of primary qualitative and quantitative data generation relevant to the selected investigation;
+        and appropriateness of the use of independent, dependent and controlled variables in the selected
+        scientific investigation'
+      verified: true
+    - id: physics-u4-aos2-kk03
+      text: identify and apply concepts of accuracy, precision, repeatability, reproducibility, resolution
+        and validity of data; and the identification of, and distinction between, error and uncertainty
+      verified: true
+    - id: physics-u4-aos2-kk04
+      text: identify and apply health, safety and ethical guidelines relevant to the selected investigation
+      verified: true
+    - id: physics-u4-aos2-kk05
+      text: discuss the nature of evidence that supports or refutes a hypothesis, model or theory
+      verified: true
+    - id: physics-u4-aos2-kk06
+      text: 'apply methods of organising, analysing and evaluating primary data to identify patterns and
+        relationships including: the physical significance of the gradient of linearised data; causes
+        of uncertainty; use of uncertainty bars; and assumptions and limitations of data, methodologies
+        and methods'
+      verified: true
+    - id: physics-u4-aos2-kk07
+      text: model the scientific practice of using a logbook to authenticate generated primary data
+      verified: true
+    - id: physics-u4-aos2-kk08
+      text: 'apply the conventions of science communication: scientific terminology and representations;
+        symbols, equations and formulas; standard abbreviations; significant figures; and units of measurement'
+      verified: true
+    - id: physics-u4-aos2-kk09
+      text: apply the conventions of scientific poster presentation, including succinct communication
+        of the selected scientific investigation, and acknowledgement of references
+      verified: true
+    - id: physics-u4-aos2-kk10
+      text: explain the key findings and implications of the selected investigation
+      verified: true
+    key_skills: []
 question_types:
-  - id: ph-mc
-    label: Multiple choice
-    description: Four-option conceptual and single-step calculation questions.
-    typical_marks: [1]
-    default_weight: 0.30
-  - id: ph-calculation
-    label: Calculation
-    description: Numerical questions requiring a formula, substitution and a unit.
-    typical_marks: [2, 3, 4]
-    default_weight: 0.70
-  - id: ph-multi-step
-    label: Multi-step problem
-    description: Problems chaining two or more relationships, often across topics.
-    typical_marks: [4, 5, 6]
-    default_weight: 1.20
-  - id: ph-explanation
-    label: Conceptual explanation
-    description: Explain a physical effect in words, with reference to a model or law.
-    typical_marks: [2, 3, 4]
-    default_weight: 0.80
-  - id: ph-graph
-    label: Graph interpretation
-    description: Read, sketch or extract a quantity from a graph, including areas and gradients.
-    typical_marks: [2, 3, 4]
-    default_weight: 1.00
-  - id: ph-diagram
-    label: Diagram-based
-    description: Questions built on a figure — field lines, circuits, free-body diagrams, ray diagrams.
-    typical_marks: [2, 3, 4]
-    default_weight: 1.10
-  - id: ph-experimental
-    label: Experimental design and analysis
-    description: Uncertainty, variables, validity and the interpretation of experimental data.
-    typical_marks: [2, 3, 4]
-    default_weight: 0.90
-  - id: ph-derivation
-    label: Derivation / proof
-    description: Show that a relationship follows from stated principles.
-    typical_marks: [3, 4]
-    default_weight: 0.90
-
+- id: ph-mc
+  label: Multiple choice
+  description: Four-option conceptual and single-step calculation questions.
+  typical_marks:
+  - 1
+  default_weight: 0.3
+- id: ph-calculation
+  label: Calculation
+  description: Numerical questions requiring a formula, substitution and a unit.
+  typical_marks:
+  - 2
+  - 3
+  - 4
+  default_weight: 0.7
+- id: ph-multi-step
+  label: Multi-step problem
+  description: Problems chaining two or more relationships, often across topics.
+  typical_marks:
+  - 4
+  - 5
+  - 6
+  default_weight: 1.2
+- id: ph-explanation
+  label: Conceptual explanation
+  description: Explain a physical effect in words, with reference to a model or law.
+  typical_marks:
+  - 2
+  - 3
+  - 4
+  default_weight: 0.8
+- id: ph-graph
+  label: Graph interpretation
+  description: Read, sketch or extract a quantity from a graph, including areas and gradients.
+  typical_marks:
+  - 2
+  - 3
+  - 4
+  default_weight: 1.0
+- id: ph-diagram
+  label: Diagram-based
+  description: Questions built on a figure — field lines, circuits, free-body diagrams, ray diagrams.
+  typical_marks:
+  - 2
+  - 3
+  - 4
+  default_weight: 1.1
+- id: ph-experimental
+  label: Experimental design and analysis
+  description: Uncertainty, variables, validity and the interpretation of experimental data.
+  typical_marks:
+  - 2
+  - 3
+  - 4
+  default_weight: 0.9
+- id: ph-derivation
+  label: Derivation / proof
+  description: Show that a relationship follows from stated principles.
+  typical_marks:
+  - 3
+  - 4
+  default_weight: 0.9
 command_terms:
   state: Give a short answer with no working or justification.
   calculate: Find a numerical answer, showing working and including a unit.

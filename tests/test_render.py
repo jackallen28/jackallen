@@ -80,12 +80,23 @@ def test_dot_point_checklist_is_printed(seeded, tmp_path):
 
 
 def test_unverified_study_design_is_declared_on_the_sheet(seeded, tmp_path):
+    """Business Management is still a reconstruction, so its sheets must say so."""
     out = tmp_path / "s.pdf"
-    render_sheet(_plan(seeded, seed=1), out)
+    render_sheet(_plan(seeded, subject="business-management", seed=1), out)
     doc = pymupdf.open(out)
     first = " ".join(doc[0].get_text("text").split())
     doc.close()
     assert "not yet imported" in first
+
+
+def test_a_verified_study_design_carries_no_warning(seeded, tmp_path):
+    """Physics was imported from the VCAA PDF; it must not be caveated."""
+    out = tmp_path / "s.pdf"
+    render_sheet(_plan(seeded, subject="physics", seed=1), out)
+    doc = pymupdf.open(out)
+    first = " ".join(doc[0].get_text("text").split())
+    doc.close()
+    assert "not yet imported" not in first
 
 
 def test_generated_questions_are_marked_and_explained(seeded, tmp_path):
@@ -206,3 +217,64 @@ def test_long_subtitle_is_elided_not_truncated_silently(seeded, tmp_path):
     assert out.endswith("…")
     assert len(out) < len(long)
     assert _elide("short", "Helvetica", 6.8, 200) == "short"
+
+
+def test_multi_part_questions_break_onto_separate_lines(seeded, tmp_path):
+    """Inlined parts read as a wall of text; the book puts them on their own lines."""
+    design = load_study_design("physics")
+    kk = design.all_key_knowledge()[0]
+    q = Question(
+        id="q1", subject_id="physics", question_type="ph-multi-step",
+        body="A trolley rolls down a ramp. a. Calculate its speed. b. Find the energy lost.",
+        stem="A trolley rolls down a ramp.",
+        parts=["a. Calculate its speed at the bottom.",
+               "b. Find the energy lost to friction."],
+        marks=5, kk_ids=[kk.id], citation="test",
+    )
+    plan = SheetPlan(spec=SheetSpec(subject_id="physics", kk_ids=[kk.id]),
+                     questions=[q])
+    out = tmp_path / "s.pdf"
+    render_sheet(plan, out)
+
+    doc = pymupdf.open(out)
+    lines = [" ".join(l.split()) for l in doc[0].get_text("text").splitlines()]
+    doc.close()
+    # Each part must start its own line rather than being glued into the stem.
+    assert any(l.startswith("a. Calculate its speed") for l in lines)
+    assert any(l.startswith("b. Find the energy lost") for l in lines)
+
+
+def test_single_part_questions_are_unaffected(seeded, tmp_path):
+    design = load_study_design("physics")
+    kk = design.all_key_knowledge()[0]
+    q = Question(
+        id="q1", subject_id="physics", question_type="ph-calculation",
+        body="Calculate the speed of the trolley at the bottom of the ramp.",
+        marks=3, kk_ids=[kk.id], citation="test",
+    )
+    plan = SheetPlan(spec=SheetSpec(subject_id="physics", kk_ids=[kk.id]),
+                     questions=[q])
+    out = tmp_path / "s.pdf"
+    result = render_sheet(plan, out)
+    assert result["questions"] == 1
+
+    doc = pymupdf.open(out)
+    text = " ".join(" ".join(doc[0].get_text("text").split()).split())
+    doc.close()
+    assert "Calculate the speed of the trolley" in text
+
+
+def test_checklist_names_only_dot_points_that_got_a_question(seeded, tmp_path):
+    """A real area of study has 28 dot points; listing them all overflowed."""
+    design = load_study_design("physics")
+    chosen = [kk.id for kk in design.area("physics-u4-aos1").key_knowledge]
+    plan = _plan(seeded, kk_ids=chosen, seed=3)
+    out = tmp_path / "s.pdf"
+    render_sheet(plan, out)
+
+    doc = pymupdf.open(out)
+    first = " ".join(doc[0].get_text("text").split())
+    doc.close()
+    assert "This sheet covers" in first
+    for kk_id in plan.uncovered_kk_ids:
+        assert design.key_knowledge(kk_id).display not in first

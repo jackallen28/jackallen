@@ -29,13 +29,35 @@ import yaml
 from ..config import STUDY_DESIGN_DIR
 from .loader import load_study_design_file
 
-UNIT_RE = re.compile(r"^\s*Unit\s+([1-4])\s*[:—-]\s*(.+?)\s*$", re.MULTILINE)
+UNIT_RE = re.compile(r"^\s*Unit\s+([1-4])\s*[:\u2014-]\s*(.+?)\s*$", re.MULTILINE)
+# Contents-page rows: "Unit 3: How do fields ......... 50". These are headings
+# too, so they must be removed before the real sections can be found.
+TOC_LINE = re.compile(r"^.*\.{4,}.*$", re.MULTILINE)
+# "Unit 1 and 2: 2023; Units 3 and 4 2024" — VCAA states the period per unit pair.
+ACCRED_LINE = re.compile(
+    r"Accreditation period\s*\n\s*([^\n]+)", re.IGNORECASE)
+# The boilerplate every outcome ends with, which is not part of the outcome.
+OUTCOME_TAIL = re.compile(
+    r"\s*To achieve this outcome the student will draw on key knowledge.*$",
+    re.IGNORECASE | re.DOTALL)
+# Equation-editor output: unrecoverable as text (see ingest/textflow.py for the
+# same problem in the question books).
+MATH_GLYPH = re.compile(r"[\U0001D400-\U0001D7FF]")
 AOS_RE = re.compile(r"^\s*Area of Study\s+(\d)\s*$", re.MULTILINE)
 OUTCOME_RE = re.compile(r"^\s*Outcome\s+(\d)\s*$", re.MULTILINE)
 KK_RE = re.compile(r"^\s*Key knowledge\s*$", re.MULTILINE | re.IGNORECASE)
 KS_RE = re.compile(r"^\s*Key skills\s*$", re.MULTILINE | re.IGNORECASE)
+# Headings that end a key-knowledge list. Without these the bullet collector
+# runs on into the assessment section and turns "Duration: 2.5 hours" and the
+# SAC outcome criteria into key knowledge dot points.
+SECTION_END_RE = re.compile(
+    r"^\s*(Key skills|School-based assessment|External assessment|Assessment|"
+    r"Unit \d|Area of Study \d|Outcome \d|End-of-year examination|Description|"
+    r"Conditions|Contribution to final assessment|Further advice|"
+    r"Satisfactory completion|Duration|Date)\b",
+    re.MULTILINE | re.IGNORECASE)
 BULLET_RE = re.compile(r"^\s*[•▪·●‣]\s*(.+)$")
-ACCRED_RE = re.compile(r"\b(20\d{2})\s*[–-]\s*(20\d{2})\b")
+ACCRED_RE = re.compile(r"\b(20\d{2})\s*[\u2013-]\s*(20\d{2})\b")
 
 
 def extract_text(pdf_path: str | Path) -> str:
@@ -50,8 +72,35 @@ def extract_text(pdf_path: str | Path) -> str:
     return "\n".join(pages)
 
 
+def _complete_title(text: str, match: re.Match) -> str:
+    """Finish a unit title that wrapped onto the next line(s).
+
+    VCE unit titles are questions, so the title is complete once a "?" appears.
+    "Unit 3: How do fields explain motion and\nelectricity?" is one title across
+    two lines; capturing only the first gives "How do fields explain motion and".
+    """
+    title = match.group(2).strip()
+    if title.endswith("?"):
+        return title
+    # The match ends just before its own newline, so the first entry here is
+    # always empty — skip blanks rather than treating one as the end of the
+    # title. Continuation lines are short; body prose is not, so a long line
+    # means the title simply never had a "?" and we stop.
+    for raw in text[match.end():match.end() + 300].splitlines()[:5]:
+        line = raw.strip()
+        if not line:
+            continue
+        if len(line) > 70:
+            break
+        title = f"{title} {line}".strip()
+        if line.endswith("?"):
+            break
+    return title
+
+
 def _sections(text: str, unit_numbers=(3, 4)) -> list[dict]:
     """Slice the document into units, then areas of study."""
+    text = TOC_LINE.sub("", text)
     units: list[dict] = []
     matches = [m for m in UNIT_RE.finditer(text) if int(m.group(1)) in unit_numbers]
     # Keep the LAST occurrence of each unit heading — earlier ones are usually the
@@ -65,7 +114,7 @@ def _sections(text: str, unit_numbers=(3, 4)) -> list[dict]:
         end = ordered[i + 1][1].start() if i + 1 < len(ordered) else len(text)
         units.append({
             "number": number,
-            "title": _clean(m.group(2)),
+            "title": _clean(_complete_title(text, m)),
             "body": text[m.end():end],
         })
     return units
@@ -94,10 +143,10 @@ def _parse_area(chunk: str) -> dict:
                 KK_RE.search(after).start() if KK_RE.search(after) else len(after),
             )),
         )
-        outcome = _clean(" ".join(after[:stop].split()))
+        outcome = _clean(OUTCOME_TAIL.sub("", " ".join(after[:stop].split())))
 
-    key_knowledge = _bullets_after(chunk, KK_RE, stop_at=KS_RE)
-    key_skills = _bullets_after(chunk, KS_RE, stop_at=AOS_RE)
+    key_knowledge = _bullets_after(chunk, KK_RE, stop_at=SECTION_END_RE)
+    key_skills = _bullets_after(chunk, KS_RE, stop_at=SECTION_END_RE)
     return {
         "title": title,
         "outcome": outcome,
@@ -132,13 +181,62 @@ def _bullets_after(chunk: str, start_re: re.Pattern,
             current = []
     if current:
         bullets.append(_clean(" ".join(current)))
-    return [b for b in bullets if len(b) > 12]
+    cleaned = [_trim_subheading(b) for b in bullets]
+    return [b for b in cleaned if len(b) > 12]
+
+
+# A subheading on the line after the last bullet gets swept into it. These are
+# Title Case fragments with no sentence punctuation, e.g. "Effects of fields".
+TRAILING_HEADING = re.compile(
+    r"\s+((?:[A-Z][a-z]+)(?:\s+(?:of|the|and|in|to|for|on)?\s*[A-Za-z]+){0,3})\s*$")
+
+
+def _trim_subheading(bullet: str) -> str:
+    m = TRAILING_HEADING.search(bullet)
+    if not m:
+        return bullet
+    tail = m.group(1).strip()
+    # Only strip when the bullet still reads as a complete dot point without it.
+    if 6 <= len(tail) <= 40 and len(bullet) - len(tail) > 40:
+        return bullet[: m.start()].rstrip(" ,;:")
+    return bullet
 
 
 def _clean(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"\s*\.$", "", text)
     return text
+
+
+def _strip_maths(text: str) -> tuple[str, bool]:
+    """Remove equation-editor wreckage from a dot point.
+
+    VCAA sets formulas with an equation editor, which extracts as private-use
+    glyph soup: "5\U0001D439&'( = *!+ G 6". There is no way to recover the real
+    formula from the text layer, and leaving the soup in would poison both the
+    selection UI and the question tagger's vocabulary. So it is removed, and the
+    dot point records that a formula was present.
+    """
+    if not MATH_GLYPH.search(text):
+        return text, False
+    # Drop the glyph runs and the punctuation soup immediately around them.
+    cleaned = re.sub(r"[\s:,]*[^\w\s]{0,4}[\U0001D400-\U0001D7FF][^,;•\n]*", " ", text)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    cleaned = re.sub(r"\s+([,;.])", r"\1", cleaned).strip(" ,;:")
+    return cleaned or text, True
+
+
+def _key_knowledge_entries(aos_id: str, texts: list[str]) -> list[dict]:
+    out = []
+    for i, raw in enumerate(texts, start=1):
+        text, had_formula = _strip_maths(raw)
+        entry = {"id": f"{aos_id}-kk{i:02d}", "text": text, "verified": True}
+        if had_formula:
+            # Surfaced in the UI so a student knows to check the study design
+            # itself for the formula this dot point names.
+            entry["has_formula"] = True
+        out.append(entry)
+    return out
 
 
 def import_study_design(
@@ -162,6 +260,7 @@ def import_study_design(
 
     text = extract_text(pdf_path)
     accred = ACCRED_RE.search(text)
+    accred_line = ACCRED_LINE.search(text)
     units_raw = _sections(text)
     if not units_raw:
         raise ValueError(
@@ -184,10 +283,7 @@ def import_study_design(
                 "number": a["number"],
                 "title": a["title"],
                 "outcome": a["outcome"],
-                "key_knowledge": [
-                    {"id": f"{aos_id}-kk{i:02d}", "text": t, "verified": True}
-                    for i, t in enumerate(a["key_knowledge"], start=1)
-                ],
+                "key_knowledge": _key_knowledge_entries(aos_id, a["key_knowledge"]),
                 "key_skills": a["key_skills"],
             })
         if not areas:
@@ -198,8 +294,11 @@ def import_study_design(
     doc = {
         "subject_id": subject_id,
         "subject_name": existing.get("subject_name", subject_id.replace("-", " ").title()),
-        "accreditation": f"{accred.group(1)}-{accred.group(2)}" if accred else
-                         existing.get("accreditation", ""),
+        "accreditation": (
+            _clean(accred_line.group(1)) if accred_line
+            else f"{accred.group(1)}-{accred.group(2)}" if accred
+            else existing.get("accreditation", "")
+        ),
         "source": f"Imported from {Path(pdf_path).name}",
         "units": units,
         # Editorial data — ours, not VCAA's — so it survives the import.

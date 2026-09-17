@@ -35,9 +35,13 @@ def test_subjects_expose_the_full_tree(client):
     assert kk and all("available" in k and "verified" in k for k in kk)
 
 
-def test_subjects_report_the_draft_status(client):
+def test_subjects_report_verification_status_accurately(client):
+    """The UI banner keys off this, so it must match the underlying data."""
+    from blitz.studydesign import load_study_design
+
     data = client.get("/api/subjects").json()
-    assert all(s["verified"] is False for s in data["subjects"])
+    for s in data["subjects"]:
+        assert s["verified"] == load_study_design(s["id"]).fully_verified
 
 
 def _some_kk(client, subject="physics", only_available=True):
