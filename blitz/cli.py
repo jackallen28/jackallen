@@ -2,6 +2,7 @@
 
     blitz init                      create the index and load the sample bank
     blitz subjects                  list subjects and how verified they are
+    blitz extract-pack <pdf>        build a draft pack from a PDF, no model
     blitz import-pack <json>        load a curated question pack (preferred)
     blitz dot-points <subject>      the dot point ids a pack should tag against
     blitz ingest <pdf> ...          index a PDF heuristically (no pack available)
@@ -158,6 +159,32 @@ def cmd_import_pack(args) -> int:
     return 0 if report.ok else 1
 
 
+def cmd_extract_pack(args) -> int:
+    """Build a draft pack from a PDF, deterministically. No model, no network."""
+    import json as _json
+
+    from .ingest.draft import build_draft, review_queue, write_draft
+
+    pack, report = build_draft(
+        args.pdf, subject_id=args.subject, source_id=args.source_id,
+        title=args.title, kind=args.kind, edition=args.edition,
+        pages=(args.first_page, args.last_page) if args.last_page else None,
+    )
+    out = write_draft(pack, args.out)
+    print(f"\nwrote {out}")
+    print(report.summary())
+
+    queue = review_queue(pack)
+    if queue and args.review_out:
+        Path(args.review_out).write_text(
+            _json.dumps(queue, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8")
+        print(f"\nwrote {args.review_out} — {len(queue)} entries needing review")
+        print("Hand that file to a person or a model; leave the rest alone.")
+    print("\nThen: blitz import-pack " + str(out) + " --dry-run")
+    return 0
+
+
 def cmd_dot_points(args) -> int:
     """The authoritative dot point ids, for whatever is building a pack."""
     import json as _json
@@ -280,6 +307,22 @@ def build_parser() -> argparse.ArgumentParser:
     pack.add_argument("--dry-run", action="store_true",
                       help="validate only; write nothing")
     pack.set_defaults(func=cmd_import_pack)
+
+    xp = sub.add_parser("extract-pack",
+                        help="build a draft pack from a PDF (no model)")
+    xp.add_argument("pdf")
+    xp.add_argument("--subject", required=True)
+    xp.add_argument("--source-id", required=True)
+    xp.add_argument("--title")
+    xp.add_argument("--kind", default="checkpoints",
+                    choices=["checkpoints", "textbook", "vcaa-exam", "other"])
+    xp.add_argument("--edition")
+    xp.add_argument("--first-page", type=int, default=0)
+    xp.add_argument("--last-page", type=int)
+    xp.add_argument("-o", "--out", required=True, help="where to write the pack")
+    xp.add_argument("--review-out",
+                    help="also write just the entries needing review")
+    xp.set_defaults(func=cmd_extract_pack)
 
     dots = sub.add_parser("dot-points",
                           help="list dot point ids, for building a pack")

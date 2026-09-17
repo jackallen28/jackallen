@@ -19,6 +19,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Physics questions | Tested against a real Checkpoints extract: 70 questions, figures cropped, solutions attached. |
 | Physics concept lexicon | Written, covering all 71 dot points. |
 | Question pack import | Schema, validator and importer done; example pack in `packs/`. |
+| Deterministic pack extraction | `blitz extract-pack` — ~40 s for 1000 pages, flags ~13% for review. |
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | **The weak link.** See below. |
 
@@ -91,6 +92,21 @@ blitz generate physics \
     --notes "impulse sign conventions and transformer turns ratios" \
     --title "Physics U3 Blitz"
 ```
+
+## Running it on a Mac
+
+See `docs/running-on-a-mac.md`. The short version: it is plain Python and
+PyMuPDF, no model and no network, and indexing a 1000-page book takes about
+**40 seconds** — 40 ms/page including cropping every figure. There is nothing to
+schedule and nothing to resume.
+
+```bash
+blitz extract-pack sources/checkpoints.pdf --subject physics \
+    --source-id cp -o packs/cp.json --review-out packs/cp-review.json
+```
+
+That produces a draft pack plus a list of the entries it is unsure about —
+about 13% of the book on the sample measured. Fix those, import, done.
 
 ## Question packs (the preferred way in)
 

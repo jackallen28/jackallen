@@ -173,25 +173,30 @@ def _looks_mangled(lines: list[str]) -> tuple[bool, str]:
 
 
 def _split_options(lines: list[str]) -> tuple[list[str], list[str]]:
-    """Pull a trailing run of A/B/C/D option lines off the body."""
-    options: list[str] = []
-    cut = len(lines)
-    expected = "EDCBA"
+    """Pull a trailing run of A/B/C/D option lines off the body.
+
+    The scan runs backwards from the end, but a stem beginning "A dark region in
+    a two-slit pattern..." matches the option pattern too, so the collected
+    letters come out [A, A, B, C, D] and the run looks malformed. Discarding the
+    lot lost every option on such questions. Instead, take the longest suffix
+    whose letters really are A, B, C, ... in order.
+    """
+    candidates: list[tuple[int, str, str]] = []
     for i in range(len(lines) - 1, -1, -1):
         m = OPTION.match(lines[i].strip())
-        if m and len(options) < 5:
-            options.insert(0, OPTION.sub("", lines[i].strip(), count=1).strip())
-            cut = i
-        elif options:
+        if not m or len(candidates) >= 6:
             break
-    if len(options) < 3:
-        return lines, []
-    # Guard against prose that happens to start with a capital letter and a space.
-    letters = [OPTION.match(lines[i].strip()).group(1)
-               for i in range(cut, cut + len(options))]
-    if letters != list("ABCDE"[:len(options)]):
-        return lines, []
-    return lines[:cut], options
+        candidates.append(
+            (i, m.group(1).upper(), OPTION.sub("", lines[i].strip(), count=1).strip())
+        )
+    candidates.reverse()
+
+    for size in range(len(candidates), 2, -1):
+        run = candidates[-size:]
+        if [c[1] for c in run] == list("ABCDEF"[:size]):
+            cut = run[0][0]
+            return lines[:cut], [c[2] for c in run]
+    return lines, []
 
 
 def _bars_inside(entries: list[_Entry], info: dict[int, _PageInfo]) -> int:
