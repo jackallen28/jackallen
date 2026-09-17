@@ -325,3 +325,214 @@ def test_the_lexicon_is_not_mistaken_for_a_study_design():
     ids = [d.subject_id for d in list_subjects()]
     assert "physics-lexicon" not in ids
     assert ids == sorted(set(ids))
+
+
+class TestMultipleFigures:
+    """A question routinely needs more than one image.
+
+    A page continuation, a shared scenario printed above it, or an earlier
+    question it depends on. Importing only the first truncated 60% of the
+    content in the first real pack this was tried on, and the loss was silent.
+    """
+
+    def _multi(self, design, tmp_path, source_pdf):
+        path = _pack(design, tmp_path)
+        pack = json.loads(path.read_text())
+        pack["questions"][0]["render_mode"] = "crop"
+        pack["questions"][0]["answer_mode"] = "crop"
+        pack["questions"][0]["figures"] = [
+            {"role": "question", "page": 0, "bbox": [40, 40, 560, 200],
+             "caption": "Shared context"},
+            {"role": "question", "page": 1, "bbox": [40, 40, 560, 300],
+             "caption": "Source question (continued)"},
+            {"role": "answer", "page": 2, "bbox": [40, 40, 560, 150],
+             "caption": "Source answer"},
+            {"role": "answer", "page": 2, "bbox": [40, 160, 560, 260],
+             "caption": "Source answer (continued)"},
+        ]
+        return _write(path, pack)
+
+    def test_every_figure_is_imported(self, design, tmp_path, source_pdf, conn):
+        import_pack(conn, self._multi(design, tmp_path, source_pdf),
+                    design=design, progress=lambda *_: None)
+        row = conn.execute("SELECT figures FROM question").fetchone()
+        figs = json.loads(row["figures"])
+        assert len(figs) == 4, f"expected 4 figures, imported {len(figs)}"
+        assert [f["role"] for f in figs] == ["question", "question",
+                                             "answer", "answer"]
+
+    def test_figure_order_is_preserved(self, design, tmp_path, source_pdf, conn):
+        """A shared scenario has to come before the question that uses it."""
+        import_pack(conn, self._multi(design, tmp_path, source_pdf),
+                    design=design, progress=lambda *_: None)
+        figs = json.loads(conn.execute("SELECT figures FROM question").fetchone()["figures"])
+        captions = [f["caption"] for f in figs if f["role"] == "question"]
+        assert captions == ["Shared context", "Source question (continued)"]
+
+    def test_each_figure_gets_its_own_file(self, design, tmp_path, source_pdf,
+                                           conn):
+        import_pack(conn, self._multi(design, tmp_path, source_pdf),
+                    design=design, progress=lambda *_: None)
+        figs = json.loads(conn.execute("SELECT figures FROM question").fetchone()["figures"])
+        paths = [f["path"] for f in figs]
+        assert len(set(paths)) == 4, "figures overwrote each other"
+
+    def test_the_first_question_figure_stays_in_the_legacy_columns(
+            self, design, tmp_path, source_pdf, conn):
+        import_pack(conn, self._multi(design, tmp_path, source_pdf),
+                    design=design, progress=lambda *_: None)
+        row = conn.execute("SELECT * FROM question").fetchone()
+        figs = json.loads(row["figures"])
+        assert row["figure_path"] == figs[0]["path"]
+        assert row["figure_caption"] == "Shared context"
+
+    def test_all_of_them_reach_the_sheet(self, design, tmp_path, source_pdf,
+                                         conn):
+        import pymupdf
+
+        from blitz.models import SheetSpec
+        from blitz.picker import build_plan
+        from blitz.render import render_sheet
+
+        import_pack(conn, self._multi(design, tmp_path, source_pdf),
+                    design=design, progress=lambda *_: None)
+        kk = json.loads(_pack(design, tmp_path).read_text())["questions"][0]["kk_ids"]
+        plan = build_plan(conn, SheetSpec(subject_id="physics", kk_ids=kk), design)
+        out = tmp_path / "sheet.pdf"
+        render_sheet(plan, out, design)
+
+        doc = pymupdf.open(out)
+        images = sum(len(doc[i].get_images(full=True))
+                     for i in range(doc.page_count))
+        doc.close()
+        assert images >= 4, (
+            f"only {images} of 4 figures reached the sheet — a question whose "
+            "context is dropped is unanswerable")
+
+    def test_the_picker_budgets_for_the_whole_stack(self, design, tmp_path,
+                                                    source_pdf, conn):
+        """Costing only the first image would overfill the sheet."""
+        from blitz.models import Question
+        from blitz.picker import build_plan
+        from blitz.models import SheetSpec
+
+        import_pack(conn, self._multi(design, tmp_path, source_pdf),
+                    design=design, progress=lambda *_: None)
+        row = conn.execute("SELECT * FROM question").fetchone()
+        q = Question.from_row(row, ["physics-u3-aos1-kk07"])
+
+        from blitz.render.layout import image_height_mm
+
+        stack = sum(image_height_mm(f["path"], columns=1,
+                                    pt_width=f.get("pt_width"))
+                    for f in q.figures_for("question"))
+        first = image_height_mm(q.figures_for("question")[0]["path"], columns=1,
+                                pt_width=q.figures_for("question")[0].get("pt_width"))
+        assert stack > first * 1.3, "the stack should cost more than its first image"
+
+
+class TestContextAndDependencies:
+    """A question that loses its scenario or its prerequisite is unanswerable."""
+
+    def _with(self, design, tmp_path, **extra):
+        path = _pack(design, tmp_path)
+        pack = json.loads(path.read_text())
+        pack["questions"][0].update(extra)
+        return _write(path, pack)
+
+    def test_context_is_stored_and_printed(self, design, tmp_path, source_pdf,
+                                           conn):
+        import pymupdf
+
+        from blitz.models import SheetSpec
+        from blitz.picker import build_plan
+        from blitz.render import render_sheet
+
+        path = self._with(design, tmp_path,
+                          context="A cricket ball is struck by a bat.")
+        import_pack(conn, path, design=design, progress=lambda *_: None)
+        row = conn.execute("SELECT context FROM question").fetchone()
+        assert row["context"] == "A cricket ball is struck by a bat."
+
+        plan = build_plan(conn, SheetSpec(subject_id="physics",
+                                          kk_ids=["physics-u3-aos1-kk07"]), design)
+        out = tmp_path / "s.pdf"
+        render_sheet(plan, out, design)
+        doc = pymupdf.open(out)
+        text = " ".join(" ".join(p.get_text("text").split()) for p in doc)
+        doc.close()
+        assert "A cricket ball is struck by a bat" in text
+
+    def test_a_dependency_outside_the_pack_is_rejected(self, design, tmp_path,
+                                                       source_pdf):
+        path = self._with(design, tmp_path, depends_on=["NOT-IN-PACK"])
+        report = validate(json.loads(path.read_text()), design, tmp_path)
+        assert not report.ok
+        assert any("not in this pack" in e for e in report.errors)
+
+    def test_a_prerequisite_is_pulled_onto_the_sheet(self, design, tmp_path,
+                                                     source_pdf, conn):
+        from blitz.models import SheetSpec
+        from blitz.picker import build_plan
+
+        path = _pack(design, tmp_path)
+        pack = json.loads(path.read_text())
+        first = pack["questions"][0]
+        second = dict(first)
+        second["id"] = "Q2"
+        second["stem"] = "Using your answer from the previous question, find the force."
+        second["depends_on"] = ["Q1"]
+        second["figures"] = []
+        second["kk_ids"] = ["physics-u3-aos1-kk06"]
+        pack["questions"].append(second)
+        _write(path, pack)
+
+        import_pack(conn, path, design=design, progress=lambda *_: None)
+        # Select only the dependent question's dot point.
+        plan = build_plan(conn, SheetSpec(subject_id="physics",
+                                          kk_ids=["physics-u3-aos1-kk06"]), design)
+        ids = [q.id for q in plan.questions]
+        assert any(i.endswith("Q2") for i in ids), "the chosen question is missing"
+        assert any(i.endswith("Q1") for i in ids), (
+            "its prerequisite was not pulled in — the question is unanswerable")
+        assert ids.index(next(i for i in ids if i.endswith("Q1"))) < \
+            ids.index(next(i for i in ids if i.endswith("Q2"))), \
+            "the prerequisite must come first"
+
+
+class TestDraftStatus:
+    """Curated is not the same as checked."""
+
+    def test_a_draft_pack_does_not_land_verified(self, design, tmp_path,
+                                                 source_pdf, conn):
+        path = _pack(design, tmp_path)
+        pack = json.loads(path.read_text())
+        pack["status"] = "draft"
+        _write(path, pack)
+        import_pack(conn, path, design=design, progress=lambda *_: None)
+        assert conn.execute("SELECT verified FROM question").fetchone()["verified"] == 0
+
+    def test_a_flagged_question_does_not_land_verified(self, design, tmp_path,
+                                                       source_pdf, conn):
+        path = _pack(design, tmp_path)
+        pack = json.loads(path.read_text())
+        pack["questions"][0]["review"] = ["curriculum tag needs subject review"]
+        _write(path, pack)
+        import_pack(conn, path, design=design, progress=lambda *_: None)
+        row = conn.execute("SELECT * FROM question").fetchone()
+        assert row["verified"] == 0
+        assert "subject review" in row["review"]
+
+    def test_an_approved_pack_still_lands_verified(self, design, tmp_path,
+                                                   source_pdf, conn):
+        import_pack(conn, _pack(design, tmp_path), design=design,
+                    progress=lambda *_: None)
+        assert conn.execute("SELECT verified FROM question").fetchone()["verified"] == 1
+
+    def test_an_unknown_status_is_rejected(self, design, tmp_path, source_pdf):
+        path = _pack(design, tmp_path)
+        pack = json.loads(path.read_text())
+        pack["questions"][0]["status"] = "probably fine"
+        _write(path, pack)
+        report = validate(json.loads(path.read_text()), design, tmp_path)
+        assert any("status must be" in e for e in report.errors)

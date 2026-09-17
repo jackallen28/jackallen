@@ -170,9 +170,14 @@ def build_plan(
         except KeyError:
             fallback = 45.0
         if q.is_cropped:
-            # The image is the question, so its scaled height is the whole cost.
-            return image_height_mm(q.figure_path, columns=columns,
-                                   pt_width=q.figure_pt_width) + 12
+            # The images ARE the question — continuation pages, shared context
+            # and required earlier questions included — so the whole stack is
+            # the cost, not just the first one.
+            return sum(
+                image_height_mm(spec["path"], columns=columns,
+                                pt_width=spec.get("pt_width"))
+                for spec in q.figures_for("question")
+            ) + 12
         return estimate_height_mm(
             q.body,
             marks=q.marks,
@@ -257,6 +262,7 @@ def build_plan(
             type_counts[q.question_type] += 1
             remaining -= w
 
+    chosen = _pull_in_dependencies(conn, spec, chosen, design, columns)
     covered = {kk for q in chosen for kk in q.kk_ids}
     plan.questions = _order_for_sheet(chosen, spec, design)
     plan.uncovered_kk_ids = [kk for kk in spec.kk_ids if kk not in covered]
@@ -288,6 +294,49 @@ def build_plan(
             "with a ° on the sheet."
         )
     return plan
+
+
+def _pull_in_dependencies(
+    conn: sqlite3.Connection,
+    spec: SheetSpec,
+    chosen: list[Question],
+    design: StudyDesign,
+    columns: int,
+) -> list[Question]:
+    """Bring in any question a chosen one cannot be answered without.
+
+    Checkpoints sets runs where a later question reads "using your answer from
+    part a" or refers to the scenario two questions earlier. Putting the second
+    on a sheet without the first gives the student something they cannot answer
+    and no way to know why.
+    """
+    have = {q.id for q in chosen}
+    wanted = [d for q in chosen for d in q.depends_on if d not in have]
+    if not wanted:
+        return chosen
+
+    marks = ", ".join("?" for _ in wanted)
+    rows = conn.execute(
+        f"SELECT q.*, s.kind AS source_kind FROM question q "
+        f"LEFT JOIN source s ON s.id = q.source_id WHERE q.id IN ({marks})",
+        wanted,
+    ).fetchall()
+    links: dict[str, list[str]] = {}
+    for row in rows:
+        links[row["id"]] = [
+            r["kk_id"] for r in conn.execute(
+                "SELECT kk_id FROM question_kk WHERE question_id = ?", (row["id"],))
+        ]
+
+    out = list(chosen)
+    for row in rows:
+        prerequisite = Question.from_row(row, links.get(row["id"], []))
+        # Insert immediately before the first question that needs it, so the
+        # pair reads in the order the book prints them.
+        at = next((i for i, q in enumerate(out) if row["id"] in q.depends_on),
+                  len(out))
+        out.insert(at, prerequisite)
+    return out
 
 
 def _kk_hits(design: StudyDesign, kk_id: str, pool: list[Question],

@@ -71,9 +71,9 @@ def choose_columns(questions: list[Question]) -> int:
         return 2
     from .layout import crop_scale
 
-    if any(crop_scale(q.figure_path, columns=2,
-                      pt_width=q.figure_pt_width) < MIN_CROP_SCALE
-           for q in cropped):
+    if any(crop_scale(spec["path"], columns=2, pt_width=spec.get("pt_width"))
+           < MIN_CROP_SCALE
+           for q in cropped for spec in q.figures_for("question")):
         return 1
     return 2
 # How many dot points the masthead checklist names before it says "and N more".
@@ -236,12 +236,18 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
     # Given a stem, the parts get their own indented lines, as in the book.
     head = q.stem if (q.stem and q.parts) else q.body
     tail = "" if (q.stem and q.parts) else f"{marks}{flag}"
-    parts: list = [
+    parts: list = []
+    if q.context:
+        # The scenario the question is set in, printed above it as the book
+        # does. Without it the question is unanswerable, so it travels with it.
+        parts.append(Paragraph(_esc(q.context), ss["Context"]))
+        parts.append(Spacer(1, 2))
+    parts.append(
         Paragraph(
             f'<b><font color="#1f4fd8">{n}.</font></b> {_esc(head)}{tail}',
             ss["Question"],
         )
-    ]
+    )
     for i, part in enumerate(q.parts):
         last = i == len(q.parts) - 1
         parts.append(Spacer(1, 1.5))
@@ -280,18 +286,32 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
 
 def _cropped_question(q: Question, n: int, ss, col_w: float,
                       marks: str, flag: str) -> list:
-    """A question shown as an image of the real page.
+    """A question shown as images of the real pages.
 
     Used where the text was judged untrustworthy at ingest — stacked fractions,
     equation-editor glyphs. Printing the text as well would put the mangled
     version we deliberately set aside right next to the correct one.
+
+    A question usually needs more than one image: the page it continues onto,
+    the shared scenario printed above it, or an earlier question it depends on.
+    They are stacked in the order the pack gave them, because that order is
+    what makes the question answerable.
     """
-    parts: list = [Paragraph(
-        f'<b><font color="#1f4fd8">{n}.</font></b>{marks}{flag}', ss["Question"])]
-    fig = _figure(q.figure_path, col_w, max_h=170 * mm)
-    if fig is not None:
-        parts += [Spacer(1, 2), fig]
-    if q.figure_caption:
+    parts: list = []
+    if q.context:
+        parts.append(Paragraph(_esc(q.context), ss["Context"]))
+        parts.append(Spacer(1, 2))
+    parts.append(Paragraph(
+        f'<b><font color="#1f4fd8">{n}.</font></b>{marks}{flag}', ss["Question"]))
+    figures = q.figures_for("question")
+    for i, spec in enumerate(figures):
+        fig = _figure(spec["path"], col_w, max_h=170 * mm)
+        if fig is None:
+            continue
+        parts += [Spacer(1, 2 if i == 0 else 3), fig]
+        if spec.get("caption") and len(figures) > 1:
+            parts.append(Paragraph(_esc(spec["caption"]), ss["Caption"]))
+    if len(figures) == 1 and q.figure_caption:
         parts.append(Paragraph(_esc(q.figure_caption), ss["Caption"]))
     if not q.options:
         parts.append(Spacer(1, 1.5))
@@ -365,16 +385,19 @@ def _solutions(ctx: _Ctx, ss, col_w: float) -> list:
     ]
     for i, q in enumerate(plan.questions, start=1):
         block: list = [Paragraph(f"{i}.", ss["SolutionHeading"])]
-        fig = _figure(q.answer_figure, col_w, max_h=90 * mm)
-        cropped = q.answer_mode == "crop" and fig is not None
+        answer_figs = [_figure(spec["path"], col_w, max_h=110 * mm)
+                       for spec in q.figures_for("answer")]
+        answer_figs = [f for f in answer_figs if f is not None]
+        cropped = q.answer_mode == "crop" and answer_figs
         if cropped:
             # Same reasoning as a cropped question: the worked solution's maths
-            # would not survive as text, so the page image is the solution.
-            block += [fig, Spacer(1, 3)]
+            # would not survive as text, so the page images are the solution.
+            for f in answer_figs:
+                block += [f, Spacer(1, 3)]
         elif q.answer:
             block.append(Paragraph(_esc(q.answer), ss["Solution"]))
-            if fig is not None:
-                block += [fig, Spacer(1, 3)]
+            for f in answer_figs:
+                block += [f, Spacer(1, 3)]
         else:
             block.append(Paragraph(
                 "<i>No worked solution in the source — check the book at the "

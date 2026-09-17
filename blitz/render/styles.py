@@ -51,6 +51,10 @@ def stylesheet() -> StyleSheet1:
         spaceAfter=0.5,
     ))
     ss.add(ParagraphStyle(
+        "Context", parent=ss["Question"], fontName=oblique, textColor=MUTED,
+        leftIndent=6, borderPadding=(0, 0, 0, 4), spaceAfter=1,
+    ))
+    ss.add(ParagraphStyle(
         "Citation", fontName=oblique, fontSize=6.5, leading=8,
         textColor=MUTED, spaceAfter=5,
     ))

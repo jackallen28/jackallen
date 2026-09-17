@@ -38,6 +38,8 @@ class PackReport:
     with_answers: int = 0
     cropped: int = 0
     untagged: int = 0
+    drafts: int = 0
+    flagged: int = 0
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -52,7 +54,8 @@ class PackReport:
         return (
             f"{head}, {self.imported} imported\n"
             f"    {self.with_figures} with figures, {self.with_answers} with "
-            f"answers, {self.cropped} rendered as crops, {self.untagged} untagged"
+            f"answers, {self.cropped} rendered as crops, {self.untagged} untagged\n"
+            f"    {self.drafts} marked draft, {self.flagged} flagged for review"
         )
 
 
@@ -170,6 +173,15 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
             err(f"{where}: unknown question_type {qt!r} "
                 f"(expected one of {sorted(valid_qt)})")
 
+        status = q.get("status", pack.get("status", "approved"))
+        if status not in ("approved", "draft", "needs-review"):
+            err(f"{where}: status must be approved, draft or needs-review, "
+                f"got {status!r}")
+
+        deps = q.get("depends_on") or []
+        if not isinstance(deps, list):
+            err(f"{where}: depends_on must be a list of question ids")
+
         for mode_key in ("render_mode", "answer_mode"):
             mode = q.get(mode_key, "text")
             if mode not in ("text", "crop"):
@@ -184,6 +196,13 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
             err(f"{where}: render_mode is 'crop' but no question figure was given")
         if q.get("answer_mode") == "crop" and not _figures_for(q, "answer"):
             err(f"{where}: answer_mode is 'crop' but no answer figure was given")
+
+    for i, q in enumerate(questions):
+        for dep in (q.get("depends_on") or []):
+            if dep not in seen:
+                err(f"question[{i}] ({q.get('id')}): depends_on {dep!r}, which "
+                    "is not in this pack — a question whose prerequisite is "
+                    "missing cannot be put on a sheet")
 
     return report
 
@@ -357,17 +376,36 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
     text = _text_of(q)
     answer = _answer_text(q)
 
-    question_fig = next(iter(_figures_for(q, "question")), None)
-    answer_fig = next(iter(_figures_for(q, "answer")), None)
-    figure_path = _materialise(question_fig, pack_dir, doc, qid) if question_fig else None
-    figure_pt_width = _pt_width(question_fig, figure_path)
-    answer_figure = _materialise(answer_fig, pack_dir, doc, f"{qid}-a") if answer_fig else None
+    # Every figure, in order. A question routinely needs more than one: a page
+    # continuation, the shared scenario printed above it, or an earlier question
+    # it depends on. Importing only the first silently truncated 60% of the
+    # content in the pilot pack.
+    figures: list[dict] = []
+    for n, fig in enumerate(q.get("figures") or []):
+        role = fig.get("role", "question")
+        tag = f"{qid}-{role[0]}{n}"
+        path = _materialise(fig, pack_dir, doc, tag)
+        if not path:
+            continue
+        figures.append({
+            "role": role,
+            "path": path,
+            "pt_width": _pt_width(fig, path),
+            "caption": fig.get("caption"),
+        })
+
+    question_figs = [f for f in figures if f["role"] == "question"]
+    answer_figs = [f for f in figures if f["role"] == "answer"]
+    first_q = question_figs[0] if question_figs else None
+    figure_path = first_q["path"] if first_q else None
+    figure_pt_width = first_q["pt_width"] if first_q else None
+    answer_figure = answer_figs[0]["path"] if answer_figs else None
 
     render_mode = q.get("render_mode", "text")
-    if render_mode == "crop" and not figure_path:
+    if render_mode == "crop" and not question_figs:
         render_mode = "text"          # validation passed, but the crop failed
     answer_mode = q.get("answer_mode", "text")
-    if answer_mode == "crop" and not answer_figure:
+    if answer_mode == "crop" and not answer_figs:
         answer_mode = "text"
 
     parts = [
@@ -390,16 +428,33 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
         "difficulty": q.get("difficulty"),
         "figure_path": figure_path,
         "figure_pt_width": figure_pt_width,
-        "figure_caption": (question_fig or {}).get("caption"),
+        "figure_caption": (first_q or {}).get("caption"),
+        "figures": json.dumps(figures) if figures else None,
         "render_mode": render_mode,
         "answer_mode": answer_mode,
         "provenance": q.get("provenance"),
-        "pdf_page": (question_fig or {}).get("page"),
+        "pdf_page": next(
+            (f.get("page") for f in (q.get("figures") or [])
+             if f.get("role", "question") == "question" and f.get("page") is not None),
+            None),
         "printed_page": q.get("printed_page"),
         "citation": _citation(source, q),
+        "context": q.get("context") or None,
+        # Namespaced like the question ids themselves, or the lookup finds
+        # nothing and the prerequisite is silently never pulled in.
+        "depends_on": json.dumps(
+            [f"{source['id']}-{d}" for d in q["depends_on"]]
+        ) if q.get("depends_on") else None,
+        "review": json.dumps(q["review"]) if q.get("review") else None,
         "generated": 0,
-        # A pack is curated, so its rows start verified — unlike the extractor's.
-        "verified": 1,
+        # A pack is curated, but curated is not the same as checked. A pack that
+        # says its rows are drafts — or that flags a row for review — is taken
+        # at its word; marking unreviewed curriculum tags "verified" would put a
+        # confidence on the sheet that nobody has earned.
+        "verified": 0 if (
+            q.get("status", pack.get("status", "approved")) != "approved"
+            or q.get("review")
+        ) else 1,
         "extra": json.dumps({k: v for k, v in (
             ("title", q.get("title")), ("notes", q.get("notes")),
             ("pack_id", q.get("id")),
@@ -407,6 +462,8 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
     }, q.get("kk_ids") or [])
 
     report.imported += 1
+    report.drafts += 1 if q.get("status", "approved") != "approved" else 0
+    report.flagged += 1 if q.get("review") else 0
     report.with_figures += 1 if figure_path else 0
     report.with_answers += 1 if answer else 0
     report.cropped += 1 if "crop" in (render_mode, answer_mode) else 0

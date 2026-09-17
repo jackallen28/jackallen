@@ -50,6 +50,23 @@ CREATE TABLE IF NOT EXISTS question (
     -- diagram — and that distinction decides whether the sheet can use two
     -- columns without squashing the book's text into illegibility.
     figure_pt_width REAL,
+    -- Every figure for this question, in order, as JSON:
+    --   [{"role": "question"|"answer", "path": ..., "pt_width": ...,
+    --     "caption": ...}, ...]
+    -- A question routinely needs several: a page continuation, a shared
+    -- scenario printed above it, or an earlier question it depends on. The
+    -- columns above are the FIRST question figure, kept for simple queries.
+    figures       TEXT,
+    -- Scenario text shared with, and printed above, this question. Carried
+    -- separately from the stem so it can be shown once above a group, and so a
+    -- question is never put on a sheet without the context that makes it
+    -- answerable.
+    context       TEXT,
+    -- Questions this one cannot be answered without, as a JSON list of ids.
+    depends_on    TEXT,
+    -- Why this row still needs a human, as a JSON list. From the pack's own
+    -- flags, or the draft extractor's.
+    review        TEXT,
     -- 'text'  : print body/options as text (the normal case)
     -- 'crop'  : the text could not be faithfully reconstructed (stacked
     --           fractions, equation-editor glyphs), so print the page image

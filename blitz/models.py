@@ -51,6 +51,10 @@ class Question:
     figure_path: str | None = None
     figure_caption: str | None = None
     figure_pt_width: float | None = None
+    figures: list[dict] = field(default_factory=list)
+    context: str | None = None
+    depends_on: list[str] = field(default_factory=list)
+    review: list[str] = field(default_factory=list)
     citation: str = ""
     source_id: str = ""
     source_kind: str = ""
@@ -80,6 +84,10 @@ class Question:
             figure_path=d.get("figure_path"),
             figure_caption=d.get("figure_caption"),
             figure_pt_width=d.get("figure_pt_width"),
+            figures=json.loads(d["figures"]) if d.get("figures") else [],
+            context=d.get("context"),
+            depends_on=json.loads(d["depends_on"]) if d.get("depends_on") else [],
+            review=json.loads(d["review"]) if d.get("review") else [],
             citation=d.get("citation") or "",
             source_id=d.get("source_id") or "",
             source_kind=d.get("source_kind") or "",
@@ -95,10 +103,28 @@ class Question:
     def has_figure(self) -> bool:
         return bool(self.figure_path)
 
+    def figures_for(self, role: str) -> list[dict]:
+        """Every figure for this role, in the order the pack gave them.
+
+        Order matters: a shared scenario or a required earlier question is
+        printed before the question it serves, and reordering them makes the
+        question unanswerable.
+        """
+        if self.figures:
+            return [f for f in self.figures
+                    if f.get("role", "question") == role and f.get("path")]
+        # Older rows, written before figures[] existed.
+        if role == "question" and self.figure_path:
+            return [{"path": self.figure_path, "pt_width": self.figure_pt_width,
+                     "caption": self.figure_caption}]
+        if role == "answer" and self.answer_figure:
+            return [{"path": self.answer_figure}]
+        return []
+
     @property
     def is_cropped(self) -> bool:
         """True when the sheet must show the page image rather than the text."""
-        return self.render_mode == "crop" and bool(self.figure_path)
+        return self.render_mode == "crop" and bool(self.figures_for("question"))
 
 
 @dataclass

@@ -85,11 +85,51 @@ figure uses `page`/`bbox` (see below). It is never copied into the repo.
     {"role": "answer", "file": "figures/CP-T002-answer.png"}
   ],
 
+  "context": "A ball is thrown directly upwards at 25 m s\u207b\u00b9. Neglect air resistance in the following three questions.",
+  "depends_on": ["CP-T001"],           // ids in THIS pack, resolved at import
+  "status": "draft",                   // approved | draft | needs-review
+  "review": ["curriculum tag needs subject review"],
+
   "render_mode": "text",               // "crop" if the text can't be trusted
   "answer_mode": "text",
   "notes": "Source answer not supplied; no answer generated."
 }
 ```
+
+### Shared context and dependencies
+
+Checkpoints sets runs of questions against one scenario, and questions that
+read "using your answer from part a". Both have to survive onto the sheet or
+the question is unanswerable.
+
+- **`context`** is the scenario printed above the question. Blitz stores it
+  separately from `stem` and prints it above the question, so a question is
+  never separated from what it is about. Repeat it on each question in the run;
+  Blitz shows it once per question rather than assuming adjacency.
+- **`depends_on`** lists ids of questions in this pack that must accompany this
+  one. When the picker selects a question with dependencies, it pulls the
+  prerequisites onto the sheet too, ahead of it. Ids that do not resolve within
+  the pack are a validation error.
+
+In crop mode the same job can be done by putting the context or the earlier
+question in as an extra `question` figure, ahead of the question's own — which
+works, and is what the pilot pack does. Prefer the structured fields where the
+text is being used, since they let Blitz lay the sheet out rather than fixing
+the arrangement into an image.
+
+### Review state
+
+A pack is trusted more than heuristic extraction: its rows land `verified` and
+its tags are taken as given. Curated is not the same as checked, so say which
+this is.
+
+- **`status`** — `approved` (default), `draft` or `needs-review`, settable per
+  question or once at the top level for the whole pack.
+- **`review`** — a list of what still needs a human on this question.
+
+Anything not `approved`, or carrying any `review` entry, lands unverified.
+Marking unreviewed curriculum tags "verified" would put a confidence on the
+sheet that nobody has earned.
 
 ### Required
 
@@ -115,6 +155,25 @@ Two forms, both optional, mixable:
   import.
 
 `role` is `"question"` (default) or `"answer"`.
+
+**A question may have as many figures as it needs, and order matters.** They are
+rendered in the order given, so put a shared scenario or a required earlier
+question *before* the question that depends on it, exactly as the book prints
+them:
+
+```jsonc
+"figures": [
+  {"role": "question", "page": 40, "bbox": [...], "caption": "Shared context"},
+  {"role": "question", "page": 41, "bbox": [...], "caption": "Source question"},
+  {"role": "answer",   "page": 543, "bbox": [...], "caption": "Source answer"}
+]
+```
+
+Blitz stacks every `question` figure into the question and every `answer` figure
+into the worked solution, and budgets the page for all of them. A question that
+runs onto a second page, or that only makes sense after the scenario above it,
+is carried whole — which is the point: a question whose context is dropped is
+unanswerable.
 
 ### When the text cannot be trusted
 
