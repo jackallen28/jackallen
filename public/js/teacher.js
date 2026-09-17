@@ -101,7 +101,7 @@
       // The state push that follows renders the loaded context; the response is
       // only needed to surface headings the file had that the app did not use.
       if (res.context?.unknownHeadings?.length) {
-        $('load-status').innerHTML = `<span style="color:var(--ai)">Heading(s) not recognised and ignored: ${escapeHtml(res.context.unknownHeadings.join(', '))}. Keep the template's headings.</span>`;
+        $('load-status').innerHTML = `<span style="color:var(--warn)">Heading(s) not recognised and ignored: ${escapeHtml(res.context.unknownHeadings.join(', '))}. Keep the template's headings.</span>`;
       } else {
         $('load-status').textContent = '';
       }
@@ -125,7 +125,7 @@
         res.rounds ? `${res.rounds} previous round(s)` : null,
         'settings',
       ].filter(Boolean);
-      const notes = (res.notes || []).map((n) => `<div style="color:var(--ai)">${escapeHtml(n)}</div>`).join('');
+      const notes = (res.notes || []).map((n) => `<div style="color:var(--warn)">${escapeHtml(n)}</div>`).join('');
       $('load-status').innerHTML = `<span style="color:var(--human)">${bits.join(' · ')}</span>${notes}`;
       if (res.settings) applySettings(res.settings);
     });
@@ -174,8 +174,8 @@
         `<span style="color:var(--human)"><strong>${escapeHtml(ctx.title)}</strong> loaded</span> — ` +
         `${ctx.sections} section${ctx.sections === 1 ? '' : 's'}` +
         (ctx.samples ? `, ${ctx.samples} writing sample${ctx.samples === 1 ? '' : 's'}` : ', no writing samples (the built-in ones are used)') +
-        (ctx.blocklist ? `, ${ctx.blocklist} name${ctx.blocklist === 1 ? '' : 's'} blocked` : ', <span style="color:var(--ai)">no names blocked</span>') +
-        (ctx.hasSubject ? '' : ', <span style="color:var(--ai)">no subject boundary given</span>');
+        (ctx.blocklist ? `, ${ctx.blocklist} name${ctx.blocklist === 1 ? '' : 's'} blocked` : ', <span style="color:var(--warn)">no names blocked</span>') +
+        (ctx.hasSubject ? '' : ', <span style="color:var(--warn)">no subject boundary given</span>');
     } else {
       $('context-status').textContent = 'No class context loaded — using the built-in unit.';
     }
@@ -225,7 +225,7 @@
   function renderRosterIssues(res) {
     const bits = [];
     if (res.duplicates?.length) {
-      bits.push(`<div style="color:var(--ai)">${res.duplicates.length} duplicate login(s) ignored: ${res.duplicates.slice(0, 5).join(', ')}</div>`);
+      bits.push(`<div style="color:var(--warn)">${res.duplicates.length} duplicate login(s) ignored: ${res.duplicates.slice(0, 5).join(', ')}</div>`);
     }
     if (res.errors?.length) {
       bits.push(`<div style="color:var(--danger)">${res.errors.length} row(s) skipped:</div>` +

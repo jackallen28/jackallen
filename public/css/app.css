@@ -1,14 +1,19 @@
+/* Allentronics palette: the two oranges and the charcoal from the logo, on a
+   warm dark ground that still projects well in a classroom. AI is blue so that
+   the brand orange is never mistaken for the "this was a bot" colour. */
 :root {
-  --bg: #0e1117;
-  --panel: #161b25;
-  --panel-2: #1d2431;
-  --line: #2a3242;
-  --text: #e8ecf3;
-  --muted: #98a3b6;
-  --accent: #6c8cff;
-  --accent-2: #8b5cf6;
+  --bg: #14110d;
+  --panel: #1e1913;
+  --panel-2: #28211a;
+  --line: #3b3128;
+  --text: #f4eee6;
+  --muted: #b3a595;
+  --accent: #ee8a2a;      /* Allentronics orange */
+  --accent-2: #f5b865;    /* the lighter orange in the wordmark */
+  --charcoal: #404040;    /* the grey of "Education Services" */
   --human: #34d399;
-  --ai: #fbbf24;
+  --ai: #7c9cff;
+  --warn: #f5b865;
   --danger: #f87171;
   --radius: 14px;
 }
@@ -21,7 +26,7 @@ html, body {
 }
 
 body {
-  background: radial-gradient(1200px 600px at 50% -10%, #1b2438 0%, var(--bg) 60%);
+  background: radial-gradient(1200px 600px at 50% -10%, #2c2016 0%, var(--bg) 60%);
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -82,6 +87,7 @@ input, select {
   width: 100%;
 }
 input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="range"] { accent-color: var(--accent); }
 
 label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 6px; }
 
@@ -109,7 +115,7 @@ label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 6
   color: var(--muted);
 }
 .pill.human { color: var(--human); border-color: #1c5344; background: #10281f; }
-.pill.ai { color: var(--ai); border-color: #5a4515; background: #2a2210; }
+.pill.ai { color: var(--ai); border-color: #2e3d6e; background: #151b30; }
 .pill.good { color: var(--human); border-color: #1c5344; background: #10281f; }
 .pill.bad { color: var(--danger); border-color: #5b2b2b; background: #2a1414; }
 
@@ -120,7 +126,7 @@ label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 6
   font-weight: 700;
   letter-spacing: .02em;
 }
-.clock.warn { color: var(--ai); }
+.clock.warn { color: var(--warn); }
 .clock.critical { color: var(--danger); }
 
 /* ---------------------------------------------------------------------- chat */
@@ -300,7 +306,7 @@ tbody tr:hover { background: var(--panel-2); }
   margin-top: 22px;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-left: 3px solid var(--ai);
+  border-left: 3px solid var(--accent-2);
   border-radius: 10px;
   background: var(--panel-2);
 }
@@ -308,7 +314,7 @@ tbody tr:hover { background: var(--panel-2); }
   font-size: .78rem;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: var(--ai);
+  color: var(--accent-2);
   margin: 0 0 8px;
 }
 .rules ul { margin: 0; padding-left: 18px; }
@@ -397,7 +403,7 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
   animation: reveal .45s ease-out forwards;
 }
 .pair.human { border-color: #1c5344; background: linear-gradient(180deg, #10281f 0%, var(--panel) 70%); }
-.pair.ai { border-color: #5a4515; background: linear-gradient(180deg, #2a2210 0%, var(--panel) 70%); }
+.pair.ai { border-color: #2e3d6e; background: linear-gradient(180deg, #151b30 0%, var(--panel) 70%); }
 .pair .face { font-size: 2.1rem; line-height: 1; }
 .pair .who { font-weight: 650; margin-top: 4px; overflow-wrap: anywhere; }
 .pair .sub { font-size: .7rem; color: var(--muted); margin-top: 2px; }
@@ -478,9 +484,9 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
   margin-top: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #5a4515;
-  background: #2a2210;
-  color: var(--ai);
+  border: 1px solid #6b4a1c;
+  background: #2b1f10;
+  color: var(--warn);
 }
 
 @media (max-width: 640px) {
@@ -494,7 +500,7 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
 .ctx-step .name { font-weight: 650; }
 .ctx-n {
   width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--accent); color: #0b1020; font-weight: 700; font-size: .85rem;
+  background: var(--accent); color: #1a1006; font-weight: 700; font-size: .85rem;
 }
 .ctx-divider { border-top: 1px solid var(--line); margin: 16px 0 14px; }
 .btn-link {
@@ -515,3 +521,28 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
 .learn-row:last-child { border-bottom: 0; }
 .learn-row input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--accent); cursor: pointer; }
 .learn-row.off { opacity: .45; }
+
+/* ---------------------------------------------------------------- credit */
+.credit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 16px 22px;
+  color: var(--muted);
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+/* The words stay faint; the logo itself is left legible. */
+.credit span { opacity: .55; transition: opacity .2s; }
+.credit:hover span { opacity: .9; }
+/* The logo was drawn for a white page — its grey subtitle disappears on the
+   dark ground — so it sits on a small light chip rather than being recoloured. */
+.credit img {
+  height: 24px; width: auto; display: block;
+  background: #efe9e1; padding: 5px 10px; border-radius: 7px;
+}
+.credit a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+/* The chat screen fills the viewport; the credit sits below the fold there. */
+.chat-shell + .credit { margin-top: -6px; }

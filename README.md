@@ -390,6 +390,18 @@ lesson to wake it. A restart also clears the room, so avoid restarting mid-class
 State is deliberately not persisted. Restarting the server clears the room, and
 nothing about a student is stored beyond the number they typed in.
 
+## Look and credit
+
+The palette is Allentronics' — the two oranges and the charcoal from the logo — on a
+warm dark ground that still projects well in a classroom. Orange is the brand and
+the action colour; AI partners are marked in blue so the brand colour is never read
+as "this was a bot"; warnings use the lighter orange. Everything is a variable at the
+top of `public/css/app.css`, so a light version is one block.
+
+Every page ends with a small *Powered and created by* line and the Allentronics
+logo (`public/img/allentronics-logo.png`), linking to allentronics.com.au. The logo
+was drawn for a white page, so it sits on a light chip rather than being recoloured.
+
 ## Layout
 
 ```
