@@ -18,6 +18,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Business Management study design | **Draft.** Reconstructed by hand, flagged `verified: false`. Send the PDF and `blitz import-study-design` replaces it. |
 | Physics questions | Tested against a real Checkpoints extract: 70 questions, figures cropped, solutions attached. |
 | Physics concept lexicon | Written, covering all 71 dot points. |
+| Question pack import | Schema, validator and importer done; example pack in `packs/`. |
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | **The weak link.** See below. |
 
@@ -90,6 +91,40 @@ blitz generate physics \
     --notes "impulse sign conventions and transformer turns ratios" \
     --title "Physics U3 Blitz"
 ```
+
+## Question packs (the preferred way in)
+
+A **question pack** is the structured index of one book: JSON, one entry per
+question, with dot point tags, provenance, figures and worked solutions already
+sorted out. `docs/question-pack-schema.md` is the contract;
+`packs/example-physics.json` is a working example.
+
+```bash
+blitz dot-points physics --json > physics-dot-points.json   # ids to tag against
+blitz import-pack packs/physics-checkpoints.json --dry-run  # validate
+blitz import-pack packs/physics-checkpoints.json            # load
+```
+
+A pack beats the heuristic extractor on every axis, because whoever built it had
+the book in front of them. It decides per question where the boundaries are,
+what the question assesses, and — most valuable of all — **whether the text can
+be trusted at all**. Set `render_mode: "crop"` with a figure and Blitz prints the
+page image instead of text, which is the only honest way to show a stacked
+fraction.
+
+Pass the JSON, not a rendered PDF of it. Parsing a pack back out of a PDF
+re-solves extraction on a document generated from structure and undoes the work:
+`m s⁻²` has already flattened to `m s-2` by the time it reaches the page.
+
+Validation is strict and the import is all-or-nothing — unknown dot point ids,
+duplicate ids, bboxes off the end of the PDF and stale study design fingerprints
+are all reported together, and nothing is written until the pack is clean. A
+half-loaded pack has invisible gaps.
+
+Packs are trusted further than extracted questions: their rows land `verified`,
+their tags are taken as given, and the tagger is not consulted. So a pack must
+not invent answers — leave `answer` out where the book supplies none, and Blitz
+prints "no worked solution in the source" with the citation.
 
 ## Loading your own material
 

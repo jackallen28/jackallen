@@ -1,0 +1,166 @@
+{
+  "pack_version": "1.0",
+  "subject_id": "physics",
+  "study_design_fingerprint": "750fe79e5aba",
+  "source": {
+    "id": "cp-example",
+    "kind": "checkpoints",
+    "title": "Checkpoints Physics",
+    "edition": "extraction trial",
+    "pdf": "../sources/codex-student-pack.pdf",
+    "page_offset": 0
+  },
+  "questions": [
+    {
+      "id": "CP-T001",
+      "title": "Motion of connected masses",
+      "provenance": "Adapted VCAA 2018 NHT SA Q8",
+      "printed_page": "11",
+      "source_number": "14",
+      "kk_ids": [
+        "physics-u3-aos1-kk01",
+        "physics-u3-aos1-kk09"
+      ],
+      "question_type": "ph-mc",
+      "marks": 1,
+      "difficulty": 3,
+      "stem": "A 1.0 kg mass attached to a string hangs 4.0 m from the ground. The string is massless. The string is connected to a 4.0 kg mass on a horizontal frictionless table. The masses are released from rest and accelerate at 1.96 m s⁻². Which one of the following best gives the speed of the 4.0 kg mass when the 1.0 kg mass strikes the ground after falling 4.0 m?",
+      "options": [
+        "2.0 m s⁻¹",
+        "4.0 m s⁻¹",
+        "8.0 m s⁻¹",
+        "16 m s⁻¹"
+      ],
+      "figures": [
+        {
+          "role": "question",
+          "page": 0,
+          "bbox": [
+            52,
+            154,
+            449,
+            329
+          ],
+          "caption": "Connected masses over a pulley"
+        }
+      ],
+      "notes": "Source answer not supplied; no answer generated."
+    },
+    {
+      "id": "CP-T002",
+      "title": "Photoelectric experiment and uncertainty",
+      "provenance": "Adapted VCAA 2017 Sample SB Q17",
+      "printed_page": "49",
+      "source_number": "14",
+      "kk_ids": [
+        "physics-u4-aos1-kk08",
+        "physics-u4-aos2-kk03"
+      ],
+      "question_type": "ph-experimental",
+      "difficulty": 5,
+      "stem": "Students set up the apparatus shown to study the photoelectric effect; in particular, the relationship between the frequency and intensity of incoming light and the maximum kinetic energy of emitted photoelectrons. Assume that all the filters give light of the same intensity. With one filter in place and the same light source, the students slowly increase the voltage from zero and plot the current as a function of the voltage.",
+      "parts": [
+        {
+          "label": "a",
+          "text": "Explain why the current drops to zero at point X.",
+          "marks": 2
+        },
+        {
+          "label": "c",
+          "text": "Determine the value of Planck's constant, h, that the students would have obtained from this graph. Give your answer in eV s.",
+          "marks": 2
+        },
+        {
+          "label": "d",
+          "text": "Describe how you would use uncertainty bars to decide whether a straight line of best fit is justified.",
+          "marks": 2
+        }
+      ],
+      "answer": {
+        "parts": [
+          {
+            "label": "a",
+            "text": "Ejected photoelectrons cross the phototube provided their kinetic energy exceeds the potential energy of the reversed DC voltage. As that voltage is increased, fewer photoelectrons have sufficient kinetic energy, until even the most energetic are stopped — point X."
+          },
+          {
+            "label": "c",
+            "text": "4.8 × 10⁻¹⁵ eV s. The gradient of the graph gives h."
+          },
+          {
+            "label": "d",
+            "text": "Fit uncertainty bars of the indicated size to all points, then check whether a straight line of best fit passes through the extent of every bar."
+          }
+        ]
+      },
+      "figures": [
+        {
+          "role": "question",
+          "page": 1,
+          "bbox": [
+            52,
+            154,
+            517,
+            325
+          ],
+          "caption": "Photocell apparatus: light source, filter, photocell, ammeter and variable DC supply"
+        }
+      ],
+      "notes": "Source table labels stopping voltage in eV; retained verbatim and flagged for subject review. Subpart b omitted here (asks the student to plot on supplied axes). Wording: added missing 'to' before 'determine'."
+    },
+    {
+      "id": "CP-T003",
+      "title": "Electron de Broglie wavelength",
+      "provenance": "VCAA 2019 SA Q14",
+      "printed_page": "14",
+      "source_number": "8",
+      "kk_ids": [
+        "physics-u4-aos1-kk12"
+      ],
+      "question_type": "ph-mc",
+      "marks": 1,
+      "difficulty": 4,
+      "stem": "Electrons of mass 9.1 × 10⁻³¹ kg are accelerated in an electron gun to a speed of 1.0 × 10⁷ m s⁻¹. The best estimate of the de Broglie wavelength of these electrons is",
+      "options": [
+        "4.5 × 10⁻⁶ m",
+        "7.3 × 10⁻⁸ m",
+        "7.3 × 10⁻¹¹ m",
+        "4.5 × 10⁻¹² m"
+      ],
+      "notes": "No figure in the source. Text-only entry — figures are optional."
+    },
+    {
+      "id": "CP-T004",
+      "title": "Calcium and copper photoemission",
+      "provenance": "VCAA 2023 SB Q13",
+      "printed_page": "49",
+      "source_number": "28",
+      "kk_ids": [
+        "physics-u4-aos1-kk08"
+      ],
+      "question_type": "ph-graph",
+      "marks": 1,
+      "difficulty": 4,
+      "stem": "In a photoelectric effect experiment, a team of physics students investigated the relationship between the maximum kinetic energy of ejected electrons and the frequency of the light incident on calcium metal. Their results are shown in the graph.",
+      "parts": [
+        {
+          "label": "a",
+          "text": "Using data from the graph, estimate the work function for calcium.",
+          "marks": 1
+        }
+      ],
+      "figures": [
+        {
+          "role": "question",
+          "page": 5,
+          "bbox": [
+            52,
+            154,
+            360,
+            389
+          ],
+          "caption": "Maximum kinetic energy against frequency for calcium"
+        }
+      ]
+    }
+  ]
+}

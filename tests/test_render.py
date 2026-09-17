@@ -278,3 +278,62 @@ def test_checklist_names_only_dot_points_that_got_a_question(seeded, tmp_path):
     assert "This sheet covers" in first
     for kk_id in plan.uncovered_kk_ids:
         assert design.key_knowledge(kk_id).display not in first
+
+
+def test_a_cropped_question_prints_the_image_not_the_text(seeded, tmp_path):
+    """The text was judged untrustworthy at ingest, so it must not reach the page.
+
+    Printing both would put the mangled version next to the correct one.
+    """
+    import pymupdf as _pymupdf
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas as rl_canvas
+
+    art = tmp_path / "fig.pdf"
+    c = rl_canvas.Canvas(str(art), pagesize=A4)
+    c.setLineWidth(1)
+    c.rect(20 * mm, 200 * mm, 60 * mm, 30 * mm)
+    c.save()
+    png = tmp_path / "fig.png"
+    doc = _pymupdf.open(art)
+    doc[0].get_pixmap(clip=_pymupdf.Rect(50, 150, 250, 260)).save(png)
+    doc.close()
+
+    design = load_study_design("physics")
+    kk = design.all_key_knowledge()[0]
+    q = Question(
+        id="q1", subject_id="physics", question_type="ph-mc",
+        body="MANGLEDTEXTTOKEN E = hp which cannot be trusted",
+        marks=1, kk_ids=[kk.id], citation="test",
+        figure_path=str(png), render_mode="crop",
+    )
+    plan = SheetPlan(spec=SheetSpec(subject_id="physics", kk_ids=[kk.id]),
+                     questions=[q])
+    out = tmp_path / "s.pdf"
+    render_sheet(plan, out)
+
+    d = pymupdf.open(out)
+    text = " ".join(p.get_text("text") for p in d)
+    images = sum(len(d[i].get_images(full=True)) for i in range(d.page_count))
+    d.close()
+    assert "MANGLEDTEXTTOKEN" not in text, "untrusted text reached the sheet"
+    assert images >= 1, "the page crop was not printed"
+
+
+def test_a_normal_question_still_prints_its_text(seeded, tmp_path):
+    design = load_study_design("physics")
+    kk = design.all_key_knowledge()[0]
+    q = Question(
+        id="q1", subject_id="physics", question_type="ph-calculation",
+        body="RELIABLETEXTTOKEN calculate the impulse.",
+        marks=3, kk_ids=[kk.id], citation="test",
+    )
+    plan = SheetPlan(spec=SheetSpec(subject_id="physics", kk_ids=[kk.id]),
+                     questions=[q])
+    out = tmp_path / "s.pdf"
+    render_sheet(plan, out)
+    d = pymupdf.open(out)
+    text = " ".join(p.get_text("text") for p in d)
+    d.close()
+    assert "RELIABLETEXTTOKEN" in text

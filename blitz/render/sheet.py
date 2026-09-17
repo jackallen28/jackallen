@@ -193,6 +193,13 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
     marks = f' <font color="#6b7280">({q.marks} mark{"s" if q.marks != 1 else ""})</font>' if q.marks else ""
     flag = ' <font color="#8a6d1f">°</font>' if q.generated else ""
 
+    if q.is_cropped:
+        # The text was judged untrustworthy at ingest — stacked fractions or
+        # equation-editor glyphs — so the page image IS the question. Printing
+        # the text as well would show the student the mangled version we
+        # deliberately set aside, next to the correct one.
+        return _cropped_question(q, n, ss, col_w, marks, flag)
+
     # A multi-part question reads as one wall of text if its parts are inlined.
     # Given a stem, the parts get their own indented lines, as in the book.
     head = q.stem if (q.stem and q.parts) else q.body
@@ -237,6 +244,29 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
 
     # Keep short questions whole; let long ones flow so they don't blow a column.
     return [KeepTogether(parts)] if len(parts) <= 4 else parts
+
+
+def _cropped_question(q: Question, n: int, ss, col_w: float,
+                      marks: str, flag: str) -> list:
+    """A question shown as an image of the real page.
+
+    Used where the text was judged untrustworthy at ingest — stacked fractions,
+    equation-editor glyphs. Printing the text as well would put the mangled
+    version we deliberately set aside right next to the correct one.
+    """
+    parts: list = [Paragraph(
+        f'<b><font color="#1f4fd8">{n}.</font></b>{marks}{flag}', ss["Question"])]
+    fig = _figure(q.figure_path, col_w, max_h=118 * mm)
+    if fig is not None:
+        parts += [Spacer(1, 2), fig]
+    if q.figure_caption:
+        parts.append(Paragraph(_esc(q.figure_caption), ss["Caption"]))
+    if not q.options:
+        parts.append(Spacer(1, 1.5))
+        parts.append(RuledSpace(col_w, lines_for_marks(q.marks, q.question_type)))
+    if q.citation:
+        parts.append(Paragraph(_esc(q.citation), ss["Citation"]))
+    return parts
 
 
 def _header(ctx: _Ctx, ss, width: float) -> list:
@@ -303,15 +333,20 @@ def _solutions(ctx: _Ctx, ss, col_w: float) -> list:
     ]
     for i, q in enumerate(plan.questions, start=1):
         block: list = [Paragraph(f"{i}.", ss["SolutionHeading"])]
-        if q.answer:
+        fig = _figure(q.answer_figure, col_w, max_h=90 * mm)
+        cropped = q.answer_mode == "crop" and fig is not None
+        if cropped:
+            # Same reasoning as a cropped question: the worked solution's maths
+            # would not survive as text, so the page image is the solution.
+            block += [fig, Spacer(1, 3)]
+        elif q.answer:
             block.append(Paragraph(_esc(q.answer), ss["Solution"]))
+            if fig is not None:
+                block += [fig, Spacer(1, 3)]
         else:
             block.append(Paragraph(
                 "<i>No worked solution in the source — check the book at the "
                 "citation printed on the question.</i>", ss["Solution"]))
-        fig = _figure(q.answer_figure, col_w, max_h=55 * mm)
-        if fig is not None:
-            block += [fig, Spacer(1, 3)]
         if q.citation:
             block.append(Paragraph(_esc(q.citation), ss["Citation"]))
         out.append(KeepTogether(block))

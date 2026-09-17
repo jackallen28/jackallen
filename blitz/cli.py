@@ -2,7 +2,9 @@
 
     blitz init                      create the index and load the sample bank
     blitz subjects                  list subjects and how verified they are
-    blitz ingest <pdf> ...          index one of your own PDFs
+    blitz import-pack <json>        load a curated question pack (preferred)
+    blitz dot-points <subject>      the dot point ids a pack should tag against
+    blitz ingest <pdf> ...          index a PDF heuristically (no pack available)
     blitz coverage <subject>        show questions held per dot point
     blitz generate <subject> ...    build a sheet from the command line
     blitz serve                     run the local web UI
@@ -146,6 +148,61 @@ def cmd_generate(args) -> int:
     return 0
 
 
+def cmd_import_pack(args) -> int:
+    """Load a curated question pack (docs/question-pack-schema.md)."""
+    ensure_dirs()
+    from .ingest.pack import import_pack
+
+    with db.session() as conn:
+        report = import_pack(conn, args.pack, dry_run=args.dry_run)
+    return 0 if report.ok else 1
+
+
+def cmd_dot_points(args) -> int:
+    """The authoritative dot point ids, for whatever is building a pack."""
+    import json as _json
+
+    from .corpus.sample import fingerprint
+
+    design = load_study_design(args.subject)
+    if args.json:
+        payload = {
+            "subject_id": design.subject_id,
+            "subject_name": design.subject_name,
+            "accreditation": design.accreditation,
+            "study_design_fingerprint": fingerprint(design),
+            "verified": design.fully_verified,
+            "question_types": [
+                {"id": qt.id, "label": qt.label, "description": qt.description}
+                for qt in design.question_types
+            ],
+            "dot_points": [
+                {
+                    "id": kk.id,
+                    "unit": unit.number,
+                    "area_of_study": area.id,
+                    "area_title": area.title,
+                    "text": kk.text,
+                    "short": kk.display,
+                }
+                for unit in design.units
+                for area in unit.areas_of_study
+                for kk in area.key_knowledge
+            ],
+        }
+        print(_json.dumps(payload, indent=2, ensure_ascii=False))
+        return 0
+
+    for unit in design.units:
+        print(f"\nUnit {unit.number}: {unit.title}")
+        for area in unit.areas_of_study:
+            print(f"  {area.id} — {area.title}")
+            for kk in area.key_knowledge:
+                print(f"    {kk.id}  {kk.text[:90]}")
+    print(f"\nfingerprint: {fingerprint(design)}")
+    return 0
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -216,6 +273,20 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--subject", required=True)
     imp.add_argument("--dry-run", action="store_true")
     imp.set_defaults(func=cmd_import_study_design)
+
+    pack = sub.add_parser("import-pack",
+                          help="load a curated question pack (JSON)")
+    pack.add_argument("pack")
+    pack.add_argument("--dry-run", action="store_true",
+                      help="validate only; write nothing")
+    pack.set_defaults(func=cmd_import_pack)
+
+    dots = sub.add_parser("dot-points",
+                          help="list dot point ids, for building a pack")
+    dots.add_argument("subject")
+    dots.add_argument("--json", action="store_true",
+                      help="machine-readable, including the design fingerprint")
+    dots.set_defaults(func=cmd_dot_points)
 
     srv = sub.add_parser("serve", help="run the local web UI")
     srv.add_argument("--host", default="127.0.0.1")
