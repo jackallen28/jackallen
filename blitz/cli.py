@@ -156,6 +156,8 @@ def cmd_import_pack(args) -> int:
 
     with db.session() as conn:
         report = import_pack(conn, args.pack, dry_run=args.dry_run)
+    if report.ok and not args.dry_run:
+        print("\nNext: blitz coverage " + (report.subject_id or "<subject>"))
     return 0 if report.ok else 1
 
 

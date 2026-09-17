@@ -270,3 +270,58 @@ def test_the_shipped_example_pack_is_valid():
     pack = json.loads(path.read_text(encoding="utf-8"))
     report = validate(pack, load_study_design("physics"), path.parent)
     assert report.ok, report.errors
+
+
+class TestFriendlyErrors:
+    """The failures you hit before a pack is even read deserve a sentence."""
+
+    def test_a_missing_file_says_so(self, conn, tmp_path):
+        report = import_pack(conn, tmp_path / "nope.json",
+                             progress=lambda *_: None)
+        assert not report.ok
+        assert "no such pack file" in report.errors[0]
+
+    def test_a_directory_says_so(self, conn, tmp_path):
+        report = import_pack(conn, tmp_path, progress=lambda *_: None)
+        assert "is a directory" in report.errors[0]
+
+    def test_malformed_json_points_at_the_line(self, conn, tmp_path):
+        path = tmp_path / "bad.json"
+        path.write_text('{"subject_id": "physics",\n  "questions": [\n',
+                        encoding="utf-8")
+        report = import_pack(conn, path, progress=lambda *_: None)
+        assert "not valid JSON" in report.errors[0]
+        assert "line" in report.errors[0]
+
+    def test_a_json_array_is_rejected_clearly(self, conn, tmp_path):
+        path = tmp_path / "arr.json"
+        path.write_text("[]", encoding="utf-8")
+        report = import_pack(conn, path, progress=lambda *_: None)
+        assert "JSON object" in report.errors[0]
+
+    def test_a_missing_subject_id_says_where_to_look(self, conn, tmp_path):
+        path = tmp_path / "p.json"
+        path.write_text('{"questions": []}', encoding="utf-8")
+        report = import_pack(conn, path, progress=lambda *_: None)
+        assert "subject_id is required" in report.errors[0]
+
+    def test_an_unknown_subject_lists_the_known_ones(self, conn, tmp_path):
+        path = tmp_path / "p.json"
+        path.write_text('{"subject_id": "chemistry", "questions": []}',
+                        encoding="utf-8")
+        report = import_pack(conn, path, progress=lambda *_: None)
+        assert "physics" in report.errors[0]
+
+    def test_a_tilde_path_is_expanded(self, conn, tmp_path, monkeypatch):
+        monkeypatch.setenv("HOME", str(tmp_path))
+        report = import_pack(conn, "~/nope.json", progress=lambda *_: None)
+        assert "~" not in report.errors[0], "the path should be expanded"
+
+
+def test_the_lexicon_is_not_mistaken_for_a_study_design():
+    """physics-lexicon.yaml sits beside the study designs but is not one."""
+    from blitz.studydesign import list_subjects
+
+    ids = [d.subject_id for d in list_subjects()]
+    assert "physics-lexicon" not in ids
+    assert ids == sorted(set(ids))

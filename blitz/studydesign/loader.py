@@ -88,10 +88,16 @@ def load_study_design(subject_id: str) -> StudyDesign:
     return load_study_design_file(path)
 
 
+# Files that sit beside the study designs but are not study designs.
+_NOT_A_DESIGN = ("-lexicon.yaml",)
+
+
 def list_subjects() -> list[StudyDesign]:
     """Every study design shipped with the tool, in filename order."""
     designs = []
     for path in sorted(STUDY_DESIGN_DIR.glob("*.yaml")):
+        if path.name.endswith(_NOT_A_DESIGN):
+            continue
         try:
             designs.append(load_study_design_file(path))
         except Exception as exc:  # a malformed file shouldn't hide the good ones

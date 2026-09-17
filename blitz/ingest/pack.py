@@ -257,18 +257,44 @@ def import_pack(
     progress=print,
 ) -> PackReport:
     """Validate a pack and, if it is clean, load it into the index."""
-    path = Path(path).resolve()
+    path = Path(path).expanduser().resolve()
     pack_dir = path.parent
-    with path.open(encoding="utf-8") as fh:
-        pack = json.load(fh)
+    report = PackReport(path=str(path))
+
+    def fail(message: str) -> PackReport:
+        report.errors.append(message)
+        progress(f"  ERROR {message}")
+        return report
+
+    # These are the things that go wrong before a pack is even read, and a raw
+    # traceback is a poor way to learn that a path has a typo in it.
+    if not path.exists():
+        return fail(f"no such pack file: {path}")
+    if path.is_dir():
+        return fail(f"{path} is a directory, not a pack file")
+    try:
+        with path.open(encoding="utf-8") as fh:
+            pack = json.load(fh)
+    except json.JSONDecodeError as exc:
+        return fail(f"{path.name} is not valid JSON: {exc.msg} at line "
+                    f"{exc.lineno}, column {exc.colno}")
+    except UnicodeDecodeError as exc:
+        return fail(f"{path.name} is not UTF-8 text: {exc}")
+
+    if not isinstance(pack, dict):
+        return fail(f"{path.name} should hold a JSON object, found "
+                    f"{type(pack).__name__}")
 
     subject_id = pack.get("subject_id")
     if not subject_id:
-        report = PackReport(path=str(path))
-        report.errors.append("subject_id is required")
-        return report
+        return fail("subject_id is required at the top level of the pack "
+                    "(see docs/question-pack-schema.md)")
 
-    design = design or load_study_design(subject_id)
+    if design is None:
+        try:
+            design = load_study_design(subject_id)
+        except FileNotFoundError as exc:
+            return fail(str(exc))
     report = validate(pack, design, pack_dir)
     report.path = str(path)
 
