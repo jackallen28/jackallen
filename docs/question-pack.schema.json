@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jackallen28/jackallen/blob/main/docs/question-pack.schema.json",
+  "title": "Blitz question pack",
+  "description": "The structured index of one book. See docs/question-pack-schema.md for the prose version. Validate with `blitz import-pack <file> --dry-run`, which checks everything this schema does plus the things a schema cannot: that dot point ids exist in the current study design, that the fingerprint is current, that bboxes fall inside the source PDF, that figure files exist, and that depends_on resolves.",
+  "type": "object",
+  "required": ["subject_id", "source", "questions"],
+  "additionalProperties": true,
+
+  "properties": {
+    "pack_version": {
+      "type": "string",
+      "description": "Schema version. Major version must match the importer's.",
+      "examples": ["1.0"]
+    },
+    "subject_id": {
+      "type": "string",
+      "description": "Must match a study design installed in Blitz.",
+      "examples": ["physics", "business-management"]
+    },
+    "study_design_fingerprint": {
+      "type": "string",
+      "description": "From `blitz dot-points <subject> --json`. Dot point ids are positional, so a study design re-import can leave every id valid while changing what it means. A mismatch is a hard error. Omitting it is allowed but warns.",
+      "examples": ["750fe79e5aba"]
+    },
+    "status": {
+      "$ref": "#/$defs/status",
+      "description": "Default review state for every question in the pack. Per-question status overrides it."
+    },
+    "source": { "$ref": "#/$defs/source" },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/question" }
+    }
+  },
+
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": ["approved", "draft", "needs-review"],
+      "default": "approved",
+      "description": "Anything other than 'approved' lands unverified in the index."
+    },
+
+    "source": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable across re-imports; re-importing updates rows in place rather than duplicating them. Also namespaces question ids and depends_on ids.",
+          "examples": ["physics-checkpoints-2024"]
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["checkpoints", "textbook", "vcaa-exam", "other"],
+          "default": "other"
+        },
+        "title": {
+          "type": "string",
+          "description": "Printed in the citation under every question.",
+          "examples": ["Checkpoints VCE Physics Units 3 & 4"]
+        },
+        "edition": { "type": "string", "examples": ["2024"] },
+        "pdf": {
+          "type": "string",
+          "description": "Path to the source PDF on the machine running the import. Required if any figure uses page/bbox. Never copied into the repo.",
+          "examples": ["/Users/jack/Documents/VCE_Physics_3_4_Checkpoints.pdf"]
+        },
+        "page_offset": {
+          "type": "integer",
+          "default": 0,
+          "description": "Printed page number minus PDF page index. Only used when a question has no printed_page of its own."
+        }
+      }
+    },
+
+    "question": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "anyOf": [
+        { "required": ["stem"] },
+        { "required": ["parts"] }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique within the pack, stable across re-runs. Stored as '<source.id>-<id>'.",
+          "examples": ["CP-C01-S11-Q001"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Short human label, shown in listings and review tools. Not printed on sheets."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "Printed in the citation, in square brackets.",
+          "examples": ["Adapted VCAA 2018 NHT SA Q8"]
+        },
+        "printed_page": {
+          "type": "string",
+          "description": "The page number AS PRINTED IN THE BOOK, not the PDF index. String because books use roman numerals and suffixes.",
+          "examples": ["11", "142"]
+        },
+        "source_number": {
+          "type": "string",
+          "description": "The question number as printed in the book.",
+          "examples": ["14"]
+        },
+
+        "kk_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Study design dot points this question assesses, best first. Must exist in the current study design. Taken as given — the tagger is not consulted for pack rows. An empty list imports the question but counts it untagged, so it can never be selected.",
+          "examples": [["physics-u3-aos1-kk01", "physics-u3-aos1-kk09"]]
+        },
+        "question_type": {
+          "type": "string",
+          "description": "An id from the subject's question_types. See `blitz dot-points <subject> --json`.",
+          "examples": ["ph-mc", "ph-calculation", "ph-experimental"]
+        },
+        "marks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total marks. If omitted, summed from parts[].marks."
+        },
+        "difficulty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "1 recall .. 5 hardest exam standard. Omit rather than guess; the picker treats it as unknown."
+        },
+
+        "stem": {
+          "type": "string",
+          "description": "The question, or the shared lead-in to its parts. Real Unicode notation: 'm s⁻²', not 'm s-2'."
+        },
+        "parts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/part" },
+          "description": "Sub-parts. Printed on their own lines with their own ruled answer space."
+        },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" },
+          "description": "Multiple choice options in order, WITHOUT the leading 'A ' / 'B ' — Blitz relabels them."
+        },
+
+        "answer": {
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/answer" }
+          ],
+          "description": "The worked solution. OMIT ENTIRELY where the book supplies none — do not generate one. Blitz prints 'no worked solution in the source' with the citation."
+        },
+
+        "context": {
+          "type": "string",
+          "description": "The scenario this question is set in, printed above it in the book. Stored separately from stem and printed above the question, so a question never reaches a sheet without what it is about. Repeat it on each question in a shared run."
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ids of questions IN THIS PACK that must accompany this one (e.g. 'using your answer from the previous question'). Unnamespaced — Blitz prefixes them with source.id. Ids that do not resolve within the pack are a validation error. The picker pulls prerequisites onto the sheet ahead of the question that needs them.",
+          "examples": [["CP-C01-S11-Q003"]]
+        },
+
+        "figures": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/figure" },
+          "description": "Every figure this question needs, IN ORDER. A question routinely needs several: a page continuation, the shared scenario above it, or an earlier question it depends on. All 'question' figures are stacked into the question and all 'answer' figures into the solution."
+        },
+
+        "render_mode": {
+          "type": "string",
+          "enum": ["text", "crop"],
+          "default": "text",
+          "description": "'crop' means the text could not be faithfully reconstructed (stacked fractions, equation-editor glyphs), so Blitz prints the page image and uses the text only for search and tagging. Requires at least one 'question' figure."
+        },
+        "answer_mode": {
+          "type": "string",
+          "enum": ["text", "crop"],
+          "default": "text",
+          "description": "As render_mode, for the worked solution. Judge it independently: solutions are where the algebra lives, so they need cropping far more often than questions do. Requires at least one 'answer' figure."
+        },
+
+        "status": { "$ref": "#/$defs/status" },
+        "review": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What still needs a human on this question. Any entry makes the row unverified.",
+          "examples": [["curriculum tag needs subject review", "shared context scope uncertain"]]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Editorial record: why an answer is missing, what wording was changed, why a crop was used. Kept with the row and shown when reviewing the index."
+        }
+      }
+    },
+
+    "part": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string", "examples": ["a", "b", "c"] },
+        "text": { "type": "string" },
+        "marks": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string" },
+        "parts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/part" }
+        }
+      },
+      "anyOf": [{ "required": ["text"] }, { "required": ["parts"] }]
+    },
+
+    "figure": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["question", "answer"],
+          "default": "question"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-BASED page index in source.pdf. Must be within the document."
+        },
+        "bbox": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "number" },
+          "description": "[x0, y0, x1, y1] in PDF points, origin TOP-LEFT of the page. x0<x1 and y0<y1. Crop to the content, not the whole page: a crop wider than about 400pt forces the sheet into a single column to stay legible."
+        },
+        "file": {
+          "type": "string",
+          "description": "Path to an image, relative to the pack file. Alternative to page+bbox."
+        },
+        "caption": {
+          "type": "string",
+          "description": "Printed under the figure when a question has more than one."
+        }
+      },
+      "oneOf": [
+        { "required": ["page", "bbox"], "not": { "required": ["file"] } },
+        { "required": ["file"], "not": { "required": ["page"] } }
+      ]
+    }
+  }
+}
