@@ -487,3 +487,31 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions button { width: 100%; }
 }
+
+/* ------------------------------------------------------- class context card */
+.ctx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+.ctx-step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.ctx-step .name { font-weight: 650; }
+.ctx-n {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: #0b1020; font-weight: 700; font-size: .85rem;
+}
+.ctx-divider { border-top: 1px solid var(--line); margin: 16px 0 14px; }
+.btn-link {
+  display: inline-block; text-decoration: none; padding: 8px 14px; border: 1px solid var(--line);
+  border-radius: 9px; color: var(--text); font-weight: 600; font-size: .85rem;
+}
+.btn-link:hover { background: var(--panel-2); }
+@media (max-width: 640px) { .ctx-grid { grid-template-columns: 1fr; } }
+
+.learn-list {
+  max-height: 46vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--bg); padding: 4px 0;
+}
+.learn-row {
+  display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start;
+  padding: 7px 12px; border-bottom: 1px solid var(--line); font-size: .92rem;
+}
+.learn-row:last-child { border-bottom: 0; }
+.learn-row input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--accent); cursor: pointer; }
+.learn-row.off { opacity: .45; }

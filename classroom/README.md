@@ -35,3 +35,11 @@ overrides everything else in this repository.
   repository.
 - The corpus is a style reference. Lines from it should not be reproduced verbatim to
   students.
+
+## Using your own class instead
+
+`TEMPLATE-class-context.md` is the file a teacher downloads from the console, fills
+in with any AI from their unit plan, and uploads before opening the room. It
+replaces `01-class-context.md`, the subject boundary and `04-writing-samples.md` at
+runtime; `02` and `03` still apply. The console reads it by its `## ` headings, so
+keep those. Nothing uploaded is written to disk — the save file is how it comes back.

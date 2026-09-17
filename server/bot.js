@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { modelCapabilities, normaliseMix } from './models.js';
 import { voicePromptSection, voiceSamples } from './voice.js';
-import { packLoaded, personaPrompt, sharedPrompt } from './classroom.js';
+import { packLoaded, personaPrompt, sharedPrompt as defaultSharedPrompt } from './classroom.js';
 
 /**
  * The AI chat partner.
@@ -68,8 +68,10 @@ export const usingClassroomPack = packLoaded && !process.env.BOT_PERSONA;
  *
  * The shared briefing is its own cached block so all four personas read from one
  * cache entry; only the short persona block after it varies per conversation.
+ * The session supplies the briefing, because an uploaded class context or a
+ * learned voice changes it while the server runs.
  */
-function systemBlocks(personaId) {
+function systemBlocks(personaId, sharedPrompt = defaultSharedPrompt) {
   if (!usingClassroomPack) {
     return [{ type: 'text', text: FALLBACK_PROMPT, cache_control: { type: 'ephemeral' } }];
   }
@@ -175,9 +177,11 @@ function scriptedReply(history) {
  *
  * @param {Array<{role: 'user'|'assistant', content: string}>} history
  * @param {string} modelId  which model answers this turn
+ * @param {string|null} personaId
+ * @param {string} [sharedPrompt]  the session's current briefing
  * @returns {Promise<{text: string, live: boolean, usage: {inputTokens: number, outputTokens: number}}>}
  */
-export async function botReply(history, modelId = defaultModel, personaId = null) {
+export async function botReply(history, modelId = defaultModel, personaId = null, sharedPrompt = defaultSharedPrompt) {
   const noUsage = { inputTokens: 0, outputTokens: 0 };
   const api = getClient();
   if (!api) return { text: scriptedReply(history), live: false, usage: noUsage };
@@ -188,7 +192,7 @@ export async function botReply(history, modelId = defaultModel, personaId = null
     const request = {
       model: modelId,
       max_tokens: 120,
-      system: systemBlocks(personaId),
+      system: systemBlocks(personaId, sharedPrompt),
       messages: history,
     };
     // Low effort keeps replies terse and fast, which is what the persona needs.

@@ -2,7 +2,10 @@ import { EventEmitter } from 'node:events';
 import { buildConversations } from './pairing.js';
 import { botReply, drawWpm, replyTiming } from './bot.js';
 import { estimateCost, modelLabel, normaliseMix } from './models.js';
-import { isKnownPersona, personaCatalog, personaLabel } from './classroom.js';
+import { buildSharedPrompt, isKnownPersona, personaCatalog, personaLabel, sharedPrompt as diskPrompt } from './classroom.js';
+import { describeContext, parseClassContext } from './context.js';
+import { buildAllowlist, extractVoice, mergeVoice, VOICE_LIMIT } from './learn.js';
+import { buildSave, parseSave } from './save.js';
 import { isValidLogin, normaliseLogin, parseRoster } from './roster.js';
 
 export const PHASES = {
@@ -37,6 +40,187 @@ export class Session extends EventEmitter {
     this.endsAt = null;
     this.roundTimer = null;
     this.usedLiveBot = false;
+    // What the teacher has loaded for this class. None of it is written to disk;
+    // the save file is how it survives the server.
+    this.classContext = null;   // parsed upload, or null for the built-in pack
+    this.learnedVoice = [];     // deidentified student lines from earlier rounds
+    this.roundLog = [];         // one summary per completed round
+    this.promptCache = null;    // { key, text } — rebuilt when context or voice change
+  }
+
+  // ----------------------------------------------------------- class context
+
+  /** The bot's briefing as it stands right now. Memoised: it is large. */
+  currentPrompt() {
+    if (!this.classContext && this.learnedVoice.length === 0) return diskPrompt;
+    const key = `${this.classContext ? this.classContext.raw.length + ':' + this.classContext.title : 'disk'}|${this.learnedVoice.length}|${this.learnedVoice.at(-1) || ''}`;
+    if (this.promptCache?.key !== key) {
+      this.promptCache = {
+        key,
+        text: buildSharedPrompt({ context: this.classContext, learnedVoice: this.learnedVoice }),
+      };
+    }
+    return this.promptCache.text;
+  }
+
+  /** Load an uploaded class context. Allowed any time a round is not running. */
+  setClassContext(markdown) {
+    if (this.phase === PHASES.ACTIVE || this.phase === PHASES.GUESS) {
+      return { ok: false, error: 'Wait until the round has finished before changing the class context.' };
+    }
+    const parsed = parseClassContext(markdown);
+    if (!parsed.ok) return parsed;
+    this.classContext = parsed.context;
+    this.promptCache = null;
+    this.emit('roster');
+    return { ok: true, context: describeContext(parsed.context) };
+  }
+
+  clearClassContext() {
+    if (this.phase === PHASES.ACTIVE || this.phase === PHASES.GUESS) {
+      return { ok: false, error: 'Wait until the round has finished.' };
+    }
+    this.classContext = null;
+    this.promptCache = null;
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  // ------------------------------------------------------------ learned voice
+
+  /** Everything a line is checked against before it can become a sample. */
+  voiceGuard() {
+    const names = [
+      ...this.roster.values(),
+      ...this.roster.keys(),
+      ...[...this.students.values()].flatMap((s) => [s.student, s.code]),
+      ...(this.classContext?.blocklist || []),
+      ...String(process.env.CLASS_BLOCKLIST || '').split(',').map((n) => n.trim()).filter(Boolean),
+    ];
+    return {
+      names: [...new Set(names.filter(Boolean))],
+      allow: buildAllowlist(this.classContext?.raw || '', diskPrompt),
+    };
+  }
+
+  /**
+   * What this round's transcripts would add to the learned voice, for the
+   * teacher to review. Nothing is kept until commitVoice() is called with the
+   * lines they approved.
+   */
+  voiceCandidates() {
+    if (this.roundNumber === 0 || this.conversations.size === 0) {
+      return { ok: false, error: 'No round has run yet.' };
+    }
+    if (this.phase === PHASES.ACTIVE) {
+      return { ok: false, error: 'Wait until the round has finished.' };
+    }
+    const { kept, dropped } = extractVoice(this.transcripts(), this.voiceGuard(), this.learnedVoice);
+    return {
+      ok: true,
+      candidates: kept,
+      dropped: dropped.length,
+      droppedReasons: summariseReasons(dropped),
+      already: this.learnedVoice.length,
+      limit: VOICE_LIMIT,
+    };
+  }
+
+  /** Keep the lines the teacher approved. Re-checked, never trusted blind. */
+  commitVoice(lines) {
+    if (!Array.isArray(lines)) return { ok: false, error: 'No lines were sent.' };
+    const before = this.learnedVoice.length;
+    this.learnedVoice = mergeVoice(this.learnedVoice, lines.map(String), this.voiceGuard());
+    this.promptCache = null;
+    this.emit('roster');
+    return { ok: true, added: this.learnedVoice.length - before, total: this.learnedVoice.length };
+  }
+
+  clearVoice() {
+    this.learnedVoice = [];
+    this.promptCache = null;
+    this.emit('roster');
+    return { ok: true };
+  }
+
+  // ---------------------------------------------------------------- save file
+
+  settings() {
+    return {
+      durationSec: this.durationSec,
+      aiRatio: this.aiRatio,
+      modelMix: this.modelMix,
+      personaMix: this.personaMix,
+    };
+  }
+
+  saveData() {
+    return buildSave({
+      context: this.classContext,
+      learnedVoice: this.learnedVoice,
+      settings: this.settings(),
+      roster: [...this.roster].map(([login, student]) => ({ login, student })),
+      rounds: this.roundLog,
+    });
+  }
+
+  /** Restore a save file. Only from a blank set-up screen — it replaces everything. */
+  loadSave(rawText) {
+    if (this.phase !== PHASES.SETUP) {
+      return { ok: false, error: 'A save file can only be loaded from the set-up screen, before the room is open.' };
+    }
+    const parsed = parseSave(rawText);
+    if (!parsed.ok) return parsed;
+    const { parts, notes } = parsed;
+
+    this.classContext = parts.context;
+    this.learnedVoice = parts.learnedVoice;
+    this.roundLog = parts.rounds;
+    if (parts.settings) {
+      if (parts.settings.durationSec) this.durationSec = Math.max(15, Math.min(900, Math.round(parts.settings.durationSec)));
+      if (parts.settings.aiRatio !== undefined) this.aiRatio = Math.max(0, Math.min(1, parts.settings.aiRatio));
+      if (parts.settings.modelMix) this.modelMix = normaliseMix(parts.settings.modelMix);
+      if (parts.settings.personaMix) this.personaMix = normalisePersonaMix(parts.settings.personaMix);
+    }
+    this.roster = new Map(parts.roster.map(({ login, student }) => [login, student]));
+    this.rosterIssues = { errors: [], duplicates: [] };
+    this.promptCache = null;
+    this.emit('phase');
+    this.emit('roster');
+    return {
+      ok: true,
+      notes,
+      title: parts.title,
+      savedAt: parts.savedAt,
+      context: describeContext(this.classContext),
+      voice: this.learnedVoice.length,
+      roster: this.roster.size,
+      rounds: this.roundLog.length,
+      settings: this.settings(),
+    };
+  }
+
+  /** Note the round that just finished, for the save file and the console. */
+  logRound() {
+    if (this.roundNumber === 0) return;
+    if (this.roundLog.some((entry) => entry.round === this.roundNumber && entry.startedAt === this.startedAt)) return;
+    const view = this.teacherView();
+    this.roundLog.push({
+      round: this.roundNumber,
+      startedAt: this.startedAt,
+      endedAt: this.endedAt,
+      durationSec: this.durationSec,
+      aiRatio: this.aiRatio,
+      joined: view.stats.joined,
+      paired: view.stats.paired,
+      withAi: view.stats.withAi,
+      answered: view.stats.answered,
+      correct: view.stats.correct,
+      accuracy: view.stats.accuracy,
+      humanAccuracy: view.stats.humanAccuracy,
+      aiAccuracy: view.stats.aiAccuracy,
+      models: Object.keys(this.modelMix),
+    });
   }
 
   // ------------------------------------------------------------------ roster
@@ -248,6 +432,7 @@ export class Session extends EventEmitter {
     this.clearTimers();
     this.phase = PHASES.RESULTS;
     this.endsAt = null;
+    this.logRound();
     this.emit('phase');
     return { ok: true };
   }
@@ -298,6 +483,11 @@ export class Session extends EventEmitter {
     this.endedAt = null;
     this.roundNumber = 0;
     this.usedLiveBot = false;
+    // The next class is a different class. The save file is how this one comes back.
+    this.classContext = null;
+    this.learnedVoice = [];
+    this.roundLog = [];
+    this.promptCache = null;
     this.emit('phase');
     this.emit('roster');
     return { ok: true };
@@ -416,7 +606,7 @@ export class Session extends EventEmitter {
       // No typing indicator yet: this stretch is reading and thinking, and the
       // API call itself is part of it.
       const startedAt = Date.now();
-      const { text, live, usage } = await botReply(history, conv.model, conv.persona);
+      const { text, live, usage } = await botReply(history, conv.model, conv.persona, this.currentPrompt());
       if (this.phase !== PHASES.ACTIVE) return;
       conv.botTurns += 1;
       conv.tokensIn += usage?.inputTokens || 0;
@@ -568,6 +758,9 @@ export class Session extends EventEmitter {
       modelMix: this.modelMix,
       personaMix: this.personaMix,
       usedLiveBot: this.usedLiveBot,
+      classContext: describeContext(this.classContext),
+      voice: { count: this.learnedVoice.length, limit: VOICE_LIMIT },
+      rounds: this.roundLog,
       roster: {
         size: this.roster.size,
         errors: this.rosterIssues.errors,
@@ -767,6 +960,16 @@ export class Session extends EventEmitter {
   }
 }
 
+
+/** "3 names someone in the class, 1 web address" — for the review modal. */
+function summariseReasons(dropped) {
+  const counts = new Map();
+  for (const { reason } of dropped) {
+    const key = reason.replace(/ ".*"$/, '');
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return [...counts].map(([reason, n]) => ({ reason, count: n }));
+}
 
 /** All personas from the pack, equally weighted. */
 export function defaultPersonaMix() {

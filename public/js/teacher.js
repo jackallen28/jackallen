@@ -60,6 +60,143 @@
     if (urls && urls.length > 1) $('join-url').title = `Also: ${urls.slice(1).join(', ')}`;
   }
 
+  // ----------------------------------------------------------------- helpers
+
+  /** Wire a hidden file input to a button, and read the chosen file as text. */
+  function fileButton(buttonId, inputId, onText) {
+    $(buttonId).addEventListener('click', () => $(inputId).click());
+    $(inputId).addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => onText(String(reader.result || ''), file.name);
+      reader.readAsText(file);
+      $(inputId).value = '';
+    });
+  }
+
+  /** Hand a file to the browser to save. */
+  function saveFile(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  // ----------------------------------------------------- class context & save
+
+  fileButton('context-btn', 'context-file', (markdown) => {
+    socket.emit('teacher:context', { markdown }, (res) => {
+      if (!res?.ok) {
+        $('context-status').innerHTML = `<span style="color:var(--danger)">${escapeHtml(res?.error || 'Could not read that file.')}</span>`;
+        return;
+      }
+      // The state push that follows renders the loaded context; the response is
+      // only needed to surface headings the file had that the app did not use.
+      if (res.context?.unknownHeadings?.length) {
+        $('load-status').innerHTML = `<span style="color:var(--ai)">Heading(s) not recognised and ignored: ${escapeHtml(res.context.unknownHeadings.join(', '))}. Keep the template's headings.</span>`;
+      } else {
+        $('load-status').textContent = '';
+      }
+    });
+  });
+
+  $('context-clear').addEventListener('click', () => command('teacher:clearContext'));
+
+  fileButton('load-btn', 'load-file', (json, filename) => {
+    socket.emit('teacher:load', { json }, (res) => {
+      if (!res?.ok) {
+        $('load-status').innerHTML = `<span style="color:var(--danger)">${escapeHtml(res?.error || 'Could not load that file.')}</span>`;
+        return;
+      }
+      const when = res.savedAt ? new Date(res.savedAt).toLocaleString() : 'unknown time';
+      const bits = [
+        `<strong>Loaded ${escapeHtml(res.title || filename)}</strong> (saved ${escapeHtml(when)}):`,
+        res.context ? 'class context' : null,
+        res.voice ? `${res.voice} learned lines` : null,
+        res.roster ? `${res.roster} logins` : null,
+        res.rounds ? `${res.rounds} previous round(s)` : null,
+        'settings',
+      ].filter(Boolean);
+      const notes = (res.notes || []).map((n) => `<div style="color:var(--ai)">${escapeHtml(n)}</div>`).join('');
+      $('load-status').innerHTML = `<span style="color:var(--human)">${bits.join(' · ')}</span>${notes}`;
+      if (res.settings) applySettings(res.settings);
+    });
+  });
+
+  $('savefile-btn').addEventListener('click', () => {
+    socket.emit('teacher:save', {}, (res) => {
+      if (!res?.ok) { $('load-status').textContent = res?.error || 'Could not build the save file.'; return; }
+      saveFile(new Blob([res.json], { type: 'application/json' }), res.name);
+      $('load-status').textContent = `Saved ${res.name}. Load it on this screen next time.`;
+    });
+  });
+
+  /** Push loaded settings into the controls, so a saved class looks the way it was left. */
+  function applySettings(settings) {
+    if (settings.durationSec) {
+      const select = $('duration');
+      if ([...select.options].some((o) => Number(o.value) === settings.durationSec)) {
+        select.value = String(settings.durationSec);
+      }
+    }
+    if (typeof settings.aiRatio === 'number') {
+      $('ratio').value = String(Math.round(settings.aiRatio * 10) * 10);
+      $('ratio-label').textContent = `${$('ratio').value}%`;
+    }
+    if (settings.modelMix && typeof settings.modelMix === 'object') {
+      const total = Object.values(settings.modelMix).reduce((n, w) => n + Number(w || 0), 0);
+      for (const [id, state] of mixState) {
+        const weight = Number(settings.modelMix[id] || 0);
+        state.on = weight > 0;
+        // Saved weights are normalised shares; map back onto the 1–5 slider.
+        state.weight = weight > 0 && total ? Math.max(1, Math.min(5, Math.round((weight / total) * 5))) : 1;
+      }
+      buildMixer();
+    }
+    if (settings.personaMix && typeof settings.personaMix === 'object') {
+      for (const [id] of personaState) personaState.set(id, Boolean(settings.personaMix[id]));
+      buildPersonaPicker();
+    }
+  }
+
+  function renderClassStatus() {
+    const ctx = latest.classContext;
+    if (ctx) {
+      $('context-status').innerHTML =
+        `<span style="color:var(--human)"><strong>${escapeHtml(ctx.title)}</strong> loaded</span> — ` +
+        `${ctx.sections} section${ctx.sections === 1 ? '' : 's'}` +
+        (ctx.samples ? `, ${ctx.samples} writing sample${ctx.samples === 1 ? '' : 's'}` : ', no writing samples (the built-in ones are used)') +
+        (ctx.blocklist ? `, ${ctx.blocklist} name${ctx.blocklist === 1 ? '' : 's'} blocked` : ', <span style="color:var(--ai)">no names blocked</span>') +
+        (ctx.hasSubject ? '' : ', <span style="color:var(--ai)">no subject boundary given</span>');
+    } else {
+      $('context-status').textContent = 'No class context loaded — using the built-in unit.';
+    }
+    $('context-clear').classList.toggle('hidden', !ctx);
+
+    const voice = latest.voice || { count: 0 };
+    $('voice-status').innerHTML = voice.count
+      ? `Class voice: <strong>${voice.count}</strong> learned line${voice.count === 1 ? '' : 's'} from earlier rounds ` +
+        `<button id="voice-clear" class="ghost small" style="margin-left:6px">Clear</button>`
+      : '';
+    $('voice-clear')?.addEventListener('click', () => command('teacher:clearVoice'));
+
+    // A fresh result from the learn step outlives the next state push; the
+    // standing summary only fills the gap when there is nothing newer to say.
+    if (learnNote) { $('learn-status').textContent = learnNote; return; }
+    const rounds = latest.rounds || [];
+    $('learn-status').textContent = voice.count
+      ? `The bot currently knows ${voice.count} of your class's lines${rounds.length ? ` across ${rounds.length} round(s)` : ''}.`
+      : 'Nothing learned yet.';
+  }
+
   // ------------------------------------------------------------------ roster
 
   $('roster-btn').addEventListener('click', () => $('roster-file').click());
@@ -258,8 +395,10 @@
         ? 'A round is running. Resetting ends it immediately and returns every student to the login screen.'
         : 'This wipes every login, student number, message and result, and goes back to the start.',
       warn: roundStarted && !downloaded
-        ? 'You have not downloaded the report for this round. Nothing is saved on the server, so it will be gone.'
-        : '',
+        ? 'You have not saved this round\'s files. Nothing is kept on the server — the transcripts, the class context and the learned voice will all be gone.'
+        : (latest?.classContext || latest?.voice?.count)
+          ? 'The class context and learned voice are wiped too. Save a file first if you want them back.'
+          : '',
       confirmLabel: 'Yes, reset everything',
     });
     if (!ok) return;
@@ -268,6 +407,8 @@
     downloaded = false;
     $('zip-note').textContent = '';
     $('roster-issues').innerHTML = '';
+    $('load-status').textContent = '';
+    learnNote = '';
     command('teacher:startOver');
   }
 
@@ -301,6 +442,99 @@
 
   $('startover-btn').addEventListener('click', confirmReset);
 
+  // ------------------------------------------------------------- learn voice
+
+  let learnCandidates = [];
+  let learnNote = '';          // the last learn result, shown until the next round
+
+  $('learn-btn').addEventListener('click', () => {
+    $('learn-status').textContent = 'Reading the transcripts…';
+    socket.emit('teacher:voiceCandidates', {}, (res) => {
+      if (!res?.ok) { $('learn-status').textContent = res?.error || 'Could not read the round.'; return; }
+      learnCandidates = res.candidates || [];
+      if (learnCandidates.length === 0) {
+        $('learn-status').textContent = res.dropped
+          ? `Nothing new to learn: ${res.dropped} line(s) were dropped for safety (${res.droppedReasons.map((r) => `${r.count} ${r.reason}`).join(', ')}).`
+          : 'Nothing new to learn from this round.';
+        return;
+      }
+      openLearnModal(res);
+    });
+  });
+
+  function openLearnModal(res) {
+    $('learn-intro').textContent =
+      `${learnCandidates.length} line(s) your students typed this round, with anything identifying already removed. ` +
+      `The bot already knows ${res.already} line(s); the limit is ${res.limit}, oldest dropped first.`;
+    $('learn-dropped').textContent = res.dropped
+      ? `${res.dropped} line(s) were removed automatically: ${res.droppedReasons.map((r) => `${r.count} ${r.reason}`).join(', ')}.`
+      : '';
+    const list = $('learn-list');
+    list.innerHTML = '';
+    for (const [index, line] of learnCandidates.entries()) {
+      const row = document.createElement('label');
+      row.className = 'learn-row';
+      row.innerHTML = `<input type="checkbox" checked data-index="${index}"><span>${escapeHtml(line)}</span>`;
+      row.querySelector('input').addEventListener('change', (e) => {
+        row.classList.toggle('off', !e.target.checked);
+        refreshLearnCount();
+      });
+      list.appendChild(row);
+    }
+    refreshLearnCount();
+    $('learn-modal').classList.remove('hidden');
+  }
+
+  function selectedLearnLines() {
+    return [...$('learn-list').querySelectorAll('input:checked')].map((el) => learnCandidates[Number(el.dataset.index)]);
+  }
+
+  function refreshLearnCount() {
+    const n = selectedLearnLines().length;
+    $('learn-count').textContent = `${n} of ${learnCandidates.length} selected`;
+    $('learn-confirm').disabled = n === 0;
+    $('learn-confirm').textContent = n === 0 ? 'Nothing selected' : `Use ${n} line${n === 1 ? '' : 's'}`;
+  }
+
+  $('learn-all').addEventListener('click', () => {
+    for (const el of $('learn-list').querySelectorAll('input')) { el.checked = true; el.closest('.learn-row').classList.remove('off'); }
+    refreshLearnCount();
+  });
+  $('learn-none').addEventListener('click', () => {
+    for (const el of $('learn-list').querySelectorAll('input')) { el.checked = false; el.closest('.learn-row').classList.add('off'); }
+    refreshLearnCount();
+  });
+  $('learn-cancel').addEventListener('click', () => $('learn-modal').classList.add('hidden'));
+  $('learn-modal').addEventListener('click', (e) => { if (e.target === $('learn-modal')) $('learn-modal').classList.add('hidden'); });
+  $('learn-confirm').addEventListener('click', () => {
+    const lines = selectedLearnLines();
+    $('learn-modal').classList.add('hidden');
+    socket.emit('teacher:voiceCommit', { lines }, (res) => {
+      learnNote = res?.ok
+        ? `Learned ${res.added} new line(s). The bot now knows ${res.total}. Save all files to keep them.`
+        : (res?.error || 'Could not save those lines.');
+      $('learn-status').textContent = learnNote;
+      downloaded = false;
+    });
+  });
+
+  $('another-btn').addEventListener('click', async () => {
+    if (!downloaded) {
+      const ok = await askConfirm({
+        title: 'Run another round?',
+        body: 'The next round replaces this one\'s transcripts and results on screen. The class context, learned voice and logins are kept.',
+        warn: 'You have not saved this round\'s files yet. Nothing is kept on the server.',
+        confirmLabel: 'Run another round anyway',
+      });
+      if (!ok) return;
+    }
+    postStage = 'reveal';
+    downloaded = false;
+    learnNote = '';
+    $('zip-note').textContent = '';
+    command('teacher:anotherRound');
+  });
+
   // ------------------------------------------------------------------ report
 
   $('zip-btn').addEventListener('click', () => {
@@ -311,16 +545,9 @@
         return;
       }
       const bytes = Uint8Array.from(atob(res.zipBase64), (c) => c.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = res.zipName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      saveFile(new Blob([bytes], { type: 'application/zip' }), res.zipName);
       downloaded = true;
-      $('zip-note').textContent = `Saved ${res.zipName} — report, spreadsheet and transcripts inside.`;
+      $('zip-note').textContent = `Saved ${res.zipName} — report, spreadsheet, transcripts and the save file inside.`;
     });
   });
 
@@ -375,6 +602,7 @@
     if (stage === 'running') startClock(); else stopClock();
 
     renderRosterStatus();
+    renderClassStatus();
     renderLobby();
     renderRunning();
     if (stage === 'answering') {

@@ -97,6 +97,11 @@ check('late joiner not in round', lateState?.phase === 'active' && lateState?.in
 
 // ---- chatting
 for (const code of codes) await emit(students[code].sock, 'chat:send', { text: `hey from ${code}` });
+// A second, plain line each — what the voice-learning step has to work with.
+// (The first line carries a login code and is rightly rejected as identifying.)
+await sleep(500);
+const PLAIN = ['idk the radio one makes sense', 'yeah nah its just the brain', 'wait what', 'fair enough i guess', 'nah that doesnt prove anything'];
+for (const [i, code] of codes.entries()) await emit(students[code].sock, 'chat:send', { text: PLAIN[i] });
 await sleep(300);
 check('own message echoed', Object.values(students).every((s) => s.msgs.some((m) => m.mine)));
 check('rate limit works', !(await emit(students[codes[0]].sock, 'chat:send', { text: 'spam' })).ok);
@@ -202,6 +207,35 @@ const zipText = zipBuf.toString('latin1');
 check('zip contains all three files',
   zipText.includes('report.html') && zipText.includes('results.csv') && zipText.includes('transcripts.txt'));
 check('transcripts file has real content', zipText.includes('where was your mind') || zipText.includes('hey from '));
+
+check('the bundle carries the save file and a readme',
+  zipText.includes('human-or-not-save.json') && zipText.includes('README.txt'));
+
+// ---- learning the class's voice from this round
+const cands = await emit(teacher, 'teacher:voiceCandidates', {});
+check('voice candidates come back after a round', cands.ok === true, cands.error || '');
+check('candidates are the students\' own plain lines', PLAIN.every((l) => cands.candidates.includes(l)),
+  JSON.stringify(cands.candidates.slice(0, 3)));
+check('lines carrying a login code were dropped, with a reason',
+  cands.dropped >= 5 && cands.droppedReasons.some((r) => r.reason === 'login code'), JSON.stringify(cands.droppedReasons));
+check('bot lines are not offered', !cands.candidates.some((l) => ['idk', 'wdym', 'fair enough'].includes(l)));
+const approved = cands.candidates.slice(0, 2);
+const commit = await emit(teacher, 'teacher:voiceCommit', { lines: [...approved, 'ABCD0001 is my login', 'msg me at a@b.com'] });
+check('approved lines are kept', commit.ok && commit.added === 2, JSON.stringify(commit));
+check('lines that fail the guard are dropped again on commit', commit.total === 2, String(commit.total));
+await sleep(150);
+check('the console sees the learned voice', tState?.voice?.count === 2, String(tState?.voice?.count));
+const again = await emit(teacher, 'teacher:voiceCandidates', {});
+check('learned lines are not offered a second time', !again.candidates.some((l) => approved.includes(l)));
+
+// ---- another round keeps everything
+check('another round from the results screen', (await emit(teacher, 'teacher:anotherRound', {})).ok);
+await sleep(200);
+check('back in the lobby with the class kept',
+  tState?.phase === 'lobby' && tState?.stats.joined >= 5 && tState?.voice?.count === 2,
+  `phase=${tState?.phase} joined=${tState?.stats.joined} voice=${tState?.voice?.count}`);
+check('the round log recorded the first round', tState?.rounds?.length === 1 && tState.rounds[0].round === 1,
+  JSON.stringify(tState?.rounds));
 
 // ---- a second round using several models at once
 check('reset for multi-model round', (await emit(teacher, 'teacher:reset', { keepStudents: true })).ok);
@@ -316,6 +350,97 @@ check('reset is idempotent', (await emit(teacher, 'teacher:startOver', {})).ok);
 check('no report after a wipe', !(await emit(teacher, 'teacher:report', {})).ok);
 check('students cannot log back in after a wipe',
   !(await emit(students[codes[0]].sock, 'student:join', { code: codes[0] })).ok);
+
+// ---- a whole class from a blank screen: context, a round, learning, save, start over, load
+const CONTEXT = `# Class Context — Year 8 Ecosystems
+
+## About this class
+- Subject: Science
+
+## What has been taught so far
+Food webs, the ten percent rule, and the sea otter and kelp forest example.
+
+## What to talk about
+Ecosystems, food webs and the examples this class has covered.
+
+## How students in this class write
+- idk the otter one makes sense
+- yeah nah
+
+## Names never to use
+Jayden, Mia
+`;
+check('starts from a blank set-up screen', tState?.phase === 'setup' && tState?.classContext === null);
+const ctxRes = await emit(teacher, 'teacher:context', { markdown: CONTEXT });
+check('a class context loads', ctxRes.ok === true, ctxRes.error || '');
+await sleep(150);
+check('the console sees the context', tState?.classContext?.title === 'Year 8 Ecosystems',
+  JSON.stringify(tState?.classContext));
+check('a blank template is refused with a reason',
+  /taught/i.test((await emit(teacher, 'teacher:context', { markdown: '# x\n\n## What has been taught so far\n\n## Names never to use\n' })).error || ''));
+check('the context survives a bad upload', tState?.classContext?.title === 'Year 8 Ecosystems');
+check('roster loads alongside it', (await emit(teacher, 'teacher:roster', { csv: rosterCsv })).ok);
+
+check('open the room with the class loaded', (await emit(teacher, 'teacher:openLobby', {})).ok);
+check('a save file cannot be loaded while the room is open',
+  !(await emit(teacher, 'teacher:load', { json: '{}' })).ok);
+const eco = io(URL);
+await new Promise((r) => eco.on('connect', r));
+const ecoMsgs = [];
+eco.on('chat:message', (m) => ecoMsgs.push(m));
+check('a student joins', (await emit(eco, 'student:join', { code: codes[0] })).ok);
+await sleep(150);
+check('the round starts', (await emit(teacher, 'teacher:start', { durationSec: 15, aiRatio: 1 })).ok);
+await sleep(300);
+await emit(eco, 'chat:send', { text: 'is it the otter thing' });
+await sleep(500);
+await emit(eco, 'chat:send', { text: 'idk i think Mia said something else' });
+await sleep(6000);
+check('the bot answers under a loaded context', ecoMsgs.some((m) => !m.mine), JSON.stringify(ecoMsgs.map((m) => m.text)));
+await emit(teacher, 'teacher:end', {});
+await sleep(150);
+await emit(eco, 'guess:submit', { guess: 'ai' });
+check('results', (await emit(teacher, 'teacher:results', {})).ok);
+await sleep(150);
+
+const ecoCands = await emit(teacher, 'teacher:voiceCandidates', {});
+check('the plain line is offered', ecoCands.ok && ecoCands.candidates.includes('is it the otter thing'), JSON.stringify(ecoCands));
+check('a line naming a blocklisted student is dropped',
+  !ecoCands.candidates.some((l) => /Mia/.test(l)) && ecoCands.droppedReasons.some((r) => /names someone/.test(r.reason)),
+  JSON.stringify(ecoCands.droppedReasons));
+const ecoCommit = await emit(teacher, 'teacher:voiceCommit', { lines: ecoCands.candidates });
+check('the voice is learned', ecoCommit.ok && ecoCommit.total >= 1, JSON.stringify(ecoCommit));
+
+const saved = await emit(teacher, 'teacher:save', {});
+check('a save file can be built', saved.ok && saved.name === 'human-or-not-save.json');
+const saveObj = JSON.parse(saved.json);
+check('the save carries context, voice, roster, settings and rounds',
+  saveObj.classContext.includes('sea otter') && saveObj.learnedVoice.length >= 1 &&
+  saveObj.roster.length === 6 && saveObj.settings.durationSec === 15 && saveObj.rounds.length === 1,
+  `voice=${saveObj.learnedVoice.length} roster=${saveObj.roster.length} rounds=${saveObj.rounds.length}`);
+check('the save file is named for the class', saveObj.title === 'Year 8 Ecosystems');
+
+const rep2 = await emit(teacher, 'teacher:report', {});
+const zip2 = Buffer.from(rep2.zipBase64, 'base64').toString('latin1');
+check('the bundle now includes the context and the voice files',
+  zip2.includes('class-context.md') && zip2.includes('class-voice.txt') && zip2.includes('human-or-not-save.json'));
+
+check('start over wipes the loaded class', (await emit(teacher, 'teacher:startOver', {})).ok);
+await sleep(200);
+check('nothing loaded after start over',
+  tState?.classContext === null && tState?.voice?.count === 0 && tState?.roster?.size === 0 && tState?.rounds?.length === 0);
+
+const loaded = await emit(teacher, 'teacher:load', { json: saved.json });
+check('the save file loads back on the set-up screen', loaded.ok === true, loaded.error || '');
+await sleep(200);
+check('context restored', tState?.classContext?.title === 'Year 8 Ecosystems');
+check('voice restored', tState?.voice?.count === saveObj.learnedVoice.length, String(tState?.voice?.count));
+check('roster restored', tState?.roster?.size === 6, String(tState?.roster?.size));
+check('settings restored', tState?.durationSec === 15 && loaded.settings?.durationSec === 15);
+check('round history restored', tState?.rounds?.length === 1);
+check('garbage is refused as a save file',
+  /not a Human or Not|not valid JSON/.test((await emit(teacher, 'teacher:load', { json: 'nope' })).error || ''));
+eco.close();
 
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : failures + ' CHECK(S) FAILED'}`);
 teacher.close();

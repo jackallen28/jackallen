@@ -8,7 +8,8 @@ import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { Session, PHASES } from './state.js';
 import { isLiveBotConfigured, defaultModel, voiceSampleCount, usingClassroomPack } from './bot.js';
-import { blocklistCount, personaCatalog } from './classroom.js';
+import { blocklistCount, classContextTemplate, personaCatalog } from './classroom.js';
+import { SAVE_FILENAME } from './save.js';
 import { MODEL_CATALOG } from './models.js';
 import { buildCsvReport, buildHtmlReport, buildTranscriptText, reportFilename } from './report.js';
 import { createZip } from './zip.js';
@@ -106,6 +107,27 @@ async function joinAddresses() {
   return [match, ...all.filter((entry) => entry !== match)];
 }
 
+/** The note at the top of the download, so the files explain themselves. */
+function bundleReadme(base, save) {
+  return [
+    'Human or Not? — saved files',
+    '',
+    `${base}/report.html ....... the round report. Open in any browser; print to PDF.`,
+    `${base}/results.csv ........ one row per student, for a spreadsheet.`,
+    `${base}/transcripts.txt .... every conversation in full.`,
+    '',
+    `${SAVE_FILENAME} .... THE SAVE FILE. Load this on the set-up screen next time to`,
+    '                            pick this class up where you left it: class context,',
+    `                            the voice the bot has learned (${save.learnedVoice.length} lines), your`,
+    `                            settings, the login list, and ${save.rounds.length} round(s) of results.`,
+    save.classContext ? 'class-context.md ........... the class context, as uploaded. Edit and re-upload.' : null,
+    save.learnedVoice.length ? 'class-voice.txt ............ the learned voice, one line each, for your own review.' : null,
+    '',
+    'Nothing is kept on the server. These files are the only copy.',
+    '',
+  ].filter((line) => line !== null).join('\n');
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new SocketServer(server);
@@ -113,6 +135,12 @@ const session = new Session();
 
 app.use(express.static(publicDir));
 app.get('/teacher', (_req, res) => res.sendFile(path.join(publicDir, 'teacher.html')));
+// The class-context template, for the teacher to fill in with any AI and upload.
+app.get('/template/class-context.md', (_req, res) => {
+  res.setHeader('content-type', 'text/markdown; charset=utf-8');
+  res.setHeader('content-disposition', 'attachment; filename="class-context-template.md"');
+  res.send(classContextTemplate);
+});
 app.get('/healthz', (_req, res) => res.json({ ok: true, phase: session.phase }));
 
 // --------------------------------------------------------------- broadcasting
@@ -239,6 +267,21 @@ io.on('connection', (socket) => {
   ));
 
   socket.on('teacher:roster', teacherOnly((payload) => session.setRoster(payload?.csv)));
+
+  // -- the loaded class: context, learned voice, save file -------------------
+  socket.on('teacher:context', teacherOnly((payload) => session.setClassContext(payload?.markdown)));
+  socket.on('teacher:clearContext', teacherOnly(() => session.clearClassContext()));
+  socket.on('teacher:voiceCandidates', teacherOnly(() => session.voiceCandidates()));
+  socket.on('teacher:voiceCommit', teacherOnly((payload) => session.commitVoice(payload?.lines)));
+  socket.on('teacher:clearVoice', teacherOnly(() => session.clearVoice()));
+  socket.on('teacher:save', teacherOnly(() => ({
+    ok: true,
+    name: SAVE_FILENAME,
+    json: JSON.stringify(session.saveData(), null, 2),
+  })));
+  socket.on('teacher:load', teacherOnly((payload) => session.loadSave(payload?.json)));
+  // Another round with the same class: back to the lobby, everything kept.
+  socket.on('teacher:anotherRound', teacherOnly(() => session.reset({ keepStudents: true })));
   socket.on('teacher:clearRoster', teacherOnly(() => session.clearRoster()));
   socket.on('teacher:openLobby', teacherOnly(() => session.openLobby()));
   socket.on('teacher:startOver', teacherOnly(() => {
@@ -263,12 +306,21 @@ io.on('connection', (socket) => {
     if (session.roundNumber === 0) return ack?.({ ok: false, error: 'No round has run yet.' });
     const data = session.reportData();
     const base = reportFilename(data, '').replace(/\.$/, '');
-    // One archive so the teacher clicks once and walks away with everything.
-    const zip = createZip([
+    // One archive so the teacher clicks once and walks away with everything:
+    // this round's report, and the save file that carries the class forward.
+    const save = session.saveData();
+    const files = [
       { name: `${base}/report.html`, content: buildHtmlReport(data) },
       { name: `${base}/results.csv`, content: buildCsvReport(data) },
       { name: `${base}/transcripts.txt`, content: buildTranscriptText(data) },
-    ]);
+      { name: SAVE_FILENAME, content: JSON.stringify(save, null, 2) },
+      { name: 'README.txt', content: bundleReadme(base, save) },
+    ];
+    if (save.classContext) files.push({ name: 'class-context.md', content: save.classContext });
+    if (save.learnedVoice.length) {
+      files.push({ name: 'class-voice.txt', content: `${save.learnedVoice.join('\n')}\n` });
+    }
+    const zip = createZip(files);
     ack?.({
       ok: true,
       html: buildHtmlReport(data),

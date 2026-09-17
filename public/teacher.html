@@ -52,6 +52,51 @@
   <!-- ============================ 1. SET UP ============================ -->
   <div id="stage-setup">
     <div class="card" style="margin-bottom:16px;">
+      <h2>This class</h2>
+      <p class="small muted">Tell the AI what this class has actually been taught, so in the chat it sounds
+        like someone who has been sitting in your room. Without this it plays a student from the
+        built-in philosophy-of-mind unit.</p>
+
+      <div class="ctx-grid">
+        <div class="ctx-step">
+          <div class="ctx-n">1</div>
+          <div>
+            <div class="name">Download the template</div>
+            <div class="small muted">Open it in Claude or any AI with your unit plan and ask it to fill in every section. Save the result as a <code>.md</code> file.</div>
+            <p style="margin:8px 0 0"><a class="ghost small btn-link" href="/template/class-context.md" download="class-context-template.md">⬇ Template (.md)</a></p>
+          </div>
+        </div>
+        <div class="ctx-step">
+          <div class="ctx-n">2</div>
+          <div>
+            <div class="name">Upload the completed context</div>
+            <div class="small muted">The app reads it by its headings. Nothing is stored on the server.</div>
+            <p style="margin:8px 0 0">
+              <button id="context-btn" class="ghost small">⬆ Upload context (.md)</button>
+              <button id="context-clear" class="ghost small hidden">Remove</button>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="small" id="context-status" style="margin-top:12px">No class context loaded — using the built-in unit.</div>
+      <div class="small" id="voice-status" style="margin-top:6px"></div>
+      <input id="context-file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" class="hidden">
+
+      <div class="ctx-divider"></div>
+
+      <div class="row">
+        <div>
+          <div class="name">Continuing a class you have run before?</div>
+          <div class="small muted">Load the save file from last time. It restores the class context, the voice the bot learned, your settings and the login list.</div>
+        </div>
+        <div class="shrink"><button id="load-btn" class="ghost">⬆ Load a save file</button></div>
+        <div class="shrink"><button id="savefile-btn" class="ghost small" title="Save what you have loaded so far, without running a round">⬇ Save file</button></div>
+      </div>
+      <input id="load-file" type="file" accept=".json,application/json" class="hidden">
+      <div class="small" id="load-status" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
       <h2>Class login list</h2>
       <p class="small muted">Upload a CSV of the logins you handed out. Four letters then four numbers,
         paired with the student number, for example <code>WXYZ1234,Student 07</code>. A header row is fine
@@ -198,16 +243,36 @@
 
   <!-- ============================ 7. REPORT ============================ -->
   <div id="stage-report" class="hidden">
-    <div class="card center" style="max-width:620px;margin:0 auto">
-      <h1 style="margin:0">Download the round</h1>
-      <p class="muted">One file with everything: the full report, a spreadsheet of results,
-        and every transcript.</p>
-      <p style="margin:26px 0 10px"><button id="zip-btn" class="big">⬇ Download everything</button></p>
-      <div class="small muted" id="zip-note"></div>
-      <p class="small muted" style="margin-top:22px">
-        Nothing is saved on the server. Once you start over, this round is gone.
+    <div class="card" style="max-width:680px;margin:0 auto 16px">
+      <h1 style="margin:0 0 4px">Save all files</h1>
+      <p class="muted">One download with everything: the round report, a spreadsheet of results, every
+        transcript — and the <strong>save file</strong>, which you load next time to pick this class up
+        where you left it.</p>
+      <p class="center" style="margin:22px 0 10px"><button id="zip-btn" class="big">⬇ Save all files</button></p>
+      <div class="small muted center" id="zip-note"></div>
+      <p class="small muted center" style="margin-top:16px">
+        Nothing is kept on the server. This download is the only copy.
       </p>
-      <p style="margin-top:20px"><button id="to-startover-btn" class="ghost">Finished — go to start over →</button></p>
+    </div>
+
+    <div class="card" style="max-width:680px;margin:0 auto 16px">
+      <h2 style="margin:0 0 4px">Teach the bot this class's voice</h2>
+      <p class="muted small">Take what your students actually typed this round, strip anything that could
+        identify someone, and add it to the bot's briefing as examples of how this class writes.
+        You review every line before it is used. This changes what the AI is shown, not the AI
+        itself — and it carries into the save file.</p>
+      <div class="row" style="align-items:center">
+        <div class="shrink"><button id="learn-btn">Learn from this round →</button></div>
+        <div><div class="small" id="learn-status"></div></div>
+      </div>
+    </div>
+
+    <div class="card center" style="max-width:680px;margin:0 auto">
+      <div class="row" style="justify-content:center">
+        <div class="shrink"><button id="another-btn" class="big">Run another round with this class →</button></div>
+        <div class="shrink"><button id="to-startover-btn" class="ghost">Finished with this class →</button></div>
+      </div>
+      <p class="small muted" style="margin-top:10px">Another round keeps the logins, the class context and the learned voice. Finishing wipes them.</p>
     </div>
   </div>
 
@@ -215,8 +280,9 @@
   <div id="stage-startover" class="hidden">
     <div class="card center" style="max-width:560px;margin:0 auto">
       <h1 style="margin:0">Start over</h1>
-      <p class="muted">This wipes every login, student number, message and result, and returns
-        to a blank set-up screen ready for the next class.</p>
+      <p class="muted">This wipes every login, student number, message and result — and the class
+        context and learned voice — and returns to a blank set-up screen ready for the next class.
+        The save file in your download brings all of it back.</p>
       <div id="download-warning" class="small" style="color:var(--ai);margin:14px 0"></div>
       <p style="margin-top:18px"><button id="startover-btn" class="big danger-solid">Wipe everything and start over</button></p>
       <p style="margin-top:10px"><button id="back-report-btn" class="ghost small">← back to the report</button></p>
@@ -224,6 +290,26 @@
   </div>
 
 </section>
+
+<!-- Review dialog for lines the bot is about to learn -->
+<div id="learn-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="learn-title">
+  <div class="modal-card" style="max-width:640px">
+    <h2 id="learn-title">Review before the bot learns these</h2>
+    <p class="muted small" id="learn-intro"></p>
+    <div class="small muted" id="learn-dropped" style="margin:6px 0 10px"></div>
+    <div class="row" style="margin-bottom:8px">
+      <div class="shrink"><button id="learn-all" class="ghost small">Select all</button></div>
+      <div class="shrink"><button id="learn-none" class="ghost small">Select none</button></div>
+      <div class="small muted" id="learn-count" style="align-self:center"></div>
+    </div>
+    <div class="learn-list" id="learn-list"></div>
+    <p class="small muted" style="margin:12px 0 0">Untick anything you would not want read out to the class. Only ticked lines are kept.</p>
+    <div class="modal-actions">
+      <button id="learn-cancel" class="ghost">Cancel</button>
+      <button id="learn-confirm">Use these lines</button>
+    </div>
+  </div>
+</div>
 
 <!-- Confirmation dialog, used for anything destructive -->
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">

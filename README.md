@@ -94,8 +94,10 @@ personal information, and everything is recorded.
 The teacher console is a sequence of screens. Each one has a single button that
 moves to the next.
 
-1. **Set up** — upload the login CSV, then choose round length, the share paired
-   with AI, which models, and which personas. Students cannot log in yet.
+1. **Set up** — describe **this class** (upload a class context, or load last
+   time's save file — see [Making it your class](#making-it-your-class)), upload
+   the login CSV, then choose round length, the share paired with AI, which
+   models, and which personas. Students cannot log in yet.
 2. **Open the room** — students log in and their **student numbers appear on
    screen** as each one succeeds, counted against the roster.
 3. **Begin the round** — a large countdown fills the screen for projection.
@@ -105,11 +107,16 @@ moves to the next.
 5. **Reveal** — who was talking to whom, and which partners were never human.
 6. **Scores** — who worked it out, class accuracy, and the fooled rate per model
    and per persona.
-7. **Report** — one button downloads a single `.zip` containing the full HTML
-   report, a results spreadsheet, and every transcript.
-8. **Start over** — wipes every login, student number, message and result, and
-   returns to a blank set-up screen for the next class. Nothing is written to
-   disk, so download the report first; the console warns you if you have not.
+7. **Report** — **Save all files** downloads a single `.zip` with the full HTML
+   report, a results spreadsheet, every transcript, and the **save file** that
+   brings the class back next time. The same screen offers **Learn from this
+   round** (teach the bot how this class writes — you review every line first)
+   and the choice between **another round with this class**, which keeps
+   everything, and **finishing**, which does not.
+8. **Start over** — wipes every login, student number, message and result, plus
+   the class context and learned voice, and returns to a blank set-up screen for
+   the next class. Nothing is written to disk, so save the files first; the
+   console warns you if you have not.
 
 A **Reset** button sits in the header on every screen, so a lesson can be
 restarted at any point — including mid-round. It always asks *Are you sure?*
@@ -128,6 +135,68 @@ always works out, and a lone student gets a bot rather than an empty room.
 
 Anyone who joins after you press Start sits the round out and is told so; they're
 picked up automatically by the next round.
+
+## Making it your class
+
+The pack in `classroom/` describes one unit. Three things on the console make the
+bot play a student from *your* room instead, and none of them needs a code change
+or a redeploy.
+
+### 1. A class context, from a template
+
+On the set-up screen: **Download the template**, open it in Claude (or any AI)
+together with your unit plan, and ask it to fill in every section — what has been
+taught, the shared reference points, what the bot must *not* know yet, the subject
+boundary, a few paraphrased lines of how your students write, and the first names
+it must never generate. Save it as `.md` and **Upload** it.
+
+The app reads the file by its `## ` headings, matched loosely so a heading the AI
+reworded slightly still lands. The template's own instructions live in HTML
+comments and are stripped. An unfilled template is refused with a reason, not
+quietly loaded; a heading the app does not recognise is reported, not lost.
+
+What changes when a context is loaded: the class-context, subject-boundary and
+writing-sample parts of the bot's briefing are replaced by yours, and the name
+blocklist comes from the file. The behaviour rules, personas, pacing and
+safeguards stay exactly as they are. A context without writing samples keeps the
+built-in corpus, because register is the hardest part to describe.
+
+### 2. Teaching the bot this class's voice
+
+After a round, **Learn from this round** takes what your students actually typed,
+strips anything that could identify someone, and shows you the surviving lines in
+a review list. Only the lines you leave ticked are kept. They go into the bot's
+briefing as examples of how this class writes — the single best guide it has —
+and they accumulate across rounds, up to 120 lines, oldest dropped first.
+
+Be clear about what this is: **examples in a prompt, not model training.** The
+model is unchanged; what it is shown before it writes is what changes. The console
+says so.
+
+Deidentification is conservative and drops rather than masks. A line goes if it
+carries an email, a web address, a username, a phone number, a login code, any
+roster label or blocklisted name, or a capitalised word mid-line that appears
+nowhere in your class context (so *Descartes* survives and *Priya* does not).
+Lines are re-checked on commit — the review list is trusted to show, not to
+invent. Your review is the last line of defence, which is why there is one.
+
+### 3. The save file
+
+Nothing is stored on the server, by design. **Save all files** on the report
+screen, or **Save file** on the set-up screen, gives you `human-or-not-save.json`:
+the class context, the learned voice, your settings, the login list, and a log of
+every round run. **Load a save file** on the set-up screen next time and the class
+is back exactly where you left it, controls included.
+
+The save file is for carrying a class forward, not for keeping what was said —
+transcripts and results live in the report next to it. Loading is only possible
+from a blank set-up screen, because it replaces everything; a file that is not a
+save file, or is from a newer version of the app, is refused with a reason, and
+a file with a few bad logins in it loads the rest and says what it skipped.
+
+**Run another round with this class** keeps all of this in place and returns to
+the lobby. **Finished with this class** and the header **Reset** wipe it, and the
+confirmation says so.
 
 ## The AI partner
 
@@ -332,13 +401,18 @@ server/
   pairing.js  shuffling, the human/AI split, and the model allocation
   report.js   the downloadable HTML and CSV reports
   voice.js    loads voice-samples.txt into the bot's prompt, fenced as data
-  classroom.js  loads classroom/, splits out the four personas, builds the prompt
-classroom/    the teacher's briefing: class context, scope, personas, samples
+  classroom.js  loads classroom/, splits out the personas, builds the briefing
+  context.js  parses an uploaded class context by its headings
+  learn.js    turns a round's transcripts into deidentified writing samples
+  save.js     the save file: build, validate, load
+classroom/    the teacher's briefing: class context, scope, personas, samples,
+              and TEMPLATE-class-context.md for teachers to fill in
 public/
   index.html  student app        js/student.js
   teacher.html teacher console   js/teacher.js
   css/app.css shared styles
 test/
+  context.mjs the context parser, deidentification and the save file, no server
   run.mjs     boots a server, then runs e2e.mjs
   e2e.mjs     full round over websockets
   bot-mock.mjs the Anthropic request path, against a local mock
