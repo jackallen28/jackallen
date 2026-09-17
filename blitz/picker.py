@@ -22,7 +22,7 @@ import sqlite3
 from collections import defaultdict
 
 from .models import Question, SheetPlan, SheetSpec
-from .render.layout import budget_mm, estimate_height_mm, image_height_mm
+from .render.layout import budget_mm, estimate_height_mm
 from .studydesign import StudyDesign, load_study_design
 
 # A Blitz is two pages. The budget and every question "weight" below are in
@@ -129,12 +129,21 @@ def _score(spec: SheetSpec, q: Question, keywords: list[str], rng: random.Random
     haystack = f"{q.body} {q.answer or ''} {q.figure_caption or ''}".lower()
     hits = sum(1 for kw in keywords if _matches(kw, haystack))
     score += hits * 1.4
-    if spec.prefer_figures and q.has_figure:
+    if spec.prefer_figures and q.has_figure and not q.is_cropped:
+        # A diagram alongside text is worth having. A crop always "has a
+        # figure" (the crop is the figure), and paying it the bonus cancelled
+        # the penalty below, so crops kept beating text on every dot point.
         score += 0.9
     if q.answer:
         score += 0.6                      # a question without a solution is half a question
     if not q.generated:
         score += 1.2                      # real questions from the books win ties
+    if q.is_cropped:
+        # A page crop is a real question but costs two to three times the
+        # space of text and cannot reflow. Prefer text where the corpus has it;
+        # crops still get in where they are all there is, or where the notes
+        # point at them.
+        score -= 1.0
     if q.verified:
         score += 0.3
     score += _difficulty_fit(spec, q)
@@ -163,108 +172,174 @@ def build_plan(
         )
         return plan
 
-    def weight(q: Question) -> float:
-        """Estimated column millimetres this question will occupy."""
-        try:
-            fallback = design.question_type(q.question_type).default_weight * 45.0
-        except KeyError:
-            fallback = 45.0
-        if q.is_cropped:
-            # The images ARE the question — continuation pages, shared context
-            # and required earlier questions included — so the whole stack is
-            # the cost, not just the first one.
-            return sum(
-                image_height_mm(spec["path"], columns=columns,
-                                pt_width=spec.get("pt_width"))
-                for spec in q.figures_for("question")
-            ) + 12
-        return estimate_height_mm(
-            q.body,
-            marks=q.marks,
-            options=q.options,
-            has_figure=q.has_figure and spec.prefer_figures,
-            fallback=fallback,
-        )
+    from .render.sheet import legible_in_columns, measure_question_mm
+    from .render.styles import stylesheet
+
+    ss = stylesheet()
+    measured: dict[tuple[str, int], float] = {}
+
+    def weight(q: Question, columns: int) -> float:
+        """Column millimetres this question will occupy, measured by laying
+        it out exactly as the renderer will (crop stacks, ruled space, parts
+        and all), so the budget the picker spends is the budget the page has."""
+        key = (q.id, columns)
+        if key not in measured:
+            try:
+                measured[key] = measure_question_mm(q, columns, design, ss)
+            except Exception:
+                measured[key] = estimate_height_mm(
+                    q.body, marks=q.marks, options=q.options,
+                    has_figure=q.has_figure and spec.prefer_figures)
+        return measured[key]
 
     ranked = sorted(candidates, key=lambda q: -_score(spec, q, keywords, rng))
-    by_kk: dict[str, list[Question]] = defaultdict(list)
-    for q in ranked:
-        for kk in q.kk_ids:
-            if kk in spec.kk_ids:
-                by_kk[kk].append(q)
-
-    # A crop-heavy sheet goes single column so the page images stay readable,
-    # which halves the millimetres available. Decide before spending them.
-    from .render.sheet import choose_columns
-
-    columns = spec.columns or choose_columns(candidates)
-    budget = budget_mm(pages, columns=columns)
-    remaining = budget
-    chosen: list[Question] = []
-    chosen_ids: set[str] = set()
-    type_counts: dict[str, int] = defaultdict(int)
-
-    # Pass 1 — breadth. One question per selected dot point.
-    #
-    # The order matters: when more dot points are selected than will fit on two
-    # pages, whichever comes last gets nothing. Walking them in menu order would
-    # silently drop Unit 4 every time, and would ignore the notes box entirely.
-    # So dot points are ordered by how well their best question answers what the
-    # student actually asked for.
-    for kk in _kk_priority(spec, design, by_kk, keywords):
-        pool = [q for q in by_kk.get(kk, []) if q.id not in chosen_ids]
-        if not pool:
-            continue
-        # Prefer a lighter question when the budget is tight, but stay near the top
-        # of the ranking: consider only the best few.
-        shortlist = pool[:4]
-        # When the budget is nearly spent, take the cheapest of the best few so
-        # a wide dot-point selection still gets broad coverage.
-        pick = min(shortlist, key=weight) if remaining < 120 else shortlist[0]
-        w = weight(pick)
-        if w > remaining:
-            continue
-        chosen.append(pick)
-        chosen_ids.add(pick.id)
-        type_counts[pick.question_type] += 1
-        remaining -= w
-
-    # Pass 2 — depth. Spend what's left on the highest-scoring questions, keeping
-    # the mix of question types roughly even.
     wanted_types = spec.question_type_ids or sorted({q.question_type for q in ranked})
-    for q in ranked:
-        if remaining <= 20:
-            break
-        if q.id in chosen_ids:
-            continue
-        w = weight(q)
-        if w > remaining:
-            continue
-        # Don't let one type eat the sheet while another asked-for type is absent.
-        missing = [t for t in wanted_types if type_counts[t] == 0]
-        if missing and q.question_type not in missing:
-            continue
-        chosen.append(q)
-        chosen_ids.add(q.id)
-        type_counts[q.question_type] += 1
-        remaining -= w
 
-    # Pass 3 — top up with anything that still fits, now ignoring the type balance.
-    for q in ranked:
-        if remaining <= 20:
-            break
-        if q.id in chosen_ids:
-            continue
-        w = weight(q)
-        if w <= remaining:
+    def select(columns: int, pool: list[Question], budget: float | None = None,
+               covered: frozenset[str] = frozenset(),
+               ) -> tuple[list[Question], dict[str, int], float, float]:
+        """Fill a budget for a given column count from a ranked pool.
+
+        Returns the chosen questions, how many of each type, the budget they
+        were picked against and what was left of it. Dot points already
+        `covered` by another section of the sheet queue behind the rest.
+        """
+        ranked = pool
+        by_kk: dict[str, list[Question]] = defaultdict(list)
+        for q in ranked:
+            for kk in q.kk_ids:
+                if kk in spec.kk_ids:
+                    by_kk[kk].append(q)
+        if budget is None:
+            budget = budget_mm(pages, columns=columns)
+        remaining = budget
+        chosen: list[Question] = []
+        chosen_ids: set[str] = set()
+        type_counts: dict[str, int] = defaultdict(int)
+
+        # Pass 1 — breadth. One question per selected dot point.
+        #
+        # The order matters: when more dot points are selected than will fit on two
+        # pages, whichever comes last gets nothing. Walking them in menu order would
+        # silently drop Unit 4 every time, and would ignore the notes box entirely.
+        # So dot points are ordered by how well their best question answers what the
+        # student actually asked for.
+        priority = sorted(_kk_priority(spec, design, by_kk, keywords),
+                          key=lambda kk: kk in covered)      # stable: uncovered first
+        for kk in priority:
+            pool = [q for q in by_kk.get(kk, []) if q.id not in chosen_ids]
+            if not pool:
+                continue
+            # Prefer a lighter question when the budget is tight, but stay near the top
+            # of the ranking: consider only the best few.
+            shortlist = pool[:4]
+            # When the budget is nearly spent, take the cheapest of the best few so
+            # a wide dot-point selection still gets broad coverage.
+            pick = min(shortlist, key=lambda x: weight(x, columns)) if remaining < 120 else shortlist[0]
+            w = weight(pick, columns)
+            if w > remaining:
+                continue
+            chosen.append(pick)
+            chosen_ids.add(pick.id)
+            type_counts[pick.question_type] += 1
+            remaining -= w
+
+        # Pass 2 — depth. Spend what's left on the highest-scoring questions, keeping
+        # the mix of question types roughly even.
+        for q in ranked:
+            if remaining <= 20:
+                break
+            if q.id in chosen_ids:
+                continue
+            w = weight(q, columns)
+            if w > remaining:
+                continue
+            # Don't let one type eat the sheet while another asked-for type is absent.
+            missing = [t for t in wanted_types if type_counts[t] == 0]
+            if missing and q.question_type not in missing:
+                continue
             chosen.append(q)
             chosen_ids.add(q.id)
             type_counts[q.question_type] += 1
             remaining -= w
 
+        # Pass 3 — top up with anything that still fits, now ignoring the type balance.
+        for q in ranked:
+            if remaining <= 20:
+                break
+            if q.id in chosen_ids:
+                continue
+            w = weight(q, columns)
+            if w <= remaining:
+                chosen.append(q)
+                chosen_ids.add(q.id)
+                type_counts[q.question_type] += 1
+                remaining -= w
+        return chosen, type_counts, budget, remaining
+
+    # Two layouts suit two kinds of material. Two columns fit twice the text
+    # but shrink a full-width page crop to under half size, where the book's
+    # 10pt print stops being readable; one column shows a crop at nearly
+    # full size and fits half as much. Legibility is a hard constraint per
+    # crop, not a vote, so a crop that would come out illegible is never a
+    # candidate for a two-column page. When the corpus has both, the sheet
+    # is both: page one is two columns of text questions, page two is one
+    # column of page crops, which is where the worked calculations live.
+    # The layout is pinned on the plan so the renderer lays out exactly what
+    # was budgeted.
+    from .render.layout import SAFETY, column_height_mm
+
+    wide: list[Question] = []
+    if spec.columns:
+        columns = spec.columns
+        chosen, type_counts, budget, remaining = select(columns, ranked)
+    else:
+        legible = [q for q in ranked
+                   if not q.is_cropped or legible_in_columns(q, 2)]
+        crops = [q for q in ranked if q not in legible]
+        columns = 2
+        if not crops:
+            chosen, type_counts, budget, remaining = select(2, legible)
+        elif not legible:
+            columns = 1
+            chosen, type_counts, budget, remaining = select(1, ranked)
+        else:
+            page1 = column_height_mm(first_page=True) * 2 * SAFETY
+            page2 = column_height_mm(first_page=False) * SAFETY
+            # The crop page holds two or three questions, so they should be
+            # the worked problems the text page cannot carry, not more
+            # multiple choice, and the compact ones: a two-mark question
+            # that is a third of a page is a poor trade. MC crops queue
+            # behind everything else; the rest go by marks per millimetre.
+            crops.sort(key=lambda q: (q.question_type.endswith("-mc"),
+                                      -(q.marks or 1) / max(weight(q, 1), 1.0)))
+            text, tc1, b1, r1 = select(2, legible, budget=page1)
+            done = frozenset(kk for q in text for kk in q.kk_ids)
+            wide, tc2, b2, r2 = select(1, crops, budget=page2, covered=done)
+            if (b2 - r2) < 0.5 * b2:
+                # Not enough crop material to carry a page of its own.
+                wide = []
+                chosen, type_counts, budget, remaining = select(2, legible)
+            else:
+                chosen = text + wide
+                type_counts = defaultdict(int)
+                for t, n in list(tc1.items()) + list(tc2.items()):
+                    type_counts[t] += n
+                budget, remaining = b1 + b2, r1 + r2
+    plan.columns = columns
+
     chosen = _pull_in_dependencies(conn, spec, chosen, design, columns)
     covered = {kk for q in chosen for kk in q.kk_ids}
-    plan.questions = _order_for_sheet(chosen, spec, design)
+    # A prerequisite pulled in for a crop belongs on the crop page with it.
+    wide_ids = {q.id for q in wide}
+    if wide_ids:
+        wide_ids |= {q.id for q in chosen
+                     if q.is_cropped and not legible_in_columns(q, 2)}
+    text_part = [q for q in chosen if q.id not in wide_ids]
+    wide_part = [q for q in chosen if q.id in wide_ids]
+    plan.questions = (_order_for_sheet(text_part, spec, design)
+                      + _order_for_sheet(wide_part, spec, design))
+    plan.wide_ids = [q.id for q in wide_part]
     plan.uncovered_kk_ids = [kk for kk in spec.kk_ids if kk not in covered]
     plan.estimated_pages = round((budget - remaining) / budget * pages, 2)
 

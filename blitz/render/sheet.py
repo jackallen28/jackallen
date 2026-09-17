@@ -36,7 +36,7 @@ from ..models import Question, SheetPlan
 from ..studydesign import StudyDesign, load_study_design
 from .answerspace import RuledSpace, lines_for_marks
 from .fonts import safe_markup
-from .layout import estimate_height_mm
+from .layout import crop_max_h_mm, crop_scale
 from .styles import ACCENT, GENERATED, MUTED, RULE, stylesheet
 
 PAGE_W, PAGE_H = A4
@@ -45,6 +45,8 @@ GUTTER = 6 * mm
 QUESTION_PAGES = 2
 # Below this scale, the book's own body text stops being readable on the sheet.
 MIN_CROP_SCALE = 0.62
+# Crops of known size are drawn at this fraction of the book's size.
+CROP_DRAW_SCALE = 0.8
 # Share of a sheet that has to be page crops before it goes single column.
 CROP_MAJORITY = 0.5
 
@@ -53,6 +55,17 @@ def _column_width(columns: int) -> float:
     if columns <= 1:
         return PAGE_W - 2 * MARGIN
     return (PAGE_W - 2 * MARGIN - GUTTER) / columns
+
+
+def legible_in_columns(q: Question, columns: int) -> bool:
+    """Would every question crop still be readable at this column width?"""
+    from .layout import crop_scale
+
+    return all(
+        crop_scale(spec["path"], columns=columns, pt_width=spec.get("pt_width"))
+        >= MIN_CROP_SCALE
+        for spec in q.figures_for("question")
+    )
 
 
 def choose_columns(questions: list[Question]) -> int:
@@ -123,6 +136,9 @@ class _Doc(BaseDocTemplate):
 
         first = frames(body_h - head_h, "f1c")
         later = frames(body_h, "fc")
+        wide = [Frame(MARGIN, body_top, PAGE_W - 2 * MARGIN, body_h, id="wide",
+                      leftPadding=0, rightPadding=0, topPadding=0,
+                      bottomPadding=0)]
         self.head_frame = Frame(
             MARGIN, PAGE_H - MARGIN - head_h + 4 * mm,
             PAGE_W - 2 * MARGIN, head_h - 4 * mm, id="head",
@@ -131,6 +147,8 @@ class _Doc(BaseDocTemplate):
         self.addPageTemplates([
             PageTemplate(id="first", frames=first, onPage=self._chrome),
             PageTemplate(id="later", frames=later, onPage=self._chrome),
+            # One full-width column: the page for crops of the book's pages.
+            PageTemplate(id="wide", frames=wide, onPage=self._chrome),
         ])
 
     def _chrome(self, canvas, doc):
@@ -199,8 +217,15 @@ def _esc(text: str) -> str:
     return safe_markup(html.escape(text or "", quote=False))
 
 
-def _figure(path: str | None, max_w: float, max_h: float = 62 * mm) -> Image | None:
-    """Scale a crop to fit a column without ever upscaling past its native size."""
+def _figure(path: str | None, max_w: float, max_h: float = 62 * mm,
+            pt_width: float | None = None) -> Image | None:
+    """Scale a crop to fit a column without ever upscaling past its printed size.
+
+    Crops are rendered at two or three pixels per point, so the pixel width
+    says nothing about how big the region was on the page. Given the region's
+    width in points, that is the ceiling; a 110pt diagram is drawn at 110pt,
+    not stretched across the column because its PNG happens to be 250px.
+    """
     if not path:
         return None
     p = Path(path)
@@ -213,7 +238,11 @@ def _figure(path: str | None, max_w: float, max_h: float = 62 * mm) -> Image | N
     iw, ih = img.imageWidth, img.imageHeight
     if not iw or not ih:
         return None
-    scale = min(max_w / iw, max_h / ih, 1.0)
+    # Drawn at 80% of the book's size when the region's size is known: the
+    # book sets 10pt, the sheet sets 8.4pt, and a crop at the sheet's own
+    # size fits three worked problems on a page where full size fits two.
+    natural = min(max_w, pt_width * CROP_DRAW_SCALE) if pt_width else max_w
+    scale = min(natural / iw, max_h / ih, 1.0)
     img.drawWidth = iw * scale
     img.drawHeight = ih * scale
     img.hAlign = "LEFT"
@@ -248,17 +277,21 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
             ss["Question"],
         )
     )
+    # The ruled space a question earns is shared out across its parts; what
+    # the split leaves over goes after the last part. Giving every part a
+    # share and then the whole allowance again doubled the space and was the
+    # single biggest reason the picker's estimates missed.
+    total_lines = lines_for_marks(q.marks, q.question_type)
+    per_part = max(1, total_lines // len(q.parts)) if q.parts else 0
     for i, part in enumerate(q.parts):
         last = i == len(q.parts) - 1
         parts.append(Spacer(1, 1.5))
         parts.append(Paragraph(
             _esc(part) + (f"{marks}{flag}" if last else ""), ss["Part"]))
         if not q.options:
-            parts.append(RuledSpace(
-                col_w - 10, max(1, lines_for_marks(q.marks, q.question_type)
-                                // max(len(q.parts), 1))))
+            parts.append(RuledSpace(col_w - 10, per_part))
 
-    fig = _figure(q.figure_path, col_w)
+    fig = _figure(q.figure_path, col_w, pt_width=q.figure_pt_width)
     if fig is not None:
         parts += [Spacer(1, 2), fig]
         if q.figure_caption:
@@ -272,8 +305,10 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
         parts.append(Spacer(1, 2))
     else:
         # Ruled working space, scaled to the marks on offer.
-        parts.append(Spacer(1, 1.5))
-        parts.append(RuledSpace(col_w, lines_for_marks(q.marks, q.question_type)))
+        remaining_lines = total_lines - per_part * len(q.parts)
+        if remaining_lines > 0:
+            parts.append(Spacer(1, 1.5))
+            parts.append(RuledSpace(col_w, remaining_lines))
 
     if q.citation:
         parts.append(Paragraph(_esc(q.citation), ss["Citation"]))
@@ -304,8 +339,11 @@ def _cropped_question(q: Question, n: int, ss, col_w: float,
     parts.append(Paragraph(
         f'<b><font color="#1f4fd8">{n}.</font></b>{marks}{flag}', ss["Question"]))
     figures = q.figures_for("question")
+    columns = 1 if col_w > (PAGE_W - 2 * MARGIN) * 0.6 else 2
+    max_h = crop_max_h_mm(columns) * mm
     for i, spec in enumerate(figures):
-        fig = _figure(spec["path"], col_w, max_h=170 * mm)
+        fig = _figure(spec["path"], col_w, max_h=max_h,
+                      pt_width=spec.get("pt_width"))
         if fig is None:
             continue
         parts += [Spacer(1, 2 if i == 0 else 3), fig]
@@ -318,7 +356,37 @@ def _cropped_question(q: Question, n: int, ss, col_w: float,
         parts.append(RuledSpace(col_w, lines_for_marks(q.marks, q.question_type)))
     if q.citation:
         parts.append(Paragraph(_esc(q.citation), ss["Citation"]))
-    return parts
+    # A crop stack split across columns reads as two questions, one of them
+    # headless. Kept together it moves whole to the next column; a stack too
+    # tall for any column still splits, as Platypus falls back to flowing it.
+    return [KeepTogether(parts)]
+
+
+def _flow_height(f, avail_w: float) -> float:
+    """Height one flowable will take at this width, in points."""
+    if isinstance(f, KeepTogether):
+        return sum(_flow_height(c, avail_w) for c in f._content)
+    try:
+        return float(f.wrap(avail_w, 10_000)[1])
+    except Exception:
+        return 0.0
+
+
+def measure_question_mm(q: Question, columns: int, design: StudyDesign,
+                        ss=None) -> float:
+    """Column millimetres this question occupies, by building its flowables.
+
+    The picker fills a millimetre budget, so it needs the same number the
+    renderer ends up with. Estimating from character counts drifted by a
+    factor of two in both directions once ruled space, stacked crops and
+    multi-part questions were in play; laying the question out and asking
+    is exact, and cheap enough to do for every candidate.
+    """
+    ss = ss or stylesheet()
+    col_w = _column_width(columns)
+    total = sum(_flow_height(f, col_w)
+                for f in _question_flowables(q, 1, ss, col_w, design))
+    return total / mm
 
 
 def _header(ctx: _Ctx, ss, width: float) -> list:
@@ -373,10 +441,10 @@ def _header(ctx: _Ctx, ss, width: float) -> list:
     return out
 
 
-def _solutions(ctx: _Ctx, ss, col_w: float) -> list:
+def _solutions(ctx: _Ctx, ss, col_w: float, template: str = "later") -> list:
     plan = ctx.plan
     out: list = [
-        NextPageTemplate("later"),
+        NextPageTemplate(template),
         PageBreak(),
         Paragraph("Worked solutions", ss["SheetTitle"]),
         Paragraph(ctx.subtitle, ss["SheetSubtitle"]),
@@ -385,7 +453,8 @@ def _solutions(ctx: _Ctx, ss, col_w: float) -> list:
     ]
     for i, q in enumerate(plan.questions, start=1):
         block: list = [Paragraph(f"{i}.", ss["SolutionHeading"])]
-        answer_figs = [_figure(spec["path"], col_w, max_h=110 * mm)
+        answer_figs = [_figure(spec["path"], col_w, max_h=110 * mm,
+                               pt_width=spec.get("pt_width"))
                        for spec in q.figures_for("answer")]
         answer_figs = [f for f in answer_figs if f is not None]
         cropped = q.answer_mode == "crop" and answer_figs
@@ -450,50 +519,93 @@ def render_sheet(
     ])
     ctx = _Ctx(plan=plan, design=design, title=title, subtitle=subtitle)
 
-    questions = list(plan.questions)
+    wide_ids = set(plan.wide_ids or [])
+    questions = [q for q in plan.questions if q.id not in wide_ids]
+    wide = [q for q in plan.questions if q.id in wide_ids]
     dropped: list[Question] = []
-    columns = plan.spec.columns or choose_columns(questions)
+    columns = plan.spec.columns or plan.columns or choose_columns(questions)
     col_w = _column_width(columns)
+    wide_w = _column_width(1)
 
     # Build, measure, shrink. Two pages is the promise; we keep it.
     masthead = _header(ctx, ss, PAGE_W - 2 * MARGIN)
 
-    def _story(with_solutions: bool) -> list:
-        out: list = []
-        for i, q in enumerate(questions, start=1):
-            out.extend(_question_flowables(q, i, ss, col_w, design))
+    # The worked solutions follow the questions' layout: a solution that is a
+    # crop of the book's page is as unreadable in a column as the question
+    # was, so if any answer needs the width, the whole section takes it.
+    sol_columns = 1 if any(
+        q.answer_mode == "crop" and not all(
+            crop_scale(spec["path"], columns=2, pt_width=spec.get("pt_width"))
+            >= MIN_CROP_SCALE for spec in q.figures_for("answer"))
+        for q in questions + wide) else columns
+
+    def _story(with_wide: bool, with_solutions: bool) -> list:
+        # Only the first page carries the masthead; every page after it gets
+        # the full column height. Without this switch page two reserved the
+        # masthead's space and left it blank.
+        out: list = [NextPageTemplate("later")]
+        n = 0
+        for q in questions:
+            n += 1
+            out.extend(_question_flowables(q, n, ss, col_w, design))
+        if with_wide and wide:
+            out += [NextPageTemplate("wide"), PageBreak()]
+            for q in wide:
+                n += 1
+                out.extend(_question_flowables(q, n, ss, wide_w, design))
         if with_solutions:
-            sol_ctx = _Ctx(SheetPlan(spec=plan.spec, questions=questions),
+            sol_ctx = _Ctx(SheetPlan(spec=plan.spec, questions=questions + wide),
                            design, title, subtitle)
-            out.extend(_solutions(sol_ctx, ss, col_w))
+            out.extend(_solutions(sol_ctx, ss, _column_width(sol_columns),
+                                  template="wide" if sol_columns == 1 else "later"))
         return out
 
     head_h = masthead_height(masthead, PAGE_W - 2 * MARGIN, ss)
 
-    def _build(with_solutions: bool) -> int:
+    def _build(with_wide: bool, with_solutions: bool) -> int:
         doc = _Doc(path, ctx, head_h=head_h, columns=columns)
         doc.masthead = masthead
-        doc.build(_story(with_solutions))
+        doc.build(_story(with_wide, with_solutions))
         return doc.page_count
 
+    def _drop_largest(pool: list[Question], cols: int) -> None:
+        # Drop the question that costs the most, not whichever came last.
+        # Popping from the end once removed eight questions to make room for a
+        # single two-page crop stack that was first in the list.
+        biggest = max(pool, key=lambda q: measure_question_mm(q, cols, design, ss))
+        pool.remove(biggest)
+        dropped.append(biggest)
+
+    # The text pages first: with a crop page to follow they get one page,
+    # otherwise the whole allowance.
+    text_pages = max_pages - 1 if wide else max_pages
     while True:
-        question_pages = _build(with_solutions=False)
-        if question_pages <= max_pages or len(questions) <= 1:
+        question_pages = _build(with_wide=False, with_solutions=False)
+        if question_pages <= text_pages or len(questions) <= 1:
             break
-        dropped.append(questions.pop())
+        _drop_largest(questions, columns)
+    # Then the crop page, which must not spill into a third.
+    while wide:
+        question_pages = _build(with_wide=True, with_solutions=False)
+        if question_pages <= max_pages or len(wide) <= 1:
+            break
+        _drop_largest(wide, 1)
 
     # Rebuild with the solutions appended, now that the question set is final.
-    total_pages = _build(with_solutions=plan.spec.include_solutions)
+    total_pages = _build(with_wide=True,
+                         with_solutions=plan.spec.include_solutions)
 
-    plan.questions = questions
+    plan.questions = questions + wide
+    plan.wide_ids = [q.id for q in wide]
     return {
         "path": str(path),
         "columns": columns,
-        "questions": len(questions),
+        "wide": len(wide),
+        "questions": len(questions) + len(wide),
         "dropped": [q.id for q in dropped],
         "total_pages": total_pages,
         "question_pages": question_pages,
-        "total_marks": sum(q.marks or 0 for q in questions),
+        "total_marks": sum(q.marks or 0 for q in questions + wide),
     }
 
 

@@ -160,7 +160,8 @@ def cmd_import_pack(args) -> int:
     from .ingest.pack import import_pack
 
     with db.session() as conn:
-        report = import_pack(conn, args.pack, dry_run=args.dry_run)
+        report = import_pack(conn, args.pack, dry_run=args.dry_run,
+                             refine=not args.keep_pack_tags)
     if report.ok and not args.dry_run:
         print("\nNext: blitz coverage " + (report.subject_id or "<subject>"))
     return 0 if report.ok else 1
@@ -352,6 +353,10 @@ def build_parser() -> argparse.ArgumentParser:
     pack.add_argument("pack")
     pack.add_argument("--dry-run", action="store_true",
                       help="validate only; write nothing")
+    pack.add_argument("--keep-pack-tags", action="store_true",
+                      help="file questions under the pack's dot points exactly "
+                           "as given, without narrowing chapter-level tags to "
+                           "the dot point each question's text names")
     pack.set_defaults(func=cmd_import_pack)
 
     ix = sub.add_parser(

@@ -136,6 +136,12 @@ class SheetPlan:
     uncovered_kk_ids: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     estimated_pages: float = 0.0
+    # Column count the plan was budgeted for; the renderer honours it so the
+    # sheet is laid out with the same millimetres the picker spent.
+    columns: int | None = None
+    # Questions budgeted for a single-column page of their own (page crops
+    # too wide to read in a column), in sheet order after the text questions.
+    wide_ids: list[str] = field(default_factory=list)
 
     @property
     def total_marks(self) -> int:

@@ -14,6 +14,7 @@ the gaps are invisible once sheets start being generated from it.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import sqlite3
 from dataclasses import dataclass, field
@@ -40,6 +41,10 @@ class PackReport:
     untagged: int = 0
     drafts: int = 0
     flagged: int = 0
+    narrowed: int = 0          # pack tags narrowed to the dot point the text names
+    extended: int = 0          # a dot point the pack never used, added on evidence
+    covered_before: int = 0    # dot points with at least one question, pack as given
+    covered_after: int = 0     # ... after refinement
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -51,20 +56,28 @@ class PackReport:
         head = f"{Path(self.path).name}: {self.questions} questions"
         if self.errors:
             return f"{head} — NOT IMPORTED, {len(self.errors)} error(s)"
-        return (
-            f"{head}, {self.imported} imported\n"
+        lines = [
+            f"{head}, {self.imported} imported",
             f"    {self.with_figures} with figures, {self.with_answers} with "
-            f"answers, {self.cropped} rendered as crops, {self.untagged} untagged\n"
-            f"    {self.drafts} marked draft, {self.flagged} flagged for review"
-        )
+            f"answers, {self.cropped} rendered as crops, {self.untagged} untagged",
+            f"    {self.drafts} marked draft, {self.flagged} flagged for review",
+        ]
+        if self.narrowed or self.extended:
+            lines.append(
+                f"    tags refined: {self.narrowed} narrowed to the dot point "
+                f"the text names, {self.extended} extended to a dot point the "
+                f"pack left empty; {self.covered_before} -> {self.covered_after} "
+                f"dot points covered")
+        return "\n".join(lines)
 
 
 def _text_of(q: dict) -> str:
-    """Stem plus parts, which is what gets searched and tagged."""
-    bits = [q.get("stem", "")]
+    """Stem plus parts, which is what gets searched, tagged and, for a question
+    without parts, printed."""
+    bits = [_split_marks(q.get("stem", ""))[0]]
     for part in q.get("parts") or []:
         label = part.get("label")
-        text = part.get("text", "")
+        text, _ = _split_marks(part.get("text", ""))
         bits.append(f"{label}. {text}" if label else text)
     return " ".join(b for b in bits if b).strip()
 
@@ -84,12 +97,30 @@ def _answer_text(q: dict) -> str | None:
     return out or None
 
 
+# "(3 marks)" on the end of a stem, as the book prints it. The sheet prints the
+# marks itself, so a stem that keeps them shows them twice.
+_TRAILING_MARKS = re.compile(r"\s*\(\s*(\d+)\s*marks?\s*\)\s*$", re.I)
+
+
+def _split_marks(text: str | None) -> tuple[str | None, int | None]:
+    """Strip a trailing "(N marks)" from text, returning the text and N."""
+    if not text:
+        return text, None
+    m = _TRAILING_MARKS.search(text)
+    if not m:
+        return text, None
+    return text[:m.start()].rstrip(), int(m.group(1))
+
+
 def _marks(q: dict) -> int | None:
     if q.get("marks") is not None:
         return int(q["marks"])
     parts = q.get("parts") or []
     total = sum(int(p["marks"]) for p in parts if p.get("marks") is not None)
-    return total or None
+    if total:
+        return total
+    _, from_stem = _split_marks(q.get("stem"))
+    return from_stem
 
 
 def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
@@ -126,6 +157,20 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
 
     valid_kk = {kk.id for kk in design.all_key_knowledge()}
     valid_qt = {qt.id for qt in design.question_types}
+
+    zoom = source.get("figure_zoom")
+    if zoom is not None and not (isinstance(zoom, (int, float)) and 0.5 <= zoom <= 8):
+        err(f"source.figure_zoom must be a number of pixels per PDF point "
+            f"(typically 1–4), got {zoom!r}")
+    uses_files = any(f.get("file") for q in (pack.get("questions") or [])
+                     for f in (q.get("figures") or []))
+    if uses_files and zoom is None and not any(
+            f.get("pt_width") for q in (pack.get("questions") or [])
+            for f in (q.get("figures") or []) if f.get("file")):
+        warn("figures are image files with no source.figure_zoom and no "
+             "pt_width; pixels will be taken as points, which overstates crop "
+             "width for any render above 72 dpi and can force single-column "
+             "sheets needlessly")
 
     questions = pack.get("questions") or []
     report.questions = len(questions)
@@ -284,9 +329,14 @@ def import_pack(
     *,
     design: StudyDesign | None = None,
     dry_run: bool = False,
+    refine: bool = True,
     progress=print,
 ) -> PackReport:
-    """Validate a pack and, if it is clean, load it into the index."""
+    """Validate a pack and, if it is clean, load it into the index.
+
+    With `refine` (the default) each question's dot points are narrowed to
+    the ones its own text names — see refine_tags for why a pack needs it.
+    """
     path = Path(path).expanduser().resolve()
     pack_dir = path.parent
     report = PackReport(path=str(path))
@@ -359,9 +409,19 @@ def import_pack(
         if pdf_path.exists():
             doc = extract.open_pdf(pdf_path)
 
+    refiner = None
+    if refine:
+        try:
+            refiner = TagRefiner(design, pack["questions"])
+        except ValueError as exc:      # a stale lexicon; import without it
+            progress(f"  ! tags not refined: {exc}")
+    if refiner is not None:
+        report.covered_before = len(refiner.mapped)
+
     try:
         for q in pack["questions"]:
-            _import_one(conn, q, pack, source, design, pack_dir, doc, report)
+            _import_one(conn, q, pack, source, design, pack_dir, doc, report,
+                        refiner)
     finally:
         if doc is not None:
             doc.close()
@@ -371,16 +431,99 @@ def import_pack(
     return report
 
 
-def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
+class TagRefiner:
+    """Turns a pack's chapter-level dot points into question-level ones.
+
+    A model indexing a book tags by chapter: every question in "Chapter 6
+    Circular motion" gets the same two or three dot points, and dot points no
+    chapter is named after get nothing at all. That was the whole Physics
+    book — 841 questions, 21 distinct tag sets, 31 of 71 dot points empty.
+    A sheet on "proper time" then has nothing to draw on while a sheet on
+    "Newton's laws" draws every question in two chapters.
+
+    The pack's tags stay authoritative for *where* a question belongs: its
+    chapter fixes the area of study, and nothing here moves a question
+    outside it. Within that, the lexicon does two things:
+
+    * narrow — where the question's own text names one of the pack's dot
+      points (a spring launcher names energy transformation, not work), keep
+      the named one(s) and drop the rest of the chapter's set;
+    * extend — where the text strongly names a dot point in the same area
+      that the pack never used at all (muons name "examples of special
+      relativity", a slip-ring generator names "DC generators"), add it.
+
+    Extension is deliberately limited to dot points the pack left empty:
+    letting it add any dot point piled a third of the book onto "Newton's
+    three laws", whose vocabulary is every mechanics question's vocabulary.
+    Where the lexicon says nothing, the pack's tags are kept as given.
+    """
+
+    STRONG = 2.0        # a multi-word trigger, or two triggers, to extend
+
+    def __init__(self, design: StudyDesign, questions: list[dict]):
+        from .tag import KeywordTagger
+
+        self.design = design
+        self.tagger = KeywordTagger(design)
+        self.mapped = {k for q in questions for k in (q.get("kk_ids") or [])}
+        self.unmapped = {kk.id for kk in design.all_key_knowledge()
+                         if kk.id not in self.mapped}
+        self.covered: set[str] = set()
+
+    def refine(self, q: dict, text: str) -> tuple[list[str], str]:
+        """The dot points to file this question under, and what changed."""
+        orig = list(q.get("kk_ids") or [])
+        if not orig:
+            return orig, "kept"
+        areas = set()
+        for k in orig:
+            try:
+                areas.add(self.design.area_of(k).id)
+            except KeyError:
+                pass
+        cands = {kk.id for a in areas for kk in self.design.area(a).key_knowledge}
+        hay = " ".join([q.get("context") or "", text, *(q.get("options") or [])])
+        lex = {k: v for k, v in self.tagger.lexicon.score_all(hay).items()
+               if k in cands}
+        inside = {k: v for k, v in lex.items() if k in orig}
+        outside = {k: v for k, v in lex.items()
+                   if k not in orig and k in self.unmapped}
+        what = []
+        if inside:
+            best = max(inside.values())
+            new = [k for k, v in sorted(inside.items(), key=lambda kv: -kv[1])
+                   if v >= best * 0.6][:2]
+            if len(new) < len(orig):
+                what.append("narrowed")
+        else:
+            new, best = list(orig), 0.0
+        if outside:
+            k, v = max(outside.items(), key=lambda kv: kv[1])
+            if v >= self.STRONG and v >= best:
+                new.append(k)
+                what.append("extended")
+        self.covered.update(new)
+        return new, "+".join(what) or "kept"
+
+
+def _import_one(conn, q, pack, source, design, pack_dir, doc, report,
+                refiner: TagRefiner | None = None) -> None:
     qid = f"{source['id']}-{q['id']}"
     text = _text_of(q)
     answer = _answer_text(q)
+    kk_ids = q.get("kk_ids") or []
+    if refiner is not None:
+        kk_ids, what = refiner.refine(q, text)
+        report.narrowed += "narrowed" in what
+        report.extended += "extended" in what
+        report.covered_after = len(refiner.covered)
 
     # Every figure, in order. A question routinely needs more than one: a page
     # continuation, the shared scenario printed above it, or an earlier question
     # it depends on. Importing only the first silently truncated 60% of the
     # content in the pilot pack.
     figures: list[dict] = []
+    zoom = float(source.get("figure_zoom") or 1.0)
     for n, fig in enumerate(q.get("figures") or []):
         role = fig.get("role", "question")
         tag = f"{qid}-{role[0]}{n}"
@@ -390,7 +533,8 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
         figures.append({
             "role": role,
             "path": path,
-            "pt_width": _pt_width(fig, path),
+            "pt_width": _pt_width(fig, path, zoom),
+            "zoom": zoom if not fig.get("bbox") else None,
             "caption": fig.get("caption"),
         })
 
@@ -408,10 +552,11 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
     if answer_mode == "crop" and not answer_figs:
         answer_mode = "text"
 
-    parts = [
-        (f"{p['label']}. {p['text']}" if p.get("label") else p.get("text", ""))
-        for p in (q.get("parts") or [])
-    ]
+    parts = []
+    for p in (q.get("parts") or []):
+        ptext, _ = _split_marks(p.get("text", ""))
+        parts.append(f"{p['label']}. {ptext}" if p.get("label") else (ptext or ""))
+    stem, _ = _split_marks(q.get("stem"))
 
     insert_question(conn, {
         "id": qid,
@@ -419,7 +564,7 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
         "source_id": source["id"],
         "question_type": q.get("question_type") or design.question_types[0].id,
         "body": text,
-        "stem": q.get("stem") or None,
+        "stem": stem or None,
         "parts": json.dumps(parts) if parts else None,
         "options": q.get("options") or None,
         "answer": answer,
@@ -459,7 +604,7 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
             ("title", q.get("title")), ("notes", q.get("notes")),
             ("pack_id", q.get("id")),
         ) if v}),
-    }, q.get("kk_ids") or [])
+    }, kk_ids)
 
     report.imported += 1
     report.drafts += 1 if q.get("status", "approved") != "approved" else 0
@@ -469,24 +614,29 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
     report.cropped += 1 if "crop" in (render_mode, answer_mode) else 0
 
 
-def _pt_width(fig: dict | None, path: str | None) -> float | None:
+def _pt_width(fig: dict | None, path: str | None, zoom: float = 1.0) -> float | None:
     """The crop's width in PDF points, which decides the sheet's layout.
 
-    A bbox says so directly. A supplied image file does not, so it is taken at
-    face value — one pixel to one point.
+    A bbox says so directly. An explicit `pt_width` on the figure is next best.
+    Otherwise a supplied image file only has pixels, and PNGs from a renderer
+    carry no DPI, so the pack's `source.figure_zoom` (pixels per point) converts
+    them. Without any of those, one pixel is taken as one point — which for a
+    3x render overstates the width threefold and forces the sheet into a
+    single column it did not need.
     """
     if not fig or not path:
         return None
     bbox = fig.get("bbox")
     if bbox:
         return float(bbox[2]) - float(bbox[0])
-    try:
-        import pymupdf
+    if fig.get("pt_width"):
+        return float(fig["pt_width"])
+    from ..render.layout import image_px_size
 
-        with pymupdf.open(path) as doc:
-            return float(doc[0].rect.width)
-    except Exception:
+    size = image_px_size(path)
+    if size is None:
         return None
+    return float(size[0]) / max(float(zoom or 1.0), 1e-6)
 
 
 def _citation(source: dict, q: dict) -> str:

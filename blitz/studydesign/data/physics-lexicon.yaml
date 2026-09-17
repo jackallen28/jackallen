@@ -39,7 +39,13 @@ dot_points:
                travels past, km h, motorbike, police car, cyclist, runner,
                speed limit, speeding, train, trains, truck, bus, skater,
                swimmer, towards each other]
-    avoid: [speed of light, relativistic, photon, electron volt, de broglie]
+    # Every mechanics question shares this vocabulary, so this dot point
+    # claimed a quarter of the fields chapters on the full book (48 of the
+    # tagger's 154 area-level misses). Anything set in a field is not here.
+    avoid: [speed of light, relativistic, photon, electron volt, de broglie,
+            satellite, orbit, orbital, gravitational field, electric field,
+            magnetic field, coulomb, point charge, charged particle,
+            charged plates, electron, proton, millikan]
 
   physics-u3-aos1-kk02:
     triggers: [circular motion, uniform circular, centripetal, banked track,

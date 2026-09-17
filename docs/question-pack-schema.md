@@ -45,6 +45,7 @@ fingerprint is what catches that. Re-check it before every run.
 | `edition` | string | no | |
 | `pdf` | string | if bbox used | Path on the importing machine. Never copied into the repo. |
 | `page_offset` | integer | no | Printed page minus PDF index. Only used when a question has no `printed_page`. |
+| `figure_zoom` | number | if `file` figures | Pixels per PDF point the image files were rendered at (0.5–8). Ignored for `page`+`bbox` figures. |
 
 ## `questions[]`
 
@@ -98,6 +99,7 @@ fingerprint is what catches that. Re-check it before every run.
 | `bbox` | number[4] | with `page` | `[x0, y0, x1, y1]` in PDF points, origin **top-left**. |
 | `file` | string | alternative | Path to an image, relative to the pack file. |
 | `caption` | string | no | Printed under the figure when a question has more than one. |
+| `pt_width` | number | no | Width of the cropped region in PDF points, for `file` figures. Overrides `source.figure_zoom`. |
 
 Exactly one of `page`+`bbox` or `file`. Prefer `page`+`bbox`: it keeps full
 resolution and the crop can be redone later without re-running the pack.
@@ -266,6 +268,17 @@ roughly **5 questions per two-page sheet where text fits 12**.
 Crop to the **content**, not the page. A crop under about 400pt wide can stay in
 a two-column layout; wider forces single column. Tighter crops are also sharper
 at the same output size.
+
+### Image files and scale
+
+A PNG carries no notion of how big it was on the page. If the pack uses `file`
+figures, say what scale they were rendered at, once, in `source.figure_zoom`
+(pixels per PDF point: a crop of a 400pt-wide region rendered at 3× is
+1200px wide, so `figure_zoom` is `3`). Without it Blitz has to treat pixels
+as points, every crop looks more than twice as wide as it is, the sheet drops
+to single column and fits a fraction of the questions it should. A figure can
+instead carry its own `pt_width`, which wins over the pack-level zoom. Figures
+given as `page`+`bbox` need neither.
 
 ### Honest gaps
 

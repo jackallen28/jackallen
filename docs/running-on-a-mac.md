@@ -16,6 +16,12 @@ blitz init
 macOS ships Python 3.9, which is too old. If `python3 --version` says 3.9 or
 lower, `brew install python@3.12` and use `python3.12` above.
 
+## The short version
+
+`mac/index-materials.command` does all of the below for a folder of materials:
+double-click it in Finder (or run it from Terminal with the subject, the study
+design PDF and the folder as arguments). See `docs/indexing-on-a-mac.md`.
+
 ## Index the whole book
 
 ```bash

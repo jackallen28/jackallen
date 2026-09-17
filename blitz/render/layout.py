@@ -34,7 +34,11 @@ def column_height_mm(first_page: bool) -> float:
     return usable - (MASTHEAD / mm if first_page else 0.0)
 
 
-def budget_mm(max_pages: int = 2, safety: float = 0.92,
+# Column breaks waste the tail of every column; the budget leaves room for it.
+SAFETY = 0.92
+
+
+def budget_mm(max_pages: int = 2, safety: float = SAFETY,
               columns: int = COLUMNS) -> float:
     """Total column millimetres available across the question pages."""
     total = column_height_mm(first_page=True) * columns
@@ -48,25 +52,54 @@ def column_width_mm(columns: int = COLUMNS) -> float:
     return ((PAGE_W - 2 * MARGIN - GUTTER) / columns) / mm
 
 
+# A single crop is never drawn taller than this. Legibility is set by the width
+# scale, so a crop taller than this is a full-page region the pack should have
+# split; drawing it at full height turned one question into two pages.
+CROP_MAX_H_MM = {1: 120.0, 2: 90.0}
+
+
+def crop_max_h_mm(columns: int = COLUMNS) -> float:
+    return CROP_MAX_H_MM.get(max(1, min(columns, 2)), 90.0)
+
+
+def image_px_size(path: str | None) -> tuple[int, int] | None:
+    """Pixel width and height of an image file, or None if unreadable.
+
+    Read with PIL on purpose: opening a PNG with PyMuPDF reports a rect in
+    points at an assumed 96 dpi, i.e. pixels x 0.75, which silently put a
+    factor of 0.75 into every width derived from it.
+    """
+    if not path:
+        return None
+    try:
+        from PIL import Image
+
+        with Image.open(path) as im:
+            w, h = im.size
+    except Exception:
+        return None
+    if not w or not h:
+        return None
+    return int(w), int(h)
+
+
 def image_height_mm(path: str | None, columns: int = COLUMNS,
                     pt_width: float | None = None,
                     fallback: float = 60.0) -> float:
-    """How much column height a page crop will occupy once scaled to fit."""
-    if not path:
-        return fallback
-    try:
-        import pymupdf
+    """How much column height a page crop will occupy once scaled to fit.
 
-        with pymupdf.open(path) as doc:
-            rect = doc[0].rect
-            px_w, px_h = rect.width, rect.height
-    except Exception:
+    Mirrors the renderer exactly, including its height cap, so the picker's
+    budget and the page agree.
+    """
+    size = image_px_size(path)
+    if size is None:
         return fallback
-    if not px_w or not px_h:
-        return fallback
-    # ReportLab fits the image to the column by its pixel dimensions.
+    px_w, px_h = size
+    # ReportLab fits the image to the column by its pixel dimensions, and the
+    # renderer also caps the height; apply both so the estimate matches.
     col = column_width_mm(columns) * mm
-    scale = min(col / px_w, 1.0)
+    max_h = crop_max_h_mm(columns) * mm
+    scale = min(col / px_w, max_h / px_h, 1.0)
     return (px_h * scale) / mm
 
 
@@ -75,7 +108,7 @@ def crop_scale(path: str | None, columns: int = COLUMNS,
     """Fraction of its printed size a crop is rendered at. 1.0 is unscaled.
 
     Judged against the region's natural width in PDF points, not the PNG's
-    pixels: crops are rendered at 3x zoom, so pixels say nothing about how big
+    pixels: crops are rendered at two or three pixels a point, so pixels say nothing about how big
     the content was on the page. Below about 0.6 the book's 10pt body text
     drops under 6pt and stops being readable.
     """
@@ -83,13 +116,10 @@ def crop_scale(path: str | None, columns: int = COLUMNS,
         return 1.0
     if pt_width is None:
         # No recorded width: assume the image is already at printed size.
-        try:
-            import pymupdf
-
-            with pymupdf.open(path) as doc:
-                pt_width = doc[0].rect.width
-        except Exception:
+        size = image_px_size(path)
+        if size is None:
             return 1.0
+        pt_width = size[0]
     if not pt_width:
         return 1.0
     return min((column_width_mm(columns) * mm) / pt_width, 1.0)

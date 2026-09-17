@@ -251,7 +251,9 @@ function showPreview(data) {
 function showSheet(data) {
   const el = $("#result");
   el.hidden = false;
-  const columns = data.columns === 1 ? " · single column (page crops)" : "";
+  const columns = data.columns === 1
+    ? " · single column (page crops)"
+    : data.wide ? ` · page 2: ${data.wide} full-width page extract${data.wide === 1 ? "" : "s"}` : "";
   el.innerHTML =
     `<h2>Your Blitz is ready</h2>
      <div class="summary">

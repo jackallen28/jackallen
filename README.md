@@ -16,13 +16,14 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 |---|---|
 | Physics study design | **Imported from the VCAA PDF.** 71 dot points, VCAA's own wording. |
 | Business Management study design | **Draft.** Reconstructed by hand, flagged `verified: false`. Send the PDF and `blitz import-study-design` replaces it. |
-| Physics questions | Tested against a real Checkpoints extract: 70 questions, figures cropped, solutions attached. |
+| Physics questions | **The whole Checkpoints book imported** from a model-built pack: 841 questions, 1273 crops, 838 with solutions. See `docs/full-book-postmortem.md` for what that run got wrong and what the next one should do. |
 | Physics concept lexicon | Written, covering all 71 dot points. |
 | Question pack import | Schema, validator and importer done; example pack in `packs/`. |
 | Deterministic pack extraction | `blitz extract-pack` — ~40 s for 1000 pages, flags ~13% for review. |
-| One-command indexing | `blitz index` — study design + book in, questions and content out. Textbook path untested on a real book. |
+| One-command indexing | `blitz index` — study design + book in, questions and content out. Textbook path untested on a real book. `mac/index-materials.command` wraps it for a folder of materials. |
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
-| Tagging | **The weak link.** See below. |
+| Tagging | 81% right area on an unseen book, before the pack's own chapter tags are used. See below. |
+| Layout | Two columns of text on page one, one column of page crops on page two, solutions after. Chosen per sheet from what the questions need. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that
@@ -57,8 +58,26 @@ actually uses, plus `requires`/`avoid` vetoes and weights to break ties. See
 back on IDF-weighted word overlap, which is much weaker.
 
 **Both sets have now informed tuning**, so neither is a clean held-out
-measurement any more. The next honest number needs a book neither has seen —
-worth running when the full Checkpoints is ingested.
+measurement any more. The honest number comes from the full Checkpoints book,
+which the lexicon had never seen, scored against the chapter each question
+sits in (`evals/tagging_eval.py --pack <pack.json>`):
+
+| full book, 841 questions, unseen | |
+|---|---|
+| coverage | 96% tagged |
+| precision | **81%** right area of study |
+| by area | motion 91%, fields 67%, electricity 89%, light and matter 83%, investigation 53% |
+
+A third of the misses were fields questions filed under "Newton's three laws",
+whose vocabulary (mass, acceleration, at rest) is every mechanics question's
+vocabulary; that dot point now refuses anything set in a field. The number
+above is from before that change so it stays a clean measurement.
+
+For a pack built by a model the tagger is not on its own: the pack's chapter
+fixes the area of study, and the lexicon only decides *which* dot point within
+it (`TagRefiner` in `blitz/ingest/pack.py`). On the full book that turned 21
+chapter-level tag sets into question-level ones and took the dot points with
+at least one question from 40 to 51 of 71.
 
 The tagger is deliberately conservative: a question it cannot place is left
 untagged and reported rather than filed somewhere plausible, because a question

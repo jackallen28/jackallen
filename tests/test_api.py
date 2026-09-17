@@ -95,19 +95,28 @@ def test_sheet_download_cannot_escape_the_output_directory(client, name):
     assert client.get(f"/sheets/{name}").status_code in (404, 422)
 
 
-def test_notes_reach_the_picker_through_the_api(client):
+def test_notes_reach_the_picker_through_the_api(client, monkeypatch):
+    """The notes box is wired through to the spec the picker sees. Whether
+    the picker then acts on it is the picker's test (test_picker.py); the
+    sample bank is small enough to fit on two pages almost whole, so a
+    sheet-level assertion here would only test the fixture."""
+    import blitz.server.app as server
+    from blitz.picker import build_plan
+
+    seen = {}
+
+    def spy(conn, spec, design=None, **kw):
+        seen["spec"] = spec
+        return build_plan(conn, spec, design, **kw)
+
+    monkeypatch.setattr(server, "build_plan", spy)
     kk = _some_kk(client)
-    plain = client.post("/api/preview",
-                        json={"subject_id": "physics", "kk_ids": kk, "seed": 11}).json()
-    nudged = client.post("/api/preview", json={
+    res = client.post("/api/preview", json={
         "subject_id": "physics", "kk_ids": kk, "seed": 11,
-        "notes": "relativity and the photoelectric effect"}).json()
-
-    def bodies(d):
-        return " ".join(q["preview"] for q in d["questions"]).lower()
-
-    assert "photoelectric" not in bodies(plain)
-    assert "photoelectric" in bodies(nudged)
+        "notes": "relativity and the photoelectric effect"})
+    assert res.status_code == 200
+    assert seen["spec"].notes == "relativity and the photoelectric effect"
+    assert seen["spec"].seed == 11
 
 
 def test_ui_is_served(client):

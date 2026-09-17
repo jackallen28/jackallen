@@ -22,7 +22,7 @@ _OPENER = re.compile(
     r"calculate|compare|interpret|discuss|distinguish|evaluate)"
     r"(?:\s+and\s+(?:apply|analyse|analyze|explain|compare|evaluate))?"
     r"(?:\s+(?:theoretically|practically|qualitatively|quantitatively|and))*"
-    r"\s+(?:the|that|a|an)?\s*",
+    r"\s+(?:(?:the|that|a|an)\b\s+)?",
     re.IGNORECASE,
 )
 

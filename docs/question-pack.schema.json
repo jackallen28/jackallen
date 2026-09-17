@@ -73,6 +73,12 @@
           "type": "integer",
           "default": 0,
           "description": "Printed page number minus PDF page index. Only used when a question has no printed_page of its own."
+        },
+        "figure_zoom": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 8,
+          "description": "Pixels per PDF point that every 'file' figure in this pack was rendered at (a 3x render of a 400pt-wide region gives a 1200px image). PNG crops carry no scale, so without this Blitz treats pixels as points and lays out a 900px crop as if it were 900pt wide, which forces single column and starves the sheet. Ignored for page+bbox figures, whose width is known exactly. Only needed if figures are files and do not each carry pt_width."
         }
       }
     },
@@ -254,6 +260,11 @@
         "caption": {
           "type": "string",
           "description": "Printed under the figure when a question has more than one."
+        },
+        "pt_width": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Width of the cropped region in PDF points, for 'file' figures only. Takes precedence over source.figure_zoom. Redundant for page+bbox figures, which state their width already."
         }
       },
       "oneOf": [

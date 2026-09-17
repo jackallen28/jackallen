@@ -85,6 +85,23 @@ that list is the first thing to extend when a real book turns out to say
 | `--no-content` | questions only |
 | `--source-id` | stable id; re-indexing the same id updates in place |
 
+## Importing a pack instead
+
+If a model has already indexed the book into a pack (`docs/question-pack-schema.md`),
+`blitz import-pack` is the way in, and it does one thing a pack usually needs:
+it **refines chapter-level tags**. A model tags by chapter — every question in
+"Circular motion" gets the same three dot points — so the importer keeps the
+chapter's area of study as given and lets the lexicon pick the dot point(s)
+the question's own text names, adding a dot point from the same area only when
+the pack left it empty and the evidence is strong. The report says what it did:
+
+```
+tags refined: 397 narrowed to the dot point the text names, 23 extended to a
+dot point the pack left empty; 40 -> 51 dot points covered
+```
+
+`--keep-pack-tags` turns that off and files everything exactly as the pack says.
+
 ## What it is not
 
 It is not a substitute for a curated pack. If someone has already been through

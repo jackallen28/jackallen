@@ -161,15 +161,94 @@ def score(pdf: Path, use_model: bool = False) -> dict:
     return stats
 
 
+def score_pack(pack_path: Path, use_model: bool = False) -> dict:
+    """Score the tagger on a question pack, at area-of-study level.
+
+    A pack built by a model tags each question by chapter, and a chapter sits
+    inside one area of study, so the pack's tags give area-level ground truth
+    for free on a book the lexicon was never tuned against. This is the
+    number to quote for the raw `blitz index` path on new material.
+    """
+    import json
+
+    design = load_study_design("physics")
+    pack = json.loads(pack_path.read_text(encoding="utf-8"))
+    items = []
+    for q in pack["questions"]:
+        kk_ids = q.get("kk_ids") or []
+        areas = {area_of(design, k) for k in kk_ids} - {None}
+        if len(areas) != 1:
+            continue                    # no single-area ground truth
+        bits = [q.get("context") or "", q.get("stem") or ""]
+        bits += [f"{p.get('label', '')}. {p.get('text', '')}" for p in q.get("parts") or []]
+        items.append((" ".join(b for b in bits if b), q.get("options") or [],
+                      q.get("marks"), next(iter(areas))))
+    if not items:
+        raise SystemExit(f"No single-area questions in {pack_path}")
+
+    if use_model:
+        tagger = ClaudeTagger(design)
+        results = tagger.tag_all([{"text": t, "options": o, "marks": m}
+                                  for t, o, m, _ in items])
+    else:
+        tagger = KeywordTagger(design)
+        results = [tagger.tag(t, o, m) for t, o, m, _ in items]
+
+    stats = {"total": len(items), "tagged": 0, "correct": 0, "wrong": 0,
+             "rejected": 0}
+    by_area: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+    confusions: dict[tuple[str, str], int] = defaultdict(int)
+    for (text, _, _, gold), result in zip(items, results):
+        if result.rejected or not result.kk_ids:
+            stats["rejected"] += 1
+            continue
+        stats["tagged"] += 1
+        predicted = area_of(design, result.kk_ids[0])
+        by_area[gold][1] += 1
+        if predicted == gold:
+            stats["correct"] += 1
+            by_area[gold][0] += 1
+        else:
+            stats["wrong"] += 1
+            confusions[(gold, predicted)] += 1
+    stats["precision"] = stats["correct"] / stats["tagged"] if stats["tagged"] else 0.0
+    stats["coverage"] = stats["tagged"] / stats["total"]
+    stats["by_area"] = {k: (v[0], v[1]) for k, v in by_area.items()}
+    stats["confusions"] = sorted(confusions.items(), key=lambda kv: -kv[1])[:6]
+    return stats
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("pdf", type=Path, nargs="?",
                     help="a Checkpoints PDF to score (area-of-study level)")
     ap.add_argument("--samples", action="store_true",
                     help="score the held-out sample bank at dot point level")
+    ap.add_argument("--pack", type=Path,
+                    help="score against a question pack's chapter-level tags "
+                         "(area-of-study level; the honest number for a book "
+                         "the lexicon was not tuned on)")
     ap.add_argument("--model", action="store_true",
                     help="score the Claude tagger instead of the keyword fallback")
     args = ap.parse_args()
+
+    if args.pack:
+        s = score_pack(args.pack, use_model=args.model)
+        name = "Claude tagger" if args.model else "keyword tagger"
+        print(f"\n{name} on {args.pack.name} (area of study level, pack tags as truth)")
+        print(f"  questions with one area : {s['total']}")
+        print(f"  tagged                  : {s['tagged']}  ({s['coverage']:.0%} coverage)")
+        print(f"  left untagged           : {s['rejected']}")
+        print(f"  right area of study     : {s['correct']}/{s['tagged']} "
+              f"({s['precision']:.0%})")
+        print("  by area:")
+        for area, (ok, n) in sorted(s["by_area"].items()):
+            print(f"    {area:18} {ok:4}/{n:<4} {ok / n:.0%}")
+        if s["confusions"]:
+            print("  most common confusions (truth -> predicted):")
+            for (gold, pred), n in s["confusions"]:
+                print(f"    {gold} -> {pred}: {n}")
+        return 0
 
     if args.samples or args.pdf is None:
         s = score_sample_bank(use_model=args.model)

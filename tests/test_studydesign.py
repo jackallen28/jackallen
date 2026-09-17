@@ -155,3 +155,14 @@ class TestSampleBankFingerprint:
                 f"{needle!r} is filed under {kk_id} ({text[:60]}…), "
                 f"which does not mention {wanted!r}"
             )
+
+
+def test_shorten_strips_an_article_only_as_a_whole_word():
+    from blitz.studydesign.schema import shorten
+
+    assert shorten("compare alternating voltage expressed as rms") == (
+        "Alternating voltage expressed as rms")
+    assert shorten("apply the field model to magnetic phenomena") == (
+        "Field model to magnetic phenomena")
+    assert shorten("analyse a collision between two bodies") == (
+        "Collision between two bodies")

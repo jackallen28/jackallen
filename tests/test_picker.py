@@ -4,7 +4,7 @@ import pytest
 
 from blitz.models import SheetSpec
 from blitz.picker import _keywords, _matches, _stem, build_plan
-from blitz.render.layout import budget_mm, estimate_height_mm
+from blitz.render.layout import budget_mm
 from blitz.studydesign import load_study_design
 
 
@@ -21,13 +21,17 @@ def test_empty_selection_yields_nothing(seeded):
 
 
 def test_plan_fits_the_page_budget(seeded):
-    plan = build_plan(seeded, _spec(seed=1))
-    used = sum(
-        estimate_height_mm(q.body, marks=q.marks, options=q.options,
-                           has_figure=q.has_figure)
-        for q in plan.questions
-    )
-    assert used <= budget_mm(2)
+    """Measured the way the renderer lays questions out, the plan fits the
+    budget it was picked against."""
+    from blitz.render.sheet import measure_question_mm
+
+    design = load_study_design("physics")
+    plan = build_plan(seeded, _spec(seed=1), design)
+    used = sum(measure_question_mm(q, plan.columns, design) for q in plan.questions)
+    assert used <= budget_mm(2, columns=plan.columns)
+    # And not by a mile: an estimate that is safe because it is timid leaves
+    # the second page empty.
+    assert used >= 0.8 * budget_mm(2, columns=plan.columns)
 
 
 def test_plan_actually_fills_the_sheet(seeded):
@@ -86,9 +90,12 @@ def test_disallowing_generated_empties_the_sample_only_index(seeded):
 
 def test_notes_pull_the_named_topic_onto_the_sheet(seeded):
     """The notes box is the feature; if it doesn't steer coverage it's decoration."""
+    # One page: the sample bank fits on two almost whole, which would make
+    # the plain sheet cover the topic by accident and prove nothing.
     design = load_study_design("physics")
-    plain = build_plan(seeded, _spec(seed=11))
-    nudged = build_plan(seeded, _spec(seed=11, notes="relativity and the photoelectric effect"))
+    plain = build_plan(seeded, _spec(seed=11), pages=1)
+    nudged = build_plan(seeded, _spec(seed=11, notes="relativity and the photoelectric effect"),
+                        pages=1)
 
     def covers(plan, needle):
         return any(
