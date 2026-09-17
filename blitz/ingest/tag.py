@@ -20,6 +20,7 @@ import re
 from dataclasses import dataclass, field
 
 from ..studydesign import StudyDesign
+from .lexicon import Lexicon, load_lexicon, validate
 
 _TOKEN = re.compile(r"[a-z][a-z'-]{2,}")
 _STOP = {
@@ -86,7 +87,12 @@ class KeywordTagger:
     # to the stem or figure above them rather than to any dot point.
     MIN_QUESTION_TERMS = 4
 
-    def __init__(self, design: StudyDesign, threshold: float | None = None):
+    # A lexicon hit is direct evidence and outranks any amount of incidental
+    # word overlap, so it is scored on its own scale rather than blended in.
+    LEXICON_FLOOR = 1.0
+
+    def __init__(self, design: StudyDesign, threshold: float | None = None,
+                 lexicon: Lexicon | None = None):
         self.design = design
         self.threshold = self.THRESHOLD if threshold is None else threshold
         self._vocab = {
@@ -95,6 +101,17 @@ class KeywordTagger:
         }
         self._idf = _idf(list(self._vocab.values()))
         self._type_cues = _type_cues(design)
+
+        self.lexicon = (
+            lexicon if lexicon is not None else load_lexicon(design.subject_id)
+        )
+        stale = validate(self.lexicon, set(self._vocab))
+        if stale:
+            raise ValueError(
+                f"{design.subject_id} lexicon references dot points the study "
+                f"design no longer has: {stale}. Dot point ids are positional, "
+                "so re-check the lexicon after a study design import."
+            )
 
     def _score(self, kk_id: str, toks: set[str]) -> tuple[float, float]:
         vocab = self._vocab.get(kk_id) or set()
@@ -122,6 +139,25 @@ class KeywordTagger:
                 reason="too little content to place",
             )
 
+        question_type = self.guess_type(haystack, options, marks)
+
+        # The lexicon speaks first. Where it fires, it is saying "a question
+        # about this dot point looks like this", which is exactly the evidence
+        # word overlap cannot provide.
+        lex = self.lexicon.score_all(haystack)
+        if lex:
+            ranked = sorted(lex.items(), key=lambda kv: -kv[1])
+            best = ranked[0][1]
+            kk_ids = [kk for kk, hit in ranked[:3] if hit >= max(best * 0.6,
+                                                                 self.LEXICON_FLOOR)]
+            if kk_ids:
+                return TagResult(
+                    kk_ids=kk_ids,
+                    question_type=question_type,
+                    difficulty=_guess_difficulty(haystack, marks),
+                    confidence=min(0.55 + 0.1 * best, 0.95),
+                )
+
         scored = []
         for kk_id in self._vocab:
             score, best_term = self._score(kk_id, toks)
@@ -129,11 +165,13 @@ class KeywordTagger:
                 scored.append((score, best_term, kk_id))
         scored.sort(reverse=True)
 
+        # The lexicon's vetoes bind here too. Without this the fallback happily
+        # re-proposed dot points the lexicon had just ruled out.
         keep = [
             (score, kk_id) for score, best_term, kk_id in scored[:3]
             if score >= self.threshold and best_term >= self.DISTINCTIVE_IDF
+            and not self.lexicon.vetoes(kk_id, haystack)
         ]
-        question_type = self.guess_type(haystack, options, marks)
         if not keep:
             return TagResult(
                 question_type=question_type,

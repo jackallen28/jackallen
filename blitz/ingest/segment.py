@@ -70,6 +70,12 @@ class RawQuestion:
     end_page_index: int = 0
     bbox: tuple[float, float, float, float] | None = None
     answer_bbox: tuple[float, float, float, float] | None = None
+    # Text printed above the question header that sets up the question — a
+    # shared scenario or a lead-in to a figure. Checkpoints prints these before
+    # the rule that fences the question, so they arrive attached to the previous
+    # question and have to be moved forward.
+    stimulus: str = ""
+    stimulus_page: int | None = None
     needs_crop: bool = False
     crop_reason: str = ""
     # A mangled worked solution is worse than a mangled question — it teaches
@@ -85,8 +91,28 @@ class RawQuestion:
 
     @property
     def full_text(self) -> str:
-        bits = [self.text, *self.parts]
+        bits = [self.stimulus, self.text, *self.parts]
         return " ".join(b for b in bits if b).strip()
+
+    @property
+    def is_stimulus_only(self) -> bool:
+        """A block that sets up the next question rather than asking one.
+
+        Checkpoints heads these with their own "Question N/ P", but they carry
+        no options, no parts, no marks and no actual interrogative — just the
+        sentence introducing a graph. Indexed on their own they are unanswerable;
+        merged forward they are the context the next question needs.
+        """
+        if self.options or self.parts or self.marks or self.answer:
+            return False
+        text = self.text.strip()
+        if not text or len(text) > 220:
+            return False
+        if "?" in text:
+            return False
+        return bool(re.match(
+            r"^(the|a|an|this|these|below|shown|use|refer|consider)\b", text,
+            re.IGNORECASE))
 
 
 @dataclass
@@ -295,6 +321,29 @@ def segment_document(doc, first: int = 0, last: int | None = None) -> list[RawQu
         q = _parse_unit(entries[start:end], info)
         if q:
             out.append(q)
+    return _merge_stimuli(out)
+
+
+def _merge_stimuli(questions: list[RawQuestion]) -> list[RawQuestion]:
+    """Fold each stimulus-only block into the question it introduces."""
+    out: list[RawQuestion] = []
+    pending: RawQuestion | None = None
+    for q in questions:
+        if q.is_stimulus_only:
+            # Two in a row: keep the later one, it is the nearer context.
+            pending = q
+            continue
+        if pending is not None:
+            q.stimulus = pending.text
+            q.stimulus_page = pending.page_index
+            # The stimulus block owns the figure, and its span is where to look.
+            if pending.bbox and q.bbox is None:
+                q.bbox = pending.bbox
+            q.page_index = min(q.page_index, pending.page_index)
+            pending = None
+        out.append(q)
+    if pending is not None:
+        out.append(pending)          # trailing stimulus with nothing after it
     return out
 
 

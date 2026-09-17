@@ -1,0 +1,308 @@
+# Concept lexicon for VCE Physics Units 3 & 4.
+#
+# The study design describes concepts; exam questions describe scenarios. VCAA
+# writes "investigate and apply Newton's three laws of motion"; Checkpoints
+# writes "a speeding motorbike travels past a stationary police car". Matching
+# one against the other on shared words fails badly — and worse than randomly,
+# because the generic words that do line up are misleading: "motion" pulls
+# kinematics questions into "motion approaching the speed of light", and
+# "travel"/"speed" pull them into "electromagnetic waves travel at the speed c".
+#
+# This file supplies the missing half: the vocabulary a question actually uses
+# for each dot point. It is hand-written subject knowledge, not derived from the
+# study design, and it is what the offline tagger leans on.
+#
+#   triggers  — terms or phrases that indicate this dot point. Multi-word
+#               phrases are matched as substrings; single words on token
+#               boundaries. A phrase is worth more than a bare word.
+#   requires  — if present, at least one of these must also appear. Used to stop
+#               a broad dot point claiming every question that shares one word.
+#   avoid     — terms that rule this dot point out even if triggers matched.
+#
+# Scored in blitz/ingest/tag.py; measured by evals/tagging_eval.py.
+
+subject_id: physics
+
+dot_points:
+
+  # --- Unit 3 AOS 1: motion in two dimensions ------------------------------
+  physics-u3-aos1-kk01:
+    triggers: [newton's laws, newton's second law, newton's third law, net force,
+               free-body, free body, friction, normal force, inclined plane,
+               incline, slope, tension, accelerates, acceleration, deceleration,
+               decelerates, braking, brakes, mass of the car, pulled, pushed,
+               lift, elevator, trolley, sled, block, rope, at rest,
+               from rest, constant acceleration, m s−2, m s⁻²,
+               # plain kinematics: Checkpoints revises it under this dot point
+               velocity, speed of the car, average speed, initial speed,
+               final speed, distance travelled, displacement, stationary,
+               travels past, km h, motorbike, police car, cyclist, runner,
+               speed limit, speeding, train, trains, truck, bus, skater,
+               swimmer, towards each other]
+    avoid: [speed of light, relativistic, photon, electron volt, de broglie]
+
+  physics-u3-aos1-kk02:
+    triggers: [circular motion, uniform circular, centripetal, banked track,
+               banked curve, circular road, roundabout, corner, bend, radius of
+               the circle, horizontal circle, conical pendulum, merry-go-round,
+               unbanked, travels around, around a flat, string, tension in the string]
+    weight: 1.6
+
+  physics-u3-aos1-kk03:
+    triggers: [satellite motion, artificial satellite, orbital period,
+               geostationary, orbits the earth, moon orbits]
+    requires: [satellite, orbit, moon, planet]
+
+  physics-u3-aos1-kk04:
+    triggers: [vertical circle, vertical plane, highest point, lowest point,
+               loop the loop, top of the loop, ferris wheel, bucket of water,
+               swung in a vertical, at the top of the circle]
+    weight: 1.9
+
+  physics-u3-aos1-kk05:
+    triggers: [projectile, projectiles, thrown, launched, kicked, fired
+               horizontally, trajectory, range of the, maximum height,
+               air resistance, falls from, dropped from, time of flight,
+               horizontal component, vertical component, angle above the
+               horizontal, golf ball, cricket ball, baseball, javelin]
+
+  physics-u3-aos1-kk06:
+    triggers: [conservation of momentum, momentum is conserved, collide,
+               collision, collisions, elastic collision, inelastic collision,
+               recoil, explodes, two trolleys, stick together, coupled,
+               conservation of energy, kinetic energy is conserved]
+
+  physics-u3-aos1-kk07:
+    triggers: [impulse, change in momentum, force-time graph, area under the
+               force, crumple zone, airbag, struck, bat, racquet, contact time]
+
+  physics-u3-aos1-kk08:
+    triggers: [work done, work done by, joules of work, force-distance graph,
+               area under the force-distance]
+    requires: [work]
+    avoid: [work function, photoelectric]
+
+  physics-u3-aos1-kk09:
+    triggers: [kinetic energy, gravitational potential energy, elastic potential
+               energy, strain potential energy, strain energy, spring, compressed,
+               stretched, spring constant, energy transformation, energy is
+               transformed, bungee, trampoline, roller coaster, pendulum swings]
+    avoid: [photon, photoelectric, work function, relativistic, emitted electrons,
+            metal surface, stopping voltage]
+
+  # --- Unit 3 AOS 2: fields -------------------------------------------------
+  physics-u3-aos2-kk01:
+    triggers: [field model, action at a distance, field lines, without contact]
+  physics-u3-aos2-kk02:
+    triggers: [compare fields, gravitational magnetic and electric, inverse
+               square, field strength]
+  physics-u3-aos2-kk03:
+    triggers: [point mass, point charge, coulomb's law, universal gravitation,
+               field about a point]
+  physics-u3-aos2-kk04:
+    triggers: [bar magnet, magnetic field lines, north pole, south pole,
+               solenoid, magnetic phenomena, magnetic field around]
+  physics-u3-aos2-kk05:
+    triggers: [uniform field, non-uniform field, static field, changing field]
+  physics-u3-aos2-kk06:
+    triggers: [parallel plates, accelerating voltage, electron gun, accelerated
+               through a potential, electric field strength, v/d, volts per metre,
+               work done on a charge, electronvolt, accelerated in a vacuum]
+  physics-u3-aos2-kk07:
+    triggers: [charged particle in a magnetic field, path of a charged particle,
+               radius of the path, mass spectrometer, velocity selector,
+               deflected by the magnetic field, into the page, out of the page]
+  physics-u3-aos2-kk08:
+    triggers: [gravitational field strength, gravitational force between,
+               mass of the planet, mass of the earth, g = gm, newton's law of
+               universal gravitation]
+  physics-u3-aos2-kk09:
+    triggers: [area under a force vs distance, change in gravitational potential
+               energy, escape, energy to move a satellite]
+  physics-u3-aos2-kk10:
+    triggers: [apparent weight, weightless, weightlessness, normal force,
+               free fall, astronaut, international space station]
+  physics-u3-aos2-kk11:
+    triggers: [orbital radius, orbital speed, period of the orbit, kepler,
+               circular orbit, satellite orbits]
+  physics-u3-aos2-kk12:
+    triggers: [interaction of two fields, current carrying wires, attract or
+               repel, two magnets]
+  physics-u3-aos2-kk13:
+    triggers: [current carrying conductor, force on a wire, bil, right-hand slap,
+               left-hand rule, current in a magnetic field, length of wire]
+  physics-u3-aos2-kk14:
+    triggers: [dc motor, commutator, armature, motor rotates, torque on the coil]
+  physics-u3-aos2-kk15:
+    triggers: [number of loops, number of turns of wire, strength of the motor,
+               increasing the current in the coil]
+  physics-u3-aos2-kk16:
+    triggers: [particle accelerator, synchrotron, cyclotron]
+
+  # --- Unit 3 AOS 3: electricity generation --------------------------------
+  physics-u3-aos3-kk01:
+    triggers: [magnetic flux, weber, flux through the loop, flux through the
+               coil, perpendicular to the area]
+  physics-u3-aos3-kk02:
+    triggers: [induced emf, emf induced, induced in the coil, electromotive force,
+               faraday's law, lenz's law, lenz, rate of change of flux,
+               induced current, eddy current, magnet falls through,
+               moving the magnet, copper tube, dropped through, magnet is dropped,
+               opposes the change]
+    weight: 1.5
+  physics-u3-aos3-kk03:
+    triggers: [generator, alternator, slip rings, split ring, dc voltage
+               produced, ac voltage produced]
+  physics-u3-aos3-kk04:
+    triggers: [photovoltaic, solar cell, solar panel, inverter]
+  physics-u3-aos3-kk05:
+    triggers: [sinusoidal, rotating loop, emf versus time graph, one revolution,
+               rotating coil]
+  physics-u3-aos3-kk06:
+    triggers: [rms, root-mean-square, root mean square, peak voltage,
+               peak-to-peak, peak to peak]
+  physics-u3-aos3-kk07:
+    triggers: [transformer, turns ratio, primary coil, secondary coil, primary
+               winding, step-up, step down, step-down, ideal transformer]
+  physics-u3-aos3-kk08:
+    triggers: [transmission line, power loss, transmission losses, power lines,
+               i²r, voltage drop along, transmitted at high voltage, substation]
+
+  # --- Unit 4 AOS 1: light, matter and relativity --------------------------
+  physics-u4-aos1-kk01:
+    triggers: [transverse electromagnetic wave, acceleration of charges,
+               changing electric field, polarisation]
+  physics-u4-aos1-kk02:
+    triggers: [speed of light in a vacuum, all electromagnetic waves,
+               electromagnetic spectrum, radio waves, microwaves, infrared,
+               ultraviolet, x-rays travel]
+    requires: [electromagnetic, spectrum, radio, microwave, vacuum]
+    avoid: [car, motorbike, train, cyclist, trolley, projectile]
+  physics-u4-aos1-kk03:
+    triggers: [standing wave, superposition, reflected wave, resonance]
+  physics-u4-aos1-kk04:
+    triggers: [nodes, antinodes, harmonic, fundamental frequency, string fixed
+               at both ends]
+  physics-u4-aos1-kk05:
+    triggers: [diffraction, aperture, slit width, spreading of the wave,
+               lambda/w, λ/w, gap width]
+  physics-u4-aos1-kk06:
+    triggers: [double slit, young's, interference pattern, path difference,
+               fringe, fringes, bright and dark bands, constructive interference,
+               destructive interference]
+  physics-u4-aos1-kk07:
+    triggers: [quantised energy, energy of a photon, planck's constant, e = hf,
+               quantum of energy]
+  physics-u4-aos1-kk08:
+    triggers: [photoelectric effect, photoelectric, photoelectrons,
+               photocurrent, work function,
+               threshold frequency, cut-off frequency, stopping voltage,
+               photocell, metal plate is illuminated, emitted electrons,
+               intensity of the light, metal surface, strikes a metal,
+               electrons are emitted, maximum kinetic energy of the emitted,
+               light of a specific frequency, illuminated with light]
+    weight: 1.6
+  physics-u4-aos1-kk09:
+    triggers: [limitation of the wave model, wave model cannot explain,
+               wave model cannot account, cannot be explained by the wave,
+               inconsistent with the wave model, classical wave theory predicts,
+               limitation of the wave]
+    weight: 1.8
+  physics-u4-aos1-kk10:
+    triggers: [electron diffraction, diffraction pattern produced by electrons,
+               crystal lattice, metal foil, diffraction rings]
+  physics-u4-aos1-kk11:
+    triggers: [same diffraction pattern, photons and electrons produce,
+               compare the diffraction]
+  physics-u4-aos1-kk12:
+    triggers: [de broglie, de bröglie, wavelength of the electron,
+               wavelength of matter, h/p, h/mv, matter waves]
+    weight: 1.6
+  physics-u4-aos1-kk13:
+    triggers: [quantisation, quantised, development of knowledge about light]
+  physics-u4-aos1-kk14:
+    triggers: [momentum of a photon, momentum of photons, radiation pressure,
+               absorbing surface, perfectly reflecting mirror, photon momentum]
+  physics-u4-aos1-kk15:
+    triggers: [absorption spectrum, emission spectrum, line spectra, spectral
+               lines, metal vapour lamp, discharge tube]
+  physics-u4-aos1-kk16:
+    triggers: [energy of absorbed, energy of emitted photons, interpret spectra,
+               wavelength of the emitted photon]
+  physics-u4-aos1-kk17:
+    triggers: [energy level, energy state, ground state, excited state,
+               electron transition, atom absorbs, atom emits]
+  physics-u4-aos1-kk18:
+    triggers: [single photon, one photon at a time, dual nature, wave-particle
+               duality, builds up over time]
+  physics-u4-aos1-kk19:
+    triggers: [approaching the speed of light, classical mechanics breaks down,
+               limitation of classical mechanics, near the speed of light]
+    requires: [speed of light, relativistic, classical mechanics, 0.9c, 0.99c]
+    avoid: [car, motorbike, cyclist, train, trolley, projectile, graph below]
+  physics-u4-aos1-kk20:
+    triggers: [einstein's postulates, two postulates, laws of physics are the
+               same, inertial reference frame, special theory of relativity]
+  physics-u4-aos1-kk21:
+    triggers: [michelson-morley, michelson morley, aether, ether, null result]
+    weight: 1.6
+  physics-u4-aos1-kk22:
+    triggers: [compare special relativity, classical physics predicts,
+               galilean, newtonian prediction]
+  physics-u4-aos1-kk23:
+    triggers: [proper time, t0, same place in the reference frame]
+    requires: [proper time, reference frame, relativistic]
+    avoid: [car, motorbike, cyclist, projectile]
+  physics-u4-aos1-kk24:
+    triggers: [proper length, l0, rest frame, length in the frame where]
+    requires: [proper length, rest frame, relativistic]
+  physics-u4-aos1-kk25:
+    triggers: [time dilation, length contraction, lorentz factor, gamma factor,
+               dilated, contracted, 0.9c, 0.99c, 0.8c]
+  physics-u4-aos1-kk26:
+    triggers: [muon, muons, cosmic ray, reach the earth's surface, decay before]
+    weight: 2.2
+  physics-u4-aos1-kk27:
+    triggers: [rest energy, total energy, mass-energy, mass energy, e = mc,
+               etot, relativistic energy, rest mass]
+  physics-u4-aos1-kk28:
+    triggers: [annihilation, positron, nuclear fusion in the sun, mass defect,
+               mass converted to energy, binding energy]
+
+  # --- Unit 4 AOS 2: scientific investigation ------------------------------
+  physics-u4-aos2-kk01:
+    triggers: [aim of the investigation, physics concepts specific to]
+    weight: 0.3
+  physics-u4-aos2-kk02:
+    triggers: [methodology, controlled experiment, independent variable,
+               dependent variable, controlled variable, method of the experiment]
+    weight: 0.3
+  physics-u4-aos2-kk03:
+    triggers: [accuracy, accurate, precision, precise, repeatability,
+               reproducibility, resolution, validity, valid, uncertainty,
+               systematic error, random error, outlier, error bars]
+    weight: 0.3
+  physics-u4-aos2-kk04:
+    triggers: [safety, ethical, risk assessment]
+    weight: 0.3
+  physics-u4-aos2-kk05:
+    triggers: [supports the hypothesis, refutes, evidence for the hypothesis]
+    weight: 0.3
+  physics-u4-aos2-kk06:
+    triggers: [line of best fit, gradient of the graph, linearise, linearised,
+               plot the data, y-intercept, plotting the data, trend in the data]
+    weight: 0.3
+  physics-u4-aos2-kk07:
+    triggers: [logbook]
+    weight: 0.3
+  physics-u4-aos2-kk08:
+    triggers: [significant figures, scientific notation, units of the answer,
+               conventions of science communication]
+    weight: 0.3
+  physics-u4-aos2-kk09:
+    triggers: [scientific poster]
+    weight: 0.3
+  physics-u4-aos2-kk10:
+    triggers: [key findings, implications of the investigation, conclusion of
+               the investigation]
+    weight: 0.3

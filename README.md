@@ -16,7 +16,8 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 |---|---|
 | Physics study design | **Imported from the VCAA PDF.** 71 dot points, VCAA's own wording. |
 | Business Management study design | **Draft.** Reconstructed by hand, flagged `verified: false`. Send the PDF and `blitz import-study-design` replaces it. |
-| Physics questions | Tested against a real Checkpoints extract: 73 questions, figures cropped, solutions attached. |
+| Physics questions | Tested against a real Checkpoints extract: 70 questions, figures cropped, solutions attached. |
+| Physics concept lexicon | Written, covering all 71 dot points. |
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | **The weak link.** See below. |
 
@@ -24,35 +25,54 @@ A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that
 quietly invents syllabus wording is worse than no tool.
 
-### Tagging accuracy — read this before trusting a sheet
+### Tagging accuracy
 
 Filing each question under the right dot point is what makes the selection UI
-mean anything, and the offline keyword tagger is not good at it. Measured
-against a real Checkpoints extract (`python evals/tagging_eval.py <pdf>`),
-scoring whether a question lands in the right *area of study*:
+mean anything. Two labelled sets, both scored by `evals/tagging_eval.py`:
 
-| | keyword tagger |
-|---|---|
-| coverage | 86% of questions tagged |
-| precision, Unit 4 AOS 1 (photoelectric, matter waves) | **96%** |
-| precision, Unit 3 AOS 1 (motion) | **27%** |
-| precision, overall | 79% |
+| | Checkpoints sample (area level) | held-out sample bank (dot point level) |
+|---|---|---|
+| coverage | 94% tagged | 100% tagged |
+| precision | **99%** right area | **90%** exact dot point, 97% right area |
 
-The overall figure flatters it. Photoelectric questions say "photon",
-"de Broglie", "diffraction" — words that appear in the study design. Motion
-questions say "car", "ball", "motorbike", "baseball player", which appear
-nowhere in it. The study design describes concepts; questions describe
-scenarios, and bag-of-words cannot bridge that.
+Ground truth for the first comes from the book itself — Checkpoints prints the
+page each question sits on and pages cluster by chapter, so page numbers map
+onto areas of study with no hand-annotation. The second is the sample bank,
+whose dot points were assigned by hand before any of this tuning existed.
 
-So the keyword tagger is a fallback that gets the tool running offline, not a
-serious tagger. **Set `ANTHROPIC_API_KEY` and `pip install -e '.[tag]'` before
-ingesting a real book.** The model reads each question in context and is the
-intended path; the eval harness scores it too (`--model`), though that has not
-yet been run — this environment had no API key.
+It started at 79% overall and **27% on motion questions**. The study design
+describes concepts ("investigate and apply Newton's three laws of motion");
+questions describe scenarios ("a speeding motorbike travels past a stationary
+police car"). Nothing useful overlaps, and what does overlap actively misleads:
+"motion" also appears in "motion approaching the speed of light", so kinematics
+questions landed under special relativity.
+
+The fix is `blitz/studydesign/data/physics-lexicon.yaml` — a hand-written
+concept lexicon giving each dot point the vocabulary a question about it
+actually uses, plus `requires`/`avoid` vetoes and weights to break ties. See
+`blitz/ingest/lexicon.py`. Business Management has no lexicon yet, so it falls
+back on IDF-weighted word overlap, which is much weaker.
+
+**Both sets have now informed tuning**, so neither is a clean held-out
+measurement any more. The next honest number needs a book neither has seen —
+worth running when the full Checkpoints is ingested.
 
 The tagger is deliberately conservative: a question it cannot place is left
-untagged and reported, rather than filed somewhere plausible. A question under
-the wrong dot point silently corrupts every sheet built from it.
+untagged and reported rather than filed somewhere plausible, because a question
+under the wrong dot point silently corrupts every sheet built from it.
+
+**A model tagger is still the intended path for a full book.** Set
+`ANTHROPIC_API_KEY` and `pip install -e '.[tag]'`. It has not been measured —
+this environment had no key — so no claim is made about it.
+
+### What else was measured on the real book
+
+| | |
+|---|---|
+| questions found in a 54-page sample | 70 |
+| multiple choice classified correctly | 29/29, no false positives |
+| questions whose figure was found | 23 of 25 that mention one |
+| worked solutions needing a page crop | 23 (a third — stacked maths) |
 
 ## Quick start
 
@@ -107,7 +127,7 @@ substantially more accurate; otherwise it falls back to keyword matching. Either
 way this is the **only** step that touches a model. Once the index is built,
 generating sheets is fully offline and instant.
 
-## Two things the real books taught us
+## Three things the real books taught us
 
 **PyMuPDF reads superscripts out of order.** In Checkpoints, the "⁻¹" in
 "10 m s⁻¹" is set about 1.3pt above the baseline, so it lands on its own y-row
@@ -129,6 +149,24 @@ instead, and the text is kept only for search and tagging. In the sample
 extract that was 2 questions and 22 worked solutions — a third of the
 solutions. A mangled worked solution is worse than a mangled question, so
 questions and solutions are checked and cropped independently.
+
+**A shared stimulus is printed above its question, not with it.** Checkpoints
+puts the lead-in sentence and the figure *above* the rule that fences the
+question, often with a question number of their own:
+
+```
+"The speed-time graph below describes the motion of an object."   <- stimulus
+[graph]
+--------------------------------------------------------------- rule
+Question 10/ 11
+Which one best describes the motion at t = 5 s?
+```
+
+So the stimulus arrives attached to the *previous* question, and the figure
+sits in the preceding fence. Segmenting on the header alone indexed the
+stimulus as an unanswerable question of its own and missed 9 of 23 figures —
+every graph question in the sample. Stimulus-only blocks are now folded into
+the question they introduce, and the figure search widens into the fence above.
 
 ## How a sheet gets built
 

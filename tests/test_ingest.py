@@ -302,3 +302,97 @@ class TestKeywordTagger:
         hard = tagger.tag("Evaluate the transformer design, hence determine "
                           "the power losses.", marks=8)
         assert (easy.difficulty or 0) < (hard.difficulty or 0)
+
+
+@pytest.fixture
+def stimulus_book(tmp_path):
+    """Reproduces how Checkpoints prints a shared stimulus and its figure.
+
+    The lead-in sentence and the graph sit ABOVE the rule that fences the
+    question, so they arrive attached to the previous question, and the figure
+    is in the preceding fence rather than the question's own. Looking only
+    inside the question's fence missed every graph question in the real sample.
+    """
+    path = tmp_path / "stimulus.pdf"
+    c = rl_canvas.Canvas(str(path), pagesize=A4)
+
+    def rule(y):
+        c.setLineWidth(0.5)
+        c.line(LEFT, y, PAGE_W - LEFT, y)
+
+    def text(y, s, size=10):
+        c.setFont("Helvetica", size)
+        c.drawString(LEFT, y, s)
+
+    y = PAGE_H - 25 * mm
+    text(y, "Question 9/ 11")
+    y -= 7 * mm
+    text(y, "Calculate the impulse delivered during the collision.")
+    y -= 8 * mm
+    rule(y)
+
+    # The stimulus block: its own "Question" header, a lead-in, and the figure.
+    y -= 10 * mm
+    text(y, "Question 10/ 11")
+    y -= 7 * mm
+    text(y, "The speed-time graph below describes the motion of an object.")
+    y -= 6 * mm
+    c.setLineWidth(1)
+    for i in range(7):
+        c.rect(LEFT + i * 8 * mm, y - 34 * mm, 7 * mm, 32 * mm)
+    y -= 42 * mm
+    rule(y)
+
+    # The question that actually uses it, in the next fence.
+    y -= 10 * mm
+    text(y, "Question 11/ 11")
+    y -= 7 * mm
+    text(y, "Which one best describes the motion of the object at t = 5 s?")
+    for opt in ("A Constant speed", "B Increasing speed",
+                "C Constant acceleration", "D Increasing acceleration"):
+        y -= 6 * mm
+        text(y, opt)
+    y -= 8 * mm
+    rule(y)
+    c.save()
+    return path
+
+
+def test_a_stimulus_only_block_is_not_indexed_as_a_question(stimulus_book):
+    """"The graph below describes..." is unanswerable on its own."""
+    qs = _questions(stimulus_book)
+    assert [q.number for q in qs] == ["9", "11"]
+
+
+def test_the_stimulus_is_carried_onto_the_question_it_introduces(stimulus_book):
+    qs = _questions(stimulus_book)
+    q = next(q for q in qs if q.number == "11")
+    assert "speed-time graph below" in q.stimulus
+    assert "speed-time graph below" in q.full_text
+    assert "Which one best describes" in q.text
+
+
+def test_the_stimulus_does_not_leak_onto_the_previous_question(stimulus_book):
+    qs = _questions(stimulus_book)
+    q = next(q for q in qs if q.number == "9")
+    assert "graph" not in q.full_text.lower()
+
+
+def test_a_figure_in_the_preceding_fence_is_found(stimulus_book, conn):
+    ingest_pdf(conn, stimulus_book, source_id="stim", subject_id="physics",
+               use_model=False, progress=lambda *_: None)
+    rows = conn.execute(
+        "SELECT * FROM question WHERE source_id='stim'").fetchall()
+    graph_q = next(r for r in rows if "describes the motion" in r["body"])
+    assert graph_q["figure_path"], (
+        "the graph sits in the fence above its question and was not found")
+
+
+def test_a_question_that_mentions_no_figure_gets_none(stimulus_book, conn):
+    ingest_pdf(conn, stimulus_book, source_id="stim", subject_id="physics",
+               use_model=False, progress=lambda *_: None)
+    row = conn.execute(
+        "SELECT * FROM question WHERE source_id='stim' AND body LIKE '%impulse%'"
+    ).fetchone()
+    assert row is not None
+    assert not row["figure_path"]

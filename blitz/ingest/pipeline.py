@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -81,29 +82,59 @@ def _union(
     return (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
 
 
-def _figure_for(page, q: RawQuestion) -> tuple[float, float, float, float] | None:
-    """The diagram belonging to this question, if any.
+FIGURE_REF = re.compile(
+    r"\b(diagram|graph|figure|shown|below|above|apparatus|sketch)\b", re.IGNORECASE)
 
-    Checkpoints fences each question between full-width rules, and the figure
-    usually sits above its question rather than below. Using the rules as the
-    boundary is far more reliable than a fixed distance threshold.
-    """
-    if not q.bbox:
-        return None
+
+def _figures_in_fence(page, y0: float, y1: float):
+    """Figure regions between the rules that fence a span of the page."""
     from .textflow import horizontal_rules
 
     rules = horizontal_rules(page)
-    _, qy0, _, qy1 = q.bbox
-    top = max([y for y in rules if y < qy0 + 2], default=0.0)
-    bottom = min([y for y in rules if y > qy1 - 2], default=page.rect.height)
+    top = max([y for y in rules if y < y0 + 2], default=0.0)
+    bottom = min([y for y in rules if y > y1 - 2], default=page.rect.height)
+    return [r for r in _page_figures(page) if r[1] >= top - 4 and r[3] <= bottom + 4]
 
-    regions = [
-        r for r in _page_figures(page)
-        if r[1] >= top - 4 and r[3] <= bottom + 4
-    ]
-    if not regions:
-        return None
-    return max(regions, key=lambda r: (r[2] - r[0]) * (r[3] - r[1]))
+
+def _figure_for(doc, q: RawQuestion):
+    """The diagram belonging to this question, and the page it is on.
+
+    Checkpoints prints a shared stimulus and its figure ABOVE the rule that
+    fences the question, so the figure usually sits in the preceding fence
+    rather than the question's own. Looking only inside the question's fence
+    missed 9 of 23 figure questions — every graph question in the sample.
+
+    So: look in the question's fence, then, if the question says there is a
+    figure, in the fence above it and on the previous page.
+    """
+    page = doc[q.page_index]
+    if not q.bbox:
+        return None, q.page_index
+
+    _, qy0, _, qy1 = q.bbox
+    regions = _figures_in_fence(page, qy0, qy1)
+    if regions:
+        return max(regions, key=_area), q.page_index
+
+    if not FIGURE_REF.search(q.full_text):
+        return None, q.page_index
+
+    # The fence immediately above, on this page.
+    above = [r for r in _page_figures(page) if r[3] <= qy0 + 4]
+    if above:
+        return max(above, key=lambda r: r[3]), q.page_index
+
+    # Still nothing: the stimulus ran back onto the previous page.
+    if q.page_index > 0:
+        prev = doc[q.page_index - 1]
+        regions = _page_figures(prev)
+        if regions:
+            return max(regions, key=lambda r: r[3]), q.page_index - 1
+    return None, q.page_index
+
+
+def _area(r) -> float:
+    return (r[2] - r[0]) * (r[3] - r[1])
 
 
 def _page_figures(page) -> list[tuple[float, float, float, float]]:
@@ -168,17 +199,17 @@ def ingest_pdf(
     for q in questions:
         page = doc[q.page_index]
 
+        figure_rect, figure_page = _figure_for(doc, q)
         figure_path = None
         render_mode = "text"
         if q.needs_crop:
             # The text can't be trusted, so show the page itself.
-            rect = _crop_span(page, _union(q.bbox, _figure_for(page, q)))
+            same_page = figure_rect if figure_page == q.page_index else None
+            rect = _crop_span(page, _union(q.bbox, same_page))
             figure_path = extract.crop(doc, q.page_index, rect, tag=source_id) if rect else None
             render_mode = "crop" if figure_path else "text"
-        else:
-            rect = _figure_for(page, q)
-            if rect:
-                figure_path = extract.crop(doc, q.page_index, rect, tag=source_id)
+        elif figure_rect:
+            figure_path = extract.crop(doc, figure_page, figure_rect, tag=source_id)
 
         answer_figure = None
         answer_mode = "text"

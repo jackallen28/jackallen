@@ -60,6 +60,64 @@ def area_of(design, kk_id: str) -> str | None:
         return None
 
 
+def sample_bank_items(subject_id: str = "physics"):
+    """A held-out, dot-point-level labelled set.
+
+    The sample bank's questions were written for this repo and hand-mapped to
+    dot points before the lexicon existed, so they are independent of the
+    tuning done against the Checkpoints set — and they are labelled at dot
+    point level, which is a much harder target than area of study.
+    """
+    import yaml
+
+    from blitz.corpus.sample import CORPUS_DIR
+
+    doc = yaml.safe_load((CORPUS_DIR / f"sample_{subject_id}.yaml").read_text(
+        encoding="utf-8"))
+    for q in doc.get("questions", []):
+        kk = q["kk"] if isinstance(q["kk"], str) else q["kk"][0]
+        yield q, kk
+
+
+def score_sample_bank(subject_id: str = "physics", use_model: bool = False) -> dict:
+    """Precision at dot point AND area level on the held-out sample bank."""
+    design = load_study_design(subject_id)
+    items = list(sample_bank_items(subject_id))
+    if use_model:
+        tagger = ClaudeTagger(design)
+        results = tagger.tag_all(
+            [{"text": q["body"], "options": q.get("options"),
+              "marks": q.get("marks")} for q, _ in items])
+    else:
+        tagger = KeywordTagger(design)
+        results = [tagger.tag(q["body"], q.get("options"), q.get("marks"))
+                   for q, _ in items]
+
+    stats = {"total": len(items), "tagged": 0, "exact": 0, "same_area": 0,
+             "rejected": 0, "mistakes": []}
+    for (q, gold), result in zip(items, results):
+        if result.rejected or not result.kk_ids:
+            stats["rejected"] += 1
+            continue
+        stats["tagged"] += 1
+        predicted = result.kk_ids[0]
+        if predicted == gold:
+            stats["exact"] += 1
+            stats["same_area"] += 1
+        elif area_of(design, predicted) == area_of(design, gold):
+            stats["same_area"] += 1
+            if len(stats["mistakes"]) < 6:
+                stats["mistakes"].append((q["body"][:64], gold, predicted, "area ok"))
+        elif len(stats["mistakes"]) < 6:
+            stats["mistakes"].append((q["body"][:64], gold, predicted, "WRONG AREA"))
+
+    tagged = stats["tagged"] or 1
+    stats["exact_precision"] = stats["exact"] / tagged
+    stats["area_precision"] = stats["same_area"] / tagged
+    stats["coverage"] = stats["tagged"] / stats["total"]
+    return stats
+
+
 def score(pdf: Path, use_model: bool = False) -> dict:
     design = load_study_design("physics")
     items = list(labelled(pdf))
@@ -105,10 +163,32 @@ def score(pdf: Path, use_model: bool = False) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("pdf", type=Path)
+    ap.add_argument("pdf", type=Path, nargs="?",
+                    help="a Checkpoints PDF to score (area-of-study level)")
+    ap.add_argument("--samples", action="store_true",
+                    help="score the held-out sample bank at dot point level")
     ap.add_argument("--model", action="store_true",
                     help="score the Claude tagger instead of the keyword fallback")
     args = ap.parse_args()
+
+    if args.samples or args.pdf is None:
+        s = score_sample_bank(use_model=args.model)
+        name = "Claude tagger" if args.model else "keyword tagger"
+        print(f"\n{name} on the held-out sample bank (dot point level)")
+        print(f"  labelled questions   : {s['total']}")
+        print(f"  tagged               : {s['tagged']}  ({s['coverage']:.0%})")
+        print(f"  left untagged        : {s['rejected']}")
+        print(f"  EXACT dot point      : {s['exact']}/{s['tagged']} "
+              f"({s['exact_precision']:.0%})")
+        print(f"  right area of study  : {s['same_area']}/{s['tagged']} "
+              f"({s['area_precision']:.0%})")
+        if s["mistakes"]:
+            print("\n  misses:")
+            for text, gold, predicted, kind in s["mistakes"]:
+                print(f"    [{kind}] {text}…")
+                print(f"        gold={gold}  predicted={predicted}")
+        if args.pdf is None:
+            return 0
 
     stats = score(args.pdf, use_model=args.model)
     name = "Claude tagger" if args.model else "keyword tagger"
