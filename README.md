@@ -20,6 +20,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Physics concept lexicon | Written, covering all 71 dot points. |
 | Question pack import | Schema, validator and importer done; example pack in `packs/`. |
 | Deterministic pack extraction | `blitz extract-pack` — ~40 s for 1000 pages, flags ~13% for review. |
+| One-command indexing | `blitz index` — study design + book in, questions and content out. Textbook path untested on a real book. |
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | **The weak link.** See below. |
 
@@ -92,6 +93,23 @@ blitz generate physics \
     --notes "impulse sign conventions and transformer turns ratios" \
     --title "Physics U3 Blitz"
 ```
+
+## Indexing a book — start here
+
+```bash
+blitz index sources/physics-textbook.pdf --subject physics \
+    --study-design sources/vcaa/physics-study-design.pdf
+```
+
+One command: imports the study design, works out whether the PDF is a
+Checkpoints book, a textbook or an exam paper, extracts every question (with
+diagrams cropped from the page), indexes the **teaching content** section by
+section, tags all of it to the study design, and reports what it could not
+place. No model, no network; about a minute per 1000 pages. See
+`docs/indexing-a-book.md`.
+
+The textbook path is built against synthetic pages and needs a real textbook to
+tune — the same way the Checkpoints path needed a real Checkpoints.
 
 ## Deploying it
 

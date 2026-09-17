@@ -182,3 +182,71 @@ def stimulus_book(tmp_path):
     rule(y)
     c.save()
     return path
+
+
+@pytest.fixture
+def fake_textbook(tmp_path):
+    """A PDF shaped like a VCE textbook chapter.
+
+    Teaching prose under section headings set in a larger font, a worked example
+    with its solution, a numbered question block at the end of a section, and a
+    chapter review. This is what the textbook extractor is written against, in
+    the absence of a real textbook.
+    """
+    path = tmp_path / "fake-textbook.pdf"
+    c = rl_canvas.Canvas(str(path), pagesize=A4)
+    y = [PAGE_H - 25 * mm]
+
+    def line(text, size=10, bold=False):
+        if y[0] < 25 * mm:
+            c.showPage()
+            y[0] = PAGE_H - 25 * mm
+        c.setFont("Helvetica-Bold" if bold else "Helvetica", size)
+        c.drawString(LEFT, y[0], text)
+        y[0] -= (size + 4)
+
+    def para(*lines):
+        for t in lines:
+            line(t)
+        y[0] -= 6
+
+    line("Chapter 6  Light and matter", 18, bold=True)
+    y[0] -= 8
+    line("6.1  The photoelectric effect", 14, bold=True)
+    para("When light of sufficiently high frequency falls on a clean metal surface,",
+         "electrons are emitted. This is the photoelectric effect. Increasing the",
+         "intensity of the light increases the number of photoelectrons but not their",
+         "maximum kinetic energy; only raising the frequency does that. The work",
+         "function of the metal is the minimum energy needed to free an electron,",
+         "and the threshold frequency is the lowest frequency that causes emission.",
+         "Einstein explained this by treating light as photons of energy E = hf.")
+    line("Worked example 6.1", 12, bold=True)
+    para("Light of frequency 8.0 x 10^14 Hz falls on a metal with work function",
+         "2.1 eV. Calculate the maximum kinetic energy of the emitted electrons.")
+    line("Solution", 10, bold=True)
+    para("E = hf = 4.14 x 10^-15 x 8.0 x 10^14 = 3.3 eV.",
+         "Ek max = E - W = 3.3 - 2.1 = 1.2 eV.")
+    line("Questions", 12, bold=True)
+    para("1. Explain why increasing the intensity of the light does not increase the",
+         "   maximum kinetic energy of the photoelectrons. (2 marks)")
+    para("2. A metal has a threshold frequency of 5.5 x 10^14 Hz. Determine its work",
+         "   function in eV. (2 marks)")
+    para("3. Which of the following best describes the photoelectric effect?",
+         "A Light behaves only as a wave",
+         "B Light delivers energy in discrete quanta",
+         "C Electrons are emitted regardless of frequency",
+         "D Intensity determines the energy of each photoelectron")
+    y[0] -= 10
+    line("6.2  The wave-like nature of matter", 14, bold=True)
+    para("De Broglie proposed that matter has a wavelength given by lambda = h/p.",
+         "Electron diffraction through a crystal lattice confirmed this: electrons",
+         "produce the same ring patterns as X-rays of the same wavelength. The",
+         "wavelength of everyday objects is far too small to observe, which is why",
+         "the wave nature of matter only shows up for particles of very small mass.")
+    line("Chapter review", 14, bold=True)
+    para("1. Calculate the de Broglie wavelength of an electron travelling at",
+         "   2.0 x 10^6 m/s. (3 marks)")
+    para("2. Compare the diffraction patterns produced by electrons and photons of",
+         "   the same wavelength. (2 marks)")
+    c.save()
+    return path

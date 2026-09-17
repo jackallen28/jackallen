@@ -2,6 +2,7 @@
 
     blitz init                      create the index and load the sample bank
     blitz subjects                  list subjects and how verified they are
+    blitz index <pdf> ...           study design + book in, index out (start here)
     blitz extract-pack <pdf>        build a draft pack from a PDF, no model
     blitz import-pack <json>        load a curated question pack (preferred)
     blitz dot-points <subject>      the dot point ids a pack should tag against
@@ -88,18 +89,22 @@ def cmd_coverage(args) -> int:
     design = load_study_design(args.subject)
     with db.session() as conn:
         rows = coverage_report(conn, design)
+        content = db.passage_coverage(conn, args.subject)
     current = None
     thin = 0
+    print(f"{'Qs':>4} {'text':>5}   {'':24}  dot point")
     for row in rows:
         if row["aos"] != current:
             current = row["aos"]
             print(f"\n{current}")
-        bar = "█" * min(row["count"], 24)
+        n_text = content.get(row["kk_id"], 0)
+        bar = "█" * min(row["count"], 20) + "░" * min(n_text, 4)
         star = "" if row["verified"] else " *"
         if row["count"] < args.thin:
             thin += 1
-        print(f"  {row['count']:4}  {bar:<24}  {row['label']}{star}")
-    print(f"\n{thin} dot point(s) hold fewer than {args.thin} questions.")
+        print(f"  {row['count']:4} {n_text:5}   {bar:<24}  {row['label']}{star}")
+    print(f"\n{thin} dot point(s) hold fewer than {args.thin} questions.  "
+          f"(█ questions, ░ teaching sections)")
     if not design.fully_verified:
         print("* wording not yet imported from the official VCAA study design.")
     return 0
@@ -159,6 +164,26 @@ def cmd_import_pack(args) -> int:
     if report.ok and not args.dry_run:
         print("\nNext: blitz coverage " + (report.subject_id or "<subject>"))
     return 0 if report.ok else 1
+
+
+def cmd_index(args) -> int:
+    """A study design and a book in, an index out. No model, no network."""
+    ensure_dirs()
+    from .ingest.index import index_book
+
+    source_id = args.source_id or Path(args.pdf).stem.lower().replace(" ", "-").replace("_", "-")
+    with db.session() as conn:
+        report = index_book(
+            conn, args.pdf,
+            subject_id=args.subject, source_id=source_id,
+            title=args.title, kind=args.kind, edition=args.edition,
+            page_offset=args.page_offset,
+            pages=(args.first_page, args.last_page) if args.last_page else None,
+            study_design_pdf=args.study_design,
+            include_content=not args.no_content,
+        )
+    print(f"\nNext: blitz coverage {args.subject}")
+    return 0 if report.questions_indexed or report.passages_indexed else 1
 
 
 def cmd_extract_pack(args) -> int:
@@ -328,6 +353,27 @@ def build_parser() -> argparse.ArgumentParser:
     pack.add_argument("--dry-run", action="store_true",
                       help="validate only; write nothing")
     pack.set_defaults(func=cmd_import_pack)
+
+    ix = sub.add_parser(
+        "index",
+        help="study design + book in, index out (questions AND content)")
+    ix.add_argument("pdf", help="a Checkpoints book, textbook or exam paper")
+    ix.add_argument("--subject", required=True)
+    ix.add_argument("--study-design", metavar="PDF",
+                    help="import the VCAA study design first, from this PDF")
+    ix.add_argument("--source-id", help="stable id; defaults to the filename")
+    ix.add_argument("--title", help="printed in citations; defaults to the filename")
+    ix.add_argument("--kind", default="auto",
+                    choices=["auto", "checkpoints", "textbook", "exam"],
+                    help="what kind of book; auto-detected by default")
+    ix.add_argument("--edition")
+    ix.add_argument("--page-offset", type=int, default=0,
+                    help="printed page number minus PDF page index")
+    ix.add_argument("--first-page", type=int, default=0)
+    ix.add_argument("--last-page", type=int)
+    ix.add_argument("--no-content", action="store_true",
+                    help="questions only; skip indexing the teaching sections")
+    ix.set_defaults(func=cmd_index)
 
     xp = sub.add_parser("extract-pack",
                         help="build a draft pack from a PDF (no model)")

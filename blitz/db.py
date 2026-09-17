@@ -115,6 +115,41 @@ CREATE TRIGGER IF NOT EXISTS question_au AFTER UPDATE ON question BEGIN
     VALUES (new.rowid, new.body, new.answer, new.figure_caption);
 END;
 
+-- Teaching content, section by section. The other half of a textbook: a
+-- revision sheet can point a student at "6.3 The photoelectric effect, p. 142"
+-- for the dot point they are stuck on.
+CREATE TABLE IF NOT EXISTS passage (
+    id            TEXT PRIMARY KEY,
+    subject_id    TEXT NOT NULL,
+    source_id     TEXT NOT NULL REFERENCES source(id) ON DELETE CASCADE,
+    title         TEXT NOT NULL,
+    section       TEXT,                  -- "6.3", if the book numbers sections
+    level         INTEGER NOT NULL DEFAULT 2,
+    body          TEXT NOT NULL,
+    page_start    INTEGER NOT NULL,      -- 0-based PDF page index
+    page_end      INTEGER NOT NULL,
+    printed_page  TEXT,                  -- as printed in the book, if known
+    confidence    REAL NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS passage_kk (
+    passage_id    TEXT NOT NULL REFERENCES passage(id) ON DELETE CASCADE,
+    kk_id         TEXT NOT NULL,
+    PRIMARY KEY (passage_id, kk_id)
+);
+CREATE INDEX IF NOT EXISTS idx_passage_subject ON passage(subject_id);
+CREATE INDEX IF NOT EXISTS idx_pkk_kk ON passage_kk(kk_id);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS passage_fts USING fts5(
+    title, body, content='passage', content_rowid='rowid'
+);
+CREATE TRIGGER IF NOT EXISTS passage_ai AFTER INSERT ON passage BEGIN
+    INSERT INTO passage_fts(rowid, title, body) VALUES (new.rowid, new.title, new.body);
+END;
+CREATE TRIGGER IF NOT EXISTS passage_ad AFTER DELETE ON passage BEGIN
+    INSERT INTO passage_fts(passage_fts, rowid, title, body)
+    VALUES ('delete', old.rowid, old.title, old.body);
+END;
+
 -- Sheets we've generated, so the picker can avoid repeating questions.
 CREATE TABLE IF NOT EXISTS sheet (
     id            TEXT PRIMARY KEY,
@@ -187,6 +222,26 @@ def insert_question(conn: sqlite3.Connection, q: dict, kk_ids: Iterable[str]) ->
             " VALUES (?, ?, ?, ?)",
             (payload["id"], kk_id, conf, 1 if i == 0 else 0),
         )
+
+
+def insert_passage(conn: sqlite3.Connection, p: dict, kk_ids: Iterable[str]) -> None:
+    cols = ", ".join(p)
+    marks = ", ".join("?" for _ in p)
+    conn.execute(f"INSERT OR REPLACE INTO passage ({cols}) VALUES ({marks})",
+                 tuple(p.values()))
+    conn.execute("DELETE FROM passage_kk WHERE passage_id = ?", (p["id"],))
+    for kk in kk_ids:
+        conn.execute("INSERT OR REPLACE INTO passage_kk (passage_id, kk_id) VALUES (?, ?)",
+                     (p["id"], kk))
+
+
+def passage_coverage(conn: sqlite3.Connection, subject_id: str) -> dict[str, int]:
+    """How many teaching passages we hold per dot point."""
+    rows = conn.execute(
+        "SELECT pk.kk_id AS kk_id, COUNT(*) AS n FROM passage_kk pk "
+        "JOIN passage p ON p.id = pk.passage_id WHERE p.subject_id = ? "
+        "GROUP BY pk.kk_id", (subject_id,)).fetchall()
+    return {r["kk_id"]: r["n"] for r in rows}
 
 
 def coverage(conn: sqlite3.Connection, subject_id: str) -> dict[str, int]:
