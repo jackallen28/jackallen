@@ -537,12 +537,9 @@ button.danger-solid { background: var(--danger); color: #2a0b0b; }
 /* The words stay faint; the logo itself is left legible. */
 .credit span { opacity: .55; transition: opacity .2s; }
 .credit:hover span { opacity: .9; }
-/* The logo was drawn for a white page — its grey subtitle disappears on the
-   dark ground — so it sits on a small light chip rather than being recoloured. */
-.credit img {
-  height: 24px; width: auto; display: block;
-  background: #efe9e1; padding: 5px 10px; border-radius: 7px;
-}
+/* Transparent, as supplied. The grey subtitle is faint on the dark ground and
+   that is by choice — the credit is meant to be quiet. */
+.credit img { height: 24px; width: auto; display: block; }
 .credit a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
 /* The chat screen fills the viewport; the credit sits below the fold there. */
 .chat-shell + .credit { margin-top: -6px; }

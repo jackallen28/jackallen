@@ -400,7 +400,8 @@ top of `public/css/app.css`, so a light version is one block.
 
 Every page ends with a small *Powered and created by* line and the Allentronics
 logo (`public/img/allentronics-logo.png`), linking to allentronics.com.au. The logo
-was drawn for a white page, so it sits on a light chip rather than being recoloured.
+is placed transparent, as supplied; its grey subtitle is faint on the dark ground, and
+the credit is meant to be quiet.
 
 ## Layout
 
