@@ -251,6 +251,7 @@ function showPreview(data) {
 function showSheet(data) {
   const el = $("#result");
   el.hidden = false;
+  const columns = data.columns === 1 ? " · single column (page crops)" : "";
   el.innerHTML =
     `<h2>Your Blitz is ready</h2>
      <div class="summary">
@@ -259,9 +260,24 @@ function showSheet(data) {
        <div class="stat"><b>${data.question_pages}</b>pages of questions</div>
        <div class="stat"><b>${data.total_pages}</b>pages with solutions</div>
      </div>
-     <p><a class="chip on" href="${data.url}" download>Download ${esc(data.filename)}</a></p>
+     <div class="viewer-bar">
+       <a class="chip on" href="${data.url}?download=1" download>Download PDF</a>
+       <a class="chip" href="${data.url}" target="_blank" rel="noopener">Open in a new tab</a>
+       <button type="button" class="chip" id="printsheet">Print</button>
+       <span class="count">${esc(data.filename)}${columns}</span>
+     </div>
      ${warnList(data.warnings)}
-     <iframe src="${data.url}" title="Your Blitz"></iframe>`;
+     <iframe id="sheetview" src="${data.url}#view=FitH" title="Your Blitz"></iframe>`;
+  // Printing goes through the viewer so the sheet prints, not the page around it.
+  $("#printsheet").onclick = () => {
+    const frame = $("#sheetview");
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    } catch {
+      window.open(`${data.url}`, "_blank", "noopener");
+    }
+  };
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

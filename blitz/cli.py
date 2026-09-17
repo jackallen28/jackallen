@@ -233,11 +233,30 @@ def cmd_dot_points(args) -> int:
 
 
 def cmd_serve(args) -> int:
+    import os
+
     import uvicorn
 
+    from .server.auth import MissingPassword, check_startup, password
+
     ensure_dirs()
-    print(f"Blitz is running at http://{args.host}:{args.port}")
-    uvicorn.run("blitz.server.app:app", host=args.host, port=args.port,
+    # A platform (Render, Fly, a container) hands the port in the environment
+    # and expects the app on 0.0.0.0. Locally, neither is true.
+    port = int(os.environ.get("PORT") or args.port)
+    host = args.host
+    if os.environ.get("PORT") and host == "127.0.0.1":
+        host = "0.0.0.0"
+
+    try:
+        check_startup(host)
+    except MissingPassword as exc:
+        print(f"\n{exc}\n")
+        return 2
+
+    where = "http://127.0.0.1" if host in ("127.0.0.1", "localhost") else f"http://{host}"
+    lock = " (password required)" if password() else ""
+    print(f"Blitz is running at {where}:{port}{lock}")
+    uvicorn.run("blitz.server.app:app", host=host, port=port,
                 reload=args.reload, log_level="warning")
     return 0
 

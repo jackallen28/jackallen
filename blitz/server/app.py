@@ -22,6 +22,7 @@ from ..models import SheetSpec
 from ..picker import build_plan
 from ..render import render_sheet
 from ..studydesign import list_subjects, load_study_design
+from .auth import auth_middleware, password
 
 STATIC = Path(__file__).resolve().parent / "static"
 
@@ -32,6 +33,18 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="VCE Blitz", docs_url=None, redoc_url=None, lifespan=lifespan)
+app.middleware("http")(auth_middleware)
+
+
+@app.get("/healthz")
+def healthz():
+    """Liveness probe. Served without a password so the platform can reach it."""
+    subjects = list_subjects()
+    return {
+        "ok": True,
+        "subjects": [s.subject_id for s in subjects],
+        "protected": bool(password()),
+    }
 
 
 class SheetRequest(BaseModel):
@@ -161,13 +174,26 @@ def api_generate(req: SheetRequest):
     }
 
 
-@app.get("/sheets/{name}")
-def get_sheet(name: str):
+@app.api_route("/sheets/{name}", methods=["GET", "HEAD"])
+def get_sheet(name: str, download: bool = False):
+    """Serve a generated sheet.
+
+    Inline by default, so the page can show the sheet in a viewer as soon as it
+    is generated — `attachment` made the browser download it and left the
+    preview blank. `?download=1` is the save button.
+
+    HEAD is registered alongside GET because some viewers probe with it first,
+    and without it the request fell through to the static mount and 404'd.
+    """
     # Resolve and confirm the file really sits inside OUT_DIR before serving it.
     path = (OUT_DIR / name).resolve()
     if not path.is_file() or OUT_DIR.resolve() not in path.parents:
         raise HTTPException(404, "no such sheet")
-    return FileResponse(path, media_type="application/pdf", filename=name)
+    disposition = "attachment" if download else "inline"
+    return FileResponse(
+        path, media_type="application/pdf",
+        headers={"Content-Disposition": f'{disposition}; filename="{name}"'},
+    )
 
 
 def _design_or_404(subject_id: str):

@@ -93,6 +93,14 @@ blitz generate physics \
     --title "Physics U3 Blitz"
 ```
 
+## Deploying it
+
+`render.yaml` deploys one private instance to Render — see
+`docs/deploying-to-render.md`. Private is enforced, not suggested: a Blitz
+carries cropped images of a copyrighted textbook, so the app **refuses to start
+on a public interface without `BLITZ_PASSWORD` set**. Locally on `127.0.0.1` no
+password is needed; the machine's own login is the access control.
+
 ## Running it on a Mac
 
 See `docs/running-on-a-mac.md`. The short version: it is plain Python and

@@ -1,0 +1,38 @@
+# Render blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploys one private instance of Blitz. Private is not optional: a Blitz
+# carries cropped images of a copyrighted textbook, so the app refuses to start
+# on a public interface without BLITZ_PASSWORD set. Render generates one below.
+#
+# See docs/deploying-to-render.md for getting your book onto the instance —
+# the licensed PDF is never committed, so it has to be uploaded to the disk.
+
+services:
+  - type: web
+    name: vce-blitz
+    runtime: python
+    plan: starter            # free has no persistent disk; see the docs
+    region: singapore        # closest Render region to Australia
+    branch: claude/vce-exam-prep-tool-eg2dha
+
+    buildCommand: pip install --upgrade pip && pip install -e .
+    startCommand: blitz serve
+    healthCheckPath: /healthz
+
+    disk:
+      name: blitz-data
+      # Everything derived and everything uploaded lives here, so it survives
+      # deploys: the SQLite index, the figure crops, the source PDFs and the
+      # generated sheets.
+      mountPath: /var/blitz
+      sizeGB: 5
+
+    envVars:
+      - key: BLITZ_ROOT
+        value: /var/blitz
+      - key: BLITZ_PASSWORD
+        generateValue: true   # Render generates it; read it in the dashboard
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: PIP_DISABLE_PIP_VERSION_CHECK
+        value: "1"
