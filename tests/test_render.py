@@ -337,3 +337,87 @@ def test_a_normal_question_still_prints_its_text(seeded, tmp_path):
     text = " ".join(p.get_text("text") for p in d)
     d.close()
     assert "RELIABLETEXTTOKEN" in text
+
+
+class TestColumnChoice:
+    """A page crop is an image of the book; scaled too far it stops being readable."""
+
+    def _crop_question(self, tmp_path, width_pt, name, kk):
+        """A question whose figure is a crop of the given width."""
+        import pymupdf as _pymupdf
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas as rl_canvas
+
+        art = tmp_path / f"{name}.pdf"
+        c = rl_canvas.Canvas(str(art), pagesize=A4)
+        c.setFont("Helvetica", 10)
+        c.drawString(20, 700, "the question text as printed in the book")
+        c.save()
+        png = tmp_path / f"{name}.png"
+        doc = _pymupdf.open(art)
+        doc[0].get_pixmap(clip=_pymupdf.Rect(20, 690, 20 + width_pt, 750)).save(png)
+        doc.close()
+
+        return Question(
+            id=name, subject_id="physics", question_type="ph-mc",
+            body="text kept only for search", marks=1, kk_ids=[kk],
+            citation="test", figure_path=str(png), render_mode="crop",
+            figure_pt_width=width_pt,
+        )
+
+    def test_full_page_width_crops_force_a_single_column(self, seeded, tmp_path):
+        from blitz.render.sheet import choose_columns
+
+        design = load_study_design("physics")
+        kk = design.all_key_knowledge()[0].id
+        wide = [self._crop_question(tmp_path, 548, f"w{i}", kk) for i in range(4)]
+        assert choose_columns(wide) == 1
+
+    def test_narrow_crops_keep_two_columns(self, seeded, tmp_path):
+        from blitz.render.sheet import choose_columns
+
+        design = load_study_design("physics")
+        kk = design.all_key_knowledge()[0].id
+        narrow = [self._crop_question(tmp_path, 200, f"n{i}", kk) for i in range(4)]
+        assert choose_columns(narrow) == 2
+
+    def test_a_mostly_text_sheet_keeps_two_columns(self, seeded, tmp_path):
+        from blitz.render.sheet import choose_columns
+
+        design = load_study_design("physics")
+        kk = design.all_key_knowledge()[0].id
+        one_crop = [self._crop_question(tmp_path, 548, "w", kk)]
+        text = [Question(id=f"t{i}", subject_id="physics",
+                         question_type="ph-calculation", body="Calculate it.",
+                         marks=2, kk_ids=[kk], citation="t") for i in range(5)]
+        assert choose_columns(one_crop + text) == 2
+
+    def test_the_chosen_layout_reaches_the_pdf(self, seeded, tmp_path):
+        design = load_study_design("physics")
+        kk = design.all_key_knowledge()[0].id
+        wide = [self._crop_question(tmp_path, 548, f"w{i}", kk) for i in range(3)]
+        plan = SheetPlan(spec=SheetSpec(subject_id="physics", kk_ids=[kk]),
+                         questions=wide)
+        result = render_sheet(plan, tmp_path / "s.pdf", design)
+        assert result["columns"] == 1
+
+    def test_an_explicit_column_count_wins(self, seeded, tmp_path):
+        design = load_study_design("physics")
+        kk = design.all_key_knowledge()[0].id
+        wide = [self._crop_question(tmp_path, 548, f"w{i}", kk) for i in range(3)]
+        plan = SheetPlan(
+            spec=SheetSpec(subject_id="physics", kk_ids=[kk], columns=2),
+            questions=wide)
+        assert render_sheet(plan, tmp_path / "s.pdf", design)["columns"] == 2
+
+    def test_a_full_width_crop_stays_readable(self, seeded, tmp_path):
+        """The point of the whole exercise: 10pt book text must not become 5pt."""
+        from blitz.render.layout import crop_scale
+
+        design = load_study_design("physics")
+        kk = design.all_key_knowledge()[0].id
+        q = self._crop_question(tmp_path, 548, "w", kk)
+        assert crop_scale(q.figure_path, columns=2, pt_width=548) < 0.6, \
+            "two columns squash it"
+        assert crop_scale(q.figure_path, columns=1, pt_width=548) > 0.9, \
+            "one column keeps it"

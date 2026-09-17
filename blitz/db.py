@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS question (
     difficulty    INTEGER,               -- 1 easy .. 5 hard
     figure_path   TEXT,                  -- crop of the question's diagram, if any
     figure_caption TEXT,
+    -- Natural width of the crop in PDF points. Crops are rendered at 3x zoom,
+    -- so the PNG's pixel size cannot tell a full-page strip from a small
+    -- diagram — and that distinction decides whether the sheet can use two
+    -- columns without squashing the book's text into illegibility.
+    figure_pt_width REAL,
     -- 'text'  : print body/options as text (the normal case)
     -- 'crop'  : the text could not be faithfully reconstructed (stacked
     --           fractions, equation-editor glyphs), so print the page image

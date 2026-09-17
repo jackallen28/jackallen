@@ -22,7 +22,7 @@ import sqlite3
 from collections import defaultdict
 
 from .models import Question, SheetPlan, SheetSpec
-from .render.layout import budget_mm, estimate_height_mm
+from .render.layout import budget_mm, estimate_height_mm, image_height_mm
 from .studydesign import StudyDesign, load_study_design
 
 # A Blitz is two pages. The budget and every question "weight" below are in
@@ -169,6 +169,10 @@ def build_plan(
             fallback = design.question_type(q.question_type).default_weight * 45.0
         except KeyError:
             fallback = 45.0
+        if q.is_cropped:
+            # The image is the question, so its scaled height is the whole cost.
+            return image_height_mm(q.figure_path, columns=columns,
+                                   pt_width=q.figure_pt_width) + 12
         return estimate_height_mm(
             q.body,
             marks=q.marks,
@@ -184,7 +188,12 @@ def build_plan(
             if kk in spec.kk_ids:
                 by_kk[kk].append(q)
 
-    budget = budget_mm(pages)
+    # A crop-heavy sheet goes single column so the page images stay readable,
+    # which halves the millimetres available. Decide before spending them.
+    from .render.sheet import choose_columns
+
+    columns = spec.columns or choose_columns(candidates)
+    budget = budget_mm(pages, columns=columns)
     remaining = budget
     chosen: list[Question] = []
     chosen_ids: set[str] = set()

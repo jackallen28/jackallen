@@ -20,6 +20,9 @@ class SheetSpec:
     prefer_figures: bool = True                           # favour diagram questions
     allow_generated: bool = True                          # fill gaps with generated Qs
     seed: int | None = None                               # reproducible sheets
+    # None picks the layout from the content: a sheet that is mostly page crops
+    # needs the full page width, or the book's own text is scaled to illegibility.
+    columns: int | None = None
     exclude_question_ids: list[str] = field(default_factory=list)
 
     def to_json(self) -> str:
@@ -47,6 +50,7 @@ class Question:
     difficulty: int | None = None
     figure_path: str | None = None
     figure_caption: str | None = None
+    figure_pt_width: float | None = None
     citation: str = ""
     source_id: str = ""
     source_kind: str = ""
@@ -75,6 +79,7 @@ class Question:
             difficulty=d.get("difficulty"),
             figure_path=d.get("figure_path"),
             figure_caption=d.get("figure_caption"),
+            figure_pt_width=d.get("figure_pt_width"),
             citation=d.get("citation") or "",
             source_id=d.get("source_id") or "",
             source_kind=d.get("source_kind") or "",

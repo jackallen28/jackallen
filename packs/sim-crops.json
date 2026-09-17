@@ -1,0 +1,1582 @@
+{
+ "pack_version": "1.0",
+ "subject_id": "physics",
+ "study_design_fingerprint": "750fe79e5aba",
+ "source": {
+  "id": "sim",
+  "kind": "checkpoints",
+  "title": "Checkpoints Physics",
+  "pdf": "../sources/physics-checkpoints-sample.pdf"
+ },
+ "questions": [
+  {
+   "id": "SIM-0001",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which one of the following is closest to the final speed and distance travelled of a ball dropped from a height on the surface of Mars and falls for 3.5 s? (g on Mars = 3.7 m s⁻²)",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 2,
+     "bbox": [
+      32,
+      128.38,
+      580.0,
+      310.94
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0003",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "A car accelerates at 2.0 m s⁻² for 5.0 s, and at the end of this time is moving at 30 m s⁻¹. Which one of the following is closest to the distance covered in this time?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 2,
+     "bbox": [
+      32,
+      703.09,
+      580.0,
+      743.34
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0004",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which one of the following is the closest to the speed of the car at the start of the 5.0 s period?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 3,
+     "bbox": [
+      32,
+      257.31,
+      580.0,
+      396.44
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0005",
+   "kk_ids": [
+    "physics-u3-aos1-kk05",
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "A ball is thrown directly upwards with an initial speed of 25 m s⁻¹. (Neglect air resistance in the following three questions.) Which of the following best describes the minimum speed of the ball during its flight and the time it occurs?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 3,
+     "bbox": [
+      32,
+      686.43,
+      580.0,
+      737.29
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0006",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which of the following best describes the distance and displacement of the ball during its flight?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 4,
+     "bbox": [
+      32,
+      243.83,
+      580.0,
+      382.96
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0007",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which one of the following best describes the acceleration of the ball during its flight?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 4,
+     "bbox": [
+      32,
+      508.53,
+      580.0,
+      633.82
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0008",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "The speed–time graph below describes the motion of an object. Which one of the following best describes the motion of the object at t = 5 s?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 4,
+     "bbox": [
+      32,
+      359.6,
+      580.0,
+      503.11
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0009",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "The distance-time graph below describes the motion of an object. Which one of the following best describes this motion?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 5,
+     "bbox": [
+      32,
+      268.56,
+      580.0,
+      393.84
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0010",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Two trains travel along the same track at 40 m s⁻¹ towards each other. At a separation of 1 km, they start to brake, each with a constant deceleration of 1.7 m s⁻². Which one of the following describes what happens?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 6,
+     "bbox": [
+      32,
+      518.01,
+      580.0,
+      665.69
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0011",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-mc",
+   "stem": "A 1.0 kg mass attached to a string hangs 4.0 m from the ground. The string is massless. The string is connected to a 4.0 kg mass on a horizontal frictionless table. The masses are released from rest and accelerate at 1.96 m s⁻². Which one of the following best gives the speed of the 4.0 kg mass when the 1.0 kg mass strikes the ground after falling 4.0 m?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 7,
+     "bbox": [
+      32,
+      84.31,
+      580.0,
+      467.14
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "11"
+  },
+  {
+   "id": "SIM-0012",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "A speeding motorbike travels past a stationary police car at a speed of 35 m s⁻¹. The police car starts accelerating immediately at 4.0 m s⁻², and it keeps accelerating at this rate until it has passed the bike. a. At what time does the police car overtake the motorbike? b. How far does the police car travel before it overtakes the motorbike?",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 7,
+     "bbox": [
+      32,
+      591.16,
+      580.0,
+      738.84
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0013",
+   "kk_ids": [
+    "physics-u3-aos1-kk01",
+    "physics-u3-aos1-kk05"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "A golf ball rolls across a smooth grass ‘green’ towards a hole. It is heading straight for the hole. The hole is 24 m distant from the ball, as shown below. The aim is to make the ball fall in the hole. If it is travelling faster than 2 m s⁻¹ when it reaches the hole, it will not fall in. If the ball is slowing down at 0.7 m s⁻², will it fall in the hole?",
+   "marks": 3,
+   "figures": [
+    {
+     "role": "question",
+     "page": 8,
+     "bbox": [
+      32,
+      153.31,
+      580.0,
+      323.5
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0014",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "A baseball player slides across the ground towards third base. There is considerable friction; he slows down quickly. He slides a distance of 4 m and then stops. Before the slide, he was moving at 9 m s⁻¹. a. What was his average deceleration during the slide? b. How long (in time) did the slide last?",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 8,
+     "bbox": [
+      32,
+      449.22,
+      580.0,
+      591.93
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0015",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "The graph shows the speed of two cars. The local speed limit is 90 km h⁻¹. a. By how much is the speeding car exceeding the speed limit? b. The police car gives chase to the speeding car 10 s after it passes. What is the acceleration of the police car at time t = 45 s s on the graph? c. Using the graph, calculate whether the police car has passed the speeding car by the time of 100 s.",
+   "marks": 8,
+   "figures": [
+    {
+     "role": "question",
+     "page": 8,
+     "bbox": [
+      32,
+      714.87,
+      580.0,
+      742.5
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0016",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-graph",
+   "stem": "A cyclist accelerates constantly from rest for 10 s at 2.5 m s⁻². In the next 20 s she rides at constant speed, and then slows to rest in the next 5 s, at a uniform rate. a. Sketch a graph of her speed against time. b. What is the magnitude of her braking deceleration? c. What distance does she cover in the total time interval of 35 s?",
+   "marks": 7,
+   "figures": [
+    {
+     "role": "question",
+     "page": 9,
+     "bbox": [
+      32,
+      505.71,
+      580.0,
+      701.97
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0017",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "The graph models the motion of a runner during a race. She starts from rest. a. Calculate the speed of the runner at time t = 2 s. b. During which time interval is the runner travelling at constant speed? c. Calculate the speed of the runner at time t = 10 s.",
+   "marks": 6,
+   "figures": [
+    {
+     "role": "question",
+     "page": 10,
+     "bbox": [
+      32,
+      112.31,
+      580.0,
+      468.29
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0018",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-graph",
+   "stem": "Cyril’s new car accelerates away from rest. Its speed-time graph is shown. a. Estimate when he first breaks the suburban speed limit of 60 km h⁻¹. b. Estimate the distance travelled in the first 4.0 s. c. What was the car’s initial acceleration?",
+   "marks": 6,
+   "figures": [
+    {
+     "role": "question",
+     "page": 10,
+     "bbox": [
+      32,
+      594.01,
+      580.0,
+      615.29
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0019",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "At a dragster race, the winner finishes at 40 m s⁻¹. She was accelerating at 10 m s⁻² for the last second. How much distance did the dragster cover in this last second?",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 11,
+     "bbox": [
+      32,
+      459.49,
+      580.0,
+      525.74
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0020",
+   "kk_ids": [
+    "physics-u3-aos1-kk01"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "During a golf shot, the ball rolls across a flat green, gradually slowing down on account of rolling friction. Ashley strikes the ball 32 m from the hole. The ball just reaches the hole. The rolling friction decelerates the ball at 1 m s⁻². What speed did Ashley give the ball at the start of the shot?",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 11,
+     "bbox": [
+      32,
+      651.46,
+      580.0,
+      730.17
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "22"
+  },
+  {
+   "id": "SIM-0021",
+   "kk_ids": [
+    "physics-u4-aos1-kk14"
+   ],
+   "question_type": "ph-mc",
+   "stem": "The searchlight power is 5.0 kW. These photons are focused onto a perfectly reflecting mirror. The average force on the mirror is closest to",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 12,
+     "bbox": [
+      32,
+      112.31,
+      580.0,
+      265.44
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0022",
+   "kk_ids": [
+    "physics-u4-aos1-kk14"
+   ],
+   "question_type": "ph-mc",
+   "stem": "If the mirror in the previous question was replaced by a perfectly absorbing surface, then the force would",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 12,
+     "bbox": [
+      32,
+      540.01,
+      580.0,
+      665.29
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0023",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-mc",
+   "stem": "A photocell is sketched below. This apparatus can be used to determine the maximum energy of emitted photoelectrons. Which of the following values best describes the key measurement for this?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 13,
+     "bbox": [
+      32,
+      209.53,
+      580.0,
+      507.95
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0025",
+   "kk_ids": [
+    "physics-u4-aos1-kk06"
+   ],
+   "question_type": "ph-mc",
+   "stem": "A dark region in a two-slit interference pattern for light happens because",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 14,
+     "bbox": [
+      32,
+      407.88,
+      580.0,
+      533.17
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0026",
+   "kk_ids": [
+    "physics-u4-aos1-kk06"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which of the following best describes what happens when the intensity of the source of light for the interference pattern is reduced greatly?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 15,
+     "bbox": [
+      32,
+      58.31,
+      580.0,
+      197.59
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0027",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Photoelectrons are emitted almost immediately from the metal surface after light of a suitable wavelength strikes it. The best explanation for this is that",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 15,
+     "bbox": [
+      32,
+      447.88,
+      580.0,
+      587.17
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0028",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "When light of a specific frequency strikes a particular metal surface, photoelectrons are emitted. If the light intensity is increased but the frequency of the light remains the same, which of the following is correct? Number of photoelectrons emitted Maximum kinetic energy of the photoelectrons remains the same remains the same remains the same increases increases remains the same increases increases",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 16,
+     "bbox": [
+      32,
+      139.31,
+      580.0,
+      335.09
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0029",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-mc",
+   "stem": "A metal surface has a work function of 2.0 eV. The minimum energy of an incoming photon required to eject a photoelectron is",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 16,
+     "bbox": [
+      32,
+      607.38,
+      580.0,
+      731.09
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0030",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-graph",
+   "stem": "The results of a photoelectric experiment are displayed in the graph below. The graph shows the maximum kinetic energy (Ek max) of photoelectrons versus the frequency (f) of light falling on the metal surface. A second experiment is conducted with the original metal surface being replaced by one with a larger work function. The original data is shown with a solid line and the results of the second experiment are shown with a dashed line. Which one of the graphs below shows the results from the second experiment? A B C D",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 17,
+     "bbox": [
+      32,
+      307.31,
+      580.0,
+      703.59
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0031",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Students are conducting a photoelectric effect experiment. They shine light of known frequency onto a metal and measure the maximum kinetic energy of the emitted photoelectrons. The students increase the intensity of the incident light. The effect of this increase would most likely be",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 18,
+     "bbox": [
+      32,
+      595.75,
+      580.0,
+      749.03
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0032",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-graph",
+   "stem": "When photons with energy E strike a metal surface, electrons may be emitted. The maximum kinetic energy, Ekmax, of the emitted electrons is given by Ekmax = E − W, where W is the work function of the metal. Which one of the following graphs best shows the relationship between the maximum kinetic energy of these electrons, Ekmax, and the wavelength of the photons, λ? A B C D",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 19,
+     "bbox": [
+      32,
+      317.88,
+      580.0,
+      751.48
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0033",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-graph",
+   "stem": "The diagram below shows a plot of maximum kinetic energy, Ekmax, versus frequency, f, for various metals capable of emitting photoelectrons. Which one of the following correctly ranks these metals in terms of their work function, from highest to lowest in numerical value? A Metal A B Metal B C Metal C D Metal D a. Determine the value of Planck’s constant, h, that the students would have obtained from this graph. b. Determine the value of the minimum frequency, or cut-off frequency, f₀, that the students would have obtained from this graph. c. Determine the value of the work function of the metal in the plate that the students would have obtained from this graph. d. The students replace the photocell with one that has a different metal plate with a work function of 2.5 eV. On the grid above, draw in the graph they would now expect.",
+   "marks": 6,
+   "figures": [
+    {
+     "role": "question",
+     "page": 20,
+     "bbox": [
+      32,
+      393.11,
+      580.0,
+      720.77
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "21"
+  },
+  {
+   "id": "SIM-0034",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-multi-step",
+   "stem": "The results of photoelectric effect experiments provide evidence for the particle-like nature of light. Outline one aspect of the results that would provide this evidence. Your response should explain: • why a wave model of light cannot satisfactorily explain this aspect of the results • how the photon theory does explain this aspect of the results.",
+   "marks": 6,
+   "figures": [
+    {
+     "role": "question",
+     "page": 22,
+     "bbox": [
+      32,
+      376.77,
+      580.0,
+      516.05
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0035",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-graph",
+   "stem": "Students set up the apparatus shown below to study the photoelectric effect; in particular, the relationship between the frequency and intensity of incoming light and the maximum kinetic energy of emitted photoelectrons. Assume that all the filters give light of the same intensity. The apparatus consists of • a source of white light • a set of filters, each of which allows only light of a one wavelength to pass • a photocell with a metal plate and a collector electrode in an evacuated glass case • a voltmeter, an ammeter and a variable DC voltage source in a circuit, as shown. With one filter in place and the same light source, the students slowly increase the voltage (measured by the voltmeter V) from zero. They plot the current measured by the ammeter A as a function of the voltage. This is shown below. a. Explain why the current drops to zero at point X. The students next use five filters to give five frequencies of light falling on the metal plate and measure the stopping voltage on the voltmeter for each frequency. The data collected is shown in the table below. Frequency (Hz ) × 10¹⁴ Stopping voltage (eV) 4.5 1.3 5.0 1.5 6.1 2.0 6.9 2.5 7.6 2.8 b. Plot the data given in the table above on the axes provided below, then draw a line of best fit to show maximum kinetic energy of the emitted photoelectrons versus frequency of light falling on the metal plate. c. From the graph plotted above, determine the value of Planck’s constant, h, that the students would have obtained. Give your answer to two significant figures. Students perform a photoelectric experiment on another metal determine the uncertainty in their measurements for the maximum kinetic energy of the photoelectrons. This is represented by a vertical bar drawn on one data point in the graph on the next page. (Uncertainties in frequency values can be neglected.) d. On the graph above, show the steps needed to determine whether the data points may be fitted by a straight line. Explain your reasoning.",
+   "marks": 10,
+   "figures": [
+    {
+     "role": "question",
+     "page": 23,
+     "bbox": [
+      32,
+      153.31,
+      580.0,
+      565.47
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0036",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Outline the conclusions about the nature of light that Albert Einstein made from the observations of photoelectric experiments. Include how these conclusions arose from the experimental observations and why these conclusions contradicted the simple wave model.",
+   "marks": 5,
+   "figures": [
+    {
+     "role": "question",
+     "page": 26,
+     "bbox": [
+      32,
+      112.31,
+      580.0,
+      213.59
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0037",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-graph",
+   "stem": "To investigate the photoelectric effect, Sai and Kym set up an experiment. The apparatus is shown below. With the light source on and a filter in place, Sai and Kym measure the maximum kinetic energy of emitted photoelectrons by gradually changing the collector voltage until the current measured by the ammeter just falls to zero. They record this voltage (the stopping voltage) for each frequency of the incident light and plot their results in a graph of stopping voltage, Vs, versus frequency, f(× 10¹⁴ Hz), of the incident light, as shown on the next page. With 6.0 × 10 ¹⁴Hz light, the ammeter always shows zero. Sai wants to repeat the experiment for this frequency with a much brighter light source and wants to expose the metal to the light for much longer. Kym says photoelectrons will never be ejected with this frequency of light. a i. Who is correct – Sai or Kym? ii. What explanation might Sai give to support her opinion that by waiting longer and using a brighter light source, photoelectrons could be ejected from the metal with light of a frequency of 6.0 × 10¹⁴ Hz? b. Use the graph to calculate Planck’s constant. Show your working. c. Determine the work function of the metal from the graph. Give your reasoning.",
+   "marks": 7,
+   "figures": [
+    {
+     "role": "question",
+     "page": 26,
+     "bbox": [
+      32,
+      658.23,
+      580.0,
+      705.52
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0038",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-explanation",
+   "stem": "April sets up the apparatus shown below to investigate the photoelectric effect. She can change the frequency of the light incident on the metal plate by changing the filter and she can change the type of metal of which the plate is made. a. For her first experiment, April chooses a filter that gives light of frequency 7.13 × 10¹⁴ Hz and a metal plate made of caesium with a work function of 1.95 eV. April adjusts the voltage of the collector electrode so that the current becomes smaller and smaller. When the ammeter, A, reaches zero, April records the voltage shown on the voltmeter, V. Use calculations to determine this voltage. A graph of photocurrent versus voltage for one particular experiment is shown below. Missing Image a. On the diagram above, draw the trace that would result for another experiment using light of the same frequency but with triple the intensity. b. What is a name given to the point labelled A on the diagram above? c. Why does the photocurrent fall to zero at the point labelled A the diagram above?",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 28,
+     "bbox": [
+      32,
+      468.73,
+      580.0,
+      757.49
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0039",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-multi-step",
+   "stem": "The apparatus shown below is used to investigate the photoelectric effect. Light of various wavelengths is shone onto a silver plate (the cathode). The work function of silver is 4.9 eV. a. Explain what happens when light of wavelength 400 nm hits the silver plate. Use calculations to support your answer. b. Explain what happens when light with a photon energy of 5.4 eV hits the silver plate. c. Which model of light does this photoelectric investigation support? Specify the model and give two reasons to justify your answer.",
+   "marks": 7,
+   "figures": [
+    {
+     "role": "question",
+     "page": 30,
+     "bbox": [
+      32,
+      139.31,
+      580.0,
+      609.44
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0040",
+   "kk_ids": [
+    "physics-u4-aos1-kk06"
+   ],
+   "question_type": "ph-diagram",
+   "stem": "In Young’s double-slit experiment, the distance between two slits, S₁ and S₂, is 2.0 mm. The slits are 1.0 m from a screen on which an interference pattern is observed, as shown in the left-hand diagram. The right-hand diagram shows the position of the central maximum of the observed interference pattern. Explain how this experiment supports the wave model of light.",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 31,
+     "bbox": [
+      32,
+      254.91,
+      580.0,
+      480.24
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0041",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "A photoelectric experiment is carried out by students. They measure the threshold frequency of light required for photoemission to be 6.5 × 10 ¹⁴ Hz and the work function to be 3.2 × 10⁻¹⁹ J. Using the students’ measurements, what value would they calculate for Planck’s constant? Outline your reasoning and show all your working. Give your answer in joule-seconds.",
+   "marks": 3,
+   "figures": [
+    {
+     "role": "question",
+     "page": 32,
+     "bbox": [
+      32,
+      58.31,
+      580.0,
+      177.02
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0042",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Light can be described by a wave model and also by a particle (or photon) model. The rapid emission of photoelectrons at very low light intensities supports one of these models but not the other. Identify the model that is supported, giving a reason for your answer.",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 32,
+     "bbox": [
+      32,
+      433.95,
+      580.0,
+      535.23
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0044",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-graph",
+   "stem": "The diagram below shows an apparatus used to study the photoelectric effect. Light of various frequencies and intensities can be shone onto the metal plate inside an evacuated cell. This sometimes results in the release of photoelectrons. The voltage of the power supply can be varied and the direction can be reversed. The graph in the diagram below shows the variation of photocurrent with voltage for three experiments, A, B and C, using light of different frequencies and intensities. a. Using the terms ‘halved’, ‘no change’ or ‘doubled’, how would the intensity and frequency of the light used in Experiment B need to be changed so that Experiment B gives the same results as Experiment A in the diagram above? Intensity Frequency b. Using the terms ‘halved’, ‘no change’ or ‘doubled’, how would the intensity and frequency of the light used in Experiment B need to be changed so that Experiment B gives the same results as Experiment C in the diagram above? Intensity Frequency c. The metal plate is made of a metal that has a work function of 2.93 eV. Determine whether photoelectrons will be ejected from the metal plate when it is illuminated by light with a wavelength of 700 nm. Show your working.",
+   "marks": 6,
+   "figures": [
+    {
+     "role": "question",
+     "page": 33,
+     "bbox": [
+      32,
+      472.95,
+      580.0,
+      738.83
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0045",
+   "kk_ids": [
+    "physics-u4-aos1-kk08",
+    "physics-u4-aos1-kk09"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Sam undertakes a photoelectric effect experiment using the apparatus shown. She uses a green filter. Sam produces a graph of photocurrent, I, in milliamperes, versus voltage, V, in volts, as shown. a. Identify what point P represents on the graph. b. Sam then significantly increases the intensity of the light. Sketch the resulting graph. c. Sam replaces the green filter with a violet filter, keeping the light source at the increased intensity. Sketch the resulting graph. d. Further experiments produce a graph of maximum kinetic energy, Ek max, of emitted photoelectrons versus frequency, f, of light. Determine the work function, in electron volts, of the metal surface used in the experiment that produced the data shown on the following page. e. From the graph shown above, calculate, in joule-seconds, the value of Planck’s constant. Show your working. f. State one limitation of the wave model in explaining the results of the photoelectric effect.",
+   "marks": 9,
+   "figures": [
+    {
+     "role": "question",
+     "page": 35,
+     "bbox": [
+      32,
+      237.53,
+      580.0,
+      758.2
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0046",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "In an experiment on the photoelectric effect, Sam shines ultraviolet light onto a zinc plate and ejects photoelectrons, as shown below. a. The work function of zinc is 4.30 eV. Calculate the minimum frequency of the ultraviolet light that could eject a photoelectron. b. Sam wants to produce a greater photocurrent – that is, to emit more photoelectrons. He considers using a much brighter red light instead of the original ultraviolet light source used in part a. Is Sam’s idea likely to produce a greater photocurrent? Explain your answer.",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 37,
+     "bbox": [
+      32,
+      412.4,
+      580.0,
+      734.14
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0047",
+   "kk_ids": [
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-diagram",
+   "stem": "In a photoelectric effect experiment, a team of physics students investigated the relationship between the maximum kinetic energy of ejected electrons and the frequency of the light incident on calcium metal. Their results are shown in the diagram below. a. Using data from the graph estimate the work function for calcium. b. Using data from the graph determine the maximum wavelength of the light that can emit photoelectrons from the calcium surface. The calcium metal was replaced with copper metal with a work function of 4.70 eV. c. On the grid in the diagram, draw the graph that would result when the calcium metal was replaced with copper metal. d. The copper metal is illuminated by photons of wavelength 380 nm. Will photoelectrons be ejected? Justify your answer using a calculation and any relevant data from the graph shown.",
+   "marks": 8,
+   "figures": [
+    {
+     "role": "question",
+     "page": 38,
+     "bbox": [
+      32,
+      440.95,
+      580.0,
+      516.23
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "49"
+  },
+  {
+   "id": "SIM-0048",
+   "kk_ids": [
+    "physics-u4-aos1-kk09",
+    "physics-u4-aos1-kk08"
+   ],
+   "question_type": "ph-mc",
+   "stem": "The spacing between atoms in a certain metal crystal is 3 × 10⁻⁹ m. Which of the following would be most likely to show wave behaviour when fired at a thin layer of the crystal? Justify your choice.",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 40,
+     "bbox": [
+      32,
+      711.14,
+      580.0,
+      751.39
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0049",
+   "kk_ids": [
+    "physics-u4-aos1-kk19"
+   ],
+   "question_type": "ph-mc",
+   "stem": "In an experiment, electrons are sent at a pair of very closely spaced slits (just like the Young’s experiment). The stream of electrons is very slow, and there is only one electron at a time in the apparatus, so at no stage can two electrons interfere destructively with each other. This means that",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 41,
+     "bbox": [
+      32,
+      514.41,
+      580.0,
+      667.69
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0050",
+   "kk_ids": [
+    "physics-u4-aos1-kk05"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Amy is interested in diffraction patterns of electrons and X-rays through small apertures. She knows that these patterns have their spacing controlled",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 42,
+     "bbox": [
+      32,
+      205.31,
+      580.0,
+      344.59
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0051",
+   "kk_ids": [
+    "physics-u4-aos1-kk19"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Amy reasoned that neutrons could also show diffraction patterns, if A the diffracting aperture was comparable with the speed of the neutrons. B the diffracting aperture was comparable with the ratio of the neutrons.h p C the ratio of the neutrons was much smaller than the size of the diffracting aperture.h p D the neutrons were moving near the speed of light.",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 42,
+     "bbox": [
+      32,
+      601.08,
+      580.0,
+      738.77
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0052",
+   "kk_ids": [
+    "physics-u4-aos1-kk12",
+    "physics-u4-aos1-kk07"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which of the following expressions is correct for the (non-relativistic) energy of a proton, where E is the energy, m the mass, λ the de Bröglie wavelength, h Planck’s constant, and c the speed of light? h²",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 43,
+     "bbox": [
+      32,
+      284.08,
+      580.0,
+      441.13
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0053",
+   "kk_ids": [
+    "physics-u4-aos1-kk12"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Identify the one statement below about de Bröglie wavelengths that is true.",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 43,
+     "bbox": [
+      32,
+      698.57,
+      580.0,
+      745.85
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0054",
+   "kk_ids": [
+    "physics-u4-aos1-kk07"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which of the following formulas applies both to photons and electrons?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 44,
+     "bbox": [
+      32,
+      355.88,
+      580.0,
+      497.26
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0056",
+   "kk_ids": [
+    "physics-u4-aos1-kk05",
+    "physics-u4-aos1-kk06"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Electrons pass through a fine metal grid, forming a diffraction pattern. If the speed of the electrons was doubled using the same metal grid, what would be the effect on the fringe spacing?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 45,
+     "bbox": [
+      32,
+      469.23,
+      580.0,
+      634.52
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0057",
+   "kk_ids": [
+    "physics-u4-aos1-kk03",
+    "physics-u4-aos1-kk07",
+    "physics-u4-aos1-kk17"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Quantised energy levels within atoms can best be explained by",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 46,
+     "bbox": [
+      32,
+      179.31,
+      580.0,
+      330.59
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0058",
+   "kk_ids": [
+    "physics-u4-aos1-kk12"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Protons of mass 1.67 × 10⁻²⁷ kg are accelerated to a speed of 2.0 × 10³ m s⁻¹. The best estimate of the de Broglie wavelength of these protons is",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 46,
+     "bbox": [
+      32,
+      594.88,
+      580.0,
+      748.01
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0059",
+   "kk_ids": [
+    "physics-u4-aos1-kk12"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which one of the following is closest to the de Broglie wavelength of a 663 kg motor car moving at 10 m s⁻¹?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 47,
+     "bbox": [
+      32,
+      311.53,
+      580.0,
+      497.51
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0061",
+   "kk_ids": [
+    "physics-u4-aos1-kk10"
+   ],
+   "question_type": "ph-mc",
+   "stem": "Which one of the following statements best explains why it is possible to compare X-ray and electron diffraction patterns?",
+   "marks": null,
+   "figures": [
+    {
+     "role": "question",
+     "page": 48,
+     "bbox": [
+      32,
+      469.23,
+      580.0,
+      634.52
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "14"
+  },
+  {
+   "id": "SIM-0062",
+   "kk_ids": [
+    "physics-u4-aos1-kk10"
+   ],
+   "question_type": "ph-diagram",
+   "stem": "X-rays are fired at metal foils. Those passing are diffracted to form rings centred on the axis. The pattern is sketched below. When electrons are fired at the same foils, the same sorts of patterns, with identical dimensions, are formed. The X-ray photons had a wavelength of 8.35 × 10⁻¹⁰ m, and a momentum of 7.94 × 10⁻²⁵ N s. a. Calculate a value for Planck’s constant from the data, in J s. Give your answer to three significant figures. b. The electron and X-ray diffraction patterns have the same spacing between rings. What did the electrons and X-ray photons used in these experiments have in common? Explain.",
+   "marks": 5,
+   "figures": [
+    {
+     "role": "question",
+     "page": 49,
+     "bbox": [
+      32,
+      179.31,
+      580.0,
+      536.75
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0063",
+   "kk_ids": [
+    "physics-u3-aos2-kk06",
+    "physics-u4-aos1-kk12"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "An electron is accelerated in a vacuum with a voltage of 900 V. It reaches a speed of 1.8 × 10⁷ m s⁻¹. a. Calculate its de Bröglie wavelength. b. The electron is aimed at a crystal, whose atomic spacing is close to 120 pm. Are interference effects likely to be observed with electrons of this speed? Support your answer with quantitative information.",
+   "marks": 5,
+   "figures": [
+    {
+     "role": "question",
+     "page": 50,
+     "bbox": [
+      32,
+      151.76,
+      580.0,
+      296.02
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0064",
+   "kk_ids": [
+    "physics-u4-aos1-kk05"
+   ],
+   "question_type": "ph-diagram",
+   "stem": "Electrons in a diffraction experiment produce very similar patterns to X-rays with a wavelength of 56 pm. Estimate the momentum of the electrons.",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 50,
+     "bbox": [
+      32,
+      579.96,
+      580.0,
+      641.24
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0065",
+   "kk_ids": [
+    "physics-u4-aos1-kk05"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Which of the following experiments is most likely to show diffraction effects? Support your choice with appropriate calculations. A. 500 nm photons passing through a 0.05 mm slit. B. 5 × 10 ⁶ m s⁻¹ electrons passing through a 0.00015 mm slit.",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 51,
+     "bbox": [
+      32,
+      200.96,
+      580.0,
+      317.67
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0066",
+   "kk_ids": [
+    "physics-u4-aos1-kk12"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Calculate the de Bröglie wavelength of 1.9 eV electrons. Ignore relativistic effects. Take me = 9.1 × 10⁻³¹ kg and h = 6.63 × 10⁻³⁴ J s.",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 51,
+     "bbox": [
+      32,
+      571.97,
+      580.0,
+      641.82
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0067",
+   "kk_ids": [
+    "physics-u4-aos1-kk18"
+   ],
+   "question_type": "ph-explanation",
+   "stem": "Physicists use the expression ‘wave-particle duality’ because light sometimes behaves like particles and electrons sometimes behave like waves. What evidence do we have that electrons can behave like waves? Explain how this evidence supports a wave model of electrons.",
+   "marks": 2,
+   "figures": [
+    {
+     "role": "question",
+     "page": 52,
+     "bbox": [
+      32,
+      185.51,
+      580.0,
+      260.79
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0068",
+   "kk_ids": [
+    "physics-u4-aos1-kk22"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "At very small scales, the ‘classical’ laws of physics used to describe motion do not work. Give an example of this.",
+   "marks": 3,
+   "figures": [
+    {
+     "role": "question",
+     "page": 52,
+     "bbox": [
+      32,
+      525.08,
+      580.0,
+      586.37
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0069",
+   "kk_ids": [
+    "physics-u4-aos1-kk05"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "Single-slit experiments can be performed with electron beams. In the experimental design below, a beam of 600 eV electrons is aimed at a very narrow slit in gold foil. The slit is vertical and viewed from above. Diffraction effects are clearly seen on the detecting screen on the right. For diffraction to be clearly seen with this apparatus, the electron wavelength must be no less than 1/500 of the slit width. What is the maximum slit width for the experiment to succeed? Show your working.",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 53,
+     "bbox": [
+      32,
+      153.31,
+      580.0,
+      424.22
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  },
+  {
+   "id": "SIM-0070",
+   "kk_ids": [
+    "physics-u4-aos1-kk05"
+   ],
+   "question_type": "ph-calculation",
+   "stem": "When a beam of electrons is directed at a very narrow opening, diffraction effects are observed. Discuss how this phenomenon is not consistent with a classical mechanics view of the electron as a particle.",
+   "marks": 4,
+   "figures": [
+    {
+     "role": "question",
+     "page": 53,
+     "bbox": [
+      32,
+      681.53,
+      580.0,
+      742.82
+     ],
+     "caption": "Source question"
+    }
+   ],
+   "render_mode": "crop",
+   "printed_page": "35"
+  }
+ ]
+}

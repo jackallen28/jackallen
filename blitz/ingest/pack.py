@@ -133,6 +133,19 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
     source_pdf = source.get("pdf")
     pdf_pages = _page_count(pack_dir, source_pdf) if source_pdf else None
 
+    # A missing source PDF is one problem, not one per figure. Reporting it per
+    # figure buried the real message under 287 copies of itself.
+    uses_bbox = any(f.get("page") is not None
+                    for q in questions for f in (q.get("figures") or []))
+    if uses_bbox and not source_pdf:
+        err("figures use page/bbox but source.pdf is not set")
+    elif uses_bbox and pdf_pages is None:
+        err(f"source.pdf could not be opened: {source_pdf}\n"
+            "         Every page/bbox figure needs it. Check the path is right "
+            "on this machine,\n"
+            "         or re-export the pack with figures as files.")
+    pdf_missing = uses_bbox and (not source_pdf or pdf_pages is None)
+
     for i, q in enumerate(questions):
         where = f"question[{i}]" + (f" ({q.get('id')})" if q.get("id") else "")
         qid = q.get("id")
@@ -164,7 +177,8 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
 
         for j, fig in enumerate(q.get("figures") or []):
             _validate_figure(fig, f"{where}.figures[{j}]", pack_dir,
-                             source_pdf, pdf_pages, err)
+                             source_pdf, pdf_pages, err,
+                             skip_pdf_checks=pdf_missing)
 
         if q.get("render_mode") == "crop" and not _figures_for(q, "question"):
             err(f"{where}: render_mode is 'crop' but no question figure was given")
@@ -175,7 +189,8 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
 
 
 def _validate_figure(fig: dict, where: str, pack_dir: Path, source_pdf,
-                     pdf_pages: int | None, err) -> None:
+                     pdf_pages: int | None, err,
+                     skip_pdf_checks: bool = False) -> None:
     role = fig.get("role", "question")
     if role not in ("question", "answer"):
         err(f"{where}: role must be 'question' or 'answer', got {role!r}")
@@ -190,12 +205,8 @@ def _validate_figure(fig: dict, where: str, pack_dir: Path, source_pdf,
             err(f"{where}: file not found: {fig['file']}")
         return
 
-    if not source_pdf:
-        err(f"{where}: uses page/bbox but source.pdf is not set")
-        return
-    if pdf_pages is None:
-        err(f"{where}: source.pdf could not be opened")
-        return
+    if skip_pdf_checks:
+        return                        # already reported once, for the whole pack
     page = fig["page"]
     if not isinstance(page, int) or not 0 <= page < pdf_pages:
         err(f"{where}: page {page} is outside the PDF (0..{pdf_pages - 1})")
@@ -349,6 +360,7 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
     question_fig = next(iter(_figures_for(q, "question")), None)
     answer_fig = next(iter(_figures_for(q, "answer")), None)
     figure_path = _materialise(question_fig, pack_dir, doc, qid) if question_fig else None
+    figure_pt_width = _pt_width(question_fig, figure_path)
     answer_figure = _materialise(answer_fig, pack_dir, doc, f"{qid}-a") if answer_fig else None
 
     render_mode = q.get("render_mode", "text")
@@ -377,6 +389,7 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
         "marks": _marks(q),
         "difficulty": q.get("difficulty"),
         "figure_path": figure_path,
+        "figure_pt_width": figure_pt_width,
         "figure_caption": (question_fig or {}).get("caption"),
         "render_mode": render_mode,
         "answer_mode": answer_mode,
@@ -397,6 +410,26 @@ def _import_one(conn, q, pack, source, design, pack_dir, doc, report) -> None:
     report.with_figures += 1 if figure_path else 0
     report.with_answers += 1 if answer else 0
     report.cropped += 1 if "crop" in (render_mode, answer_mode) else 0
+
+
+def _pt_width(fig: dict | None, path: str | None) -> float | None:
+    """The crop's width in PDF points, which decides the sheet's layout.
+
+    A bbox says so directly. A supplied image file does not, so it is taken at
+    face value — one pixel to one point.
+    """
+    if not fig or not path:
+        return None
+    bbox = fig.get("bbox")
+    if bbox:
+        return float(bbox[2]) - float(bbox[0])
+    try:
+        import pymupdf
+
+        with pymupdf.open(path) as doc:
+            return float(doc[0].rect.width)
+    except Exception:
+        return None
 
 
 def _citation(source: dict, q: dict) -> str:

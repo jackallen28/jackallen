@@ -43,6 +43,39 @@ PAGE_W, PAGE_H = A4
 MARGIN = 12 * mm
 GUTTER = 6 * mm
 QUESTION_PAGES = 2
+# Below this scale, the book's own body text stops being readable on the sheet.
+MIN_CROP_SCALE = 0.62
+# Share of a sheet that has to be page crops before it goes single column.
+CROP_MAJORITY = 0.5
+
+
+def _column_width(columns: int) -> float:
+    if columns <= 1:
+        return PAGE_W - 2 * MARGIN
+    return (PAGE_W - 2 * MARGIN - GUTTER) / columns
+
+
+def choose_columns(questions: list[Question]) -> int:
+    """Two columns normally; one when the sheet is carried by page crops.
+
+    A crop is an image of the real page, typically the full width of it. Scaled
+    into a 90mm column that is about 47%, which puts the book's 10pt text under
+    5pt — present but unreadable. Given the whole page it lands near full size.
+    So a sheet that leans on crops gives up the second column to keep them
+    legible, and takes fewer questions in exchange.
+    """
+    if not questions:
+        return 2
+    cropped = [q for q in questions if q.is_cropped]
+    if len(cropped) / len(questions) < CROP_MAJORITY:
+        return 2
+    from .layout import crop_scale
+
+    if any(crop_scale(q.figure_path, columns=2,
+                      pt_width=q.figure_pt_width) < MIN_CROP_SCALE
+           for q in cropped):
+        return 1
+    return 2
 # How many dot points the masthead checklist names before it says "and N more".
 CHECKLIST_MAX = 12
 
@@ -62,7 +95,8 @@ class _Ctx:
 class _Doc(BaseDocTemplate):
     """Two-column A4 with a running footer, plus a page counter for the fit loop."""
 
-    def __init__(self, path, ctx: _Ctx, head_h: float = 34 * mm, **kw):
+    def __init__(self, path, ctx: _Ctx, head_h: float = 34 * mm,
+                 columns: int = 2, **kw):
         super().__init__(str(path), pagesize=A4, leftMargin=MARGIN,
                          rightMargin=MARGIN, topMargin=MARGIN,
                          bottomMargin=MARGIN, title=ctx.title,
@@ -71,26 +105,24 @@ class _Doc(BaseDocTemplate):
         self.page_count = 0
         self.masthead: list = []
 
-        col_w = (PAGE_W - 2 * MARGIN - GUTTER) / 2
+        self.columns = max(1, columns)
+        col_w = _column_width(self.columns)
         body_top = MARGIN + 6 * mm          # room for the footer rule
         body_h = PAGE_H - MARGIN - body_top
 
         # The first page gives up however much the masthead actually needs —
         # measured by the caller, because a wide dot-point selection makes the
         # checklist several lines longer.
-        first = [
-            Frame(MARGIN, body_top, col_w, body_h - head_h, id="f1l",
-                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0),
-            Frame(MARGIN + col_w + GUTTER, body_top, col_w, body_h - head_h,
-                  id="f1r", leftPadding=0, rightPadding=0, topPadding=0,
-                  bottomPadding=0),
-        ]
-        later = [
-            Frame(MARGIN, body_top, col_w, body_h, id="fl",
-                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0),
-            Frame(MARGIN + col_w + GUTTER, body_top, col_w, body_h, id="fr",
-                  leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0),
-        ]
+        def frames(height: float, tag: str) -> list[Frame]:
+            return [
+                Frame(MARGIN + i * (col_w + GUTTER), body_top, col_w, height,
+                      id=f"{tag}{i}", leftPadding=0, rightPadding=0,
+                      topPadding=0, bottomPadding=0)
+                for i in range(self.columns)
+            ]
+
+        first = frames(body_h - head_h, "f1c")
+        later = frames(body_h, "fc")
         self.head_frame = Frame(
             MARGIN, PAGE_H - MARGIN - head_h + 4 * mm,
             PAGE_W - 2 * MARGIN, head_h - 4 * mm, id="head",
@@ -256,7 +288,7 @@ def _cropped_question(q: Question, n: int, ss, col_w: float,
     """
     parts: list = [Paragraph(
         f'<b><font color="#1f4fd8">{n}.</font></b>{marks}{flag}', ss["Question"])]
-    fig = _figure(q.figure_path, col_w, max_h=118 * mm)
+    fig = _figure(q.figure_path, col_w, max_h=170 * mm)
     if fig is not None:
         parts += [Spacer(1, 2), fig]
     if q.figure_caption:
@@ -395,9 +427,10 @@ def render_sheet(
     ])
     ctx = _Ctx(plan=plan, design=design, title=title, subtitle=subtitle)
 
-    col_w = (PAGE_W - 2 * MARGIN - GUTTER) / 2
     questions = list(plan.questions)
     dropped: list[Question] = []
+    columns = plan.spec.columns or choose_columns(questions)
+    col_w = _column_width(columns)
 
     # Build, measure, shrink. Two pages is the promise; we keep it.
     masthead = _header(ctx, ss, PAGE_W - 2 * MARGIN)
@@ -415,7 +448,7 @@ def render_sheet(
     head_h = masthead_height(masthead, PAGE_W - 2 * MARGIN, ss)
 
     def _build(with_solutions: bool) -> int:
-        doc = _Doc(path, ctx, head_h=head_h)
+        doc = _Doc(path, ctx, head_h=head_h, columns=columns)
         doc.masthead = masthead
         doc.build(_story(with_solutions))
         return doc.page_count
@@ -432,6 +465,7 @@ def render_sheet(
     plan.questions = questions
     return {
         "path": str(path),
+        "columns": columns,
         "questions": len(questions),
         "dropped": [q.id for q in dropped],
         "total_pages": total_pages,

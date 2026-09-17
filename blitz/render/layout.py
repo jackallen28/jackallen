@@ -34,15 +34,65 @@ def column_height_mm(first_page: bool) -> float:
     return usable - (MASTHEAD / mm if first_page else 0.0)
 
 
-def budget_mm(max_pages: int = 2, safety: float = 0.92) -> float:
+def budget_mm(max_pages: int = 2, safety: float = 0.92,
+              columns: int = COLUMNS) -> float:
     """Total column millimetres available across the question pages."""
-    total = column_height_mm(first_page=True) * COLUMNS
-    total += column_height_mm(first_page=False) * COLUMNS * (max_pages - 1)
+    total = column_height_mm(first_page=True) * columns
+    total += column_height_mm(first_page=False) * columns * (max_pages - 1)
     return total * safety
 
 
-def column_width_mm() -> float:
-    return ((PAGE_W - 2 * MARGIN - GUTTER) / COLUMNS) / mm
+def column_width_mm(columns: int = COLUMNS) -> float:
+    if columns <= 1:
+        return (PAGE_W - 2 * MARGIN) / mm
+    return ((PAGE_W - 2 * MARGIN - GUTTER) / columns) / mm
+
+
+def image_height_mm(path: str | None, columns: int = COLUMNS,
+                    pt_width: float | None = None,
+                    fallback: float = 60.0) -> float:
+    """How much column height a page crop will occupy once scaled to fit."""
+    if not path:
+        return fallback
+    try:
+        import pymupdf
+
+        with pymupdf.open(path) as doc:
+            rect = doc[0].rect
+            px_w, px_h = rect.width, rect.height
+    except Exception:
+        return fallback
+    if not px_w or not px_h:
+        return fallback
+    # ReportLab fits the image to the column by its pixel dimensions.
+    col = column_width_mm(columns) * mm
+    scale = min(col / px_w, 1.0)
+    return (px_h * scale) / mm
+
+
+def crop_scale(path: str | None, columns: int = COLUMNS,
+               pt_width: float | None = None) -> float:
+    """Fraction of its printed size a crop is rendered at. 1.0 is unscaled.
+
+    Judged against the region's natural width in PDF points, not the PNG's
+    pixels: crops are rendered at 3x zoom, so pixels say nothing about how big
+    the content was on the page. Below about 0.6 the book's 10pt body text
+    drops under 6pt and stops being readable.
+    """
+    if not path:
+        return 1.0
+    if pt_width is None:
+        # No recorded width: assume the image is already at printed size.
+        try:
+            import pymupdf
+
+            with pymupdf.open(path) as doc:
+                pt_width = doc[0].rect.width
+        except Exception:
+            return 1.0
+    if not pt_width:
+        return 1.0
+    return min((column_width_mm(columns) * mm) / pt_width, 1.0)
 
 
 def text_height_mm(text: str, chars_per_line: int = CHARS_PER_LINE) -> float:

@@ -221,8 +221,10 @@ def ingest_pdf(
             answer_figure = extract.crop(doc, a_page_index, rect, tag=f"{source_id}-a")
             answer_mode = "crop" if answer_figure else "text"
 
+        fig_pt_w = (figure_rect[2] - figure_rect[0]) if figure_rect else None
         staged.append({
             "raw": q,
+            "figure_pt_width": fig_pt_w,
             "text": q.full_text,
             "stem": q.text,
             "parts": q.parts,
@@ -268,6 +270,7 @@ def ingest_pdf(
             "marks": item["marks"],
             "difficulty": tags.difficulty,
             "figure_path": item["figure_path"],
+            "figure_pt_width": item["figure_pt_width"],
             "render_mode": item["render_mode"],
             "answer_mode": item["answer_mode"],
             "provenance": q.provenance,
