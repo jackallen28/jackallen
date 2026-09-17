@@ -38,22 +38,26 @@ BLITZ=".venv/bin/blitz"
 [ -x "$BLITZ" ] || .venv/bin/pip install --quiet -e .
 
 # --- what to index -----------------------------------------------------------
+# Arguments given on the command line are taken as given (an empty study
+# design argument means "keep the one already imported"); anything not given
+# is asked for, which is what a double-click from Finder gets.
 SUBJECT="${1:-}"
 DESIGN="${2:-}"
 FOLDER="${3:-}"
 
-if [ -z "$SUBJECT" ]; then
+if [ $# -lt 1 ]; then
   echo "Subjects Blitz knows:"
   "$BLITZ" subjects | sed 's/^/    /'
   read -r -p "Subject id (e.g. physics): " SUBJECT
 fi
-if [ -z "$DESIGN" ]; then
+if [ $# -lt 2 ]; then
   read -r -p "VCAA study design PDF (blank to keep the one already imported): " DESIGN
 fi
-if [ -z "$FOLDER" ]; then
+if [ $# -lt 3 ]; then
   read -r -p "Folder of PDFs / packs to index [sources/$SUBJECT]: " FOLDER
-  FOLDER="${FOLDER:-sources/$SUBJECT}"
 fi
+FOLDER="${FOLDER:-sources/$SUBJECT}"
+[ -n "$SUBJECT" ] || { echo "A subject id is needed."; exit 1; }
 # Finder drops paths with trailing spaces and escaped characters; tidy them.
 DESIGN="$(echo "$DESIGN" | sed -e 's/[[:space:]]*$//' -e "s/\\\\ / /g")"
 FOLDER="$(echo "$FOLDER" | sed -e 's/[[:space:]]*$//' -e "s/\\\\ / /g")"
@@ -73,6 +77,12 @@ fi
 shopt -s nullglob nocaseglob
 found=0
 for pack in "$FOLDER"/*.json; do
+  # A pack names its subject and holds questions; any other JSON lying in the
+  # folder (a model's own stats or audit files) is not ours to import.
+  if ! grep -q '"subject_id"' "$pack" || ! grep -q '"questions"' "$pack"; then
+    echo; echo "-- $(basename "$pack"): not a question pack, skipped"
+    continue
+  fi
   found=1
   echo; echo "== Pack: $pack"
   "$BLITZ" import-pack "$pack" || echo "   (not imported — fix the errors above and re-run)"
