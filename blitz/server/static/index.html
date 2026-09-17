@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VCE Blitz</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <h1>VCE&nbsp;Blitz</h1>
+    <p class="tagline">Two pages. Your study design. Your books.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="step">
+    <h2><span class="n">1</span> Subject</h2>
+    <div id="subjects" class="chips" role="radiogroup" aria-label="Subject"></div>
+  </section>
+
+  <section class="step">
+    <h2><span class="n">2</span> What do you want on it?</h2>
+    <p class="hint">Straight from the study design. The number beside each dot
+      point is how many questions the index holds for it.</p>
+    <div class="toolbar">
+      <button type="button" class="ghost" data-select="all">Select all</button>
+      <button type="button" class="ghost" data-select="none">Clear</button>
+      <button type="button" class="ghost" data-select="covered">Only ones with questions</button>
+      <span class="spacer"></span>
+      <span id="kkcount" class="count">0 selected</span>
+    </div>
+    <div id="tree"></div>
+  </section>
+
+  <section class="step">
+    <h2><span class="n">3</span> Question types</h2>
+    <div id="types" class="chips"></div>
+  </section>
+
+  <section class="step">
+    <h2><span class="n">4</span> Anything else?</h2>
+    <textarea id="notes" rows="3" placeholder="e.g. I keep losing marks on Force Field Analysis weighting, and I never know when to use impulse vs momentum."></textarea>
+    <div class="options">
+      <label>Title <input id="title" type="text" placeholder="Blitz"></label>
+      <label>Difficulty
+        <select id="difficulty">
+          <option value="mixed" selected>Mixed</option>
+          <option value="easy">Easier</option>
+          <option value="hard">Harder</option>
+        </select>
+      </label>
+      <label class="check"><input id="solutions" type="checkbox" checked> Worked solutions</label>
+      <label class="check"><input id="figures" type="checkbox" checked> Favour diagram questions</label>
+      <label class="check"><input id="generated" type="checkbox" checked> Fill gaps with generated questions</label>
+    </div>
+  </section>
+
+  <section class="step actions">
+    <button id="preview" type="button" class="ghost">Preview</button>
+    <button id="generate" type="button" class="primary">Generate my Blitz</button>
+    <span id="status" class="status" role="status"></span>
+  </section>
+
+  <section id="result" class="result" hidden></section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

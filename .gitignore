@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Your licensed source PDFs and everything derived from them stay local.
+# These are anchored to the repo root: blitz/studydesign/data/ holds the
+# shipped study designs and must NOT be ignored.
+/sources/**
+!/sources/README.md
+/data/
+/out/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+.env

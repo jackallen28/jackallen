@@ -1,0 +1,198 @@
+# VCE Physics — Units 3 & 4
+#
+# STATUS: DRAFT. Every dot point below is `verified: false`. The wording was
+# reconstructed from memory of the study design, NOT copied from the VCAA
+# document, and the Unit 4 area-of-study split in particular needs checking.
+# Replace it with the real thing before relying on it:
+#
+#     blitz import-study-design sources/vcaa/physics-sd.pdf --subject physics
+#
+# The importer rewrites this file from the PDF and sets verified: true. Until
+# then the UI shows an "unverified study design" banner on every sheet.
+
+subject_id: physics
+subject_name: VCE Physics
+accreditation: ""        # set by the importer from the PDF cover page
+source: "DRAFT — not yet imported from the VCAA study design"
+
+units:
+  - number: 3
+    title: How do fields explain motion and electricity?
+    areas_of_study:
+      - number: 1
+        title: How do physicists explain motion in two dimensions?
+        outcome: >-
+          On completion of this unit the student should be able to investigate
+          motion and related energy transformations experimentally, and analyse
+          motion using Newton's laws of motion in one and two dimensions.
+        key_knowledge:
+          - text: "Newton's three laws of motion in situations where two or more coplanar forces act along a straight line and in two dimensions"
+            label: Newton's laws
+          - text: "the vector nature of force, and the resolution of forces into components including on inclined planes"
+            label: Force vectors and inclines
+          - text: "impulse and momentum in an isolated system, including the impulse-momentum theorem and conservation of momentum in one dimension"
+            label: Impulse and momentum
+          - text: "elastic and inelastic collisions with reference to conservation of kinetic energy"
+            label: Elastic vs inelastic collisions
+          - text: "work done by a constant force, and the relationship between work, force and displacement"
+            label: Work
+          - text: "kinetic energy, gravitational potential energy near the Earth's surface, and strain potential energy as the area under a force-distance graph"
+            label: Energy stores
+          - text: "the conservation of mechanical energy in isolated systems"
+            label: Conservation of energy
+          - text: "projectile motion near the Earth's surface, including the independence of horizontal and vertical components, with air resistance considered qualitatively"
+            label: Projectile motion
+          - text: "uniform circular motion in a horizontal plane, including centripetal acceleration and net force"
+            label: Circular motion
+          - text: "banked tracks and circular motion in a vertical plane at the highest and lowest points"
+            label: Banked and vertical circles
+      - number: 2
+        title: How do things move without contact?
+        outcome: >-
+          On completion of this unit the student should be able to analyse
+          gravitational, electric and magnetic fields, and apply these to
+          explain the operation of motors and the orbits of satellites.
+        key_knowledge:
+          - text: "fields as a model to explain forces acting at a distance, including gravitational, electric and magnetic fields"
+            label: The field model
+          - text: "the direction and shape of gravitational, electric and magnetic field lines, including the direction of force on a positive test charge or small mass"
+            label: Field lines
+          - text: "Newton's law of universal gravitation and the gravitational field of a point mass"
+            label: Universal gravitation
+          - text: "Coulomb's law and the electric field of a point charge"
+            label: Coulomb's law
+          - text: "the magnitude and direction of the force on a current-carrying conductor in a magnetic field"
+            label: Force on a conductor
+          - text: "the qualitative and quantitative treatment of the field between charged parallel plates, including work done on a charge"
+            label: Parallel plates
+          - text: "the use of gravitational field and energy to analyse satellite motion, including the area under a force-distance graph as energy change"
+            label: Satellite motion and energy
+          - text: "circular orbits of satellites about the Earth and the relationship between period and radius"
+            label: Orbits
+          - text: "the qualitative description of apparent weightlessness in orbit"
+            label: Apparent weightlessness
+      - number: 3
+        title: How are fields used to move electrical energy?
+        outcome: >-
+          On completion of this unit the student should be able to analyse and
+          evaluate the generation, transmission and use of electricity with
+          reference to electromagnetic induction.
+        key_knowledge:
+          - text: "magnetic flux and the factors that determine it, including field strength and the area and orientation of a loop"
+            label: Magnetic flux
+          - text: "generation of an EMF by a changing magnetic flux, including Faraday's law and Lenz's law"
+            label: Faraday's and Lenz's laws
+          - text: "the qualitative and quantitative analysis of EMF-versus-time graphs for a rotating loop"
+            label: EMF graphs
+          - text: "the operation of AC generators and DC generators, including the role of slip rings and commutators"
+            label: Generators
+          - text: "the operation of DC motors, including the role of the commutator"
+            label: DC motors
+          - text: "peak, peak-to-peak and RMS values of AC voltage and current"
+            label: RMS values
+          - text: "the operation of an ideal transformer, including the turns ratio and conservation of power"
+            label: Transformers
+          - text: "power transmission losses in lines and the reasons for transmitting at high voltage"
+            label: Transmission losses
+  - number: 4
+    title: How have creative ideas and investigations revolutionised thinking in physics?
+    areas_of_study:
+      - number: 1
+        title: How has understanding about the physical world changed?
+        outcome: >-
+          On completion of this unit the student should be able to analyse and
+          apply models of light and matter, and describe the relationship
+          between light, matter and special relativity.
+        key_knowledge:
+          - text: "the wave model of light, including the evidence from Young's double slit experiment and the relationship between path difference and interference"
+            label: Wave model and interference
+          - text: "diffraction and the significance of the ratio of wavelength to aperture size"
+            label: Diffraction
+          - text: "the particle-like nature of light as evidenced by the photoelectric effect, including threshold frequency, work function and stopping voltage"
+            label: Photoelectric effect
+          - text: "the limitations of the wave model in explaining the photoelectric effect"
+            label: Limits of the wave model
+          - text: "the wave-like nature of matter, including de Broglie wavelength and electron diffraction patterns"
+            label: Matter waves
+          - text: "the quantised energy levels of the atom and the production of atomic absorption and emission line spectra"
+            label: Atomic spectra
+          - text: "Einstein's two postulates of special relativity and the constancy of the speed of light for all inertial observers"
+            label: Postulates of relativity
+          - text: "proper time, proper length, time dilation and length contraction, and the evidence from muon decay"
+            label: Time dilation and length contraction
+          - text: "relativistic energy, including rest energy and the mass-energy relationship"
+            label: Relativistic energy
+      - number: 2
+        title: How is scientific inquiry used to investigate the physical world?
+        outcome: >-
+          On completion of this unit the student should be able to design and
+          conduct a scientific investigation related to the physical world, and
+          present methodologies, findings and conclusions in a scientific poster.
+        key_knowledge:
+          - text: "the distinction between independent, dependent and controlled variables"
+            label: Variables
+          - text: "the characteristics of scientific methodologies and techniques of primary quantitative data generation"
+            label: Methodology
+          - text: "accuracy, precision, repeatability, reproducibility and validity of measurements"
+            label: Measurement quality
+          - text: "systematic and random errors, outliers, and the effect of uncertainty on a result"
+            label: Errors and uncertainty
+          - text: "the use of appropriate graphical representations, including linearisation and the interpretation of gradients and intercepts"
+            label: Graphing and linearisation
+          - text: "the nature of evidence supporting or refuting a hypothesis, and the identification of limitations in conclusions"
+            label: Evidence and conclusions
+
+question_types:
+  - id: ph-mc
+    label: Multiple choice
+    description: Four-option conceptual and single-step calculation questions.
+    typical_marks: [1]
+    default_weight: 0.30
+  - id: ph-calculation
+    label: Calculation
+    description: Numerical questions requiring a formula, substitution and a unit.
+    typical_marks: [2, 3, 4]
+    default_weight: 0.70
+  - id: ph-multi-step
+    label: Multi-step problem
+    description: Problems chaining two or more relationships, often across topics.
+    typical_marks: [4, 5, 6]
+    default_weight: 1.20
+  - id: ph-explanation
+    label: Conceptual explanation
+    description: Explain a physical effect in words, with reference to a model or law.
+    typical_marks: [2, 3, 4]
+    default_weight: 0.80
+  - id: ph-graph
+    label: Graph interpretation
+    description: Read, sketch or extract a quantity from a graph, including areas and gradients.
+    typical_marks: [2, 3, 4]
+    default_weight: 1.00
+  - id: ph-diagram
+    label: Diagram-based
+    description: Questions built on a figure — field lines, circuits, free-body diagrams, ray diagrams.
+    typical_marks: [2, 3, 4]
+    default_weight: 1.10
+  - id: ph-experimental
+    label: Experimental design and analysis
+    description: Uncertainty, variables, validity and the interpretation of experimental data.
+    typical_marks: [2, 3, 4]
+    default_weight: 0.90
+  - id: ph-derivation
+    label: Derivation / proof
+    description: Show that a relationship follows from stated principles.
+    typical_marks: [3, 4]
+    default_weight: 0.90
+
+command_terms:
+  state: Give a short answer with no working or justification.
+  calculate: Find a numerical answer, showing working and including a unit.
+  determine: Find a value or conclusion, drawing on given data or a graph.
+  show that: Derive the stated result — the answer is given, so the working is the marks.
+  explain: Give the physical reason, referring to the relevant law or model.
+  describe: Give an account of what happens, without necessarily saying why.
+  compare: Set out similarities and differences between two situations or models.
+  sketch: Draw a labelled graph or diagram showing the correct shape and key features.
+  estimate: Give an approximate value with reasoning about the assumptions made.
+  justify: Support an answer with physical reasoning or evidence.
+  evaluate: Weigh the evidence or the limitations and state a judgement.

@@ -1,0 +1,189 @@
+# Sample questions so the tool is testable before your own PDFs are ingested.
+# Written for this project, not taken from any book. All marked generated: true.
+source:
+  id: ph-sample
+  kind: generated
+  title: Blitz sample bank
+questions:
+  - kk: physics-u3-aos1-kk01
+    type: ph-mc
+    marks: 1
+    difficulty: 2
+    body: "A 1200 kg car accelerates uniformly from rest to 20 m s⁻¹ in 8.0 s on a level road. What is the magnitude of the net force acting on the car?"
+    options: ["300 N", "3000 N", "3.0 × 10³ N up the road", "2.4 × 10⁴ N"]
+    answer: "B. a = Δv/Δt = 20/8.0 = 2.5 m s⁻². F_net = ma = 1200 × 2.5 = 3000 N, horizontal and in the direction of motion. Option C states the wrong direction; option D multiplies mass by velocity rather than acceleration."
+  - kk: physics-u3-aos1-kk02
+    type: ph-calculation
+    marks: 3
+    difficulty: 3
+    body: "A 5.0 kg block rests on a frictionless plane inclined at 30° to the horizontal. Calculate the magnitude of the component of the block's weight acting parallel to the incline, and hence its acceleration down the slope. Take g = 9.8 m s⁻²."
+    answer: "Weight W = mg = 5.0 × 9.8 = 49 N. The component parallel to the incline is W sin θ = 49 × sin 30° = 49 × 0.50 = 24.5 N ≈ 25 N. With no friction this is the net force, so a = F/m = 24.5/5.0 = 4.9 m s⁻² directed down the slope. (Equivalently a = g sin θ = 9.8 × 0.5.)"
+  - kk: physics-u3-aos1-kk03
+    type: ph-multi-step
+    marks: 5
+    difficulty: 4
+    body: "A 0.16 kg cricket ball travelling at 30 m s⁻¹ is struck and returns along its original line at 40 m s⁻¹. The bat is in contact with the ball for 1.2 ms. Calculate the impulse delivered to the ball and the average force exerted by the bat."
+    answer: "Take the initial direction of travel as positive. p_i = 0.16 × 30 = +4.8 kg m s⁻¹. p_f = 0.16 × (−40) = −6.4 kg m s⁻¹. Impulse = Δp = p_f − p_i = −6.4 − 4.8 = −11.2 kg m s⁻¹, i.e. 11.2 N s directed opposite to the ball's original motion. F_avg = Δp/Δt = 11.2 / 1.2 × 10⁻³ = 9.3 × 10³ N. The most common error is subtracting the speeds (10 m s⁻¹) instead of treating velocity as a vector."
+  - kk: physics-u3-aos1-kk04
+    type: ph-explanation
+    marks: 3
+    difficulty: 3
+    body: "Two trolleys collide and move off together. Explain why momentum is conserved in this collision but kinetic energy is not."
+    answer: "Momentum is conserved because the trolleys form an isolated system: the forces they exert on each other are an action–reaction pair, equal and opposite, so the impulses cancel and the total momentum is unchanged. Kinetic energy is not conserved because the collision is inelastic — the trolleys deform and couple together, and some kinetic energy is transformed into other forms such as sound, heat and permanent deformation. Momentum conservation follows from Newton's third law and holds for all collisions; kinetic energy conservation is an additional condition that holds only for elastic collisions."
+  - kk: physics-u3-aos1-kk06
+    type: ph-graph
+    marks: 4
+    difficulty: 4
+    body: "A spring is compressed and a force–compression graph is plotted. The graph is a straight line from the origin to (0.12 m, 60 N). Determine the strain potential energy stored at 0.12 m compression, and state the speed this would give a 0.50 kg trolley released from that compression on a frictionless surface."
+    answer: "Strain energy = area under the force–compression graph = ½ × base × height = ½ × 0.12 × 60 = 3.6 J. On release, all strain energy becomes kinetic energy: ½mv² = 3.6, so v² = 2 × 3.6 / 0.50 = 14.4 and v = 3.8 m s⁻¹. Note the area, not the product Fx — using 0.12 × 60 = 7.2 J is the standard error here."
+  - kk: physics-u3-aos1-kk08
+    type: ph-multi-step
+    marks: 5
+    difficulty: 4
+    body: "A ball is launched from ground level at 25 m s⁻¹ at 40° above the horizontal. Ignoring air resistance and taking g = 9.8 m s⁻², calculate the maximum height reached and the horizontal range."
+    answer: "Resolve: u_x = 25 cos 40° = 19.2 m s⁻¹, u_y = 25 sin 40° = 16.1 m s⁻¹. Maximum height: at the top v_y = 0, so v_y² = u_y² − 2gh gives h = u_y²/(2g) = 16.1²/(2 × 9.8) = 13.2 m. Time of flight: t = 2u_y/g = 2 × 16.1/9.8 = 3.28 s. Range: x = u_x t = 19.2 × 3.28 = 63 m. The horizontal and vertical motions are independent — the only link between them is the shared time."
+  - kk: physics-u3-aos1-kk09
+    type: ph-diagram
+    marks: 3
+    difficulty: 3
+    body: "A car travels at constant speed around a flat, unbanked circular bend. Draw a free-body diagram of the car and explain which force provides the centripetal acceleration."
+    answer: "The free-body diagram shows three forces: weight mg acting vertically down, the normal force N acting vertically up (equal in magnitude to mg since there is no vertical acceleration), and friction acting horizontally toward the centre of the circle. Friction between the tyres and the road is the only horizontal force available, so it alone provides the centripetal force: f = mv²/r. There is no outward 'centrifugal force' on the free-body diagram. If the required mv²/r exceeds the maximum static friction, the car cannot hold the bend and slides outward along a tangent."
+  - kk: physics-u3-aos1-kk10
+    type: ph-calculation
+    marks: 4
+    difficulty: 5
+    body: "A 0.40 kg ball on the end of a 0.80 m string is swung in a vertical circle. At the highest point the string tension is 2.0 N. Calculate the speed of the ball at that point. Take g = 9.8 m s⁻²."
+    answer: "At the highest point both the tension and the weight point downward, toward the centre of the circle, so together they supply the centripetal force: T + mg = mv²/r. T + mg = 2.0 + (0.40 × 9.8) = 2.0 + 3.92 = 5.92 N. v² = (T + mg) × r / m = 5.92 × 0.80 / 0.40 = 11.84, so v = 3.4 m s⁻¹. Note that the minimum possible speed at the top occurs when T = 0, giving v = √(gr) = 2.8 m s⁻¹."
+  - kk: physics-u3-aos2-kk01
+    type: ph-explanation
+    marks: 3
+    difficulty: 2
+    body: "Explain what is meant by a field model, and state one similarity and one difference between gravitational and electric fields."
+    answer: "A field model explains forces acting at a distance by proposing that an object modifies the space around it, and that a second object placed in that space experiences a force because of the field there rather than because of direct contact. Similarity: both are inverse-square fields whose strength falls as 1/r² from a point source, and both are vector fields with the force along the field line. Difference: the gravitational field is always attractive because mass is only ever positive, whereas the electric field can be attractive or repulsive because charge has two signs."
+  - kk: physics-u3-aos2-kk03
+    type: ph-calculation
+    marks: 3
+    difficulty: 3
+    body: "Calculate the gravitational field strength at the surface of a planet of mass 4.8 × 10²⁴ kg and radius 5.6 × 10⁶ m. Take G = 6.67 × 10⁻¹¹ N m² kg⁻²."
+    answer: "g = GM/r² = (6.67 × 10⁻¹¹ × 4.8 × 10²⁴) / (5.6 × 10⁶)² = 3.20 × 10¹⁴ / 3.136 × 10¹³ = 10.2 N kg⁻¹ (or m s⁻²), directed toward the centre of the planet. Note the radius is squared — forgetting to square it is the usual error and gives an answer larger by a factor of 5.6 × 10⁶."
+  - kk: physics-u3-aos2-kk05
+    type: ph-diagram
+    marks: 3
+    difficulty: 3
+    body: "A straight wire carrying 3.0 A runs horizontally, west to east, through a magnetic field of 0.25 T directed vertically downward. Calculate the force on a 0.40 m length of the wire and state its direction."
+    answer: "F = nBIL with the wire perpendicular to the field, so F = 0.25 × 3.0 × 0.40 = 0.30 N. Direction: using the right-hand slap rule with fingers pointing along B (down) and thumb along the conventional current (east), the palm pushes toward the north — so the force is horizontal, directed north."
+  - kk: physics-u3-aos2-kk06
+    type: ph-multi-step
+    marks: 5
+    difficulty: 4
+    body: "Two parallel plates are separated by 4.0 mm with a potential difference of 120 V across them. Calculate the electric field strength between the plates and the work done on an electron moving from the negative plate to the positive plate. Take e = 1.6 × 10⁻¹⁹ C."
+    answer: "E = V/d = 120 / 4.0 × 10⁻³ = 3.0 × 10⁴ V m⁻¹ (or N C⁻¹), directed from the positive plate toward the negative plate. Work done on the electron W = qV = 1.6 × 10⁻¹⁹ × 120 = 1.92 × 10⁻¹⁷ J (equivalently 120 eV). The electron is negative, so it is attracted toward the positive plate and the electric force does positive work on it, converting electric potential energy into kinetic energy."
+  - kk: physics-u3-aos2-kk08
+    type: ph-multi-step
+    marks: 5
+    difficulty: 5
+    body: "A satellite orbits the Earth in a circular orbit of radius 8.0 × 10⁶ m. Given GM_E = 3.99 × 10¹⁴ N m² kg⁻¹, calculate the satellite's orbital speed and period."
+    answer: "For a circular orbit gravity supplies the centripetal force: GMm/r² = mv²/r, so v² = GM/r. v² = 3.99 × 10¹⁴ / 8.0 × 10⁶ = 4.99 × 10⁷, giving v = 7.06 × 10³ m s⁻¹. Period T = 2πr/v = 2π × 8.0 × 10⁶ / 7.06 × 10³ = 7.12 × 10³ s ≈ 1.98 hours. Note the satellite's own mass cancels — every satellite at this radius has the same speed and period."
+  - kk: physics-u3-aos2-kk09
+    type: ph-explanation
+    marks: 3
+    difficulty: 4
+    body: "An astronaut aboard the International Space Station appears weightless. Explain why this is described as apparent weightlessness rather than an absence of gravity."
+    answer: "At the ISS's altitude the Earth's gravitational field strength is still roughly 90% of its surface value, so gravity is very much present and is in fact what holds the station in orbit. The astronaut appears weightless because both the astronaut and the station are in free fall — gravity is the only significant force acting, and it produces the same centripetal acceleration for both. Since the floor accelerates downward at exactly the same rate as the astronaut, there is no normal force between them. Apparent weight is the normal force we feel, so it reads zero, while true weight mg remains large."
+  - kk: physics-u3-aos3-kk01
+    type: ph-mc
+    marks: 1
+    difficulty: 2
+    body: "A rectangular loop of area A lies in a uniform magnetic field of strength B. The flux through the loop is greatest when the plane of the loop is:"
+    options: ["parallel to the field", "perpendicular to the field", "at 45° to the field", "flux does not depend on orientation"]
+    answer: "B. Flux Φ = BA⊥, where A⊥ is the area projected perpendicular to the field. When the plane of the loop is perpendicular to the field, the loop's normal is parallel to the field and the full area A is presented to it, so Φ = BA is maximum. When the plane is parallel to the field, no field lines pass through the loop and Φ = 0."
+  - kk: physics-u3-aos3-kk02
+    type: ph-calculation
+    marks: 4
+    difficulty: 4
+    body: "A 40-turn coil of area 2.5 × 10⁻³ m² sits perpendicular to a magnetic field that falls uniformly from 0.80 T to 0.20 T in 0.050 s. Calculate the magnitude of the EMF induced in the coil."
+    answer: "Initial flux Φ_i = BA = 0.80 × 2.5 × 10⁻³ = 2.0 × 10⁻³ Wb. Final flux Φ_f = 0.20 × 2.5 × 10⁻³ = 5.0 × 10⁻⁴ Wb. ΔΦ = 1.5 × 10⁻³ Wb. By Faraday's law, |EMF| = N ΔΦ/Δt = 40 × 1.5 × 10⁻³ / 0.050 = 1.2 V. Remember to include the number of turns — omitting N is the most common error."
+  - kk: physics-u3-aos3-kk02
+    type: ph-explanation
+    marks: 3
+    difficulty: 4
+    body: "A bar magnet is dropped north-pole-first through a vertical copper tube. Explain, using Lenz's law, why it falls more slowly than it would in free fall."
+    answer: "As the magnet falls, the magnetic flux through each ring-shaped section of the tube changes, inducing an EMF and hence an eddy current in the copper. By Lenz's law the induced current flows in the direction that opposes the change producing it: the ring ahead of the magnet is repelled by it and the ring behind attracts it, so in both cases the magnetic force on the magnet acts upward, opposing its motion. This retarding force grows with speed, so the magnet approaches a low terminal velocity. Energy is conserved — gravitational potential energy becomes electrical energy and then heat in the copper, rather than kinetic energy."
+  - kk: physics-u3-aos3-kk04
+    type: ph-explanation
+    marks: 3
+    difficulty: 3
+    body: "Describe the difference between an AC generator and a DC generator in terms of their construction, and sketch the shape of the output voltage of each."
+    answer: "Both use a coil rotating in a magnetic field, so the EMF induced in the coil is sinusoidal in each case. The difference is in how the coil connects to the external circuit. An AC generator uses two slip rings, each permanently connected to one end of the coil, so the sinusoidal EMF is delivered unchanged and the output alternates: a full sine wave crossing zero and reversing polarity each half-turn. A DC generator uses a split-ring commutator, which swaps the connections every half-turn, so the negative half-cycles are flipped upward: the output is a series of positive humps that touch zero but never go negative."
+  - kk: physics-u3-aos3-kk06
+    type: ph-calculation
+    marks: 3
+    difficulty: 3
+    body: "An AC supply has a peak-to-peak voltage of 340 V. Calculate its peak voltage and its RMS voltage."
+    answer: "Peak voltage V_p = ½ × V_p-p = ½ × 340 = 170 V. RMS voltage V_RMS = V_p/√2 = 170/1.414 = 120 V. The common error is applying the 1/√2 factor to the peak-to-peak value directly, which gives 240 V."
+  - kk: physics-u3-aos3-kk08
+    type: ph-multi-step
+    marks: 6
+    difficulty: 5
+    body: "A generator supplies 50 kW to a transmission line of total resistance 4.0 Ω. Calculate the power lost in the line when the power is transmitted at 500 V, and again at 10 kV, and explain the significance of the comparison."
+    answer: "At 500 V: I = P/V = 50 000/500 = 100 A. P_loss = I²R = 100² × 4.0 = 40 000 W = 40 kW — 80% of the supplied power is lost as heat in the line. At 10 kV: I = 50 000/10 000 = 5.0 A. P_loss = 5.0² × 4.0 = 100 W — 0.2% of the supplied power. Significance: line loss goes as I²R, so it depends on the square of the current. Transmitting the same power at 20× the voltage cuts the current by 20 and the loss by 400. This is why power is stepped up by transformers for transmission and stepped down again near the consumer."
+  - kk: physics-u3-aos3-kk07
+    type: ph-calculation
+    marks: 3
+    difficulty: 2
+    body: "An ideal transformer has 1200 turns on the primary and 80 turns on the secondary. The primary is connected to 240 V AC and the secondary draws 3.0 A. Calculate the secondary voltage and the primary current."
+    answer: "V_s/V_p = N_s/N_p, so V_s = 240 × 80/1200 = 16 V. For an ideal transformer power in equals power out: V_p I_p = V_s I_s, so I_p = (16 × 3.0)/240 = 0.20 A. Note the step-down in voltage is matched by a step-up in current — a transformer conserves power, it does not create it."
+  - kk: physics-u4-aos1-kk01
+    type: ph-multi-step
+    marks: 4
+    difficulty: 4
+    body: "In a Young's double slit experiment, light of wavelength 640 nm passes through slits 0.25 mm apart and the pattern is observed on a screen 2.0 m away. Calculate the spacing between adjacent bright fringes."
+    answer: "Δy = λL/d = (640 × 10⁻⁹ × 2.0) / (0.25 × 10⁻³) = 1.28 × 10⁻⁶ / 2.5 × 10⁻⁴ = 5.1 × 10⁻³ m = 5.1 mm. Bright fringes occur where the path difference is a whole number of wavelengths (constructive interference); dark fringes where it is a half-integer number of wavelengths."
+  - kk: physics-u4-aos1-kk03
+    type: ph-graph
+    marks: 5
+    difficulty: 5
+    body: "A photoelectric experiment plots maximum kinetic energy of emitted electrons against frequency of incident light, giving a straight line crossing the frequency axis at 5.5 × 10¹⁴ Hz. Determine the work function of the metal in eV and state what the gradient of the line represents. Take h = 4.14 × 10⁻¹⁵ eV s."
+    answer: "The x-intercept is the threshold frequency f₀, the lowest frequency that causes emission. At that point E_k,max = 0, so the photon energy exactly equals the work function: W = hf₀ = 4.14 × 10⁻¹⁵ × 5.5 × 10¹⁴ = 2.28 eV ≈ 2.3 eV. The gradient of the line is Planck's constant h — it is the same for every metal, so lines for different metals are parallel and differ only in their intercepts."
+  - kk: physics-u4-aos1-kk04
+    type: ph-explanation
+    marks: 4
+    difficulty: 5
+    body: "Explain two features of the photoelectric effect that the wave model of light cannot account for, and state how the photon model explains each."
+    answer: "(1) The threshold frequency: the wave model predicts that light of any frequency should eventually eject electrons if it is intense enough or shone for long enough, because energy accumulates. In practice no electrons are emitted below f₀ regardless of intensity or duration. The photon model explains this because energy arrives in discrete quanta E = hf, and a single photon below hf₀ simply cannot supply the work function. (2) The instantaneous emission: the wave model predicts a measurable delay at very low intensity while the electron absorbs enough energy, but emission is observed within about 10⁻⁹ s. In the photon model a single photon transfers all its energy to a single electron in one interaction, so there is nothing to wait for. (Intensity affecting current but not maximum kinetic energy is a third acceptable feature.)"
+  - kk: physics-u4-aos1-kk05
+    type: ph-calculation
+    marks: 3
+    difficulty: 4
+    body: "Calculate the de Broglie wavelength of an electron travelling at 2.5 × 10⁶ m s⁻¹. Take h = 6.63 × 10⁻³⁴ J s and m_e = 9.11 × 10⁻³¹ kg."
+    answer: "λ = h/p = h/(mv) = 6.63 × 10⁻³⁴ / (9.11 × 10⁻³¹ × 2.5 × 10⁶) = 6.63 × 10⁻³⁴ / 2.28 × 10⁻²⁴ = 2.9 × 10⁻¹⁰ m. This is comparable to atomic spacing in a crystal, which is why electrons of this speed produce observable diffraction patterns when fired at a crystal lattice — direct evidence of the wave-like nature of matter."
+  - kk: physics-u4-aos1-kk08
+    type: ph-multi-step
+    marks: 5
+    difficulty: 5
+    body: "Muons created in the upper atmosphere have a proper lifetime of 2.2 μs and travel toward Earth at 0.99c. Calculate the lifetime measured by an observer on the ground, and explain why far more muons reach the surface than classical physics predicts."
+    answer: "γ = 1/√(1 − v²/c²) = 1/√(1 − 0.99²) = 1/√(1 − 0.9801) = 1/√0.0199 = 7.09. The proper lifetime of 2.2 μs is measured in the muon's own frame, so the ground observer measures t = γt₀ = 7.09 × 2.2 = 15.6 μs. Classically, in 2.2 μs a muon at 0.99c travels only about 650 m and almost none survive the ~10 km descent. Because the ground observer measures the dilated lifetime, the muon survives long enough to cover roughly 4.6 km, and a large fraction reach the surface. In the muon's own frame the explanation is length contraction — the 10 km of atmosphere is contracted to about 1.4 km."
+  - kk: physics-u4-aos1-kk09
+    type: ph-calculation
+    marks: 3
+    difficulty: 4
+    body: "An electron is accelerated until its total energy is 3.0 times its rest energy. Calculate its Lorentz factor and its speed as a fraction of c."
+    answer: "Total energy E = γE₀, so γ = E/E₀ = 3.0. From γ = 1/√(1 − v²/c²): 1 − v²/c² = 1/γ² = 1/9 = 0.111, so v²/c² = 0.889 and v = 0.943c. Note that its kinetic energy is E − E₀ = 2.0E₀, i.e. twice the rest energy — at relativistic speeds ½mv² is no longer valid."
+  - kk: physics-u4-aos2-kk03
+    type: ph-experimental
+    marks: 4
+    difficulty: 3
+    body: "A student measures the period of a pendulum five times and obtains 1.42, 1.44, 1.43, 1.42 and 1.85 s. Comment on the precision and accuracy of this data set, and state how the student should treat the fifth reading."
+    answer: "The first four readings agree closely with one another, so the measurements are precise — repeated measurements cluster tightly. Precision says nothing about accuracy: without a known true value, we cannot say how close the mean is to the accepted value, and a systematic error (such as starting the timer late every time) would shift all readings together while leaving them precise. The fifth reading, 1.85 s, is an outlier — it lies far outside the spread of the others and most likely reflects a one-off mistake such as a mistimed start. The student should investigate it and, if a cause is identified, exclude it from the mean and state clearly that it was excluded and why, rather than silently deleting it."
+  - kk: physics-u4-aos2-kk05
+    type: ph-graph
+    marks: 4
+    difficulty: 4
+    body: "A student investigating a spring measures period T against mass m and finds the T-versus-m graph is curved. Explain how the student could linearise the data, and state what the gradient of the linearised graph would represent given T = 2π√(m/k)."
+    answer: "Squaring both sides gives T² = 4π²m/k. So plotting T² (y-axis) against m (x-axis) should give a straight line through the origin, which linearises the relationship. The gradient of that line is 4π²/k, so the spring constant can be found as k = 4π²/gradient. A straight line through the origin also confirms that T² is directly proportional to m, supporting the model; a non-zero y-intercept would suggest a systematic error, such as the mass of the spring itself contributing to the oscillation."
+  - kk: physics-u4-aos2-kk04
+    type: ph-experimental
+    marks: 3
+    difficulty: 3
+    body: "Distinguish between a systematic error and a random error, and state one way of reducing each."
+    answer: "A systematic error shifts every reading in the same direction by a similar amount — for example, an ammeter with a non-zero reading before the circuit is connected. It affects accuracy but not precision, and cannot be reduced by repeating the measurement; it is reduced by calibrating or zeroing the instrument and correcting the readings. A random error causes readings to scatter unpredictably above and below the true value — for example, human reaction time when starting a stopwatch. It affects precision, and is reduced by taking repeated measurements and averaging, or by using an instrument that removes the human element such as a light gate."

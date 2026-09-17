@@ -1,0 +1,34 @@
+[project]
+name = "vce-blitz"
+version = "0.1.0"
+description = "Generate two-page, study-design-anchored VCE revision sheets from your own textbooks and Checkpoints PDFs."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pymupdf>=1.24",
+    "reportlab>=4.1",
+    "pyyaml>=6.0",
+    "pydantic>=2.6",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+tag = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+blitz = "blitz.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["blitz*"]
+
+[tool.setuptools.package-data]
+blitz = ["studydesign/data/*.yaml", "server/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

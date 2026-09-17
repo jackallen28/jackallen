@@ -1,0 +1,156 @@
+# Sample questions so the tool is testable before your own PDFs are ingested.
+# These are written for this project, not taken from any book, and every one is
+# marked generated: true so it prints with a ° and can be excluded entirely
+# (uncheck "fill gaps with generated questions" in the UI, or pass --no-generated).
+source:
+  id: bm-sample
+  kind: generated
+  title: Blitz sample bank
+questions:
+  - kk: bm-u3-aos1-kk01
+    type: bm-mc
+    marks: 1
+    difficulty: 2
+    body: Which business type has a separate legal identity from its owners and can sell shares to the general public?
+    options: ["Sole trader", "Partnership", "Private limited company", "Public listed company"]
+    answer: "D. A public listed company is incorporated, so it has a separate legal identity, and its shares are listed on the ASX and available to the general public. A private limited company is also incorporated but cannot sell shares publicly."
+  - kk: bm-u3-aos1-kk02
+    type: bm-short
+    marks: 2
+    difficulty: 2
+    body: Distinguish between the business objective of increasing market share and the objective of fulfilling a market need.
+    answer: "Increasing market share means growing the proportion of total industry sales the business holds, measured against competitors, whereas fulfilling a market need means supplying a good or service that customers want but that is not currently being adequately provided. Market share is competitive and comparative; fulfilling a market need is about the product itself."
+  - kk: bm-u3-aos1-kk03
+    type: bm-case-study
+    marks: 4
+    difficulty: 3
+    body: "Kembla Foods has announced it will close its regional processing plant and move production offshore. Identify two stakeholders of Kembla Foods and explain how the interests of each may conflict as a result of this decision."
+    answer: "Employees have an interest in job security and ongoing income; the closure removes both. Shareholders have an interest in a return on their investment; offshoring is likely to reduce costs and raise profit, which serves them. These interests directly conflict — the decision that benefits shareholders financially is the decision that costs employees their jobs. (Other valid pairs: the local community vs shareholders, customers vs employees.)"
+  - kk: bm-u3-aos1-kk05
+    type: bm-short
+    marks: 3
+    difficulty: 2
+    body: Describe the persuasive management style and outline one situation in which it would be appropriate.
+    answer: "A persuasive manager makes the decision alone but then attempts to sell that decision to employees by explaining the reasoning behind it, hoping to gain their acceptance. Communication is largely one-way, downward. It is appropriate where a decision is time-sensitive and non-negotiable — such as implementing a legislated safety change — but where employee buy-in still matters for it to work in practice."
+  - kk: bm-u3-aos1-kk07
+    type: bm-extended
+    marks: 6
+    difficulty: 4
+    body: "Analyse the relationship between a manager's communication and delegation skills, and evaluate the consequences for a business where a manager delegates without communicating effectively."
+    answer: "Delegation is the transfer of authority and responsibility for a task to a subordinate; communication is the exchange of information so that the message sent is the message received. The two are interdependent: delegation can only succeed if the manager communicates the scope of the task, the authority granted, the standard expected and the deadline. Where delegation occurs without effective communication, employees are left with responsibility but no clear brief. The likely consequences are duplicated or missed work, decisions made outside the employee's actual authority, rework and missed deadlines (efficiency falls), and a decline in employee confidence and motivation as they are held accountable for standards never made explicit. Over time this tends to push the manager back toward doing the work themselves, which defeats the purpose of delegating and constrains the business's capacity to grow. On balance, delegation without communication is worse than not delegating at all, because it adds confusion to the existing workload."
+  - kk: bm-u3-aos1-kk09
+    type: bm-short
+    marks: 2
+    difficulty: 3
+    body: Distinguish between official corporate culture and real corporate culture.
+    answer: "Official corporate culture is the set of values and beliefs a business formally states it holds, expressed through documents such as a mission statement, code of conduct, logos and slogans. Real corporate culture is what actually happens — the shared values, attitudes and behaviours employees display day to day, such as the language used in the staff room or whether managers actually take their own leave entitlements. The two can differ markedly."
+  - kk: bm-u3-aos2-kk02
+    type: bm-theory-application
+    marks: 6
+    difficulty: 4
+    body: "A call centre reports high staff turnover and low engagement despite paying above the award. Apply Lawrence and Nohria's Four Drive Theory to explain why pay alone has not resolved the problem, and propose one strategy the business could use."
+    answer: "Four Drive Theory holds that employees are motivated by four drives: to acquire, to bond, to comprehend and to defend. Above-award pay satisfies only the drive to acquire. If the work is repetitive and scripted, the drive to comprehend is unsatisfied; if staff work in isolation with high monitoring, the drives to bond and to defend are also unsatisfied. Because the drives operate together, satisfying one intensely does not compensate for neglecting the others, which explains why pay has not fixed turnover. A suitable strategy would be job rotation across product lines with team-based problem-solving sessions, which addresses the drive to comprehend (new skills and understanding) and the drive to bond (working with colleagues) at the same time."
+  - kk: bm-u3-aos2-kk03
+    type: bm-mc
+    marks: 1
+    difficulty: 2
+    body: Which motivation strategy is most likely to improve employee motivation in the long term rather than the short term?
+    options: ["A one-off performance bonus", "Investment in training", "A sanction for lateness", "A staff barbecue"]
+    answer: "B. Investment in training builds an employee's skills and sense of competence, which is a durable source of motivation and also supports career advancement. Financial bonuses and sanctions tend to produce a short, sharp change in behaviour that fades once the incentive or threat is removed."
+  - kk: bm-u3-aos2-kk05
+    type: bm-short
+    marks: 4
+    difficulty: 3
+    body: Compare on-the-job and off-the-job training, referring to cost and disruption to operations.
+    answer: "Both develop employee skills to improve performance. On-the-job training occurs at the workplace during normal operations, so it is generally cheaper (no external provider or venue) and the employee remains productive, but it can disrupt the trainer's own output and the training may absorb existing bad habits. Off-the-job training occurs away from the workplace, usually with an expert, so it is typically more expensive and removes the employee from operations entirely, but it is free of workplace distractions and can deliver specialised skills that no one internally holds."
+  - kk: bm-u3-aos2-kk07
+    type: bm-case-study
+    marks: 5
+    difficulty: 4
+    body: "A manufacturer is closing one of two production lines and 40 roles will go. Explain the difference between redundancy and dismissal in this context, and outline two transition considerations the business should address."
+    answer: "Redundancy occurs when the role itself is no longer required — here the closure of the line removes the positions regardless of employee performance — and attracts redundancy pay and notice under the National Employment Standards. Dismissal is termination because of the employee's own conduct or capacity, and is not what is happening here; treating these as dismissals would expose the business to unfair dismissal claims. Transition considerations: (1) outplacement support such as résumé writing, job-search assistance and referrals to other employers, and (2) counselling or financial advice services to help employees manage the personal and financial effect of losing the role. Both also protect the corporate culture and reputation of the business among remaining staff."
+  - kk: bm-u3-aos2-kk11
+    type: bm-short
+    marks: 3
+    difficulty: 3
+    body: Distinguish between mediation and arbitration as methods of dispute resolution.
+    answer: "In mediation, an independent third party facilitates discussion between the disputing parties to help them reach their own agreement; the mediator does not impose a decision and any outcome is not legally binding unless the parties choose to formalise it. In arbitration, an independent third party such as the Fair Work Commission hears both sides and hands down a decision that is legally binding on the parties, whether or not they agree with it."
+  - kk: bm-u3-aos3-kk02
+    type: bm-short
+    marks: 3
+    difficulty: 1
+    body: Identify the three key elements of an operations system and give one example of each for a commercial bakery.
+    answer: "Inputs — the resources used, such as flour, water, bakers' labour and ovens. Processes — the activities that transform inputs into outputs, such as mixing, proving and baking. Outputs — the finished good or service delivered to the customer, such as loaves of sourdough ready for sale."
+  - kk: bm-u3-aos3-kk05
+    type: bm-theory-application
+    marks: 4
+    difficulty: 4
+    body: "Explain how a Just In Time approach to materials management could improve the efficiency of a furniture manufacturer, and identify one risk it creates."
+    answer: "Just In Time delivers materials only as they are needed in the production process, so the manufacturer holds minimal inventory. Efficiency improves because less capital is tied up in stock, less warehouse space and handling is required, and there is less timber damaged or obsolete in storage — the cost per unit of output falls. The risk is supply vulnerability: because there is no buffer stock, a single late or defective delivery halts production entirely, which can be costly if suppliers are distant or the supply chain is disrupted."
+  - kk: bm-u3-aos3-kk06
+    type: bm-extended
+    marks: 8
+    difficulty: 5
+    body: "Evaluate the use of Total Quality Management as a strategy for improving both the efficiency and effectiveness of a service business."
+    answer: "TQM is an organisation-wide commitment to continuous improvement in which every employee is responsible for quality at every stage, using tools such as continuous improvement, employee empowerment, customer focus and quality circles. Effectiveness: because TQM is built around meeting customer requirements, it directly serves objectives such as fulfilling a market need and increasing market share; in a service business, where the product is the interaction itself, empowering frontline staff to resolve problems immediately raises customer satisfaction and retention. Efficiency: quality is built in rather than inspected in, so rework, complaints handling and service recovery costs fall, reducing the resources consumed per unit of output. Weaknesses: TQM requires substantial up-front investment in training and cultural change; results are gradual rather than immediate, so it is a poor response to an urgent performance problem; and it depends on genuine employee buy-in, so in a business with an autocratic style or high casual turnover it can become a token exercise. On balance, TQM is well suited to a service business pursuing long-term differentiation and customer loyalty, but a business needing an immediate cost reduction would be better served by a targeted strategy such as lean management or cost cutting."
+  - kk: bm-u3-aos3-kk07
+    type: bm-short
+    marks: 3
+    difficulty: 2
+    body: Outline the three Rs of waste minimisation and explain how each reduces a manufacturer's costs.
+    answer: "Reduce — using fewer inputs to make the same output, which directly lowers materials spend. Reuse — using an item again in its existing form, such as returning pallets to the supplier, which avoids repurchase. Recycle — reprocessing end-of-life material into new inputs, such as remelting offcuts, which turns what would be a disposal cost into a usable resource. All three also cut waste disposal charges."
+  - kk: bm-u4-aos1-kk02
+    type: bm-mc
+    marks: 1
+    difficulty: 2
+    body: A business records a rise in the level of staff turnover and a rise in the number of customer complaints. Which management strategy most directly addresses both?
+    options: ["Cost cutting", "Staff training", "Redeployment of resources", "Increased investment in technology"]
+    answer: "B. Staff training improves employee competence and confidence, which raises the standard of service customers receive (reducing complaints), and signals investment in employees' careers, which improves job satisfaction and reduces turnover. Cost cutting is likely to worsen both indicators."
+  - kk: bm-u4-aos1-kk02
+    type: bm-case-study
+    marks: 4
+    difficulty: 3
+    body: "Over two years, a retailer's rate of productivity growth fell from 3.1% to 0.4% while its level of wastage rose from 2% to 7%. Analyse what these two key performance indicators, read together, suggest about the business's operations."
+    answer: "Productivity growth measures the change in output per unit of input; a fall to 0.4% means the business is converting its resources into output barely more efficiently than before. Wastage measures resources lost in the production process; a rise from 2% to 7% means a growing share of inputs never becomes saleable output. Read together, they point to a problem inside the operations system rather than in demand: inputs are being consumed without producing output, which is precisely what drives productivity down. Likely causes include ageing equipment, inadequate training or a breakdown in quality management, since defective output counts as both waste and lost productivity."
+  - kk: bm-u4-aos1-kk03
+    type: bm-theory-application
+    marks: 6
+    difficulty: 4
+    body: "A café chain plans to introduce self-service ordering kiosks. Apply Lewin's Force Field Analysis to this proposal, identifying two driving and two restraining forces, and explain how weighting the forces would help the manager decide."
+    answer: "Driving forces: the pursuit of profit, since kiosks reduce labour cost per order; and technology, since reliable kiosk hardware and payment integration now exist at low cost. Restraining forces: employees, who may resist because they fear their hours will be cut; and financial considerations, since the up-front purchase and installation cost is significant. In Force Field Analysis the manager assigns each force a weighting (say 1–5) according to its strength, then totals the driving and restraining scores. If driving forces outweigh restraining forces the change is likely to succeed; if not, the manager can see precisely which restraining force is heaviest and target it — for example, by guaranteeing no reduction in employee hours, converting the strongest restraining force into a neutral one rather than abandoning the change."
+  - kk: bm-u4-aos1-kk06
+    type: bm-short
+    marks: 4
+    difficulty: 4
+    body: Explain two principles of the Learning Organisation and how each supports a business undergoing transformation.
+    answer: "Systems thinking — seeing the business as an interrelated whole rather than separate departments. During transformation this ensures a change in one area, such as automating warehousing, is assessed for its effect on sales and customer service, avoiding change that fixes one KPI while damaging another. Shared vision — a genuine, collectively held picture of where the business is going. During transformation this converts compliance into commitment: employees who share the vision are more likely to support change rather than act as a restraining force, which reduces resistance and speeds implementation."
+  - kk: bm-u4-aos1-kk08
+    type: bm-extended
+    marks: 8
+    difficulty: 5
+    body: "Discuss the appropriateness of Porter's lower cost strategy for a business whose key performance indicators show falling net profit but rising market share."
+    answer: "Porter's lower cost strategy seeks competitive advantage by becoming the lowest-cost producer in the industry, allowing the business either to undercut rivals on price or to earn a wider margin at the market price. The KPI pattern here — rising market share with falling net profit — suggests the business may already be competing on price, winning volume while eroding margin. If so, pursuing lower cost is appropriate but only if it targets the cost base rather than the price: strategies such as lean management, global sourcing of inputs or investment in automation would restore margin while protecting the volume gains already won. If instead the business simply cuts price further, it deepens the existing problem. There is also a risk that cost cutting reaches quality — reducing input quality or staffing would likely raise wastage and customer complaints and surrender the market share gained. An alternative is differentiation, using the enlarged customer base to justify a price rise supported by superior service or product features, which restores profit without a volume war. On balance, a lower cost strategy is appropriate here provided it is implemented through operational efficiency rather than price reduction; if the business's market share was won on brand rather than price, differentiation would be the stronger choice."
+  - kk: bm-u4-aos2-kk01
+    type: bm-short
+    marks: 3
+    difficulty: 3
+    body: Explain why leadership is particularly important during the implementation stage of business change.
+    answer: "Implementation is where a change stops being a plan and starts affecting people's daily work, so it is the point at which restraining forces such as employee resistance and organisational inertia are strongest. A leader influences and inspires employees to work toward the business's objectives, communicating why the change is necessary and modelling the new behaviours. Without this, employees revert to old practices and the change fails despite sound planning, because the real corporate culture overrides the official policy."
+  - kk: bm-u4-aos2-kk03
+    type: bm-case-study
+    marks: 6
+    difficulty: 4
+    body: "A supermarket chain replaces half its staffed checkouts with automated ones. Analyse the effect of this change on three different stakeholder groups."
+    answer: "Employees: checkout roles are reduced, causing redundancies or a shift to casual hours; remaining staff move to supervising multiple machines, which changes the nature of the work and may raise stress. Customers: waiting times may fall at peak periods and transactions become faster, but customers who value service or find the technology difficult — including older and disabled customers — receive a worse experience, and some may shift to competitors. Shareholders: labour costs fall and, if sales volumes hold, net profit and return on investment rise, which serves their interest in a return on investment; however, if customer complaints rise and market share falls, the gain is short-lived. The general community also bears a cost, as reduced entry-level employment removes a common first job."
+  - kk: bm-u4-aos2-kk05
+    type: bm-short
+    marks: 3
+    difficulty: 3
+    body: Explain why a business should review its key performance indicators after implementing change, rather than only before.
+    answer: "KPIs measured before the change establish the baseline that justified the transformation, but only a post-implementation review shows whether the change actually delivered the intended improvement. Comparing the same indicators — such as productivity growth, wastage and customer complaints — before and after allows the business to evaluate the effectiveness of the strategies chosen, identify unintended consequences in areas that were not targeted, and make further adjustments. Without the second review, the business is assuming success rather than establishing it."
+  - kk: bm-u3-aos1-kk04
+    type: bm-definition
+    marks: 2
+    difficulty: 1
+    body: Define corporate social responsibility and give one example of a business acting beyond its legal obligations toward a stakeholder group.
+    answer: "Corporate social responsibility is the obligation a business has to act ethically and beyond what the law requires, considering the effect of its decisions on people, the community and the environment. Example: paying suppliers within 14 days when the law permits far longer, protecting the cash flow of small supplier businesses."
