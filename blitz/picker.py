@@ -21,6 +21,7 @@ import re
 import sqlite3
 from collections import defaultdict
 
+from . import db
 from .models import Question, SheetPlan, SheetSpec
 from .render.layout import budget_mm, estimate_height_mm
 from .studydesign import StudyDesign, load_study_design
@@ -202,10 +203,19 @@ def build_plan(
 
     if not candidates:
         plan.uncovered_kk_ids = list(spec.kk_ids)
-        plan.warnings.append(
-            "No questions in the index match that selection. Ingest your sources "
-            "first, or widen the question types."
-        )
+        # Said in the words a teacher uses. "Ingest your sources" is the name
+        # of a function, not an instruction anyone can follow.
+        held = sum(db.coverage(conn, spec.subject_id).values())
+        if held:
+            plan.warnings.append(
+                "No questions match that selection. Try ticking more dot "
+                "points, or turn off any question types you have restricted "
+                "it to under More options.")
+        else:
+            plan.warnings.append(
+                "There are no questions for this subject yet. Go to Index "
+                "materials, add your textbook or practice SACs, and they will "
+                "appear here.")
         return plan
 
     from .render.sheet import legible_in_columns, measure_question_mm

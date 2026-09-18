@@ -202,3 +202,27 @@ def test_keywords_drop_filler_words():
     kws = _keywords("I really struggle with the Force Field Analysis weighting")
     assert "force" in kws and "weighting" in kws
     assert "really" not in kws and "with" not in kws
+
+
+class TestEmptyHandedMessages:
+    """What a teacher is told when a sheet cannot be built.
+
+    "Ingest your sources first" is the name of a function, not an instruction
+    anyone outside this repo can follow.
+    """
+
+    def test_an_empty_subject_points_at_the_page_that_fixes_it(self, conn):
+        plan = build_plan(conn, _spec(kk_ids=["physics-u3-aos1-kk01"]))
+        assert plan.questions == []
+        message = plan.warnings[0]
+        assert "Index materials" in message
+        assert "ingest" not in message.lower()
+
+    def test_a_too_narrow_selection_says_how_to_widen_it(self, seeded):
+        """There are questions; this selection just does not reach them."""
+        plan = build_plan(seeded, _spec(kk_ids=["physics-u4-aos2-kk06"],
+                                        question_type_ids=["ph-mc"]))
+        assert plan.questions == []
+        message = plan.warnings[0]
+        assert "ticking more dot points" in message
+        assert "Index materials" not in message
