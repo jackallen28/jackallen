@@ -146,6 +146,48 @@ class TestPublisherVocabularies:
         assert qs[1].provenance == "Exam-style questions"
 
 
+class TestOnlineResourceNotes:
+    """A link to a video is not a question, however it is laid out."""
+
+    @staticmethod
+    def _segment(path):
+        doc = pymupdf.open(path)
+        try:
+            return segment_textbook(doc)
+        finally:
+            doc.close()
+
+    def test_resource_callouts_never_become_questions(self, fake_learnon_textbook):
+        qs = self._segment(fake_learnon_textbook)
+        blob = " ".join(q.full_text for q in qs).lower()
+        for marker in ("elesson", "int-6799", "int-6801", "doc-1821",
+                       "learnon", "digital document"):
+            assert marker not in blob, f"a resource callout was kept: {marker}"
+
+    def test_the_real_questions_around_them_survive(self, fake_learnon_textbook):
+        qs = self._segment(fake_learnon_textbook)
+        assert [q.number for q in qs] == ["1", "3"]
+        assert "gravitational field strength" in qs[0].text
+        assert "uniform shell" in qs[1].text
+
+    def test_a_resources_heading_does_not_open_a_block(self, fake_learnon_textbook):
+        qs = self._segment(fake_learnon_textbook)
+        assert all(q.provenance != "Resources" for q in qs)
+
+
+class TestMarksOnTheMarkerLine:
+    def test_marks_beside_the_number_are_not_lost(self, fake_marks_inline_textbook):
+        doc = pymupdf.open(fake_marks_inline_textbook)
+        try:
+            qs = segment_textbook(doc)
+        finally:
+            doc.close()
+        assert [q.number for q in qs] == ["1", "2"]
+        assert [q.marks for q in qs] == [2, 6]
+        assert "MARKS" not in qs[0].text
+        assert qs[0].text.startswith("Outline one financial")
+
+
 class TestPassages:
     @pytest.fixture
     def passages(self, fake_textbook, design):
@@ -294,3 +336,19 @@ class TestHeadingDetectionIsNotFooledByMaths:
         assert not _is_heading(big("3.0 × 10⁸"), 10.0)
         assert not _is_heading(big("λ = h/p"), 10.0)
         assert not _is_heading(big("D 250 m s⁻¹"), 10.0)
+
+
+def test_diagnose_reports_what_it_found(fake_learnon_textbook, capsys):
+    """The command exists so "it doesn't work" can become a bug report."""
+    import argparse
+
+    from blitz.cli import cmd_diagnose
+
+    args = argparse.Namespace(file=str(fake_learnon_textbook), first_page=0,
+                              last_page=None, show=12)
+    assert cmd_diagnose(args) == 0
+    out = capsys.readouterr().out
+    assert "detected      : textbook" in out
+    assert "question block" in out
+    assert "questions extracted: 2" in out
+    assert "online-resource callouts" in out

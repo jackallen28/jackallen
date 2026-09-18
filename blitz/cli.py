@@ -10,6 +10,7 @@
     blitz import-pack <json>        load a curated question pack (preferred)
     blitz extract-pack <pdf>        build a draft pack from a PDF, no model
     blitz ingest <pdf> ...          index a PDF heuristically (no pack available)
+    blitz diagnose <file>           what the extractor sees, when a book comes out empty
 
     blitz briefing <subject>        questions to ask an AI, to tag this subject well
     blitz context <subject> <file>  feed its answer back in
@@ -188,6 +189,98 @@ def cmd_ingest(args) -> int:
         print("\n  examples of text that matched no dot point:")
         for s in report.untagged_samples:
             print(f"    · {s}…")
+    return 0
+
+
+def cmd_diagnose(args) -> int:
+    """Show what the extractor sees in a book, without indexing anything.
+
+    "It doesn't find the questions" is not something anyone can act on, and
+    the books are licensed so they cannot be sent anywhere. This prints the
+    structure the segmenter found — the headings it recognised, the blocks it
+    built, what it kept and what it threw away — which is enough to say which
+    pattern a new publisher needs.
+    """
+    import pymupdf
+
+    from .ingest.detect import detect_kind
+    from .ingest.passages import body_font_size
+    from .ingest.segment import is_resource_note
+    from .ingest.textbook import (
+        CONTEXT_BLOCK, QUESTION_BLOCK, QUESTION_MARKER, REVISION_QUESTION,
+        WORKED_EXAMPLE, _blocks, _split_numbered, segment_textbook,
+    )
+    from .ingest.textflow import build_lines
+
+    path = Path(args.file)
+    if not path.exists():
+        print(f"no such file: {path}")
+        return 1
+
+    doc = pymupdf.open(path)
+    try:
+        first = args.first_page or 0
+        last = min(args.last_page or doc.page_count, doc.page_count)
+        kind = detect_kind(doc)
+        body = body_font_size(doc)
+        print(f"{path.name}: {doc.page_count} pages")
+        print(f"  detected      : {kind.kind} (confidence {kind.confidence:.2f})")
+        print(f"  body text size: {body:.1f} pt "
+              f"(a heading is anything >= {body * 1.15:.1f} pt)")
+        print(f"  reading pages : {first}-{last - 1}")
+
+        # Which of the heading patterns fire, and how often.
+        counts: dict[str, int] = {}
+        examples: dict[str, str] = {}
+        for index in range(first, last):
+            for line in build_lines(doc[index]):
+                t = line.text.strip()
+                for name, pattern in (("question block", QUESTION_BLOCK),
+                                      ("worked example", WORKED_EXAMPLE),
+                                      ("revision question", REVISION_QUESTION),
+                                      ("Question N marker", QUESTION_MARKER),
+                                      ("shared stimulus", CONTEXT_BLOCK)):
+                    if pattern.match(t):
+                        counts[name] = counts.get(name, 0) + 1
+                        examples.setdefault(name, t[:60])
+
+        print("\n  headings recognised:")
+        if not counts:
+            print("    NONE — this is why nothing comes out. The book heads its")
+            print("    questions with wording no pattern in")
+            print("    blitz/ingest/textbook.py matches yet.")
+        for name, n in sorted(counts.items(), key=lambda kv: -kv[1]):
+            print(f"    {name:20} {n:5}   e.g. {examples[name]!r}")
+
+        from .ingest.segment import _stream
+
+        entries, _ = _stream(doc, first, last)
+        blocks = _blocks(entries, body)
+        print(f"\n  blocks built: {len(blocks)}")
+        for b in blocks[:args.show]:
+            items = len(_split_numbered(b.entries)) if b.kind == "questions" else 1
+            label = b.label or "(no heading)"
+            print(f"    [{b.kind:14}] {label[:44]:44} {len(b.entries):4} lines, "
+                  f"{items} item(s)")
+        if len(blocks) > args.show:
+            print(f"    ... and {len(blocks) - args.show} more")
+
+        questions = segment_textbook(doc, first, last, body)
+        print(f"\n  questions extracted: {len(questions)}")
+        for q in questions[:args.show]:
+            print(f"    {str(q.number or '?'):>5}. [{(q.provenance or '')[:22]:22}] "
+                  f"{q.marks or '-'} marks  {q.text[:58]!r}")
+
+        dropped = sum(1 for e in entries if is_resource_note(e.line.text))
+        if dropped:
+            print(f"\n  {dropped} line(s) looked like online-resource callouts "
+                  "and were excluded.")
+        if not questions:
+            print("\n  Nothing was extracted. Paste this whole report into the")
+            print("  conversation — the heading counts above say which pattern")
+            print("  is missing.")
+    finally:
+        doc.close()
     return 0
 
 
@@ -524,6 +617,15 @@ def build_parser() -> argparse.ArgumentParser:
     ing.add_argument("--no-model", action="store_true",
                      help="tag with keywords only, never call the API")
     ing.set_defaults(func=cmd_ingest)
+
+    dg = sub.add_parser("diagnose",
+                        help="show what the extractor sees in a book")
+    dg.add_argument("file")
+    dg.add_argument("--first-page", type=int, default=0)
+    dg.add_argument("--last-page", type=int)
+    dg.add_argument("--show", type=int, default=12,
+                    help="how many blocks and questions to list")
+    dg.set_defaults(func=cmd_diagnose)
 
     cov = sub.add_parser("coverage", help="questions held per dot point")
     cov.add_argument("subject")

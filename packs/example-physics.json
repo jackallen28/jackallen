@@ -7,7 +7,7 @@
     "kind": "checkpoints",
     "title": "Checkpoints Physics",
     "edition": "extraction trial",
-    "pdf": "../sources/codex-student-pack.pdf",
+    "pdf": "example-source.pdf",
     "page_offset": 0
   },
   "questions": [

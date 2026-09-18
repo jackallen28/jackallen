@@ -27,8 +27,8 @@ import re
 from dataclasses import dataclass
 
 from .segment import (
-    MARKS_INLINE, MARKS_LINE, OPTION, PART, PROVENANCE, RawQuestion, _Entry,
-    _PageInfo, _split_options, _stream,
+    MARKS_INLINE, MARKS_LINE, OPTION, PART, PROVENANCE, RESOURCE_HEADING,
+    RawQuestion, _Entry, _PageInfo, _split_options, _stream, is_resource_note,
 )
 from .textflow import Line
 
@@ -51,7 +51,11 @@ SOLUTION = re.compile(r"^(solution|answer|working)\s*:?\s*$", re.IGNORECASE)
 NUMBERED = re.compile(r"^\s*(\d{1,3})\s*[.)]\s+(?=\S)")
 # "Question 1" on a line of its own, with the question under it. Distinct from
 # Checkpoints' "Question 12/ 11", which carries a page number after a slash.
-QUESTION_MARKER = re.compile(r"^question\s+(\d{1,3})\s*$", re.IGNORECASE)
+# The marks often sit on the same line as the number rather than under it,
+# and some books bracket it: "Question 1 (2 MARKS)", "Question 1.", "Q3".
+QUESTION_MARKER = re.compile(
+    r"^q(?:uestion)?\s*(\d{1,3})\s*[.):]?\s*(?:\(\s*\d+\s*marks?\s*\))?\s*$",
+    re.IGNORECASE)
 # A shared stimulus every question in the block refers back to. Without it the
 # questions under it are unanswerable, so it travels with them as context.
 CONTEXT_BLOCK = re.compile(
@@ -106,6 +110,11 @@ def _blocks(entries: list[_Entry], body_size: float) -> list[_Block]:
             close()
             context, context_page = "", None
             current = _Block("revision", t, [])
+            continue
+        if RESOURCE_HEADING.match(t):
+            # "Resources" / "learnON" heads a list of links, not questions.
+            close()
+            context, context_page = "", None
             continue
         if CONTEXT_BLOCK.match(t):
             close()
@@ -174,7 +183,10 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
         marker = QUESTION_MARKER.match(lines[0].strip())
         if marker:
             number = marker.group(1)
-            lines = lines[1:]
+            # Keep anything after the number — "(2 MARKS)" often rides on the
+            # same line, and dropping the whole line dropped the marks with it.
+            rest = lines[0].strip()[marker.end(1):].lstrip(" .):")
+            lines = ([rest] if rest.strip() else []) + lines[1:]
         else:
             m = NUMBERED.match(lines[0])
             number = m.group(1) if m else None
@@ -182,16 +194,26 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
     if not lines:
         return None
 
-    # The exam this question came from, printed bare under it.
+    # Where the callout sits decides what it means. Opening the question, the
+    # whole item is a link dressed as a question — including the hybrid kind
+    # ("Try out this Interactivity ... and describe what happens"), which a
+    # student cannot do on paper. Trailing, it is the block's sign-off swept
+    # into the last question, and only the line goes.
+    if lines and is_resource_note(lines[0]):
+        return None
+
     provenance = None
     kept: list[str] = []
     for line in lines:
         p = PROVENANCE.match(line.strip())
         if p:
             provenance = (p.group(1) or p.group(2)).strip()
-        else:
+        elif not is_resource_note(line):
             kept.append(line)
-    lines = kept or lines
+    lines = kept
+
+    if not lines:
+        return None
 
     body_lines, options = _split_options(lines)
     marks = 0
@@ -221,7 +243,7 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
     text = " ".join(stem).strip()
     if not text and parts:
         text = parts.pop(0)
-    if len(text) < 15:
+    if len(text) < 15 or is_resource_note(text):
         return None
 
     mangled, reason = _looks_mangled(lines)
@@ -258,7 +280,7 @@ def _worked_example(block: _Block, info: dict[int, _PageInfo],
         return None
 
     text = " ".join(e.line.text for e in q_entries).strip()
-    if len(text) < 15:
+    if len(text) < 15 or is_resource_note(text):
         return None
     answer = " ".join(e.line.text for e in a_entries).strip() or None
 

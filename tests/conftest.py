@@ -354,6 +354,54 @@ def fake_busman_textbook(tmp_path):
     return path
 
 
+@pytest.fixture
+def fake_learnon_textbook(tmp_path):
+    """A Physics page with online-resource callouts among the questions.
+
+    Jacaranda's learnON titles print these in the question block and in the
+    same style, so they were being filed as questions and printed on sheets
+    telling the student to go and watch a video.
+    """
+    path = tmp_path / "fake-learnon.pdf"
+    c, line, para = _book_page(path)
+
+    line("Chapter 5  Fields", 18, bold=True)
+    line("5.1  Gravitational fields", 14, bold=True)
+    para("The field around a mass is the region in which another mass feels a",
+         "force. Its strength is the force per unit mass at that point.")
+    line("Resources", 12, bold=True)
+    para("Watch this eLesson: Gravitational fields (ele-0031)",
+         "Try out this Interactivity: Field strength explorer (int-6799)",
+         "Complete this digital document: Investigation 5.1 (doc-1821)")
+    line("Questions", 12, bold=True)
+    para("1. Calculate the gravitational field strength 2.0 Earth radii from the",
+         "   centre of the Earth. (3 marks)")
+    para("2. Try out this Interactivity: Orbital motion (int-6801) and describe",
+         "   what happens to the period as the radius increases.")
+    para("3. Explain why the field strength inside a uniform shell is zero.",
+         "   (2 marks)")
+    para("Find all this and more in your learnON title.")
+    c.save()
+    return path
+
+
+@pytest.fixture
+def fake_marks_inline_textbook(tmp_path):
+    """Question number and marks on one line, as several publishers print it."""
+    path = tmp_path / "fake-marks-inline.pdf"
+    c, line, para = _book_page(path)
+
+    line("Chapter 2  Managing employees", 18, bold=True)
+    line("Exam-style questions", 12, bold=True)
+    line("Question 1 (2 MARKS)")
+    para("Outline one financial motivation strategy a business could use.")
+    line("Question 2 (6 MARKS)")
+    para("Analyse how investment in training could reduce staff absenteeism",
+         "over the longer term.")
+    c.save()
+    return path
+
+
 @pytest.fixture(autouse=True)
 def _never_touch_a_real_folder():
     """Fail loudly if a test writes outside the throwaway root.

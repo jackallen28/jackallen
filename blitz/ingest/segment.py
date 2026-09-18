@@ -53,6 +53,40 @@ NOISE = re.compile(
     re.IGNORECASE,
 )
 
+# Online-resource callouts, which are not questions however they are laid out.
+#
+# Jacaranda's learnON titles print these between the real questions and in the
+# same style — "Try out this Interactivity: Projectile motion (int-6799)" sits
+# where question 4 should be — so the segmenter happily filed them as
+# questions and students got a sheet telling them to go and watch a video.
+# Edrolo and Cambridge do the same with QR codes and companion websites.
+#
+# Matched anywhere in the question, not just at the start: the callout often
+# begins with a real-looking verb ("Complete this digital document ...").
+ONLINE_RESOURCE = re.compile(
+    r"learn\s?on|elesson|eworkbook|emodelling|ebookplus|"
+    r"int-\d|ele-\d|doc-\d|ewbk-\d|"
+    r"interactivit(y|ies)|digital document|digital doc|weblink|web link|"
+    r"try out this|watch this (video|elesson)|explore more with|"
+    r"scan the qr|qr code|companion website|online only|"
+    r"in your learnon title|access (this|these) .{0,30}online",
+    re.IGNORECASE)
+# A bare section heading that introduces a block of them.
+RESOURCE_HEADING = re.compile(
+    r"^(resources|online resources|digital resources|learn\s?on)\s*:?\s*$",
+    re.IGNORECASE)
+
+
+def is_resource_note(text: str) -> bool:
+    """True when this is a pointer to online material rather than a question.
+
+    Deliberately not applied to a question that merely mentions a video or a
+    website in its own scenario, which is why the markers are product names
+    and asset codes ("int-6799") rather than words like "online".
+    """
+    return bool(text) and bool(ONLINE_RESOURCE.search(text))
+
+
 # Glyphs that only show up when the extractor has mangled a formula, plus the
 # Mathematical Alphanumeric Symbols block used by equation editors.
 MATH_GLYPH = re.compile(r"[\U0001D400-\U0001D7FF]")
@@ -92,6 +126,11 @@ class RawQuestion:
     @property
     def looks_like_question(self) -> bool:
         if len(self.text) < 20:
+            return False
+        if is_resource_note(self.full_text):
+            # A pointer to a video or an interactivity, laid out like a
+            # question. Answering it is impossible and printing it wastes
+            # half a sheet.
             return False
         return bool(self.text or self.options or self.parts)
 
