@@ -42,6 +42,24 @@ class BackupReport:
                 f"{self.counts.get('students', 0)} students, "
                 f"{self.counts.get('sheets', 0)} sheets")
 
+    @property
+    def holds_student_data(self) -> bool:
+        """Whether this zip carries names, for the warning the summary omits.
+
+        A backup is the obvious thing to hand a colleague setting Blitz up, and
+        in a school the names in it are student records. Worth one sentence so
+        that is a decision rather than an accident.
+        """
+        return bool(self.counts.get("students"))
+
+    def privacy_note(self) -> str:
+        n = self.counts.get("students", 0)
+        if not n:
+            return ""
+        return (f"This backup contains {n} student name(s) and their sheet "
+                f"history. Treat it as student data: keep it on school "
+                f"storage and do not email it around.")
+
 
 def _counts(db_path: Path) -> dict:
     if not db_path.exists():

@@ -58,6 +58,8 @@ def cmd_backup(args) -> int:
     print(f"  {report.summary()}")
     if not args.include_sources:
         print("  (source books left out; --include-sources adds them)")
+    if report.holds_student_data:
+        print(f"  ! {report.privacy_note()}")
     return 0
 
 

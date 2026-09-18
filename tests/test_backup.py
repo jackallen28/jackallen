@@ -91,3 +91,32 @@ def test_the_home_page_can_make_a_backup_and_hand_it_over(_client, tmp_path, mon
     assert got.status_code == 200
     assert got.headers["content-type"].startswith("application/zip")
     assert _client.get("/backups/../etc/passwd").status_code in (404, 400)
+
+
+class TestStudentDataWarning:
+    """A backup is the obvious thing to hand a colleague, and in a school the
+    names in it are student records. Worth one sentence so that is a decision
+    rather than an accident."""
+
+    def test_a_backup_with_students_says_so(self, tmp_path):
+        root = tmp_path / "root"
+        (root / "index").mkdir(parents=True)
+        conn = db.connect(root / "index" / "blitz.sqlite3")
+        db.get_or_create_student(conn, "A Student")
+        conn.commit()
+        conn.close()
+
+        report = backup.create_backup(root=root)
+        assert report.holds_student_data
+        note = report.privacy_note()
+        assert "student data" in note
+        assert "1 student name" in note
+
+    def test_a_backup_with_no_students_says_nothing(self, tmp_path):
+        root = tmp_path / "root"
+        (root / "index").mkdir(parents=True)
+        db.connect(root / "index" / "blitz.sqlite3").close()
+
+        report = backup.create_backup(root=root)
+        assert not report.holds_student_data
+        assert report.privacy_note() == ""

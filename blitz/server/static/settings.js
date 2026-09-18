@@ -129,7 +129,10 @@ $("#backup").onclick = async () => {
     });
     if (!res.ok) throw new Error(res.statusText);
     const d = await res.json();
-    out.innerHTML = `Saved ${esc(d.summary)} — <a href="/backups/${encodeURIComponent(d.name)}">download it</a>`;
+    const note = d.privacy_note
+      ? `<br><b>Note:</b> ${esc(d.privacy_note)}`
+      : "";
+    out.innerHTML = `Saved ${esc(d.summary)} — <a href="/backups/${encodeURIComponent(d.name)}">download it</a>${note}`;
     load();
   } catch (e) {
     out.textContent = "Backup failed: " + e;
