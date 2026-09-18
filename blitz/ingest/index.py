@@ -17,7 +17,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..db import insert_passage, insert_question, upsert_source
+from ..db import (content_fingerprint, duplicate_of, insert_passage,
+                  insert_question, upsert_source)
 from ..studydesign import StudyDesign, load_study_design
 from . import extract
 from .detect import Detection, detect_kind
@@ -37,6 +38,10 @@ class IndexReport:
     questions_found: int = 0
     questions_indexed: int = 0
     questions_untagged: int = 0
+    # Word for word the same as a question already indexed from another file.
+    # A folder of SACs often holds both the .docx and a PDF of it.
+    duplicates: int = 0
+    duplicate_sources: set[str] = field(default_factory=set)
     with_figures: int = 0
     with_solutions: int = 0
     cropped: int = 0
@@ -53,6 +58,10 @@ class IndexReport:
         lines.append(
             f"  questions: {self.questions_found} found, {self.questions_indexed} "
             f"indexed, {self.questions_untagged} untagged")
+        if self.duplicates:
+            lines.append(
+                f"             {self.duplicates} skipped as already indexed from "
+                f"{', '.join(sorted(self.duplicate_sources))}")
         lines.append(
             f"             {self.with_figures} with figures, {self.with_solutions} "
             f"with solutions, {self.cropped} as page crops")
@@ -121,7 +130,14 @@ def index_book(
         # inline) and then treated as any other book.
         progress(f"  rendering {pdf_path.name} to PDF…")
         converted_from = pdf_path
-        pdf_path = docx_to_pdf(pdf_path)
+        try:
+            pdf_path = docx_to_pdf(pdf_path)
+        except Exception as exc:                 # noqa: BLE001 - reported below
+            raise extract.SourceError(
+                f"{converted_from.name} could not be read as a Word document. "
+                "It may be damaged, or saved in the old .doc format.\n"
+                "    Open it in Word and use File > Save As to save a .docx.\n"
+                f"    ({type(exc).__name__}: {exc})") from exc
         report.review.append(
             f"converted from Word ({converted_from.name}); page numbers in "
             "citations are the rendered PDF's, not Word's")
@@ -142,6 +158,16 @@ def index_book(
             f"{design.subject_name} ({'verified' if design.fully_verified else 'DRAFT'})")
 
     doc = extract.open_pdf(pdf_path)
+    if extract.looks_scanned(doc):
+        doc.close()
+        raise extract.SourceError(
+            f"{Path(pdf_path).name} looks like a scan: its pages are pictures "
+            "with no text behind them.\n"
+            "    Blitz reads the text layer, so there is nothing for it to "
+            "read here.\n"
+            "    On a Mac, open it in Preview and export as PDF with text "
+            "recognition, or ask for the original file rather than a "
+            "photocopy.")
     first, last = pages or (0, doc.page_count)
     last = min(last, doc.page_count)
     report.pages = last - first
@@ -206,6 +232,17 @@ def index_book(
                                      f"{q.full_text[:70]}…")
             continue
 
+        fingerprint = content_fingerprint(q.full_text)
+        seen = duplicate_of(conn, fingerprint, subject_id, source_id)
+        if seen is not None:
+            report.duplicates += 1
+            report.duplicate_sources.add(seen["source_id"])
+            if len(report.review) < 40:
+                report.review.append(
+                    f"already indexed as {seen['serial']} from "
+                    f"{seen['source_id']}: {q.full_text[:60]}…")
+            continue
+
         printed = q.printed_page or (str(q.page_index + 1 + page_offset) if page_offset else None)
         insert_question(conn, {
             "id": _qid(source_id, q),
@@ -222,6 +259,7 @@ def index_book(
             "pdf_page": q.page_index, "printed_page": printed,
             "citation": _citation(title, printed, q.number, q.provenance),
             "context": q.stimulus or None,
+            "fingerprint": fingerprint,
             "generated": 0, "verified": 0,
         }, tags.kk_ids)
         report.questions_indexed += 1

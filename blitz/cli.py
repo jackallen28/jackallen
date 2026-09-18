@@ -217,8 +217,18 @@ def cmd_diagnose(args) -> int:
         print(f"no such file: {path}")
         return 1
 
-    doc = pymupdf.open(path)
+    from .ingest.extract import SourceError, looks_scanned, open_pdf
+
     try:
+        doc = open_pdf(path)
+    except SourceError as exc:
+        print(f"\n{exc}\n")
+        return 1
+    try:
+        if looks_scanned(doc):
+            print(f"\n{path.name} looks like a scan: its pages are pictures "
+                  "with no text behind them, so there is nothing to read.\n")
+            return 1
         first = args.first_page or 0
         last = min(args.last_page or doc.page_count, doc.page_count)
         kind = detect_kind(doc)
@@ -389,17 +399,24 @@ def cmd_index(args) -> int:
     ensure_dirs()
     from .ingest.index import index_book
 
+    from .ingest.extract import SourceError
+
     source_id = args.source_id or Path(args.pdf).stem.lower().replace(" ", "-").replace("_", "-")
-    with db.session() as conn:
-        report = index_book(
-            conn, args.pdf,
-            subject_id=args.subject, source_id=source_id,
-            title=args.title, kind=args.kind, edition=args.edition,
-            page_offset=args.page_offset,
-            pages=(args.first_page, args.last_page) if args.last_page else None,
-            study_design_pdf=args.study_design,
-            include_content=not args.no_content,
-        )
+    try:
+        with db.session() as conn:
+            report = index_book(
+                conn, args.pdf,
+                subject_id=args.subject, source_id=source_id,
+                title=args.title, kind=args.kind, edition=args.edition,
+                page_offset=args.page_offset,
+                pages=(args.first_page, args.last_page) if args.last_page else None,
+                study_design_pdf=args.study_design,
+                include_content=not args.no_content,
+            )
+    except SourceError as exc:
+        # The file is the problem, not the program. Say which and what to do.
+        print(f"\n{exc}\n")
+        return 1
     print(f"\nNext: blitz coverage {args.subject}")
     return 0 if report.questions_indexed or report.passages_indexed else 1
 
@@ -509,6 +526,24 @@ def cmd_dot_points(args) -> int:
     return 0
 
 
+def _already_running(port: int) -> bool:
+    """Is a Blitz — not something else — already answering on this port?"""
+    import json
+    import urllib.error
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(
+                f"http://127.0.0.1:{port}/healthz", timeout=1.5) as response:
+            return bool(json.loads(response.read()).get("ok"))
+    except urllib.error.HTTPError:
+        # It answered, so something is listening; a password-protected Blitz
+        # returns 401 here only if the deployment protects /healthz.
+        return True
+    except Exception:                            # noqa: BLE001 - nothing there
+        return False
+
+
 def cmd_serve(args) -> int:
     import os
 
@@ -531,6 +566,20 @@ def cmd_serve(args) -> int:
         return 2
 
     where = "http://127.0.0.1" if host in ("127.0.0.1", "localhost") else f"http://{host}"
+
+    # Double-clicking the launcher twice is the most likely thing anyone will
+    # do wrong. Announcing "Blitz is running" and then dying on "address
+    # already in use" reads as a crash; opening the copy that is already
+    # there is what the person meant.
+    if _already_running(port):
+        print(f"Blitz is already running at {where}:{port} — opening it.")
+        print("Close the other Terminal window to stop it.")
+        if args.open:
+            import webbrowser
+
+            webbrowser.open(f"{where}:{port}/")
+        return 0
+
     lock = " (password required)" if password() else ""
     print(f"Blitz is running at {where}:{port}{lock}")
     print(f"  make a sheet     {where}:{port}/")

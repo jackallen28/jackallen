@@ -5,6 +5,7 @@ is reachable from the internet must not be reachable by everyone. These tests
 exist so that stays true.
 """
 
+import argparse
 import os
 
 import pytest
@@ -162,3 +163,36 @@ class TestBlueprint:
         assert service["plan"] != "free", (
             "the free plan has no persistent disk, so the index would not "
             "survive a restart")
+
+
+class TestDoubleLaunch:
+    """Double-clicking the launcher twice is the likeliest school mishap.
+
+    It used to print "Blitz is running at ..." and then die on "address
+    already in use", which reads as a crash rather than as "it is open
+    already".
+    """
+
+    def test_an_occupied_port_is_detected(self, monkeypatch):
+        import blitz.cli as cli
+
+        monkeypatch.setattr(cli, "_already_running", lambda port: True)
+        args = argparse.Namespace(port=8999, host="127.0.0.1", open=False,
+                                  reload=False)
+        assert cli.cmd_serve(args) == 0
+
+    def test_a_free_port_is_not_mistaken_for_a_running_blitz(self):
+        from blitz.cli import _already_running
+
+        # Nothing is listening on this port in the test environment.
+        assert _already_running(8123) is False
+
+    def test_it_says_which_window_to_close(self, monkeypatch, capsys):
+        import blitz.cli as cli
+
+        monkeypatch.setattr(cli, "_already_running", lambda port: True)
+        cli.cmd_serve(argparse.Namespace(port=8999, host="127.0.0.1",
+                                         open=False, reload=False))
+        out = capsys.readouterr().out
+        assert "already running" in out
+        assert "Close the other Terminal window" in out

@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .. import db
 from ..db import insert_question, upsert_source
 from ..studydesign import StudyDesign, load_study_design
 from . import extract, segment
@@ -40,6 +41,11 @@ class IngestReport:
     cropped_questions: int = 0
     cropped_solutions: int = 0
     multi_part: int = 0
+    # Questions already in the index, word for word, from another file. A
+    # teacher who indexes a SAC as both .docx and .pdf would otherwise get
+    # every question on the sheet twice with no warning.
+    duplicates: int = 0
+    duplicate_sources: set[str] = field(default_factory=set)
     untagged_samples: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -50,6 +56,9 @@ class IngestReport:
             f"solutions, {self.multi_part} multi-part\n"
             f"    {self.cropped_questions} questions and {self.cropped_solutions} "
             f"solutions rendered as page crops (maths that won't reflow)"
+            + (f"\n    {self.duplicates} skipped: already indexed from "
+               f"{', '.join(sorted(self.duplicate_sources))}"
+               if self.duplicates else "")
         )
 
 
@@ -253,6 +262,14 @@ def ingest_pdf(
 
         q: RawQuestion = item["raw"]
         qid = _question_id(source_id, q.page_index, q.number, item["text"])
+        fingerprint = db.content_fingerprint(item["text"])
+        seen = db.duplicate_of(conn, fingerprint, subject_id, source_id)
+        if seen is not None:
+            # Already here from another file. Skipping keeps the index honest
+            # and the teacher is told which file it came from.
+            report.duplicates += 1
+            report.duplicate_sources.add(seen["source_id"])
+            continue
         printed = q.printed_page or (
             str(q.page_index + 1 + page_offset) if page_offset else None
         )
@@ -271,6 +288,7 @@ def ingest_pdf(
             "difficulty": tags.difficulty,
             "figure_path": item["figure_path"],
             "figure_pt_width": item["figure_pt_width"],
+            "fingerprint": fingerprint,
             "render_mode": item["render_mode"],
             "answer_mode": item["answer_mode"],
             "provenance": q.provenance,

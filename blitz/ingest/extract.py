@@ -54,8 +54,64 @@ class PageContent:
         return _merge_rects(self.images + _cluster(self.drawings))
 
 
+class SourceError(Exception):
+    """A source file Blitz cannot read, with something the person can do.
+
+    Everything that reaches a teacher goes through here. Raw PyMuPDF errors
+    are accurate and useless: "Failed to open file ... as type pdf" is a stack
+    trace to a person holding a photocopied SAC.
+    """
+
+
 def open_pdf(path: str | Path) -> fitz.Document:
-    return fitz.open(str(path))
+    """Open a PDF, or explain in plain words why it cannot be opened."""
+    path = Path(path)
+    if not path.exists():
+        raise SourceError(f"There is no file at {path}.")
+    if path.stat().st_size == 0:
+        raise SourceError(
+            f"{path.name} is empty (0 bytes). It may have failed to download "
+            "or copy — try saving it again.")
+    try:
+        doc = fitz.open(str(path))
+    except Exception as exc:                     # noqa: BLE001 - reported, not swallowed
+        raise SourceError(
+            f"{path.name} could not be opened as a PDF. It may be damaged, or "
+            f"it may not really be a PDF despite its name.\n"
+            f"    Try opening it in Preview and re-saving it as PDF.\n"
+            f"    ({type(exc).__name__}: {exc})") from exc
+    if doc.needs_pass:
+        doc.close()
+        raise SourceError(
+            f"{path.name} is password-protected, so its text cannot be read.\n"
+            "    Open it, enter the password, and save an unprotected copy.")
+    if doc.page_count == 0:
+        doc.close()
+        raise SourceError(f"{path.name} has no pages in it.")
+    return doc
+
+
+# A page with a picture and essentially no text is a photocopy. Schools have a
+# lot of them, and they extract to nothing at all with no explanation.
+SCAN_CHARS_PER_PAGE = 60
+
+
+def looks_scanned(doc: fitz.Document, sample: int = 12) -> bool:
+    """True when the PDF is images of pages rather than text."""
+    pages = min(sample, doc.page_count)
+    if not pages:
+        return False
+    step = max(1, doc.page_count // pages)
+    checked = chars = 0
+    for i in range(0, doc.page_count, step):
+        if checked >= pages:
+            break
+        checked += 1
+        try:
+            chars += len(doc[i].get_text("text").strip())
+        except Exception:                        # noqa: BLE001 - a bad page is not fatal
+            continue
+    return checked > 0 and chars / checked < SCAN_CHARS_PER_PAGE
 
 
 def read_page(doc: fitz.Document, index: int, page_offset: int = 0) -> PageContent:

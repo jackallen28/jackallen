@@ -7,7 +7,9 @@ FTS5 gives us keyword search so the notes box can bias selection.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import sqlite3
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
@@ -190,6 +192,9 @@ _MIGRATIONS = {
         ("flag", "TEXT"),            # incomplete | corrupt | wrong, or NULL
         ("flag_note", "TEXT"),
         ("flagged_at", "TEXT"),
+        # Hash of the question's words, used to notice the same question
+        # arriving twice from two files. See content_fingerprint().
+        ("fingerprint", "TEXT"),
     ],
     "sheet": [
         ("student_id", "TEXT"),
@@ -215,9 +220,55 @@ def _migrate(conn: sqlite3.Connection) -> None:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ctype}")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_question_serial "
                  "ON question(serial)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_question_fingerprint "
+                 "ON question(fingerprint)")
+    _backfill_fingerprints(conn)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_sheet_student ON sheet(student_id)")
     assign_serials(conn)
     conn.commit()
+
+
+_FINGERPRINT_NOISE = re.compile(r"[^a-z0-9 ]+")
+
+
+def content_fingerprint(text: str) -> str:
+    """A hash of what a question says, ignoring how it was typeset.
+
+    The question id is derived from the file it came from, so the same
+    question indexed from a PDF and from the Word original it was made from
+    gets two ids and lands on a sheet twice. A teacher indexing both — which
+    is the obvious thing to do with a folder of SACs — had no way to notice.
+
+    Punctuation and spacing differ between the two conversions, so neither
+    survives into the hash; the words do.
+    """
+    words = _FINGERPRINT_NOISE.sub(" ", (text or "").lower())
+    normalised = " ".join(words.split())
+    if len(normalised) < 24:
+        # Too short to be distinctive; treat as un-fingerprintable rather than
+        # collapsing every one-line question into the same bucket.
+        return ""
+    return hashlib.sha1(normalised.encode()).hexdigest()[:16]
+
+
+def _backfill_fingerprints(conn: sqlite3.Connection) -> None:
+    """Fill in fingerprints for rows indexed before the column existed."""
+    rows = conn.execute(
+        "SELECT id, body FROM question WHERE fingerprint IS NULL").fetchall()
+    for row in rows:
+        conn.execute("UPDATE question SET fingerprint = ? WHERE id = ?",
+                     (content_fingerprint(row["body"]), row["id"]))
+
+
+def duplicate_of(conn: sqlite3.Connection, fingerprint: str, subject_id: str,
+                 source_id: str) -> sqlite3.Row | None:
+    """An existing question with the same words, from a different file."""
+    if not fingerprint:
+        return None
+    return conn.execute(
+        "SELECT id, serial, source_id FROM question "
+        "WHERE fingerprint = ? AND subject_id = ? AND source_id != ? LIMIT 1",
+        (fingerprint, subject_id, source_id)).fetchone()
 
 
 # ---------------------------------------------------------------------------

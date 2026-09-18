@@ -147,6 +147,7 @@ def _run(job: IndexJob) -> None:
 
 def _index(job: IndexJob) -> None:
     from ..export import export_subject
+    from ..ingest.extract import SourceError
     from ..ingest.index import index_book
     from ..ingest.pack import import_pack
     from ..studydesign.loader import load_study_design
@@ -209,13 +210,23 @@ def _index(job: IndexJob) -> None:
                                  progress=lambda s: say(s.rstrip()))
             if not report.ok:
                 say(f"  not imported ({len(report.errors)} error(s))")
+        skipped: list[str] = []
         for book in books:
             say(f"\nBook: {book.name}")
             source_id = f"{job.subject_id}-{slug(book.stem)}"
-            report = index_book(conn, book, subject_id=job.subject_id,
-                                source_id=source_id, design=design,
-                                progress=lambda s: say(s.rstrip()))
+            try:
+                report = index_book(conn, book, subject_id=job.subject_id,
+                                    source_id=source_id, design=design,
+                                    progress=lambda s: say(s.rstrip()))
+            except SourceError as exc:
+                # One unreadable file — a photocopy, a locked PDF — must not
+                # throw away the other nine the teacher dropped in with it.
+                say(f"  SKIPPED. {exc}")
+                skipped.append(book.name)
+                continue
             say(report.summary())
+        if skipped:
+            say(f"\n{len(skipped)} file(s) skipped: {', '.join(skipped)}")
         conn.commit()
 
         say("\nWriting the export folder…")
