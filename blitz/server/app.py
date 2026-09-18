@@ -160,6 +160,8 @@ async def api_setup(
     erase: str = Form(""),
     replace: str = Form(""),
     backup: UploadFile | None = File(None),
+    designs: list[UploadFile] = File(default=[]),
+    design_names: list[str] = Form(default=[]),
 ):
     """Set the folder up one of three ways: restore, scratch, or keep."""
     from .. import setup as setup_mod
@@ -180,9 +182,23 @@ async def api_setup(
             finally:
                 staged.unlink(missing_ok=True)
         elif mode == "scratch":
-            result = setup_mod.setup_scratch(
-                [s for s in subjects if s], samples=bool(samples),
-                erase=bool(erase))
+            import tempfile
+
+            with tempfile.TemporaryDirectory() as tmp:
+                uploaded = []
+                for i, upload in enumerate(designs or []):
+                    if not upload.filename:
+                        continue
+                    staged = Path(tmp) / Path(upload.filename).name
+                    staged.write_bytes(await upload.read())
+                    # An empty name means "guess it from the filename", which
+                    # add_study_design does; passing the filename through as
+                    # the name would make the subject "2024ChemistrySD".
+                    name = design_names[i] if i < len(design_names) else ""
+                    uploaded.append((name, staged))
+                result = setup_mod.setup_scratch(
+                    [s for s in subjects if s], samples=bool(samples),
+                    erase=bool(erase), designs=uploaded)
         elif mode == "adopt":
             result = setup_mod.setup_adopt()
         else:

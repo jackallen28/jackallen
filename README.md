@@ -28,7 +28,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Flags | A question flagged incomplete, corrupt or wrong never goes on a sheet until cleared. |
 | Students | Sheets are logged per student or class; repeats are skipped; `students/MASTER.xlsx` and one workbook each are rewritten after every sheet. |
 | Backup | One zip with the index, crops, study designs, student record and every sheet; `blitz restore` puts it back. |
-| First run | A new copy has nothing in it: the setup screen restores a backup or starts fresh with only the subjects you tick. |
+| First run | A new copy has nothing in it: the setup screen restores a backup, or starts fresh with the subjects you tick plus any study design you upload. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that

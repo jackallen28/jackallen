@@ -36,9 +36,13 @@
 
     <fieldset style="margin:0">
       <legend>Start from scratch</legend>
-      <p class="hint">A new, empty index. Tick any subject you want ready to go; add any other by uploading its
-        VCAA study design later on the Index materials page.</p>
+      <p class="hint">A new, empty index. Tick any subject you want ready to go, and add your own below.</p>
       <div id="shipped"></div>
+      <label for="designs" style="margin-top:12px">Your own subjects</label>
+      <p class="hint" style="margin:0 0 4px">Upload a VCAA study design, PDF or Word, for any subject not listed above.
+        Several at once is fine.</p>
+      <input id="designs" type="file" multiple accept=".pdf,.docx">
+      <div id="designrows"></div>
       <label class="check" style="display:flex;gap:6px;margin-top:8px"><input id="samples" type="checkbox"> include a few sample questions so you can try a sheet before indexing a book</label>
       <label class="check" id="erase-wrap" hidden style="display:flex;gap:6px;margin-top:8px"><input id="erase" type="checkbox"> start over: move the index already here aside</label>
       <div class="row"><button type="button" class="primary" data-mode="scratch">Create</button></div>

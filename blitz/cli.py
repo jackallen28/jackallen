@@ -119,12 +119,22 @@ def cmd_setup(args) -> int:
                 print("any other subject is added by uploading its VCAA study "
                       "design on the Index materials page.\n")
                 return 1
+            names = list(args.name or [])
+            uploads = []
+            for i, design in enumerate(args.design or []):
+                path = Path(design)
+                if not path.exists():
+                    print(f"\nno such study design: {path}\n")
+                    return 1
+                uploads.append((names[i] if i < len(names) else "", path))
             result = setup_mod.setup_scratch(args.subjects, samples=args.samples,
-                                             erase=args.erase)
+                                             erase=args.erase, designs=uploads)
     except (FileExistsError, FileNotFoundError, ValueError) as exc:
         print(f"\n{exc}\n")
         return 1
     print(f"set up ({result['mode']}) in {setup_mod.settings_path().parent}")
+    for added in result.get("added", []):
+        print(f"  added {added['name']} ({added['id']}) from its study design")
     if result.get("subjects"):
         print(f"  subjects: {', '.join(result['subjects'])}")
     print("\nNext: blitz serve --open")
@@ -421,6 +431,11 @@ def build_parser() -> argparse.ArgumentParser:
                     help="keep an index that is already in the folder")
     st.add_argument("--subjects", nargs="*", default=[], metavar="ID",
                     help="shipped study designs to start with (blitz subjects)")
+    st.add_argument("--design", nargs="*", default=[], metavar="FILE",
+                    help="study design PDF or Word files to add as subjects")
+    st.add_argument("--name", nargs="*", default=[], metavar="NAME",
+                    help="subject names for those files, in the same order; "
+                         "guessed from the filename where missing")
     st.add_argument("--samples", action="store_true",
                     help="load sample questions for those subjects")
     st.add_argument("--erase", action="store_true",

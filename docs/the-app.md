@@ -21,10 +21,14 @@ in:
   sheet come back as they were.
 - **Start from scratch** — a new, empty index. The study designs that ship
   with Blitz (VCE Physics, VCE Business Management) are offered as starters;
-  tick the ones you want and leave the rest. Any other subject is added
-  later by uploading its VCAA study design on the Index materials page.
-  Sample questions are optional, so you can try a sheet before indexing a
-  book.
+  tick the ones you want and leave the rest. **Any other subject is added
+  right there**: upload its VCAA study design, PDF or Word, and Blitz reads
+  the units, areas of study and dot points out of it. Several at once is
+  fine. The subject's name is guessed from the filename, so
+  `2023PhysicsSD.pdf` becomes "Physics", and you can correct it before
+  pressing Create. A file the parser cannot read stops the setup and names
+  itself, leaving the folder as it was. Sample questions are optional, so
+  you can try a sheet before indexing a book.
 
 If the folder already holds an index from before this screen existed, a
 third option appears: keep it. Starting over instead moves the old index
@@ -39,8 +43,14 @@ The same thing from a terminal:
 ```bash
 blitz setup --restore ~/Downloads/blitz-backup-2026-09-18-0204.zip
 blitz setup --subjects physics            # or --subjects with nothing after it
+blitz setup --design ~/Downloads/2024LegalStudiesSD.pdf --name "Legal Studies"
 blitz setup --keep                        # adopt an index already in the folder
 ```
+
+A subject added this way gets generic question types (multiple choice,
+short answer, extended response) until someone writes better ones for it,
+and no concept lexicon, so its tagging leans on word overlap with VCAA's
+own wording. Both are worth improving once the subject has books behind it.
 
 ## Where everything lives
 

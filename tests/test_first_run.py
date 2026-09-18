@@ -129,6 +129,76 @@ def test_samples_are_opt_in(fresh):
     assert held > 0
 
 
+def test_a_study_design_uploaded_at_setup_becomes_a_subject(fresh, tmp_path):
+    from tests.test_docx import _study_design
+
+    client, root = fresh
+    sd = _study_design(tmp_path / "2024LegalStudiesSD.docx").read_bytes()
+    res = client.post(
+        "/api/setup",
+        data={"mode": "scratch", "design_names": ["Legal Studies"]},
+        files={"designs": ("2024LegalStudiesSD.docx", sd,
+                           "application/octet-stream")})
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["added"] == [{"id": "legal-studies", "name": "Legal Studies",
+                              "path": str(root / "study-designs" / "legal-studies.yaml")}]
+    assert body["subjects"] == ["legal-studies"]
+
+    subjects = client.get("/api/subjects").json()["subjects"]
+    assert [s["id"] for s in subjects] == ["legal-studies"]
+    only = subjects[0]
+    assert only["name"] == "Legal Studies"
+    assert [u["number"] for u in only["units"]] == [3, 4]
+    assert [q["id"] for q in only["question_types"]] == [
+        "ls-mc", "ls-short", "ls-extended"]
+
+
+def test_an_uploaded_design_can_be_named_from_its_filename(fresh, tmp_path):
+    from blitz.setup import subject_name_from_filename
+    from tests.test_docx import _study_design
+
+    assert subject_name_from_filename("2023PhysicsSD.pdf") == "Physics"
+    assert subject_name_from_filename(
+        "vce-business-management-study-design.docx") == "Business Management"
+    assert subject_name_from_filename("legal_studies.pdf") == "Legal Studies"
+    assert subject_name_from_filename("2024.pdf") == "New subject"
+
+    client, root = fresh
+    sd = _study_design(tmp_path / "2024ChemistrySD.docx").read_bytes()
+    res = client.post("/api/setup", data={"mode": "scratch"},
+                      files={"designs": ("2024ChemistrySD.docx", sd,
+                                         "application/octet-stream")})
+    assert res.status_code == 200, res.text
+    assert res.json()["added"][0]["name"] == "Chemistry"
+
+
+def test_a_study_design_that_cannot_be_read_stops_the_setup(fresh, tmp_path):
+    client, root = fresh
+    res = client.post("/api/setup", data={"mode": "scratch", "subjects": ["physics"]},
+                      files={"designs": ("notes.docx", b"not a docx at all",
+                                         "application/octet-stream")})
+    assert res.status_code == 400
+    assert "notes.docx" in res.json()["detail"]
+    # Nothing was written, so the person is still on the setup page.
+    assert not (root / "blitz.json").exists()
+    assert client.get("/").status_code == 307
+
+
+def test_the_cli_adds_a_subject_from_a_study_design(fresh, tmp_path, capsys):
+    from blitz.cli import main
+    from tests.test_docx import _study_design
+
+    client, root = fresh
+    sd = _study_design(tmp_path / "sd.docx")
+    assert main(["setup", "--design", str(sd), "--name", "Legal Studies"]) == 0
+    assert (root / "study-designs" / "legal-studies.yaml").exists()
+    assert "added Legal Studies" in capsys.readouterr().out
+
+    assert main(["setup", "--force", "--design", str(tmp_path / "nope.docx")]) == 1
+    assert "no such study design" in capsys.readouterr().out
+
+
 def test_restoring_a_backup_brings_everything_back(fresh, tmp_path):
     from blitz import backup
     from blitz.corpus.sample import load_all_samples

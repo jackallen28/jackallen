@@ -7,9 +7,10 @@ Nothing is assumed about what a new person teaches. Until the folder holds a
   or an earlier install; everything comes back as it was;
 * **start from scratch** — a new, empty index. The study designs that ship
   with the tool (VCE Physics, VCE Business Management) are offered as
-  optional starters; any other subject is added later by uploading its VCAA
-  study design on the Index materials page. A handful of sample questions
-  can be included to try the sheet generator before any book is indexed.
+  optional starters, and any other subject is added right there by
+  uploading its VCAA study design, PDF or Word. A handful of sample
+  questions can be included to try the sheet generator before any book is
+  indexed.
 
 A folder that already holds an index from before this page existed is
 recognised and offered as a third option: keep it.
@@ -22,6 +23,7 @@ declined Physics never sees it.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -74,6 +76,47 @@ def shipped_subjects() -> list[dict]:
                     "dot_points": n, "verified": d.fully_verified,
                     "lexicon": (config.STUDY_DESIGN_DIR / f"{d.subject_id}-lexicon.yaml").exists()})
     return out
+
+
+# Words a study design's filename carries that are not the subject's name.
+_FILENAME_NOISE = {"sd", "studydesign", "study", "design", "vcaa", "vce",
+                   "units", "unit", "final", "accredited", "curriculum", "adjusted"}
+_CAMEL = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+
+
+def subject_name_from_filename(filename: str) -> str:
+    """A first guess at the subject, from what the file is called.
+
+    "2023PhysicsSD.pdf" and "vce-business-management-study-design.docx" are
+    the two shapes VCAA's downloads actually come in. The person can edit
+    whatever this returns before it is used.
+    """
+    stem = Path(filename).stem
+    spaced = _CAMEL.sub(" ", stem).replace("_", " ").replace("-", " ")
+    words = []
+    for word in spaced.split():
+        if re.fullmatch(r"20\d{2}|\d{1,2}", word):
+            continue
+        if word.lower().strip(".") in _FILENAME_NOISE:
+            continue
+        words.append(word)
+    name = " ".join(words).strip()
+    if not name:
+        return "New subject"
+    return name if any(c.isupper() for c in name[1:]) else name.title()
+
+
+def add_study_design(path: Path, name: str, root: Path | None = None) -> dict:
+    """Import an uploaded study design as a new subject in this folder."""
+    from .server.indexjob import slug
+    from .studydesign.importer import import_study_design
+
+    root = Path(root or config.ROOT)
+    name = " ".join((name or "").split()) or subject_name_from_filename(path.name)
+    subject_id = slug(name)
+    out = import_study_design(path, subject_id, out_dir=root / "study-designs",
+                              subject_name=name)
+    return {"id": subject_id, "name": name, "path": str(out)}
 
 
 def enable_shipped_subject(subject_id: str, root: Path | None = None) -> Path:
@@ -131,12 +174,27 @@ def _clear_caches() -> None:
 
 
 def setup_scratch(subjects: list[str], samples: bool = False,
-                  erase: bool = False, root: Path | None = None) -> dict:
-    """A new index, with the chosen shipped subjects enabled."""
+                  erase: bool = False, root: Path | None = None,
+                  designs: list[tuple[str, Path]] | None = None) -> dict:
+    """A new index: the chosen shipped subjects, plus any uploaded designs.
+
+    `designs` is (subject name, file) pairs. They are imported first, before
+    anything is moved or written, so a study design the parser cannot read
+    stops the setup with the folder as it was rather than half-done.
+    """
     from . import db
 
     root = Path(root or config.ROOT)
     _ensure_dirs(root)
+    added: list[dict] = []
+    for name, path in (designs or []):
+        try:
+            added.append(add_study_design(Path(path), name, root))
+        except Exception as exc:
+            # Whatever went wrong reading it — not a study design, not even a
+            # readable document — the person needs to know which file.
+            raise ValueError(f"{Path(path).name}: {exc}") from exc
+
     db_path = root / "index" / "blitz.sqlite3"
     if db_path.exists():
         if not erase:
@@ -162,8 +220,9 @@ def setup_scratch(subjects: list[str], samples: bool = False,
                 sid = path.stem.removeprefix("sample_")
                 if sid in subjects:
                     loaded[sid] = load_sample(conn, sid)
-    return _write_settings(root, mode="scratch", subjects=list(subjects),
-                           samples=loaded)
+    return _write_settings(root, mode="scratch",
+                           subjects=list(subjects) + [a["id"] for a in added],
+                           added=added, samples=loaded)
 
 
 def setup_restore(zip_path: Path, replace: bool = False,
