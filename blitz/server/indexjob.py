@@ -134,10 +134,20 @@ def start(subject_id: str, folder: Path, study_design: Path | None = None,
 
 
 def _run(job: IndexJob) -> None:
+    from ..ingest.extract import SourceError
+    from ..studydesign.importer import EmptyStudyDesign
+
     job.status = "running"
     try:
         _index(job)
         job.status = "done"
+    except (SourceError, EmptyStudyDesign) as exc:
+        # Already written for a person to read. Prefixing "EmptyStudyDesign:"
+        # and appending a stack trace makes it look like a crash instead of
+        # like the answer, which it is.
+        job.error = str(exc)
+        job.say(f"STOPPED. {exc}")
+        job.status = "failed"
     except Exception as exc:                      # surfaced on the page, not lost
         job.error = f"{type(exc).__name__}: {exc}"
         job.say(f"ERROR {job.error}")
@@ -165,6 +175,11 @@ def _index(job: IndexJob) -> None:
 
         guide = write_subject_guide(job.subject_id)[0]
         say(f"  dot points and indexing notes → {guide}")
+        from ..setup import adopt_shipped_lexicon
+
+        adopted = adopt_shipped_lexicon(job.subject_id)
+        if adopted:
+            say(f"  concept lexicon for {adopted} dot points came with it")
     design = load_study_design(job.subject_id)
     say(f"Subject: {design.subject_name} "
         f"({'verified' if design.fully_verified else 'draft wording'})")

@@ -106,6 +106,41 @@ def subject_name_from_filename(filename: str) -> str:
     return name if any(c.isupper() for c in name[1:]) else name.title()
 
 
+def adopt_shipped_lexicon(subject_id: str, root: Path | None = None) -> int:
+    """Give a freshly imported subject the concept lexicon that ships for it.
+
+    Dot point ids are positional, so a lexicon only fits a design whose ids
+    match — but when they do, it is the single biggest thing separating good
+    tagging from word-overlap guessing. Someone who imports Business
+    Management from VCAA themselves was getting the weak version while a
+    lexicon covering all 46 of its dot points sat unused in the download.
+
+    Returns how many dot points the installed lexicon covers, or 0.
+    """
+    from .ingest.lexicon import load_lexicon, validate
+    from .studydesign import load_study_design
+
+    root = Path(root or config.ROOT)
+    src = config.STUDY_DESIGN_DIR / f"{subject_id}-lexicon.yaml"
+    dest_dir = root / "study-designs"
+    dest = dest_dir / src.name
+    if not src.exists() or dest.exists():
+        return 0
+
+    shipped = load_lexicon(subject_id, config.STUDY_DESIGN_DIR)
+    design = load_study_design(subject_id)
+    valid = {kk.id for kk in design.all_key_knowledge()}
+    stale = validate(shipped, valid)
+    if stale or not shipped.concepts:
+        # The imported design numbers its dot points differently, so the
+        # lexicon would point at the wrong concepts. Better none than wrong.
+        return 0
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, dest)
+    load_lexicon.cache_clear()
+    return len(shipped.concepts)
+
+
 def add_study_design(path: Path, name: str, root: Path | None = None) -> dict:
     """Import an uploaded study design as a new subject in this folder."""
     from .server.indexjob import slug
@@ -117,11 +152,12 @@ def add_study_design(path: Path, name: str, root: Path | None = None) -> dict:
     out = import_study_design(path, subject_id, out_dir=root / "study-designs",
                               subject_name=name)
     _clear_caches()
+    lexicon = adopt_shipped_lexicon(subject_id, root=root)
     from .guide import write_subject_guide
 
     guide = write_subject_guide(subject_id, root=root)[0]
     return {"id": subject_id, "name": name, "path": str(out),
-            "guide": str(guide)}
+            "guide": str(guide), "lexicon": lexicon}
 
 
 def enable_shipped_subject(subject_id: str, root: Path | None = None) -> Path:

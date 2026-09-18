@@ -262,6 +262,10 @@ def default_question_types(subject_id: str) -> list[dict]:
     ]
 
 
+class EmptyStudyDesign(ValueError):
+    """A file that parsed but yielded no dot points to teach against."""
+
+
 def import_study_design(
     pdf_path: str | Path,
     subject_id: str,
@@ -344,6 +348,22 @@ def import_study_design(
         print(f"  ! {p}")
     if problems:
         print("  Check those against the PDF before trusting the file.")
+
+    # A study design with no dot points is not a study design. Writing one
+    # anyway produced a subject that looked installed, accepted books, and
+    # filed every question under nothing: "3 questions indexed, 0 of 0 dot
+    # points". A warning in a log is not enough — nothing downstream can
+    # recover from this, so it stops here.
+    if n_kk == 0:
+        raise EmptyStudyDesign(
+            f"No key knowledge dot points were found in "
+            f"{Path(pdf_path).name}.\n"
+            f"    {len(units)} unit heading(s) were found, so the file was "
+            f"read, but none of the dot points under them.\n"
+            f"    This usually means it is not the VCAA study design itself "
+            f"— a course outline, a summary or a scanned copy will do this.\n"
+            f"    Download the current study design from vcaa.vic.edu.au and "
+            f"use that PDF or Word file.")
 
     if dry_run:
         print(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True,

@@ -42,6 +42,19 @@ class IndexReport:
     # A folder of SACs often holds both the .docx and a PDF of it.
     duplicates: int = 0
     duplicate_sources: set[str] = field(default_factory=set)
+    subject_id: str = ""
+    subject_name: str = ""
+
+    # Half a book matching nothing usually means the subject is wrong, not
+    # that the book is hard.
+    UNTAGGED_ALARM = 0.5
+
+    @property
+    def wrong_subject_suspected(self) -> bool:
+        if self.questions_found < 3:
+            return False
+        return (self.questions_untagged / self.questions_found
+                >= self.UNTAGGED_ALARM)
     with_figures: int = 0
     with_solutions: int = 0
     cropped: int = 0
@@ -58,6 +71,15 @@ class IndexReport:
         lines.append(
             f"  questions: {self.questions_found} found, {self.questions_indexed} "
             f"indexed, {self.questions_untagged} untagged")
+        if self.wrong_subject_suspected:
+            # Choosing the wrong subject in the dropdown is easy and the result
+            # is worse than nothing: the few questions that do match something
+            # get filed under it. Say so while it is still obvious why.
+            lines.append(
+                f"             ! most of this book matched no dot point. If it "
+                f"is not a {self.subject_name or self.subject_id} book, index "
+                f"it under the right subject; anything indexed under the wrong "
+                f"one should be removed.")
         if self.duplicates:
             lines.append(
                 f"             {self.duplicates} skipped as already indexed from "
@@ -121,7 +143,7 @@ def index_book(
     if not pdf_path.exists():
         raise FileNotFoundError(pdf_path)
     title = title or pdf_path.stem.replace("-", " ").replace("_", " ").title()
-    report = IndexReport(source_id=source_id)
+    report = IndexReport(source_id=source_id, subject_id=subject_id)
 
     converted_from = None
     if is_docx(pdf_path):
@@ -153,6 +175,18 @@ def index_book(
         report.study_design = f"imported from {Path(study_design_pdf).name} → {out.name}"
         design = None
     design = design or load_study_design(subject_id)
+    # Nothing downstream can do anything useful without dot points: every
+    # question would be filed against nothing and the run would report
+    # "3 indexed, 0 of 0 dot points", which reads as success.
+    if not design.all_key_knowledge():
+        raise extract.SourceError(
+            f"The {design.subject_name} study design in this Blitz folder has "
+            f"no dot points in it, so there is nothing to file questions "
+            f"under.\n"
+            f"    Go to Settings and re-import the study design for "
+            f"{subject_id}, using the PDF or Word file from vcaa.vic.edu.au.\n"
+            f"    (Nothing was indexed, so there is nothing to undo.)")
+    report.subject_name = design.subject_name
     if not report.study_design:
         report.study_design = (
             f"{design.subject_name} ({'verified' if design.fully_verified else 'DRAFT'})")
@@ -190,7 +224,17 @@ def index_book(
         path=str(pdf_path), edition=edition, page_offset=page_offset,
         ingested_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
 
-    tagger = KeywordTagger(design)
+    try:
+        tagger = KeywordTagger(design)
+    except ValueError as exc:
+        # The lexicon points at dot points the design no longer has. Real,
+        # but a raw traceback is the wrong way to say it.
+        raise extract.SourceError(
+            f"The concept lexicon for {subject_id} does not match its study "
+            f"design, so tagging would be wrong.\n"
+            f"    Go to Settings and clear the lexicon for this subject, or "
+            f"re-import the study design it was written for.\n"
+            f"    ({exc})") from exc
 
     # 3. Questions, with the extractor that matches the book.
     progress("  extracting questions…")
