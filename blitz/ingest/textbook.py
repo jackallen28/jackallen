@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from .segment import (
     MARKS_INLINE, MARKS_LINE, OPTION, PART, PROVENANCE, RESOURCE_HEADING,
     RawQuestion, _Entry, _PageInfo, _split_options, _stream, is_resource_note,
-    normalise_part,
+    normalise_part, rejoin_wrapped_marks,
 )
 from .textflow import Line
 
@@ -145,8 +145,14 @@ def _blocks(entries: list[_Entry], body_size: float) -> list[_Block]:
         if QUESTION_MARKER.match(t):
             # "Question 1" numbers an item, but QUESTION_BLOCK would read it as
             # a heading and open an empty block on every question in the book.
-            # It opens a block only when there is none, for a publisher that
-            # prints no heading above the list at all.
+            # It opens a block only when there is none, for a publisher — or a
+            # practice SAC — that prints no heading above the list at all.
+            if current is not None and current.kind == "context":
+                # A SAC opens with "CASE STUDY" and goes straight to
+                # "Question 1". Without this the stimulus block stays open and
+                # swallows every question in the paper, and the paper indexes
+                # as nothing at all.
+                close()
             if current is None:
                 current = _Block("questions", "", [], context, context_page)
                 context, context_page = "", None
@@ -197,7 +203,8 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
                    number: str | None = None) -> RawQuestion | None:
     from .segment import _bars_inside, _bbox, _looks_mangled
 
-    lines = [e.line.text for e in item]
+    lines = rejoin_wrapped_marks([e.line.text for e in item])
+    declared_marks: int | None = None
     if number is None:
         # "Question 1" stands on its own line and is not part of the question;
         # "1. " opens the first line and is stripped off it.
@@ -207,6 +214,14 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
             # Keep anything after the number — "(2 MARKS)" often rides on the
             # same line, and dropping the whole line dropped the marks with it.
             rest = lines[0].strip()[marker.end(1):].lstrip(" .):")
+            mk = MARKS_LINE.match(rest.strip())
+            if mk:
+                # Marks stated on the header line are the question's total,
+                # full stop. A SAC restates them at the end of a single-part
+                # question — "Question 3 (12 marks) ... (12 marks)" — and
+                # counting both made it a 24-mark question.
+                declared_marks = int(mk.group(1))
+                rest = ""
             lines = ([rest] if rest.strip() else []) + lines[1:]
         else:
             m = NUMBERED.match(lines[0])
@@ -237,18 +252,39 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
         return None
 
     body_lines, options = _split_options(lines)
-    marks = 0
+    # Marks are counted in two places and only one of them is the total.
+    #
+    # A practice SAC heads the question with its total — "Question 1 (8 marks)"
+    # — and then gives each part its own allocation, a. (2), b. (2), c. (4).
+    # Adding both gave 16 for an 8-mark question, which then bought twice the
+    # answer space it needed and threw the sheet's page budget out. So marks
+    # found before the first part are the declared total and win; marks on the
+    # parts are only used when nothing was declared.
+    header_marks = 0
+    part_marks = 0
     stem: list[str] = []
     parts: list[str] = []
     current: list[str] | None = None
+
+    def add(n: int) -> None:
+        nonlocal header_marks, part_marks
+        if current is None and not parts:
+            header_marks += n
+        else:
+            part_marks += n
+
     for line in body_lines:
         mk = MARKS_LINE.match(line.strip())
         if mk:
-            marks += int(mk.group(1))
+            add(int(mk.group(1)))
             continue
         inline = MARKS_INLINE.search(line)
         if inline:
-            marks += int(inline.group(1))
+            is_part = bool(PART.match(line))
+            if is_part:
+                part_marks += int(inline.group(1))
+            else:
+                add(int(inline.group(1)))
             line = MARKS_INLINE.sub("", line).strip()
         if PART.match(line):
             if current:
@@ -260,6 +296,7 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
             stem.append(line)
     if current:
         parts.append(" ".join(current).strip())
+    marks = declared_marks or header_marks or part_marks
 
     text = " ".join(stem).strip()
     if not text and parts:

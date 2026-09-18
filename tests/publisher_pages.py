@@ -259,3 +259,63 @@ def build(name, tmp_path):
     fn(line, para, newpage)
     c.save()
     return path, expect
+
+
+# --- practice SACs -----------------------------------------------------------
+# Business Management has no Checkpoints. Its sources are the textbook and
+# practice SACs, which are school-written papers: one case study, then
+# multi-part questions that all refer back to it, with a total on each question
+# header and an allocation on each part.
+
+@page("practice-sac", 3)
+def _(line, para, newpage):
+    line("VCE Business Management Units 3 & 4", 12, bold=True)
+    line("Practice SAC - Area of Study 2: Human Resource Management", 11, bold=True)
+    para("Time allowed: 50 minutes        Total marks: 30")
+    para("Read the case study below and answer all questions.")
+    line("CASE STUDY", 12, bold=True)
+    para("Meridian Foods is a family-owned manufacturer employing 180 staff at two",
+         "sites in regional Victoria. Over the past year absenteeism has risen from",
+         "3% to 9% and the operations manager has reported falling output per worker.",
+         "Senior management is considering a performance-related pay scheme and an",
+         "expanded training program.")
+    line("Question 1 (8 marks)", 11, bold=True)
+    para("a. Define the term motivation. (2 marks)")
+    para("b. Outline one financial motivation strategy Meridian Foods could use. (2 marks)")
+    para("c. Analyse how this strategy might affect employee performance over the",
+         "   longer term. (4 marks)")
+    line("Question 2 (10 marks)", 11, bold=True)
+    para("a. Distinguish between on-the-job and off-the-job training. (4 marks)")
+    para("b. Recommend a training option for Meridian Foods and justify your choice.",
+         "   (6 marks)")
+    line("Question 3 (12 marks)", 11, bold=True)
+    para("Evaluate the use of key performance indicators to measure the success of",
+         "the changes proposed at Meridian Foods. (12 marks)")
+
+
+def sac_docx(path):
+    """The same paper as a Word file, which is how a school actually writes it."""
+    from docx import Document
+
+    d = Document()
+    d.add_heading("VCE Business Management Units 3 & 4", level=1)
+    d.add_heading("Practice SAC - Area of Study 2", level=2)
+    d.add_paragraph("Time allowed: 50 minutes        Total marks: 30")
+    d.add_heading("CASE STUDY", level=2)
+    d.add_paragraph(
+        "Meridian Foods is a family-owned manufacturer employing 180 staff at "
+        "two sites in regional Victoria. Over the past year absenteeism has "
+        "risen from 3% to 9% and the operations manager has reported falling "
+        "output per worker. Senior management is considering a "
+        "performance-related pay scheme and an expanded training program.")
+    d.add_heading("Question 1 (8 marks)", level=3)
+    d.add_paragraph("a. Define the term motivation. (2 marks)")
+    d.add_paragraph("b. Outline one financial motivation strategy Meridian Foods could use. (2 marks)")
+    d.add_paragraph("c. Analyse how this strategy might affect employee performance over the longer term. (4 marks)")
+    d.add_heading("Question 2 (10 marks)", level=3)
+    d.add_paragraph("a. Distinguish between on-the-job and off-the-job training. (4 marks)")
+    d.add_paragraph("b. Recommend a training option for Meridian Foods and justify your choice. (6 marks)")
+    d.add_heading("Question 3 (12 marks)", level=3)
+    d.add_paragraph("Evaluate the use of key performance indicators to measure the success of the changes proposed at Meridian Foods. (12 marks)")
+    d.save(str(path))
+    return path

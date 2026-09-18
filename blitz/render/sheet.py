@@ -249,7 +249,46 @@ def _figure(path: str | None, max_w: float, max_h: float = 62 * mm,
     return img
 
 
-def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
+def _group_by_context(questions: list[Question]) -> list[Question]:
+    """Bring questions that share a stimulus together, keeping the order.
+
+    A practice SAC gives one case study to every question in the paper. Unless
+    they sit next to each other on the sheet the stimulus has to be reprinted
+    for each one, and six copies of a six-line case study is most of a page.
+    """
+    out: list[Question] = []
+    placed: set[str] = set()
+    for q in questions:
+        if q.id in placed:
+            continue
+        out.append(q)
+        placed.add(q.id)
+        if not q.context:
+            continue
+        for other in questions:
+            if other.id not in placed and other.context == q.context:
+                out.append(other)
+                placed.add(other.id)
+    return out
+
+
+def _context_runs(questions: list[Question]) -> list[tuple[int, int]]:
+    """(start, length) of each run of questions sharing one stimulus."""
+    runs: list[tuple[int, int]] = []
+    i = 0
+    while i < len(questions):
+        ctx = questions[i].context
+        j = i + 1
+        if ctx:
+            while j < len(questions) and questions[j].context == ctx:
+                j += 1
+        runs.append((i, j - i))
+        i = j
+    return runs
+
+
+def _question_flowables(q: Question, n: int, ss, col_w: float, design,
+                        shared_context: bool = False) -> list:
     """One question as a block that won't be split across columns if it's short."""
     marks = f' <font color="#6b7280">({q.marks} mark{"s" if q.marks != 1 else ""})</font>' if q.marks else ""
     flag = ' <font color="#8a6d1f">°</font>' if q.generated else ""
@@ -263,12 +302,16 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
 
     # A multi-part question reads as one wall of text if its parts are inlined.
     # Given a stem, the parts get their own indented lines, as in the book.
-    head = q.stem if (q.stem and q.parts) else q.body
+    # The stem whenever there is one: q.body is the searchable full text and
+    # carries the context, so using it printed the case study twice — once as
+    # the grey stimulus block and again inside the question.
+    head = q.stem or q.body
     tail = "" if (q.stem and q.parts) else f"{marks}{flag}"
     parts: list = []
-    if q.context:
+    if q.context and not shared_context:
         # The scenario the question is set in, printed above it as the book
         # does. Without it the question is unanswerable, so it travels with it.
+        # `shared_context` means the group above already printed it.
         parts.append(Paragraph(_esc(q.context), ss["Context"]))
         parts.append(Spacer(1, 2))
     parts.append(
@@ -532,8 +575,9 @@ def render_sheet(
     ctx = _Ctx(plan=plan, design=design, title=title, subtitle=subtitle)
 
     wide_ids = set(plan.wide_ids or [])
-    questions = [q for q in plan.questions if q.id not in wide_ids]
-    wide = [q for q in plan.questions if q.id in wide_ids]
+    questions = _group_by_context(
+        [q for q in plan.questions if q.id not in wide_ids])
+    wide = _group_by_context([q for q in plan.questions if q.id in wide_ids])
     dropped: list[Question] = []
     columns = plan.spec.columns or plan.columns or choose_columns(questions)
     col_w = _column_width(columns)
@@ -557,14 +601,29 @@ def render_sheet(
         # masthead's space and left it blank.
         out: list = [NextPageTemplate("later")]
         n = 0
-        for q in questions:
-            n += 1
-            out.extend(_question_flowables(q, n, ss, col_w, design))
+
+        def emit(group: list[Question], width: float) -> None:
+            """One run of questions, with a shared stimulus printed once."""
+            nonlocal n
+            shared = len(group) > 1 and bool(group[0].context)
+            if shared:
+                first, last = n + 1, n + len(group)
+                lead = (f"Questions {first}\u2013{last} refer to the following "
+                        "case study.")
+                out.append(Paragraph(f"<b>{_esc(lead)}</b>", ss["Context"]))
+                out.append(Paragraph(_esc(group[0].context), ss["Context"]))
+                out.append(Spacer(1, 2))
+            for q in group:
+                n += 1
+                out.extend(_question_flowables(q, n, ss, width, design,
+                                               shared_context=shared))
+
+        for start, size in _context_runs(questions):
+            emit(questions[start:start + size], col_w)
         if with_wide and wide:
             out += [NextPageTemplate("wide"), PageBreak()]
-            for q in wide:
-                n += 1
-                out.extend(_question_flowables(q, n, ss, wide_w, design))
+            for start, size in _context_runs(wide):
+                emit(wide[start:start + size], wide_w)
         if with_solutions:
             sol_ctx = _Ctx(SheetPlan(spec=plan.spec, questions=questions + wide),
                            design, title, subtitle)

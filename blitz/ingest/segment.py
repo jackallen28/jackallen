@@ -55,6 +55,44 @@ MARKS_INLINE = re.compile(r"\((\d+)\s*marks?\)", re.IGNORECASE)
 # dropped" is a stem, "a Calculate the net force" is a part.
 PART = re.compile(r"^([a-h])(?:[.)]\s+(?=\S)|\s+(?=[A-Z]))")
 
+OPTION = re.compile(r"^([A-E])[.)]?\s+(?=\S)")
+NOISE = re.compile(
+    r"^(chapter\s+\d|unit\s+[1-4]\b|area of study|isbn|©|copyright|"
+    r"cambridge university press|uncorrected|sample pages|page\s+\d+|\d{1,4})\s*$",
+    re.IGNORECASE,
+)
+
+# A mark allocation broken over a line break: "... longer term. (4" then
+# "marks)". Word documents converted to PDF wrap wherever the column ends, so
+# this is normal rather than exotic, and neither fragment matches MARKS_INLINE.
+_MARKS_HEAD = re.compile(r"\(\s*\d+\s*$")
+_MARKS_TAIL = re.compile(r"^\s*marks?\s*\)", re.IGNORECASE)
+
+
+def rejoin_wrapped_marks(lines: list[str]) -> list[str]:
+    """Put a mark allocation back together when the line break split it.
+
+    Left alone, "(4" stays in the question text and the 4 marks go uncounted —
+    which then sizes the answer space wrongly as well as printing a stray
+    bracket on the sheet.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        nxt = lines[i + 1] if i + 1 < len(lines) else None
+        tail = _MARKS_TAIL.match(nxt) if nxt is not None else None
+        if tail and _MARKS_HEAD.search(line):
+            out.append(f"{line.rstrip()} {nxt[:tail.end()].strip()}")
+            rest = nxt[tail.end():].strip()
+            if rest:
+                out.append(rest)
+            i += 2
+            continue
+        out.append(line)
+        i += 1
+    return out
+
 
 def normalise_part(line: str) -> str:
     """Print every part the same way, whatever the book did.
@@ -67,12 +105,6 @@ def normalise_part(line: str) -> str:
     if not m:
         return line
     return f"{m.group(1)}. {line[m.end():].strip()}"
-OPTION = re.compile(r"^([A-E])[.)]?\s+(?=\S)")
-NOISE = re.compile(
-    r"^(chapter\s+\d|unit\s+[1-4]\b|area of study|isbn|©|copyright|"
-    r"cambridge university press|uncorrected|sample pages|page\s+\d+|\d{1,4})\s*$",
-    re.IGNORECASE,
-)
 
 # Online-resource callouts, which are not questions however they are laid out.
 #
@@ -347,7 +379,7 @@ def _parse_unit(entries: list[_Entry],
     else:
         q_entries, a_entries = body_entries[:split_at], body_entries[split_at + 1:]
 
-    q_lines = [e.line.text for e in q_entries]
+    q_lines = rejoin_wrapped_marks([e.line.text for e in q_entries])
     provenance = None
     kept: list[str] = []
     for line in q_lines:

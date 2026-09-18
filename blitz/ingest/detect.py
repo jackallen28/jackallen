@@ -26,6 +26,18 @@ TEXTBOOK_CUES = re.compile(
     r"chapter review|key (terms|concepts|ideas)|summary|learning (objectives|outcomes))",
     re.IGNORECASE)
 NUMBERED = re.compile(r"^\s*\d{1,3}\s*[.)]\s+\S")
+# A school-written practice SAC. It has none of VCAA's furniture — no
+# "SECTION A", no official header — so it fell through every branch and was
+# reported as unknown, and Business Management is mostly these.
+# Deliberately the paper's own furniture and not "case study": a textbook
+# prints case studies too, and including it made an Edrolo textbook page
+# detect as an exam.
+SAC_CUES = re.compile(
+    r"^(practice\s+)?sac\b|school[- ]assessed coursework|"
+    r"^total marks\b|^time allowed\b|^writing time\b|"
+    r"reading time|answer all questions|^unit\s+[34]\s+outcome|"
+    r"^student name|^teacher:|marks? allocated",
+    re.IGNORECASE)
 
 
 @dataclass
@@ -61,6 +73,8 @@ def detect_kind(doc, sample: int = 40) -> Detection:
                 counts["exam_questions"] += 1
             if VCAA_HEADER.search(t):
                 counts["vcaa_headers"] += 1
+            if SAC_CUES.match(t):
+                counts["sac_cues"] += 1
             if TEXTBOOK_CUES.match(t):
                 counts["textbook_cues"] += 1
             if NUMBERED.match(t):
@@ -76,6 +90,11 @@ def detect_kind(doc, sample: int = 40) -> Detection:
         return Detection("checkpoints", conf, dict(counts), pages)
     if counts["exam_sections"] or (counts["vcaa_headers"] and counts["exam_questions"]):
         conf = min(1.0, (counts["exam_sections"] + counts["exam_questions"]) / 6)
+        return Detection("exam", max(conf, 0.5), dict(counts), pages)
+    # A practice SAC: marked-up questions plus the paper's own furniture
+    # ("Total marks", "Time allowed", "Answer all questions").
+    if counts["exam_questions"] >= 2 and counts["sac_cues"] >= 1:
+        conf = min(1.0, (counts["exam_questions"] + counts["sac_cues"]) / 6)
         return Detection("exam", max(conf, 0.5), dict(counts), pages)
     if per_page.get("textbook_cues", 0) >= 0.15 or (
             counts["textbook_cues"] >= 3 and per_page.get("numbered_items", 0) >= 0.3):
