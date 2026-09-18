@@ -14,7 +14,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -35,6 +35,33 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="VCE Blitz", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+# Paths that work before the folder has been set up: the setup page itself,
+# what it calls, the health probe, and the static files any page needs.
+SETUP_PATHS = {"/setup", "/setup.js", "/api/status", "/api/setup", "/healthz"}
+ASSET_SUFFIXES = (".css", ".js", ".png", ".svg", ".ico", ".woff", ".woff2")
+
+
+@app.middleware("http")
+async def setup_gate(request, call_next):
+    """Until the Blitz folder is set up, only the setup page is reachable.
+
+    A browser is redirected there; an API call is refused with a clear
+    reason rather than acting on an index that does not exist yet.
+    """
+    from ..setup import is_set_up
+
+    path = request.url.path
+    if is_set_up() or path in SETUP_PATHS or path.endswith(ASSET_SUFFIXES):
+        return await call_next(request)
+    if path.startswith("/api/"):
+        return JSONResponse(
+            {"detail": "This Blitz folder has not been set up yet. Open / to "
+                       "restore a backup or start from scratch."},
+            status_code=409)
+    return RedirectResponse("/setup", status_code=307)
+
+
 app.middleware("http")(auth_middleware)
 
 
@@ -103,6 +130,68 @@ def _apply_history(conn, spec: SheetSpec, student: dict | None, allow_repeats: b
         f"WHERE q.id IN ({marks}) AND kk.kk_id IN ({kk_marks}) ORDER BY q.serial",
         [*had, *spec.kk_ids]).fetchall()
     return [r["serial"] for r in rows if r["serial"]]
+
+
+# --- First run ----------------------------------------------------------------
+
+@app.get("/setup")
+def setup_page():
+    """Shown until the folder is set up; afterwards it redirects home."""
+    from ..setup import is_set_up
+
+    if is_set_up():
+        return RedirectResponse("/", status_code=307)
+    return FileResponse(STATIC / "setup.html")
+
+
+@app.get("/api/status")
+def api_status():
+    """What this Blitz folder holds, for the setup page."""
+    from ..setup import status
+
+    return status()
+
+
+@app.post("/api/setup")
+async def api_setup(
+    mode: str = Form(...),
+    subjects: list[str] = Form(default=[]),
+    samples: str = Form(""),
+    erase: str = Form(""),
+    replace: str = Form(""),
+    backup: UploadFile | None = File(None),
+):
+    """Set the folder up one of three ways: restore, scratch, or keep."""
+    from .. import setup as setup_mod
+    from ..config import ROOT
+
+    if setup_mod.is_set_up():
+        raise HTTPException(409, "this folder is already set up")
+    try:
+        if mode == "restore":
+            if backup is None or not backup.filename:
+                raise HTTPException(400, "choose the backup zip to restore")
+            staged = ROOT / "backups" / f"restoring-{backup.filename}"
+            staged.parent.mkdir(parents=True, exist_ok=True)
+            staged.write_bytes(await backup.read())
+            try:
+                result = setup_mod.setup_restore(staged, replace=bool(replace),
+                                                 name=Path(backup.filename).name)
+            finally:
+                staged.unlink(missing_ok=True)
+        elif mode == "scratch":
+            result = setup_mod.setup_scratch(
+                [s for s in subjects if s], samples=bool(samples),
+                erase=bool(erase))
+        elif mode == "adopt":
+            result = setup_mod.setup_adopt()
+        else:
+            raise HTTPException(400, f"unknown setup mode {mode!r}")
+    except FileExistsError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result
 
 
 @app.get("/api/root")

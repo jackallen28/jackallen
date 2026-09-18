@@ -78,8 +78,19 @@ def load_study_design_file(path: Path) -> StudyDesign:
 
 
 def design_dirs() -> list[Path]:
-    """Where study designs are looked for: the person's own first, then the
-    ones shipped with the tool. An import writes to the first."""
+    """Where study designs are looked for. An import writes to the first.
+
+    Once the folder has been set up, only the person's own folder counts:
+    someone who teaches Legal Studies should not find Physics in their
+    subject list because it happened to ship in the download, and choosing
+    no subjects at all has to mean none. Setup copies the ones they asked
+    for. Before setup the shipped designs stand in, so a fresh checkout
+    works straight away.
+    """
+    from ..setup import is_set_up
+
+    if is_set_up():
+        return [USER_DESIGN_DIR]
     return [USER_DESIGN_DIR, STUDY_DESIGN_DIR]
 
 

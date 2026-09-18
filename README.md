@@ -28,6 +28,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Flags | A question flagged incomplete, corrupt or wrong never goes on a sheet until cleared. |
 | Students | Sheets are logged per student or class; repeats are skipped; `students/MASTER.xlsx` and one workbook each are rewritten after every sheet. |
 | Backup | One zip with the index, crops, study designs, student record and every sheet; `blitz restore` puts it back. |
+| First run | A new copy has nothing in it: the setup screen restores a backup or starts fresh with only the subjects you tick. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that
@@ -102,10 +103,12 @@ this environment had no key — so no claim is made about it.
 
 ## Quick start
 
-On a Mac, double-click `mac/Blitz.command`. It opens the browser on four
-doors: make a Blitz, index materials, students, questions
-(`docs/the-app.md`). Everything you add or make lands in `~/Documents/Blitz/`.
-Everything below is the same thing from a terminal.
+On a Mac, double-click `mac/Blitz.command`. The first time, it opens on a
+setup screen: restore a backup, or start from scratch and tick which of the
+shipped study designs you want. After that it opens on four doors: make a
+Blitz, index materials, students, questions (`docs/the-app.md`). Everything
+you add or make lands in `~/Documents/Blitz/`. Everything below is the same
+thing from a terminal.
 
 ```bash
 pip install -e .

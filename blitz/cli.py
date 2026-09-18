@@ -70,19 +70,64 @@ def cmd_restore(args) -> int:
 
 
 def cmd_init(args) -> int:
+    """Create the folder and an empty index.
+
+    Sample questions are no longer loaded by default: a new person has not
+    said which subjects they teach yet, and a bank of Physics questions
+    nobody asked for is clutter. `blitz setup` (or the app's first-run page)
+    is where subjects are chosen; `--samples` here is the shortcut.
+    """
     ensure_dirs()
-    with db.session() as conn:
-        counts = load_all_samples(conn)
     from .config import ROOT
 
+    with db.session() as conn:
+        counts = load_all_samples(conn) if args.samples else {}
     print(f"your Blitz folder is {ROOT}")
     print(f"index ready at {db.DB_PATH}")
     for subject, n in counts.items():
         print(f"  {subject}: {n} sample questions loaded")
-    print("\nIngest your own sources next, e.g.:")
-    print("  blitz ingest sources/physics-checkpoints.pdf \\")
-    print("      --subject physics --source-id physics-checkpoints \\")
-    print("      --kind checkpoints --page-offset -2")
+    from .setup import is_set_up
+
+    if not is_set_up():
+        print("\nNot set up yet. Either:")
+        print("  blitz serve --open          and choose on the first-run page, or")
+        print("  blitz setup --restore <backup.zip>")
+        print("  blitz setup --subjects physics")
+    return 0
+
+
+def cmd_setup(args) -> int:
+    """First run, from a terminal: restore a backup or start from scratch."""
+    from . import setup as setup_mod
+
+    ensure_dirs()
+    if setup_mod.is_set_up() and not args.force:
+        print(f"\n{setup_mod.settings_path()} already exists; this folder is "
+              "set up. Pass --force to set it up again.\n")
+        return 1
+    try:
+        if args.restore:
+            result = setup_mod.setup_restore(Path(args.restore), replace=args.replace)
+        elif args.keep:
+            result = setup_mod.setup_adopt()
+        else:
+            available = {s["id"] for s in setup_mod.shipped_subjects()}
+            unknown = [s for s in args.subjects if s not in available]
+            if unknown:
+                print(f"\nno study design ships for: {', '.join(unknown)}")
+                print(f"available: {', '.join(sorted(available)) or 'none'}")
+                print("any other subject is added by uploading its VCAA study "
+                      "design on the Index materials page.\n")
+                return 1
+            result = setup_mod.setup_scratch(args.subjects, samples=args.samples,
+                                             erase=args.erase)
+    except (FileExistsError, FileNotFoundError, ValueError) as exc:
+        print(f"\n{exc}\n")
+        return 1
+    print(f"set up ({result['mode']}) in {setup_mod.settings_path().parent}")
+    if result.get("subjects"):
+        print(f"  subjects: {', '.join(result['subjects'])}")
+    print("\nNext: blitz serve --open")
     return 0
 
 
@@ -364,8 +409,25 @@ def build_parser() -> argparse.ArgumentParser:
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("init", help="create the index and load the sample bank"
-                   ).set_defaults(func=cmd_init)
+    init = sub.add_parser("init", help="create the Blitz folder and an empty index")
+    init.add_argument("--samples", action="store_true",
+                      help="also load the sample question banks")
+    init.set_defaults(func=cmd_init)
+    st = sub.add_parser("setup", help="first run: restore a backup or start fresh")
+    st.add_argument("--restore", metavar="ZIP", help="a backup zip to restore")
+    st.add_argument("--replace", action="store_true",
+                    help="with --restore, move an existing index aside first")
+    st.add_argument("--keep", action="store_true",
+                    help="keep an index that is already in the folder")
+    st.add_argument("--subjects", nargs="*", default=[], metavar="ID",
+                    help="shipped study designs to start with (blitz subjects)")
+    st.add_argument("--samples", action="store_true",
+                    help="load sample questions for those subjects")
+    st.add_argument("--erase", action="store_true",
+                    help="move an existing index aside and start over")
+    st.add_argument("--force", action="store_true",
+                    help="set up again even though this folder already is")
+    st.set_defaults(func=cmd_setup)
     sub.add_parser("root", help="print the folder all your data lives in"
                    ).set_defaults(func=cmd_root)
     bk = sub.add_parser("backup", help="zip everything worth keeping into backups/")

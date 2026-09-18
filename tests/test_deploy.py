@@ -19,6 +19,15 @@ def client(tmp_path, monkeypatch):
     from blitz import config, db
     from blitz.corpus.sample import load_all_samples
 
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    (tmp_path / "blitz.json").write_text('{"version": 1, "mode": "test"}')
+    import shutil as _shutil
+
+    import blitz.studydesign.loader as _loader
+
+    _shutil.copytree(config.STUDY_DESIGN_DIR, tmp_path / "study-designs")
+    monkeypatch.setattr(config, "USER_DESIGN_DIR", tmp_path / "study-designs")
+    monkeypatch.setattr(_loader, "USER_DESIGN_DIR", tmp_path / "study-designs")
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "t.sqlite3")
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.sqlite3")
     import blitz.server.app as server

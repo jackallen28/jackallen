@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up Blitz — Allentronics</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="plain">
+<header class="masthead">
+  <div class="wrap">
+    <img class="logo" src="/logo.png" alt="Allentronics Education Services">
+    <p class="tagline">Welcome. This folder has not been set up yet: <code id="root"></code></p>
+  </div>
+</header>
+<div class="wrap">
+  <h1 class="ask">How would you like to start?</h1>
+
+  <fieldset id="adopt" hidden>
+    <legend>Keep what is here</legend>
+    <p id="adopt-text"></p>
+    <button type="button" class="primary" data-mode="adopt">Keep it and continue</button>
+  </fieldset>
+
+  <div class="doors" style="margin-bottom:22px">
+    <fieldset style="margin:0">
+      <legend>Restore a backup</legend>
+      <p class="hint">The zip that <b>Create backup</b> made on another machine or an earlier install.
+        Everything comes back as it was: the index, figures, study designs, students and every sheet.</p>
+      <label for="zip">Backup zip</label>
+      <input id="zip" type="file" accept=".zip">
+      <label class="check" id="replace-wrap" hidden style="display:flex;gap:6px;margin-top:8px"><input id="replace" type="checkbox"> replace the index already here (the old one is kept aside)</label>
+      <div class="row"><button type="button" class="primary" data-mode="restore">Restore</button></div>
+    </fieldset>
+
+    <fieldset style="margin:0">
+      <legend>Start from scratch</legend>
+      <p class="hint">A new, empty index. Tick any subject you want ready to go; add any other by uploading its
+        VCAA study design later on the Index materials page.</p>
+      <div id="shipped"></div>
+      <label class="check" style="display:flex;gap:6px;margin-top:8px"><input id="samples" type="checkbox"> include a few sample questions so you can try a sheet before indexing a book</label>
+      <label class="check" id="erase-wrap" hidden style="display:flex;gap:6px;margin-top:8px"><input id="erase" type="checkbox"> start over: move the index already here aside</label>
+      <div class="row"><button type="button" class="primary" data-mode="scratch">Create</button></div>
+    </fieldset>
+  </div>
+
+  <p id="status" class="hint"></p>
+</div>
+<script src="/setup.js"></script>
+</body>
+</html>

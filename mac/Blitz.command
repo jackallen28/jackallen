@@ -29,6 +29,7 @@ if [ ! -x .venv/bin/blitz ]; then
   .venv/bin/pip install --quiet -e .
 fi
 
-.venv/bin/blitz init >/dev/null
+# No `blitz init` here: on a fresh machine the app opens on its own setup
+# page, where you restore a backup or choose what to start with.
 echo "Starting Blitz. Leave this window open while you use it."
 exec .venv/bin/blitz serve --open

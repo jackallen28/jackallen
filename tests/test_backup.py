@@ -79,8 +79,9 @@ def test_the_home_page_can_make_a_backup_and_hand_it_over(_client, tmp_path, mon
     import blitz.server.app as server
 
     root = _root(tmp_path)
-    monkeypatch.setattr(server, "BACKUP_ROOT", root, raising=False)
+    (root / "blitz.json").write_text('{"version": 1, "mode": "test"}')
     monkeypatch.setattr(backup.config, "ROOT", root)
+    monkeypatch.setattr(server, "OUT_DIR", root / "blitzes")
     monkeypatch.setattr(db, "DB_PATH", root / "index" / "blitz.sqlite3")
     res = _client.post("/api/backup", json={"include_sources": False})
     assert res.status_code == 200, res.text

@@ -9,6 +9,15 @@ from blitz.corpus.sample import load_all_samples
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    (tmp_path / "blitz.json").write_text('{"version": 1, "mode": "test"}')
+    import shutil as _shutil
+
+    import blitz.studydesign.loader as _loader
+
+    _shutil.copytree(config.STUDY_DESIGN_DIR, tmp_path / "study-designs")
+    monkeypatch.setattr(config, "USER_DESIGN_DIR", tmp_path / "study-designs")
+    monkeypatch.setattr(_loader, "USER_DESIGN_DIR", tmp_path / "study-designs")
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "api.sqlite3")
     monkeypatch.setattr(config, "OUT_DIR", tmp_path / "out")
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "api.sqlite3")

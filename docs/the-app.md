@@ -10,12 +10,45 @@ four doors.
 | **Students** | every student or class, every sheet they have had, every question on it; their workbook and the master workbook |
 | **Questions** | look a question up by its serial number or its words, read it and its solution, flag it if it is broken |
 
+## First run
+
+A new copy of Blitz holds no questions, no index and nobody's subjects. The
+first time it starts, every page sends you to a setup screen with two ways
+in:
+
+- **Restore a backup** — the zip `Create backup` made on another machine or
+  an earlier install. The index, figures, study designs, students and every
+  sheet come back as they were.
+- **Start from scratch** — a new, empty index. The study designs that ship
+  with Blitz (VCE Physics, VCE Business Management) are offered as starters;
+  tick the ones you want and leave the rest. Any other subject is added
+  later by uploading its VCAA study design on the Index materials page.
+  Sample questions are optional, so you can try a sheet before indexing a
+  book.
+
+If the folder already holds an index from before this screen existed, a
+third option appears: keep it. Starting over instead moves the old index
+aside rather than deleting it.
+
+What you pick is what you get. A person who ticks nothing has no subjects,
+not somebody else's Physics: once set up, only the study designs in your own
+folder count, and the shipped ones are templates setup copies from.
+
+The same thing from a terminal:
+
+```bash
+blitz setup --restore ~/Downloads/blitz-backup-2026-09-18-0204.zip
+blitz setup --subjects physics            # or --subjects with nothing after it
+blitz setup --keep                        # adopt an index already in the folder
+```
+
 ## Where everything lives
 
 One folder, `~/Documents/Blitz/`, shown at the bottom of the home page:
 
 ```
 Blitz/
+  blitz.json       written at setup; its presence is what "set up" means
   study-designs/   imported study designs (the shipped ones are the fallback)
   sources/         everything uploaded, per subject
   index/           the question index and figure crops (rebuildable)

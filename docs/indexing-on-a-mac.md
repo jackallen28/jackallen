@@ -5,8 +5,9 @@ is no account or key. A 1000-page book takes about a minute.
 
 ## The app
 
-Double-click **`mac/Blitz.command`**. It starts Blitz and opens the browser
-on the *Index materials* page:
+Double-click **`mac/Blitz.command`**. The first time it opens on a setup
+screen, where you restore a backup or choose what to start with; after that
+it opens on the home page. From there, *Index materials*:
 
 1. pick the subject, or choose *New subject…* and name it;
 2. add the VCAA study design (PDF or Word) the first time for a subject;

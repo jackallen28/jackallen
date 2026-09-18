@@ -25,12 +25,19 @@ def client(tmp_path, monkeypatch):
     import blitz.studydesign.importer as importer
     import blitz.studydesign.loader as loader
 
-    designs = tmp_path / "designs"
+    # A set-up folder keeps the study designs it uses in its own folder; the
+    # shipped ones are only templates setup copies from.
+    designs = tmp_path / "shipped"
     shutil.copytree(config.STUDY_DESIGN_DIR, designs)
-    mine = tmp_path / "my-designs"
+    mine = tmp_path / "study-designs"
+    shutil.copytree(config.STUDY_DESIGN_DIR, mine)
     for mod in (config, loader, importer):
         monkeypatch.setattr(mod, "STUDY_DESIGN_DIR", designs)
         monkeypatch.setattr(mod, "USER_DESIGN_DIR", mine)
+    # The app under test is one in use, so its folder is set up; the setup
+    # page and the gate in front of it have their own tests.
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    (tmp_path / "blitz.json").write_text('{"version": 1, "mode": "test"}')
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "t.sqlite3")
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.sqlite3")
     monkeypatch.setattr(config, "CROPS_DIR", tmp_path / "crops")
