@@ -420,7 +420,7 @@ function showSheet(data) {
        <div class="stat"><b>${data.questions}</b>questions</div>
        <div class="stat"><b>${data.total_marks}</b>marks</div>
        <div class="stat"><b>${data.question_pages}</b>pages of questions</div>
-       <div class="stat"><b>${data.total_pages}</b>pages with solutions</div>
+       <div class="stat"><b>${data.total_pages}</b>${data.solutions === false ? "pages total" : "pages with solutions"}</div>
      </div>
      <div class="viewer-bar">
        <a class="chip on" href="${data.url}?download=1" download>Download PDF</a>

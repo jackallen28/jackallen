@@ -388,6 +388,10 @@ def api_generate(req: SheetRequest):
             from ..students import write_workbooks
 
             write_workbooks(conn)
+    if result.get("solutions_missing"):
+        plan.warnings.append(
+            "No solutions page: not one of these questions has a worked solution "
+            "in the index, so a page of 'no solution' lines was left off.")
     if skipped:
         plan.warnings.append(
             f"Skipped {len(skipped)} question(s) {student['name']} has already had "

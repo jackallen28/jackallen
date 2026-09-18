@@ -43,9 +43,30 @@ PROVENANCE = re.compile(
     r"^(?:\[([^\]]*(?:VCAA|Adapted)[^\]]*)\]"
     r"|((?:adapted\s+from\s+)?VCAA\s+\d{4}[^\n]{0,60}))\s*$",
     re.IGNORECASE)
-MARKS_LINE = re.compile(r"^\((\d+)\s*marks?\)\s*$", re.IGNORECASE)
+# A line that is nothing but the mark allocation. The brackets are optional:
+# plenty of books print a bare "2 marks" right-aligned under the question, and
+# requiring the brackets left it sitting in the question text with the marks
+# uncounted. MARKS_INLINE below still insists on them — stripping an
+# unbracketed "2 marks" from mid-sentence would mangle real prose.
+MARKS_LINE = re.compile(r"^[(\[]?\s*(\d+)\s*marks?\s*[)\]]?\s*$", re.IGNORECASE)
 MARKS_INLINE = re.compile(r"\((\d+)\s*marks?\)", re.IGNORECASE)
-PART = re.compile(r"^([a-h])[.)]\s+(?=\S)")
+# "a. <part>" and the unpunctuated "a <part>". The bare form insists on a
+# capital letter, because "a" is also the indefinite article: "a ball is
+# dropped" is a stem, "a Calculate the net force" is a part.
+PART = re.compile(r"^([a-h])(?:[.)]\s+(?=\S)|\s+(?=[A-Z]))")
+
+
+def normalise_part(line: str) -> str:
+    """Print every part the same way, whatever the book did.
+
+    One publisher writes "a. Calculate ...", another "a Calculate ...". On a
+    sheet that mixes questions from both books the second form reads as a typo,
+    so the label is rewritten to "a." and the text follows it.
+    """
+    m = PART.match(line)
+    if not m:
+        return line
+    return f"{m.group(1)}. {line[m.end():].strip()}"
 OPTION = re.compile(r"^([A-E])[.)]?\s+(?=\S)")
 NOISE = re.compile(
     r"^(chapter\s+\d|unit\s+[1-4]\b|area of study|isbn|©|copyright|"
@@ -176,17 +197,63 @@ class _PageInfo:
     height: float
 
 
+# How far into a page a running header or footer can sit, as a fraction of
+# page height, and how many pages must share a line before it counts as
+# furniture rather than content. Two is enough: the same words, in the margin,
+# on two different pages is a masthead. Body text does not repeat verbatim.
+MARGIN_BAND = 0.08
+FURNITURE_PAGES = 2
+FURNITURE_SHARE = 0.25
+
+
+def _furniture(pages: dict[int, list], heights: dict[int, float]) -> set[str]:
+    """Text repeated in the margins of many pages: mastheads and footers.
+
+    "VCE PHYSICS UNITS 3 & 4" at the top of every page is not matchable by
+    pattern — every publisher writes a different one — but it is trivially
+    detectable by repetition. Without this the masthead of the following page
+    is swept into the last question of the previous one, and the question
+    prints with the book's title glued to the end of it.
+
+    Only the top and bottom of the page are considered, so a phrase that
+    genuinely recurs in the body ("Calculate the acceleration") is safe.
+    """
+    if len(pages) < 2:
+        return set()
+    seen: dict[str, set[int]] = {}
+    for index, lines in pages.items():
+        height = heights.get(index) or 0
+        if not height:
+            continue
+        band = height * MARGIN_BAND
+        for line in lines:
+            if line.y0 > band and line.y1 < height - band:
+                continue
+            text = line.text.strip()
+            if text:
+                seen.setdefault(text, set()).add(index)
+    threshold = max(FURNITURE_PAGES, int(len(pages) * FURNITURE_SHARE))
+    return {text for text, on in seen.items() if len(on) >= threshold}
+
+
 def _stream(doc, first: int = 0, last: int | None = None
             ) -> tuple[list[_Entry], dict[int, _PageInfo]]:
     """Every line in the book, in order, tagged with its page."""
     last = doc.page_count if last is None else min(last, doc.page_count)
-    out: list[_Entry] = []
     info: dict[int, _PageInfo] = {}
+    lines_by_page: dict[int, list] = {}
+    heights: dict[int, float] = {}
     for index in range(first, last):
         page = doc[index]
         info[index] = _PageInfo(bars=fraction_bars(page), height=page.rect.height)
-        for line in build_lines(page):
-            if NOISE.match(line.text):
+        heights[index] = page.rect.height
+        lines_by_page[index] = build_lines(page)
+
+    furniture = _furniture(lines_by_page, heights)
+    out: list[_Entry] = []
+    for index in range(first, last):
+        for line in lines_by_page[index]:
+            if NOISE.match(line.text) or line.text.strip() in furniture:
                 continue
             out.append(_Entry(line=line, page_index=index))
     return out, info
@@ -315,7 +382,7 @@ def _parse_unit(entries: list[_Entry],
         if PART.match(line):
             if current:
                 parts.append(" ".join(current).strip())
-            current = [line]
+            current = [normalise_part(line)]
         elif current is not None:
             current.append(line)
         else:

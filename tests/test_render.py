@@ -453,3 +453,49 @@ class TestColumnChoice:
             "two columns squash it"
         assert crop_scale(q.figure_path, columns=1, pt_width=548) > 0.9, \
             "one column keeps it"
+
+
+class TestSolutionsPage:
+    """A solutions page is only worth a page if there are solutions on it."""
+
+    def _plan_without_answers(self, seeded):
+        plan = _plan(seeded, seed=1)
+        for q in plan.questions:
+            q.answer = None
+            q.answer_mode = None
+        return plan
+
+    def test_no_solutions_page_when_nothing_has_a_solution(self, seeded, tmp_path):
+        """A textbook with no answers section produced a whole page of
+        identical "No worked solution in the source" lines."""
+        plan = self._plan_without_answers(seeded)
+        result = render_sheet(plan, tmp_path / "s.pdf")
+        assert result["solutions"] is False
+        assert result["solutions_missing"] is True
+        assert result["total_pages"] == result["question_pages"]
+
+        doc = pymupdf.open(tmp_path / "s.pdf")
+        text = "".join(p.get_text() for p in doc)
+        doc.close()
+        assert "Worked solutions" not in text
+        assert "No worked solution in the source" not in text
+
+    def test_solutions_still_print_when_there_are_some(self, seeded, tmp_path):
+        result = render_sheet(_plan(seeded, seed=1), tmp_path / "s.pdf")
+        assert result["solutions"] is True
+        assert result["solutions_missing"] is False
+        assert result["total_pages"] > result["question_pages"]
+
+
+def test_areas_from_both_units_are_distinguishable(seeded, tmp_path):
+    """Every unit has an AOS 1, so the subtitle said "AOS 1: ..., AOS 1: ..."."""
+    design = load_study_design("physics")
+    kk = [design.units[0].areas_of_study[0].key_knowledge[0].id,
+          design.units[1].areas_of_study[0].key_knowledge[0].id]
+    plan = build_plan(seeded, SheetSpec(subject_id="physics", kk_ids=kk), design)
+    render_sheet(plan, tmp_path / "s.pdf", design)
+
+    doc = pymupdf.open(tmp_path / "s.pdf")
+    text = doc[0].get_text()
+    doc.close()
+    assert "U3 AOS 1" in text and "U4 AOS 1" in text

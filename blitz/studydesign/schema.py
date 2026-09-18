@@ -82,6 +82,24 @@ class AreaOfStudy:
     def display(self) -> str:
         return f"AOS {self.number}: {self.title}"
 
+    @property
+    def unit_number(self) -> int | None:
+        """The unit this area belongs to, read off its positional id."""
+        import re
+
+        m = re.search(r"-u(\d+)-aos", self.id)
+        return int(m.group(1)) if m else None
+
+    @property
+    def display_with_unit(self) -> str:
+        """Unambiguous when areas from both units appear side by side.
+
+        Every unit has an AOS 1, so a sheet drawing on Unit 3 and Unit 4 listed
+        "AOS 1: ..., AOS 1: ..." and looked like a duplicate.
+        """
+        unit = self.unit_number
+        return f"U{unit} AOS {self.number}: {self.title}" if unit else self.display
+
 
 @dataclass(frozen=True)
 class Unit:

@@ -29,16 +29,33 @@ from dataclasses import dataclass
 from .segment import (
     MARKS_INLINE, MARKS_LINE, OPTION, PART, PROVENANCE, RESOURCE_HEADING,
     RawQuestion, _Entry, _PageInfo, _split_options, _stream, is_resource_note,
+    normalise_part,
 )
 from .textflow import Line
 
 # Headings that open a block of questions. Case-insensitive, start of line.
 QUESTION_BLOCK = re.compile(
-    r"^(review questions?|questions?|exercises?|chapter review|section review|"
-    r"end[- ]of[- ]chapter|test yourself|check your understanding|"
-    r"try (this|these)|practice questions?|exam[- ]style questions?|"
-    r"multiple[- ]choice questions?|short[- ]answer questions?|"
-    r"key questions?|section questions?)\b[^\n]{0,40}$",
+    r"^("
+    # The plain ones.
+    r"questions?|review questions?|chapter review|section review|unit review|"
+    r"exercises?|problems|activities|"
+    # "Check your ..." — Oxford, Pearson and Jacaranda each chose a different
+    # noun, and a book that uses one never uses the others.
+    r"check your (learning|understanding|knowledge|recall)|"
+    r"quick check|learning check|self[- ]check|knowledge check|"
+    r"test yourself|try (this|these|it yourself)|now try this|"
+    # End of chapter.
+    r"end[- ]of[- ]chapter( questions?)?|chapter questions?|"
+    r"consolidation( questions?)?|revision questions?|further questions?|"
+    # Exam practice.
+    r"practice questions?|exam[- ]style questions?|exam questions?|"
+    r"multiple[- ]choice( questions?)?|short[- ]answer( questions?)?|"
+    r"extended[- ]response( questions?)?|"
+    r"key questions?|section questions?|"
+    r"application questions?|analysis questions?|"
+    r"skills and applications|apply your (understanding|knowledge)|"
+    r"knowledge and understanding"
+    r")\b[^\n]{0,40}$",
     re.IGNORECASE)
 WORKED_EXAMPLE = re.compile(
     r"^(worked example|sample problem|worked solution)\s*(\d+(?:\.\d+)*)?",
@@ -48,7 +65,11 @@ WORKED_EXAMPLE = re.compile(
 REVISION_QUESTION = re.compile(
     r"^revision question\s*([a-z]?\d+(?:\.\d+)*)", re.IGNORECASE)
 SOLUTION = re.compile(r"^(solution|answer|working)\s*:?\s*$", re.IGNORECASE)
-NUMBERED = re.compile(r"^\s*(\d{1,3})\s*[.)]\s+(?=\S)")
+# "1. Define ...", "1) Define ...", and — Oxford, Pearson and most Australian
+# textbooks — a bare "1 Define ...". The bare form needs a capital letter after
+# it or it swallows measurements and stray numbers: "10 m/s is the speed",
+# "2 marks", "5.0 kg". Three digits at most, so a year like 2019 cannot match.
+NUMBERED = re.compile(r"^\s*(\d{1,3})(?:\s*[.)]\s+(?=\S)|\s+(?=[A-Z]))")
 # "Question 1" on a line of its own, with the question under it. Distinct from
 # Checkpoints' "Question 12/ 11", which carries a page number after a slash.
 # The marks often sit on the same line as the number rather than under it,
@@ -232,7 +253,7 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
         if PART.match(line):
             if current:
                 parts.append(" ".join(current).strip())
-            current = [line]
+            current = [normalise_part(line)]
         elif current is not None:
             current.append(line)
         else:

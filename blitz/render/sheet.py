@@ -520,7 +520,7 @@ def render_sheet(
 
     title = plan.spec.title or f"{design.subject_name} — Blitz"
     aos_names = sorted({
-        design.area_of(kk).display
+        design.area_of(kk).display_with_unit
         for kk in plan.spec.kk_ids
         if _has_area(design, kk)
     })
@@ -604,8 +604,17 @@ def render_sheet(
         _drop_largest(wide, 1)
 
     # Rebuild with the solutions appended, now that the question set is final.
-    total_pages = _build(with_wide=True,
-                         with_solutions=plan.spec.include_solutions)
+    #
+    # A solutions page is only worth a page if there are solutions on it. A
+    # textbook with no answers section produced one identical line per
+    # question — "No worked solution in the source" thirteen times — which is
+    # a whole sheet of paper saying nothing. When not one question has an
+    # answer, the section is dropped and the report says so.
+    solutions_available = any(
+        q.answer or (q.answer_mode == "crop" and q.figures_for("answer"))
+        for q in questions + wide)
+    with_solutions = plan.spec.include_solutions and solutions_available
+    total_pages = _build(with_wide=True, with_solutions=with_solutions)
 
     plan.questions = questions + wide
     plan.wide_ids = [q.id for q in wide]
@@ -618,6 +627,8 @@ def render_sheet(
         "total_pages": total_pages,
         "question_pages": question_pages,
         "total_marks": sum(q.marks or 0 for q in questions + wide),
+        "solutions": with_solutions,
+        "solutions_missing": plan.spec.include_solutions and not solutions_available,
     }
 
 

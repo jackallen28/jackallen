@@ -361,6 +361,9 @@ def cmd_generate(args) -> int:
     print(f"  {result['questions']} questions, {result['total_marks']} marks, "
           f"{result['total_pages']} pages total "
           f"({result['question_pages']} of questions)")
+    if result.get("solutions_missing"):
+        print("  no solutions page: not one of these questions has a worked "
+              "solution in the index")
     for w in plan.warnings:
         print(f"  ! {w}")
     if result["dropped"]:
