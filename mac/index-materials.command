@@ -54,10 +54,11 @@ fi
 if [ $# -lt 2 ]; then
   read -r -p "VCAA study design PDF (blank to keep the one already imported): " DESIGN
 fi
+ROOT="$("$BLITZ" root)"
 if [ $# -lt 3 ]; then
-  read -r -p "Folder of PDFs / packs to index [sources/$SUBJECT]: " FOLDER
+  read -r -p "Folder of PDFs / packs to index [$ROOT/sources/$SUBJECT]: " FOLDER
 fi
-FOLDER="${FOLDER:-sources/$SUBJECT}"
+FOLDER="${FOLDER:-$ROOT/sources/$SUBJECT}"
 [ -n "$SUBJECT" ] || { echo "A subject id is needed."; exit 1; }
 # Finder drops paths with trailing spaces and escaped characters; tidy them.
 DESIGN="$(echo "$DESIGN" | sed -e 's/[[:space:]]*$//' -e "s/\\\\ / /g")"

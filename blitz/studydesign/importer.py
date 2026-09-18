@@ -26,7 +26,7 @@ from pathlib import Path
 
 import yaml
 
-from ..config import STUDY_DESIGN_DIR
+from ..config import STUDY_DESIGN_DIR, USER_DESIGN_DIR
 from .loader import load_study_design_file
 
 UNIT_RE = re.compile(r"^\s*Unit\s+([1-4])\s*[:\u2014-]\s*(.+?)\s*$", re.MULTILINE)
@@ -274,13 +274,18 @@ def import_study_design(
     Question types and command terms are this tool's own editorial data, not
     VCAA's, so they are carried across from the existing file rather than lost.
     """
-    out_dir = Path(out_dir or STUDY_DESIGN_DIR)
+    out_dir = Path(out_dir or USER_DESIGN_DIR)
+    out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / f"{subject_id}.yaml"
 
+    # Editorial data (question types, command terms) is carried over from the
+    # file being replaced: the person's own if there is one, else the shipped.
     existing: dict = {}
-    if target.exists():
-        with target.open(encoding="utf-8") as fh:
-            existing = yaml.safe_load(fh) or {}
+    for candidate in (target, STUDY_DESIGN_DIR / f"{subject_id}.yaml"):
+        if candidate.exists():
+            with candidate.open(encoding="utf-8") as fh:
+                existing = yaml.safe_load(fh) or {}
+            break
 
     text = extract_text(pdf_path)
     accred = ACCRED_RE.search(text)

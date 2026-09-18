@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from .config import OUT_DIR
+from .config import EXPORTS_DIR
 from .corpus.sample import fingerprint
 from .studydesign import StudyDesign, load_study_design
 
@@ -85,7 +85,7 @@ def export_subject(conn: sqlite3.Connection, subject_id: str,
     """Write the subject's index to a folder (and a zip of it)."""
     design = design or load_study_design(subject_id)
     stamp = datetime.now().strftime("%Y-%m-%d-%H%M")
-    folder = Path(out_dir or OUT_DIR) / f"index-{subject_id}-{stamp}"
+    folder = Path(out_dir or EXPORTS_DIR) / f"index-{subject_id}-{stamp}"
     if folder.exists():
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
@@ -121,6 +121,9 @@ def export_subject(conn: sqlite3.Connection, subject_id: str,
                                  "pt_width": q.get("figure_pt_width") if role == "question" else None})
         questions.append({
             "id": q["id"],
+            "serial": q.get("serial"),
+            "flag": q.get("flag"),
+            "flag_note": q.get("flag_note"),
             "source_id": q["source_id"],
             "kk_ids": kk,
             "question_type": q["question_type"],

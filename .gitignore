@@ -12,6 +12,11 @@ venv/
 !/sources/README.md
 /data/
 /out/
+/index/
+/blitzes/
+/exports/
+/students/
+/study-designs/
 *.sqlite3
 *.sqlite3-wal
 *.sqlite3-shm

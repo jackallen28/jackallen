@@ -93,6 +93,9 @@ def _fetch_candidates(
         params.extend(spec.question_type_ids)
     if not spec.allow_generated:
         sql += " AND q.generated = 0"
+    # A question someone has flagged as incomplete, corrupt or wrong is out
+    # until the flag is cleared, whatever else the spec asks for.
+    sql += " AND q.flag IS NULL"
     if spec.exclude_question_ids:
         ex_marks = ", ".join("?" for _ in spec.exclude_question_ids)
         sql += f" AND q.id NOT IN ({ex_marks})"

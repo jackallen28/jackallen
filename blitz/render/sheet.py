@@ -310,8 +310,8 @@ def _question_flowables(q: Question, n: int, ss, col_w: float, design) -> list:
             parts.append(Spacer(1, 1.5))
             parts.append(RuledSpace(col_w, remaining_lines))
 
-    if q.citation:
-        parts.append(Paragraph(_esc(q.citation), ss["Citation"]))
+    if q.citation or q.serial:
+        parts.append(Paragraph(_esc(_cite(q)), ss["Citation"]))
     else:
         parts.append(Spacer(1, 4))
 
@@ -354,12 +354,22 @@ def _cropped_question(q: Question, n: int, ss, col_w: float,
     if not q.options:
         parts.append(Spacer(1, 1.5))
         parts.append(RuledSpace(col_w, lines_for_marks(q.marks, q.question_type)))
-    if q.citation:
-        parts.append(Paragraph(_esc(q.citation), ss["Citation"]))
+    if q.citation or q.serial:
+        parts.append(Paragraph(_esc(_cite(q)), ss["Citation"]))
     # A crop stack split across columns reads as two questions, one of them
     # headless. Kept together it moves whole to the next column; a stack too
     # tall for any column still splits, as Platypus falls back to flowing it.
     return [KeepTogether(parts)]
+
+
+def _cite(q: Question) -> str:
+    """The line under a question: its serial, then where it came from.
+
+    The serial is what a teacher looks up. Printed on the question and again
+    on its solution, it ties the two together and gives the Questions page
+    something exact to search for."""
+    bits = [b for b in (q.serial, q.citation) if b]
+    return " · ".join(bits)
 
 
 def _flow_height(f, avail_w: float) -> float:
@@ -471,8 +481,8 @@ def _solutions(ctx: _Ctx, ss, col_w: float, template: str = "later") -> list:
             block.append(Paragraph(
                 "<i>No worked solution in the source — check the book at the "
                 "citation printed on the question.</i>", ss["Solution"]))
-        if q.citation:
-            block.append(Paragraph(_esc(q.citation), ss["Citation"]))
+        if q.citation or q.serial:
+            block.append(Paragraph(_esc(_cite(q)), ss["Citation"]))
         out.append(KeepTogether(block))
     return out
 

@@ -33,7 +33,18 @@
       <h2>Students</h2>
       <p>See which questions each student or class has already been given, and keep sheets from repeating them.</p>
     </a>
+    <a class="door" href="/questions">
+      <span class="door-n">4</span>
+      <h2>Questions</h2>
+      <p>Look a question up by the serial number printed on a sheet, check its solution, and flag it if it is incomplete or wrong.</p>
+    </a>
   </div>
+  <p class="hint" id="root"></p>
+  <script>
+    fetch("/api/root").then((r) => r.json()).then((d) => {
+      document.getElementById("root").textContent = "Everything lives in " + d.root;
+    }).catch(() => {});
+  </script>
 </main>
 </body>
 </html>

@@ -44,7 +44,20 @@
   </section>
 
   <section class="step">
-    <h2><span class="n">4</span> Anything else?</h2>
+    <h2><span class="n">4</span> Who is it for?</h2>
+    <p class="hint">Optional. Name a student or class and the sheet is logged against them, and questions they have
+      already had are skipped next time.</p>
+    <div class="options" style="margin-top:0">
+      <label>Student or class
+        <select id="student"><option value="">Nobody in particular</option></select>
+      </label>
+      <label id="newstudent" hidden>New name <input id="student_name" type="text" placeholder="e.g. Year 12 Physics, or Sam"></label>
+      <label class="check"><input id="repeats" type="checkbox"> Allow repeats</label>
+    </div>
+  </section>
+
+  <section class="step">
+    <h2><span class="n">5</span> Anything else?</h2>
     <textarea id="notes" rows="3" placeholder="e.g. I keep losing marks on Force Field Analysis weighting, and I never know when to use impulse vs momentum."></textarea>
     <div class="options">
       <label>Title <input id="title" type="text" placeholder="Blitz"></label>

@@ -6,6 +6,8 @@ index built from them and the sheets it produces all stay on this machine.
 
 from __future__ import annotations
 
+import json
+import re
 import uuid
 from pathlib import Path
 
@@ -17,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .. import db
-from ..config import OUT_DIR, ensure_dirs
+from ..config import CROPS_DIR, OUT_DIR, STUDENTS_DIR, ensure_dirs
 from ..models import SheetSpec
 from ..picker import build_plan
 from ..render import render_sheet
@@ -58,9 +60,56 @@ class SheetRequest(BaseModel):
     prefer_figures: bool = True
     allow_generated: bool = True
     seed: int | None = None
+    # Who it is for. An existing id, or a new name to create. With a student
+    # named, questions they have already been given are skipped unless
+    # allow_repeats is set.
+    student_id: str | None = None
+    student_name: str | None = None
+    allow_repeats: bool = False
 
     def to_spec(self) -> SheetSpec:
-        return SheetSpec(**self.model_dump())
+        fields = self.model_dump(exclude={"student_id", "student_name", "allow_repeats"})
+        return SheetSpec(**fields)
+
+
+def _resolve_student(conn, req: SheetRequest) -> dict | None:
+    """The student row for a request, creating one from a new name."""
+    if req.student_name and req.student_name.strip():
+        return db.get_or_create_student(conn, req.student_name)
+    if req.student_id:
+        row = conn.execute("SELECT * FROM student WHERE id = ?", (req.student_id,)).fetchone()
+        if row is None:
+            raise HTTPException(404, "no such student")
+        return dict(row)
+    return None
+
+
+def _apply_history(conn, spec: SheetSpec, student: dict | None, allow_repeats: bool
+                   ) -> list[str]:
+    """Exclude what the student has had; return the serials that were skipped
+    among questions that would otherwise have been candidates."""
+    if student is None or allow_repeats:
+        return []
+    had = db.student_history(conn, student["id"])
+    if not had:
+        return []
+    spec.exclude_question_ids = sorted(set(spec.exclude_question_ids) | set(had))
+    if not spec.kk_ids:
+        return []
+    marks = ", ".join("?" for _ in had)
+    kk_marks = ", ".join("?" for _ in spec.kk_ids)
+    rows = conn.execute(
+        f"SELECT DISTINCT q.serial FROM question q JOIN question_kk kk ON kk.question_id = q.id "
+        f"WHERE q.id IN ({marks}) AND kk.kk_id IN ({kk_marks}) ORDER BY q.serial",
+        [*had, *spec.kk_ids]).fetchall()
+    return [r["serial"] for r in rows if r["serial"]]
+
+
+@app.get("/api/root")
+def api_root():
+    from ..config import ROOT
+
+    return {"root": str(ROOT)}
 
 
 @app.get("/api/subjects")
@@ -124,11 +173,22 @@ def api_preview(req: SheetRequest):
     """What would go on the sheet, without rendering it."""
     design = _design_or_404(req.subject_id)
     with db.session() as conn:
-        plan = build_plan(conn, req.to_spec(), design)
+        student = _resolve_student(conn, req)
+        spec = req.to_spec()
+        skipped = _apply_history(conn, spec, student, req.allow_repeats)
+        plan = build_plan(conn, spec, design)
+    if skipped:
+        plan.warnings.append(
+            f"Skipped {len(skipped)} question(s) {student['name']} has already had "
+            f"on these dot points ({', '.join(skipped[:8])}{'…' if len(skipped) > 8 else ''}). "
+            "Tick 'allow repeats' to let them back in.")
     return {
+        "student": student,
+        "skipped": skipped,
         "questions": [
             {
                 "id": q.id,
+                "serial": q.serial,
                 "type": q.question_type,
                 "marks": q.marks,
                 "generated": q.generated,
@@ -151,8 +211,10 @@ def api_preview(req: SheetRequest):
 @app.post("/api/generate")
 def api_generate(req: SheetRequest):
     design = _design_or_404(req.subject_id)
-    spec = req.to_spec()
     with db.session() as conn:
+        student = _resolve_student(conn, req)
+        spec = req.to_spec()
+        skipped = _apply_history(conn, spec, student, req.allow_repeats)
         plan = build_plan(conn, spec, design)
         if not plan.questions:
             raise HTTPException(
@@ -160,13 +222,37 @@ def api_generate(req: SheetRequest):
                 "Nothing to put on the sheet. "
                 + (plan.warnings[0] if plan.warnings else "Select some dot points."),
             )
-        name = f"blitz-{req.subject_id}-{uuid.uuid4().hex[:8]}.pdf"
+        stem = f"blitz-{req.subject_id}-{uuid.uuid4().hex[:8]}"
+        if student:
+            from ..students import safe_name
+
+            who = safe_name(student["name"]).replace(" ", "-").lower()
+            stem = f"blitz-{who}-{req.subject_id}-{uuid.uuid4().hex[:6]}"
+        name = f"{stem}.pdf"
         result = render_sheet(plan, OUT_DIR / name, design)
+        db.record_sheet(
+            conn, sheet_id=stem, subject_id=req.subject_id,
+            title=req.title or f"{design.subject_name} Blitz",
+            spec_json=spec.to_json(), pdf_path=str(OUT_DIR / name),
+            question_ids=[q.id for q in plan.questions],
+            student_id=student["id"] if student else None)
+        conn.commit()
+        if student:
+            from ..students import write_workbooks
+
+            write_workbooks(conn)
+    if skipped:
+        plan.warnings.append(
+            f"Skipped {len(skipped)} question(s) {student['name']} has already had "
+            f"({', '.join(skipped[:8])}{'…' if len(skipped) > 8 else ''}).")
 
     return {
         **result,
         "url": f"/sheets/{name}",
         "filename": name,
+        "student": student,
+        "skipped": skipped,
+        "serials": [q.serial for q in plan.questions],
         "warnings": plan.warnings,
         "uncovered": [
             {"id": kk, "label": _label(design, kk)} for kk in plan.uncovered_kk_ids
@@ -226,6 +312,196 @@ def blitz_page():
 @app.get("/students")
 def students_page():
     return FileResponse(STATIC / "students.html")
+
+
+@app.get("/questions")
+def questions_page():
+    return FileResponse(STATIC / "questions.html")
+
+
+# --- Students ----------------------------------------------------------------
+
+class StudentIn(BaseModel):
+    name: str
+
+
+@app.get("/api/students")
+def api_students():
+    with db.session() as conn:
+        rows = conn.execute(
+            "SELECT st.id, st.name, COUNT(DISTINCT s.id) AS sheets, "
+            "COUNT(sq.question_id) AS questions, MAX(s.created_at) AS last "
+            "FROM student st LEFT JOIN sheet s ON s.student_id = st.id "
+            "LEFT JOIN sheet_question sq ON sq.sheet_id = s.id "
+            "GROUP BY st.id ORDER BY st.name").fetchall()
+    return {"folder": str(STUDENTS_DIR), "students": [dict(r) for r in rows]}
+
+
+@app.post("/api/students")
+def api_student_create(body: StudentIn):
+    from ..students import write_workbooks
+
+    with db.session() as conn:
+        try:
+            student = db.get_or_create_student(conn, body.name)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        conn.commit()
+        write_workbooks(conn)
+    return student
+
+
+@app.get("/api/students/{student_id}")
+def api_student(student_id: str):
+    from ..students import safe_name
+
+    with db.session() as conn:
+        st = conn.execute("SELECT * FROM student WHERE id = ?", (student_id,)).fetchone()
+        if st is None:
+            raise HTTPException(404, "no such student")
+        sheets = []
+        for sh in conn.execute(
+                "SELECT * FROM sheet WHERE student_id = ? ORDER BY created_at DESC",
+                (student_id,)):
+            design = _design_or_404(sh["subject_id"])
+            qs = []
+            for r in conn.execute(
+                    "SELECT q.id, q.serial, q.citation FROM sheet_question sq "
+                    "JOIN question q ON q.id = sq.question_id "
+                    "WHERE sq.sheet_id = ? ORDER BY sq.position", (sh["id"],)):
+                kk = [x["kk_id"] for x in conn.execute(
+                    "SELECT kk_id FROM question_kk WHERE question_id = ? "
+                    "ORDER BY primary_kk DESC", (r["id"],))]
+                qs.append({"id": r["id"], "serial": r["serial"],
+                           "citation": r["citation"],
+                           "kk": [_label(design, k) for k in kk]})
+            pdf = Path(sh["pdf_path"]).name if sh["pdf_path"] else None
+            sheets.append({"id": sh["id"], "title": sh["title"],
+                           "subject_id": sh["subject_id"],
+                           "created_at": sh["created_at"],
+                           "url": f"/sheets/{pdf}" if pdf and (OUT_DIR / pdf).exists() else None,
+                           "questions": qs})
+    return {**dict(st), "workbook": f"{safe_name(st['name'])}.xlsx", "sheets": sheets}
+
+
+@app.get("/students/files/{name}")
+def get_student_file(name: str):
+    path = (STUDENTS_DIR / name).resolve()
+    if path.suffix != ".xlsx" or not path.is_file() or STUDENTS_DIR.resolve() not in path.parents:
+        raise HTTPException(404, "no such workbook")
+    return FileResponse(
+        path, filename=name,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+# --- Questions: look up, inspect, flag ----------------------------------------
+
+_SERIAL = re.compile(r"^[A-Za-z]{2,4}-\d{1,6}$")
+
+
+def _fts_query(text: str) -> str:
+    """A safe FTS5 query: every word quoted, all required, prefix on the last."""
+    words = [w.replace('"', "") for w in text.split() if w.strip('"')]
+    if not words:
+        return ""
+    quoted = [f'"{w}"' for w in words]
+    quoted[-1] = quoted[-1] + "*"
+    return " ".join(quoted)
+
+
+def _crop_url(path: str | None) -> str | None:
+    if not path:
+        return None
+    p = Path(path)
+    return f"/crops/{p.name}" if p.exists() else None
+
+
+@app.get("/api/questions")
+def api_questions(subject: str, q: str = "", flagged: str = "", limit: int = 40):
+    """Search by serial (exact) or words (full text), optionally flagged only."""
+    q = q.strip()
+    with db.session() as conn:
+        design = _design_or_404(subject)
+        params: list = [subject]
+        if _SERIAL.match(q):
+            where = "q.subject_id = ? AND upper(q.serial) = upper(?)"
+            params.append(q)
+        elif q:
+            where = ("q.subject_id = ? AND q.rowid IN (SELECT rowid FROM question_fts "
+                     "WHERE question_fts MATCH ?)")
+            params.append(_fts_query(q))
+        else:
+            where = "q.subject_id = ?"
+        if flagged:
+            where += " AND q.flag IS NOT NULL"
+        total = conn.execute(f"SELECT COUNT(*) AS n FROM question q WHERE {where}",
+                             params).fetchone()["n"]
+        rows = conn.execute(
+            f"SELECT q.* FROM question q WHERE {where} ORDER BY q.flag IS NULL, q.serial LIMIT ?",
+            [*params, max(1, min(limit, 200))]).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            kk = [x["kk_id"] for x in conn.execute(
+                "SELECT kk_id FROM question_kk WHERE question_id = ? ORDER BY primary_kk DESC",
+                (d["id"],))]
+            given = conn.execute(
+                "SELECT COUNT(*) AS n FROM sheet_question sq JOIN sheet s ON s.id = sq.sheet_id "
+                "WHERE sq.question_id = ? AND s.student_id IS NOT NULL", (d["id"],)).fetchone()["n"]
+            figs = []
+            for spec in json.loads(d.get("figures") or "[]"):
+                url = _crop_url(spec.get("path"))
+                if url:
+                    figs.append({"role": spec.get("role", "question"), "url": url})
+            if not figs:
+                for role, key in (("question", "figure_path"), ("answer", "answer_figure")):
+                    url = _crop_url(d.get(key))
+                    if url:
+                        figs.append({"role": role, "url": url})
+            try:
+                type_label = design.question_type(d["question_type"]).label
+            except KeyError:
+                type_label = d["question_type"]
+            out.append({
+                "id": d["id"], "serial": d.get("serial"), "citation": d.get("citation"),
+                "source_id": d["source_id"], "type_label": type_label,
+                "marks": d.get("marks"), "kk": [_label(design, k) for k in kk],
+                "context": d.get("context"), "body": d["body"],
+                "options": json.loads(d["options"]) if d.get("options") else None,
+                "answer": d.get("answer"), "render_mode": d.get("render_mode") or "text",
+                "answer_mode": d.get("answer_mode") or "text", "figures": figs,
+                "flag": d.get("flag"), "flag_note": d.get("flag_note"),
+                "flagged_at": d.get("flagged_at"), "given": given,
+            })
+    return {"total": total, "questions": out}
+
+
+class FlagIn(BaseModel):
+    flag: str | None = None
+    note: str = ""
+
+
+@app.post("/api/questions/{question_id}/flag")
+def api_flag(question_id: str, body: FlagIn):
+    with db.session() as conn:
+        if conn.execute("SELECT 1 FROM question WHERE id = ?", (question_id,)).fetchone() is None:
+            raise HTTPException(404, "no such question")
+        try:
+            db.set_flag(conn, question_id, body.flag or None, body.note.strip() or None)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        conn.commit()
+        row = conn.execute("SELECT id, serial, flag, flag_note, flagged_at FROM question "
+                           "WHERE id = ?", (question_id,)).fetchone()
+    return dict(row)
+
+
+@app.get("/crops/{name}")
+def get_crop(name: str):
+    path = (CROPS_DIR / name).resolve()
+    if not path.is_file() or CROPS_DIR.resolve() not in path.parents:
+        raise HTTPException(404, "no such figure")
+    return FileResponse(path)
 
 
 @app.get("/index")

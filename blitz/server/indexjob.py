@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .. import db
-from ..config import OUT_DIR, SOURCES_DIR
+from ..config import EXPORTS_DIR, SOURCES_DIR
 
 _JOBS: dict[str, "IndexJob"] = {}
 _LOCK = threading.Lock()
@@ -204,5 +204,5 @@ def export_path(name: str) -> Path | None:
     """A zip under out/ by name, or None if the name is not one of ours."""
     if not re.fullmatch(r"index-[a-z0-9-]+-\d{4}-\d{2}-\d{2}-\d{4}\.zip", name):
         return None
-    path = OUT_DIR / name
+    path = EXPORTS_DIR / name
     return path if path.exists() else None

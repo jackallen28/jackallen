@@ -63,6 +63,8 @@ class Question:
     render_mode: str = "text"      # 'text' or 'crop' — see db.py
     answer_mode: str = "text"
     provenance: str | None = None
+    serial: str | None = None          # PH-0413, printed on every sheet
+    flag: str | None = None            # set by a person; never picked while set
     kk_ids: list[str] = field(default_factory=list)
 
     @classmethod
@@ -96,6 +98,8 @@ class Question:
             render_mode=d.get("render_mode") or "text",
             answer_mode=d.get("answer_mode") or "text",
             provenance=d.get("provenance"),
+            serial=d.get("serial"),
+            flag=d.get("flag"),
             kk_ids=kk_ids or [],
         )
 

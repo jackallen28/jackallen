@@ -22,8 +22,8 @@ the sheet generator uses is updated at the same time, so *Make a Blitz →* at
 the top of the page works straight away.
 
 Leave the Terminal window it opened alone while you use it; closing it stops
-the app. Everything uploaded lands under `sources/<subject>/uploads/`, which
-is gitignored.
+the app. Everything uploaded lands under `~/Documents/Blitz/sources/<subject>/`,
+and everything the app makes goes beside it (`docs/the-app.md`).
 
 ## The script
 
@@ -72,8 +72,11 @@ Then either **double-click `mac/index-materials.command` in Finder** and
 answer three questions (subject, study design, folder), or from Terminal:
 
 ```bash
-mac/index-materials.command physics sources/vcaa/physics-study-design.pdf sources/physics
+mac/index-materials.command physics ~/Documents/Blitz/sources/vcaa/physics-study-design.pdf ~/Documents/Blitz/sources/physics
 ```
+
+The folder defaults to `~/Documents/Blitz/sources/<subject>` if you leave it
+out; `blitz root` prints where that is on your machine.
 
 Leave the study design argument empty (`""`) after the first run for a
 subject; it only needs importing once, and re-importing changes nothing unless

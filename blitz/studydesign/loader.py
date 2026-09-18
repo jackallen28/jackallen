@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from ..config import STUDY_DESIGN_DIR
+from ..config import STUDY_DESIGN_DIR, USER_DESIGN_DIR
 from .schema import AreaOfStudy, KeyKnowledge, QuestionType, StudyDesign, Unit
 
 
@@ -77,10 +77,24 @@ def load_study_design_file(path: Path) -> StudyDesign:
         return parse_study_design(yaml.safe_load(fh))
 
 
+def design_dirs() -> list[Path]:
+    """Where study designs are looked for: the person's own first, then the
+    ones shipped with the tool. An import writes to the first."""
+    return [USER_DESIGN_DIR, STUDY_DESIGN_DIR]
+
+
+def design_path(subject_id: str) -> Path | None:
+    for d in design_dirs():
+        path = d / f"{subject_id}.yaml"
+        if path.exists():
+            return path
+    return None
+
+
 @functools.lru_cache(maxsize=None)
 def load_study_design(subject_id: str) -> StudyDesign:
-    path = STUDY_DESIGN_DIR / f"{subject_id}.yaml"
-    if not path.exists():
+    path = design_path(subject_id)
+    if path is None:
         available = ", ".join(s.subject_id for s in list_subjects()) or "none"
         raise FileNotFoundError(
             f"No study design for {subject_id!r} (available: {available})"
@@ -93,11 +107,17 @@ _NOT_A_DESIGN = ("-lexicon.yaml",)
 
 
 def list_subjects() -> list[StudyDesign]:
-    """Every study design shipped with the tool, in filename order."""
-    designs = []
-    for path in sorted(STUDY_DESIGN_DIR.glob("*.yaml")):
-        if path.name.endswith(_NOT_A_DESIGN):
+    """Every study design available, the person's own overriding the shipped."""
+    seen: dict[str, Path] = {}
+    for d in design_dirs():
+        if not d.is_dir():
             continue
+        for path in sorted(d.glob("*.yaml")):
+            if path.name.endswith(_NOT_A_DESIGN):
+                continue
+            seen.setdefault(path.stem, path)
+    designs = []
+    for stem, path in sorted(seen.items()):
         try:
             designs.append(load_study_design_file(path))
         except Exception as exc:  # a malformed file shouldn't hide the good ones

@@ -10,6 +10,7 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 
 async function boot() {
+  loadStudents();
   const res = await fetch("/api/subjects");
   const data = await res.json();
   state.subjects = data.subjects;
@@ -168,9 +169,34 @@ document.addEventListener("click", (e) => {
   syncChecks();
 });
 
+async function loadStudents() {
+  const res = await fetch("/api/students");
+  if (!res.ok) return;
+  const data = await res.json();
+  const sel = $("#student");
+  sel.innerHTML = '<option value="">Nobody in particular</option>';
+  for (const s of data.students) {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = `${s.name} (${s.questions} question${s.questions === 1 ? "" : "s"} so far)`;
+    sel.appendChild(opt);
+  }
+  const opt = document.createElement("option");
+  opt.value = "__new__";
+  opt.textContent = "New student or class…";
+  sel.appendChild(opt);
+  const wanted = new URLSearchParams(location.search).get("student");
+  if (wanted && data.students.some((s) => s.id === wanted)) sel.value = wanted;
+  sel.onchange = () => { $("#newstudent").hidden = sel.value !== "__new__"; };
+}
+
 function payload() {
+  const student = $("#student").value;
   return {
     subject_id: state.subject.id,
+    student_id: student && student !== "__new__" ? student : null,
+    student_name: student === "__new__" ? $("#student_name").value.trim() || null : null,
+    allow_repeats: $("#repeats").checked,
     kk_ids: [...state.kk],
     question_type_ids: [...state.types],
     notes: $("#notes").value,
@@ -215,7 +241,12 @@ $("#generate").onclick = async () => {
   try {
     const data = await post("/api/generate");
     showSheet(data);
-    setStatus("");
+    setStatus(data.student ? `Logged against ${data.student.name}.` : "");
+    if (data.student) {
+      await loadStudents();
+      $("#student").value = data.student.id;
+      $("#newstudent").hidden = true;
+    }
   } catch (err) {
     setStatus(err.message);
   } finally {
@@ -242,7 +273,7 @@ function showPreview(data) {
        <div class="stat"><b>${data.uncovered.length}</b>dot points with no room</div>
      </div>
      <ul class="qlist">${data.questions.map((q) =>
-        `<li>${q.generated ? '<span class="gen">°</span> ' : ""}${esc(q.preview)}…
+        `<li>${q.generated ? '<span class="gen">°</span> ' : ""}<b>${esc(q.serial || "")}</b> ${esc(q.preview)}…
          <em>${esc(q.citation)}</em></li>`).join("")}</ul>
      ${warnList(data.warnings)}`;
   el.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -10,17 +10,33 @@
 <body class="plain">
 <header class="masthead">
   <div class="wrap">
-    <nav class="nav"><a href="/">Home</a><a href="/blitz">Make a Blitz</a><a href="/index">Index materials</a></nav>
+    <nav class="nav"><a href="/">Home</a><a href="/blitz">Make a Blitz</a><a href="/index">Index materials</a><a href="/questions">Questions</a></nav>
     <a href="/"><img class="logo" src="/logo.png" alt="Allentronics Education Services"></a>
     <p class="tagline">Students · which questions each student or class has been given.</p>
   </div>
 </header>
 <div class="wrap">
   <fieldset>
-    <legend>Coming next</legend>
-    <p>Student and class tracking is the next piece: name a student or class when you make a Blitz,
-      and this page will show every question they have had, with a spreadsheet that updates each time.</p>
+    <legend>Students and classes</legend>
+    <div id="list"></div>
+    <div class="row" style="margin-top:10px">
+      <input id="newname" type="text" placeholder="New student or class name" style="max-width:320px">
+      <button id="add" type="button" class="primary">Add</button>
+      <span class="spacer" style="flex:1"></span>
+      <a id="master" href="/students/files/MASTER.xlsx"><button type="button" class="ghost">Download MASTER.xlsx</button></a>
+    </div>
+    <p class="hint" id="where"></p>
+  </fieldset>
+
+  <fieldset id="detail" hidden>
+    <legend id="detail-name"></legend>
+    <div class="row">
+      <a id="wb" href="#"><button type="button" class="ghost">Download their workbook</button></a>
+      <a id="make" href="#"><button type="button" class="primary">Make them a Blitz →</button></a>
+    </div>
+    <div id="sheets"></div>
   </fieldset>
 </div>
+<script src="/students.js"></script>
 </body>
 </html>

@@ -24,6 +24,9 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | 81% right area on an unseen book, before the pack's own chapter tags are used. See below. |
 | Layout | Two columns of text on page one, one column of page crops on page two, solutions after. Chosen per sheet from what the questions need. |
+| Serial numbers | Every question carries one (`PH-0413`), printed on the sheet and its solution; the Questions page finds it. |
+| Flags | A question flagged incomplete, corrupt or wrong never goes on a sheet until cleared. |
+| Students | Sheets are logged per student or class; repeats are skipped; `students/MASTER.xlsx` and one workbook each are rewritten after every sheet. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that
@@ -98,11 +101,10 @@ this environment had no key — so no claim is made about it.
 
 ## Quick start
 
-On a Mac, double-click `mac/Blitz.command`: it opens the browser on a page
-where you pick a subject, add the study design and your books or Word files,
-press Index, and get a folder of the result plus the sheet generator ready to
-use (`docs/indexing-on-a-mac.md`). Everything below is the same thing from a
-terminal.
+On a Mac, double-click `mac/Blitz.command`. It opens the browser on four
+doors: make a Blitz, index materials, students, questions
+(`docs/the-app.md`). Everything you add or make lands in `~/Documents/Blitz/`.
+Everything below is the same thing from a terminal.
 
 ```bash
 pip install -e .

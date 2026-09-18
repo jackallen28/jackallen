@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questions — Allentronics</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="plain">
+<header class="masthead">
+  <div class="wrap">
+    <nav class="nav"><a href="/">Home</a><a href="/blitz">Make a Blitz</a><a href="/index">Index materials</a><a href="/students">Students</a></nav>
+    <a href="/"><img class="logo" src="/logo.png" alt="Allentronics Education Services"></a>
+    <p class="tagline">Questions · look one up by its serial number or its words, check it against the book, flag it if it is broken.</p>
+  </div>
+</header>
+<div class="wrap">
+  <fieldset>
+    <legend>Find</legend>
+    <div class="row">
+      <select id="subject" style="max-width:220px"></select>
+      <input id="q" type="text" placeholder="PH-0413, or words from the question" style="flex:1;min-width:240px">
+      <label class="check" style="display:flex;gap:6px;align-items:center"><input id="flagged" type="checkbox"> flagged only</label>
+      <button id="search" type="button" class="primary">Search</button>
+    </div>
+    <p class="hint">The serial is printed under every question on a Blitz and again on its solution. Words search the question text and the worked solution.</p>
+  </fieldset>
+
+  <div id="count" class="hint"></div>
+  <div id="results"></div>
+</div>
+<script src="/questions.js"></script>
+</body>
+</html>

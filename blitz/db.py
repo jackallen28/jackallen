@@ -165,7 +165,36 @@ CREATE TABLE IF NOT EXISTS sheet_question (
     position      INTEGER NOT NULL,
     PRIMARY KEY (sheet_id, question_id)
 );
+
+-- A student or a class: a name, and through sheet.student_id, everything
+-- they have been given.
+CREATE TABLE IF NOT EXISTS student (
+    id            TEXT PRIMARY KEY,
+    name          TEXT NOT NULL UNIQUE,
+    created_at    TEXT NOT NULL
+);
+
+-- Per-subject counters for the serial numbers printed on every question.
+CREATE TABLE IF NOT EXISTS serial_counter (
+    subject_id    TEXT PRIMARY KEY,
+    next_value    INTEGER NOT NULL
+);
 """
+
+# Columns added after the first release. SQLite cannot add them inside the
+# CREATE TABLE IF NOT EXISTS above for an existing database, so each is
+# checked for and added on connect.
+_MIGRATIONS = {
+    "question": [
+        ("serial", "TEXT"),          # PH-0413: printed on sheets, searchable
+        ("flag", "TEXT"),            # incomplete | corrupt | wrong, or NULL
+        ("flag_note", "TEXT"),
+        ("flagged_at", "TEXT"),
+    ],
+    "sheet": [
+        ("student_id", "TEXT"),
+    ],
+}
 
 
 def connect(path: Path | None = None) -> sqlite3.Connection:
@@ -174,7 +203,52 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    _migrate(conn)
     return conn
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    for table, columns in _MIGRATIONS.items():
+        have = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+        for name, ctype in columns:
+            if name not in have:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ctype}")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_question_serial "
+                 "ON question(serial)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_sheet_student ON sheet(student_id)")
+    assign_serials(conn)
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Serial numbers
+# ---------------------------------------------------------------------------
+
+def serial_prefix(subject_id: str) -> str:
+    """PH for physics, BM for business-management, LS for legal-studies."""
+    words = [w for w in subject_id.split("-") if w]
+    if len(words) == 1:
+        return words[0][:2].upper()
+    return "".join(w[0] for w in words)[:4].upper()
+
+
+def next_serial(conn: sqlite3.Connection, subject_id: str) -> str:
+    row = conn.execute("SELECT next_value FROM serial_counter WHERE subject_id = ?",
+                       (subject_id,)).fetchone()
+    n = row["next_value"] if row else 1
+    conn.execute("INSERT INTO serial_counter (subject_id, next_value) VALUES (?, ?) "
+                 "ON CONFLICT(subject_id) DO UPDATE SET next_value = excluded.next_value",
+                 (subject_id, n + 1))
+    return f"{serial_prefix(subject_id)}-{n:04d}"
+
+
+def assign_serials(conn: sqlite3.Connection) -> None:
+    """Give every question without a serial one, in a stable order."""
+    rows = conn.execute("SELECT id, subject_id FROM question WHERE serial IS NULL "
+                        "ORDER BY subject_id, source_id, id").fetchall()
+    for row in rows:
+        conn.execute("UPDATE question SET serial = ? WHERE id = ?",
+                     (next_serial(conn, row["subject_id"]), row["id"]))
 
 
 @contextmanager
@@ -205,6 +279,17 @@ def insert_question(conn: sqlite3.Connection, q: dict, kk_ids: Iterable[str]) ->
         payload["options"] = json.dumps(list(payload["options"]))
     if isinstance(payload.get("extra"), dict):
         payload["extra"] = json.dumps(payload["extra"])
+
+    # A re-import replaces the row, but the serial printed on past sheets and
+    # any flag a person has set are theirs to keep.
+    prior = conn.execute("SELECT serial, flag, flag_note, flagged_at FROM question "
+                         "WHERE id = ?", (payload["id"],)).fetchone()
+    if prior and prior["serial"]:
+        payload.setdefault("serial", prior["serial"])
+        for col in ("flag", "flag_note", "flagged_at"):
+            payload.setdefault(col, prior[col])
+    else:
+        payload.setdefault("serial", next_serial(conn, payload["subject_id"]))
 
     cols = ", ".join(payload)
     marks = ", ".join("?" for _ in payload)
@@ -275,3 +360,73 @@ def coverage_by_type(conn: sqlite3.Connection, subject_id: str) -> dict[tuple[st
         (subject_id,),
     ).fetchall()
     return {(r["kk_id"], r["qt"]): r["n"] for r in rows}
+
+
+# ---------------------------------------------------------------------------
+# Flags, students, sheets
+# ---------------------------------------------------------------------------
+
+FLAGS = ("incomplete", "corrupt", "wrong")
+
+
+def set_flag(conn: sqlite3.Connection, question_id: str, flag: str | None,
+             note: str | None = None) -> None:
+    """Mark a question as unusable (or clear the mark). Flagged questions
+    never go on a sheet."""
+    from datetime import datetime, timezone
+
+    if flag is not None and flag not in FLAGS:
+        raise ValueError(f"flag must be one of {FLAGS}, got {flag!r}")
+    when = datetime.now(timezone.utc).isoformat(timespec="seconds") if flag else None
+    conn.execute("UPDATE question SET flag = ?, flag_note = ?, flagged_at = ? WHERE id = ?",
+                 (flag, note if flag else None, when, question_id))
+
+
+def student_id_for(name: str) -> str:
+    import re
+
+    return re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-") or "student"
+
+
+def get_or_create_student(conn: sqlite3.Connection, name: str) -> dict:
+    from datetime import datetime, timezone
+
+    name = " ".join(name.split())
+    if not name:
+        raise ValueError("a student or class needs a name")
+    row = conn.execute("SELECT * FROM student WHERE lower(name) = lower(?)",
+                       (name,)).fetchone()
+    if row:
+        return dict(row)
+    sid = student_id_for(name)
+    base, n = sid, 2
+    while conn.execute("SELECT 1 FROM student WHERE id = ?", (sid,)).fetchone():
+        sid = f"{base}-{n}"
+        n += 1
+    conn.execute("INSERT INTO student (id, name, created_at) VALUES (?, ?, ?)",
+                 (sid, name, datetime.now(timezone.utc).isoformat(timespec="seconds")))
+    return dict(conn.execute("SELECT * FROM student WHERE id = ?", (sid,)).fetchone())
+
+
+def student_history(conn: sqlite3.Connection, student_id: str) -> list[str]:
+    """Every question id this student has been given, oldest sheet first."""
+    return [r["question_id"] for r in conn.execute(
+        "SELECT sq.question_id FROM sheet_question sq JOIN sheet s ON s.id = sq.sheet_id "
+        "WHERE s.student_id = ? ORDER BY s.created_at, sq.position", (student_id,))]
+
+
+def record_sheet(conn: sqlite3.Connection, *, sheet_id: str, subject_id: str,
+                 title: str, spec_json: str, pdf_path: str | None,
+                 question_ids: list[str], student_id: str | None = None) -> None:
+    from datetime import datetime, timezone
+
+    conn.execute(
+        "INSERT OR REPLACE INTO sheet (id, subject_id, title, created_at, spec, "
+        "pdf_path, student_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (sheet_id, subject_id, title,
+         datetime.now(timezone.utc).isoformat(timespec="seconds"),
+         spec_json, pdf_path, student_id))
+    conn.execute("DELETE FROM sheet_question WHERE sheet_id = ?", (sheet_id,))
+    for i, qid in enumerate(question_ids, start=1):
+        conn.execute("INSERT OR REPLACE INTO sheet_question (sheet_id, question_id, "
+                     "position) VALUES (?, ?, ?)", (sheet_id, qid, i))

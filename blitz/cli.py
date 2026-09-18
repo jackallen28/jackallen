@@ -28,10 +28,22 @@ from .render import render_sheet
 from .studydesign import list_subjects, load_study_design
 
 
+def cmd_root(args) -> int:
+    """Print the folder everything lives in."""
+    from .config import ROOT
+
+    ensure_dirs()
+    print(ROOT)
+    return 0
+
+
 def cmd_init(args) -> int:
     ensure_dirs()
     with db.session() as conn:
         counts = load_all_samples(conn)
+    from .config import ROOT
+
+    print(f"your Blitz folder is {ROOT}")
     print(f"index ready at {db.DB_PATH}")
     for subject, n in counts.items():
         print(f"  {subject}: {n} sample questions loaded")
@@ -322,6 +334,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init", help="create the index and load the sample bank"
                    ).set_defaults(func=cmd_init)
+    sub.add_parser("root", help="print the folder all your data lives in"
+                   ).set_defaults(func=cmd_root)
     sub.add_parser("subjects", help="list subjects").set_defaults(func=cmd_subjects)
 
     ing = sub.add_parser("ingest", help="index one of your own PDFs")

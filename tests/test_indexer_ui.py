@@ -27,8 +27,10 @@ def client(tmp_path, monkeypatch):
 
     designs = tmp_path / "designs"
     shutil.copytree(config.STUDY_DESIGN_DIR, designs)
+    mine = tmp_path / "my-designs"
     for mod in (config, loader, importer):
         monkeypatch.setattr(mod, "STUDY_DESIGN_DIR", designs)
+        monkeypatch.setattr(mod, "USER_DESIGN_DIR", mine)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "t.sqlite3")
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.sqlite3")
     monkeypatch.setattr(config, "CROPS_DIR", tmp_path / "crops")
@@ -38,10 +40,17 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(extract, "CROPS_DIR", tmp_path / "crops", raising=False)
     monkeypatch.setattr(pack, "CROPS_DIR", tmp_path / "crops", raising=False)
     monkeypatch.setattr(indexjob, "SOURCES_DIR", tmp_path / "sources")
-    monkeypatch.setattr(indexjob, "OUT_DIR", tmp_path / "out")
-    monkeypatch.setattr(export, "OUT_DIR", tmp_path / "out")
-    monkeypatch.setattr(server, "OUT_DIR", tmp_path / "out")
+    monkeypatch.setattr(indexjob, "EXPORTS_DIR", tmp_path / "out")
+    monkeypatch.setattr(export, "EXPORTS_DIR", tmp_path / "out")
+    monkeypatch.setattr(server, "OUT_DIR", tmp_path / "sheets")
+    monkeypatch.setattr(server, "STUDENTS_DIR", tmp_path / "students")
+    monkeypatch.setattr(server, "CROPS_DIR", tmp_path / "crops")
+    monkeypatch.setattr(config, "STUDENTS_DIR", tmp_path / "students")
+    import blitz.students as students
+
+    monkeypatch.setattr(students, "STUDENTS_DIR", tmp_path / "students", raising=False)
     (tmp_path / "out").mkdir()
+    (tmp_path / "sheets").mkdir()
     loader.load_study_design.cache_clear()
     yield TestClient(server.app)
     loader.load_study_design.cache_clear()

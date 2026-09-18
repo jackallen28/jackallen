@@ -128,9 +128,14 @@ def _parse(raw: dict) -> Lexicon:
 @functools.lru_cache(maxsize=None)
 def load_lexicon(subject_id: str, directory: Path | None = None) -> Lexicon:
     """The lexicon for a subject, or an empty one if it has none."""
-    directory = Path(directory or STUDY_DESIGN_DIR)
-    path = directory / f"{subject_id}-lexicon.yaml"
-    if not path.exists():
+    if directory is not None:
+        candidates = [Path(directory) / f"{subject_id}-lexicon.yaml"]
+    else:
+        from ..studydesign.loader import design_dirs
+
+        candidates = [d / f"{subject_id}-lexicon.yaml" for d in design_dirs()]
+    path = next((c for c in candidates if c.exists()), None)
+    if path is None:
         return Lexicon(subject_id=subject_id)
     with path.open(encoding="utf-8") as fh:
         return _parse(yaml.safe_load(fh) or {})
