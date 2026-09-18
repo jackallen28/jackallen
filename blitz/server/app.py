@@ -212,6 +212,22 @@ def _label(design, kk_id: str) -> str:
 
 # --- Index materials: upload, run, hand back a folder -------------------------
 
+@app.get("/")
+def home_page():
+    """Three doors: make a Blitz, index materials, students."""
+    return FileResponse(STATIC / "home.html")
+
+
+@app.get("/blitz")
+def blitz_page():
+    return FileResponse(STATIC / "index.html")
+
+
+@app.get("/students")
+def students_page():
+    return FileResponse(STATIC / "students.html")
+
+
 @app.get("/index")
 def indexer_page():
     """The plain page for indexing files: pick a subject, drop files, press Index."""

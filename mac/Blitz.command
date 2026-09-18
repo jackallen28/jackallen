@@ -31,4 +31,4 @@ fi
 
 .venv/bin/blitz init >/dev/null
 echo "Starting Blitz. Leave this window open while you use it."
-exec .venv/bin/blitz serve --open index
+exec .venv/bin/blitz serve --open
