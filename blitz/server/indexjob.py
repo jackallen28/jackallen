@@ -36,6 +36,7 @@ class IndexJob:
     folder: Path
     study_design: Path | None = None
     subject_name: str | None = None
+    context: list[Path] = field(default_factory=list)
     status: str = "queued"          # queued | running | done | failed
     log: list[str] = field(default_factory=list)
     result: dict = field(default_factory=dict)
@@ -121,9 +122,11 @@ def find_materials(folder: Path) -> tuple[list[Path], list[Path]]:
 
 
 def start(subject_id: str, folder: Path, study_design: Path | None = None,
-          subject_name: str | None = None) -> IndexJob:
+          subject_name: str | None = None,
+          context: list[Path] | None = None) -> IndexJob:
     job = IndexJob(id=uuid.uuid4().hex[:10], subject_id=subject_id, folder=folder,
-                   study_design=study_design, subject_name=subject_name)
+                   study_design=study_design, subject_name=subject_name,
+                   context=list(context or []))
     with _LOCK:
         _JOBS[job.id] = job
     threading.Thread(target=_run, args=(job,), daemon=True).start()
@@ -164,6 +167,32 @@ def _index(job: IndexJob) -> None:
     design = load_study_design(job.subject_id)
     say(f"Subject: {design.subject_name} "
         f"({'verified' if design.fully_verified else 'draft wording'})")
+
+    # Context documents go in before anything is indexed, so a concept
+    # lexicon they carry is what this run's tagging uses.
+    if job.context:
+        from ..context import add_context
+        from ..ingest.lexicon import load_lexicon
+
+        say(f"\nContext documents: {len(job.context)}")
+        try:
+            result = add_context(
+                job.subject_id,
+                [(p.name, p.read_bytes()) for p in job.context],
+                design=design)
+            say(f"  kept {', '.join(result['stored'])} in {result['folder']}")
+            if result["lexicon"]:
+                lex = result["lexicon"]
+                say(f"  installed a concept lexicon covering {lex['dot_points']} "
+                    f"dot points ({lex['coverage']:.0%}) from {lex['from']}")
+                if lex["unknown"]:
+                    say(f"  ! ignored {len(lex['unknown'])} dot point id(s) this "
+                        f"study design does not have: {', '.join(lex['unknown'][:5])}")
+            for note in result["notes"]:
+                say(f"  ! {note}")
+        except ValueError as exc:
+            say(f"  ! context not stored: {exc}")
+        load_lexicon.cache_clear()
 
     packs, books = find_materials(job.folder)
     if not packs and not books:

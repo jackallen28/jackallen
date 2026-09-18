@@ -9,6 +9,7 @@ four doors.
 | **Index materials** | add a study design and books, worksheets or question packs; get a folder of everything indexed |
 | **Students** | every student or class, every sheet they have had, every question on it; their workbook and the master workbook |
 | **Questions** | look a question up by its serial number or its words, read it and its solution, flag it if it is broken |
+| **Settings** | subjects and what each one knows, context documents, backups |
 
 ## First run
 
@@ -76,6 +77,53 @@ Both files are rewritten whenever the subject's study design is imported
 again, so they never describe an older curriculum than the index is using.
 `blitz guide <subject>` rewrites them on demand.
 
+## Teaching Blitz a subject
+
+Blitz decides which dot point a question belongs to by matching the words
+the question uses against the words a question about that dot point tends
+to use. The study design does not supply those. It says "apply the field
+model to magnetic phenomena"; the exam says "a bar magnet is placed between
+two current-carrying wires". Nothing useful overlaps.
+
+The missing half is a **concept lexicon**: for each dot point, the
+vocabulary a question about it actually uses, plus the terms that rule it
+out. Physics has a hand-written one and files 83% of an unseen book's
+questions under the right area of study. A subject without one falls back
+on word overlap, which is much weaker.
+
+Writing one by hand is a few hours. The app does it in three steps, from
+Settings or the Index materials page:
+
+1. **Download the briefing questions** for the subject. They are generated
+   against its real dot point ids, and they walk through how the study
+   design breaks up: which dot points are content and which are skills,
+   which are routinely examined together, which are easily confused and
+   what single phrase separates them, what vocabulary each one attracts,
+   what wrongly attracts questions to it, and what notation the extractor
+   is likely to mangle.
+2. **Give that file and the study design to an AI of your choice** and ask
+   it to answer every question. The last thing it is asked for is a fenced
+   YAML block in the exact shape Blitz reads.
+3. **Upload its answer back** as a context document. The prose is kept with
+   the subject's material; the lexicon is checked against the study design
+   and installed. Ids the design does not have are dropped and named, and a
+   lexicon written entirely against a different version is refused.
+
+From a terminal:
+
+```bash
+blitz briefing physics                  # writes physics-briefing-questions.md
+blitz context physics answers.md        # keeps it, installs the lexicon
+```
+
+A context document with no lexicon in it is still kept: it is the subject's
+notes, and whoever prepares material next should read it. Only the lexicon
+changes what the tagger does. Settings shows, per subject, how many dot
+points its lexicon covers and which documents it holds.
+
+The study design is a public VCAA document. Do not paste copyrighted
+textbook content into an AI as part of this.
+
 ## Where everything lives
 
 One folder, `~/Documents/Blitz/`, shown at the bottom of the home page:
@@ -85,7 +133,7 @@ Blitz/
   blitz.json       written at setup; its presence is what "set up" means
   study-designs/   imported study designs (the shipped ones are the fallback)
   sources/         everything uploaded, per subject, plus each subject's
-                   indexing guide and dot points
+                   indexing guide, dot points and context/ documents
   index/           the question index and figure crops (rebuildable)
   exports/         "index materials" result folders and their zips
   blitzes/         every sheet ever generated
@@ -98,7 +146,7 @@ and you have backed up the lot.
 
 ## Backup
 
-**Create backup** on the home page (or `blitz backup`) writes one zip into
+**Create backup** in Settings (or `blitz backup`) writes one zip into
 `backups/` with everything worth keeping: the index, every figure crop, the
 study designs you imported, the student record and its workbooks, and every
 sheet ever made. Left out on purpose: the uploaded source books (tick

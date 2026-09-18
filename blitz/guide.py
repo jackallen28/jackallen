@@ -22,7 +22,7 @@ import json
 from datetime import date
 from pathlib import Path
 
-from .config import SOURCES_DIR
+from . import config
 from .corpus.sample import fingerprint
 from .studydesign import StudyDesign, load_study_design
 
@@ -183,7 +183,34 @@ Each rule cost a real mistake on a real book; the reasoning is in
 The full schema, with field types and a worked example, is in
 `docs/question-pack-schema.md`.
 
-## 5. Check it worked
+## 5. Teach Blitz this subject's vocabulary
+
+Blitz decides which dot point a question belongs to by matching the words
+the question uses against the words a question about that dot point tends
+to use. The study design does not supply those: it says "apply the field
+model to magnetic phenomena", the exam says "a bar magnet is placed between
+two current-carrying wires". A subject without a **concept lexicon** falls
+back on word overlap with VCAA's own wording, which is much weaker.
+
+You do not have to write one by hand:
+
+```bash
+blitz briefing {design.subject_id}        # a questionnaire, tailored to these dot points
+```
+
+Give that file and the study design to an AI of your choice, ask it to
+answer every question, then:
+
+```bash
+blitz context {design.subject_id} <its-answer>.md
+```
+
+Blitz keeps the notes in `context/` beside this file and installs the
+lexicon at the end of the answer, after checking every dot point id against
+this study design. The same thing is on the Settings page, and on the Index
+materials page under "Context documents".
+
+## 6. Check it worked
 
 ```bash
 blitz coverage {design.subject_id}              # questions now behind each dot point
@@ -200,7 +227,8 @@ def write_subject_guide(subject_id: str, root: Path | None = None,
                         design: StudyDesign | None = None) -> list[Path]:
     """Create the subject's materials folder and write its two files."""
     design = design or load_study_design(subject_id)
-    folder = (Path(root) / "sources" / subject_id) if root else (SOURCES_DIR / subject_id)
+    base = (Path(root) / "sources") if root else config.SOURCES_DIR
+    folder = base / subject_id
     folder.mkdir(parents=True, exist_ok=True)
     guide = folder / GUIDE_NAME
     guide.write_text(guide_text(design), encoding="utf-8")

@@ -226,3 +226,14 @@ button.ghost:hover { border-color: var(--accent); color: var(--accent); }
 .plain .stat { display: inline-block; margin-right: 18px; }
 .plain .stat b { font-size: 20px; margin-right: 4px; }
 [hidden] { display: none !important; }
+
+/* ---- "More options": the controls most sheets never need ---------------- */
+details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+details.more > summary {
+  cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--accent-dark);
+  list-style: none;
+}
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "▸ "; }
+details.more[open] > summary::before { content: "▾ "; }
+details.more h3 { font-size: 13px; margin: 12px 0 4px; }

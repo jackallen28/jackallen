@@ -10,7 +10,7 @@
 <body>
 <header class="masthead">
   <div class="wrap">
-    <nav class="nav"><a href="/">Home</a><a href="/index">Index materials</a></nav>
+    <nav class="nav"><a href="/">Home</a><a href="/index">Index materials</a><a href="/settings">Settings</a></nav>
     <a href="/"><img class="logo" src="/logo.png" alt="Allentronics Education Services"></a>
     <p class="tagline">Make a Blitz · two pages, your study design, your books.</p>
   </div>
@@ -39,12 +39,7 @@
   </section>
 
   <section class="step">
-    <h2><span class="n">3</span> Question types</h2>
-    <div id="types" class="chips"></div>
-  </section>
-
-  <section class="step">
-    <h2><span class="n">4</span> Who is it for?</h2>
+    <h2><span class="n">3</span> Who is it for?</h2>
     <p class="hint">Optional. Name a student or class and the sheet is logged against them, and questions they have
       already had are skipped next time.</p>
     <div class="options" style="margin-top:0">
@@ -57,21 +52,30 @@
   </section>
 
   <section class="step">
-    <h2><span class="n">5</span> Anything else?</h2>
+    <h2><span class="n">4</span> Anything else?</h2>
     <textarea id="notes" rows="3" placeholder="e.g. I keep losing marks on Force Field Analysis weighting, and I never know when to use impulse vs momentum."></textarea>
     <div class="options">
       <label>Title <input id="title" type="text" placeholder="Blitz"></label>
-      <label>Difficulty
-        <select id="difficulty">
-          <option value="mixed" selected>Mixed</option>
-          <option value="easy">Easier</option>
-          <option value="hard">Harder</option>
-        </select>
-      </label>
       <label class="check"><input id="solutions" type="checkbox" checked> Worked solutions</label>
-      <label class="check"><input id="figures" type="checkbox" checked> Favour diagram questions</label>
-      <label class="check"><input id="generated" type="checkbox" checked> Fill gaps with generated questions</label>
     </div>
+    <details class="more">
+      <summary>More options</summary>
+      <p class="hint">Sensible defaults are already set; these are here when you want them.</p>
+      <h3>Question types</h3>
+      <p class="hint">All of them unless you say otherwise.</p>
+      <div id="types" class="chips"></div>
+      <div class="options">
+        <label>Difficulty
+          <select id="difficulty">
+            <option value="mixed" selected>Mixed</option>
+            <option value="easy">Easier</option>
+            <option value="hard">Harder</option>
+          </select>
+        </label>
+        <label class="check"><input id="figures" type="checkbox" checked> Favour diagram questions</label>
+        <label class="check"><input id="generated" type="checkbox" checked> Fill gaps with generated questions</label>
+      </div>
+    </details>
   </section>
 
   <section class="step actions">

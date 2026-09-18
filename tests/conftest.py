@@ -1,9 +1,22 @@
+import atexit
+import os
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Point the whole test run at a throwaway Blitz folder BEFORE blitz.config is
+# imported, because several modules bind their paths at import time. Without
+# this, a test that does not patch every one of them writes into the real
+# ~/Documents/Blitz — which is how figure crops, an indexing guide and an
+# installed lexicon ended up there.
+_TEST_ROOT = Path(tempfile.mkdtemp(prefix="blitz-tests-"))
+os.environ["BLITZ_ROOT"] = str(_TEST_ROOT)
+atexit.register(shutil.rmtree, _TEST_ROOT, True)
 
 from blitz import db                                    # noqa: E402
 from blitz.corpus.sample import load_sample             # noqa: E402
@@ -250,3 +263,18 @@ def fake_textbook(tmp_path):
          "   the same wavelength. (2 marks)")
     c.save()
     return path
+
+
+@pytest.fixture(autouse=True)
+def _never_touch_a_real_folder():
+    """Fail loudly if a test writes outside the throwaway root.
+
+    Checked rather than assumed: the paths are spread across a dozen
+    modules, and a new one that forgets is otherwise silent until someone
+    finds strange files in their own Blitz folder.
+    """
+    from blitz import config
+
+    assert str(config.ROOT) == str(_TEST_ROOT), (
+        f"tests must run against {_TEST_ROOT}, not {config.ROOT}")
+    yield

@@ -37,6 +37,9 @@ function onSubjectChange() {
   // Every subject has a folder of its own holding its dot points and the
   // notes on preparing material; say where, because that is what someone
   // hands to whoever is doing the indexing.
+  $("#briefing").href = isNew || !s
+    ? "#" : `/api/subjects/${encodeURIComponent(s.id)}/briefing`;
+  $("#briefing").style.opacity = isNew || !s ? 0.5 : 1;
   $("#folderhint").textContent = (isNew || !root || !s)
     ? ""
     : `You can also drop files straight into ${root}/sources/${s.id}/ — its `
@@ -74,10 +77,12 @@ async function submit(ev) {
     fd.append("subject_id", id);
   }
   if ($("#design").files.length) fd.append("study_design", $("#design").files[0]);
-  if (!$("#files").files.length && !$("#design").files.length) {
+  if (!$("#files").files.length && !$("#design").files.length
+      && !$("#context").files.length) {
     setStatus("Choose at least one file."); return;
   }
   for (const f of $("#files").files) fd.append("files", f);
+  for (const f of $("#context").files) fd.append("context", f);
 
   $("#go").disabled = true;
   $("#result").hidden = true;

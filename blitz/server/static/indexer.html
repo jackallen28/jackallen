@@ -10,7 +10,7 @@
 <body class="plain">
 <header class="masthead">
   <div class="wrap">
-    <nav class="nav"><a href="/">Home</a><a href="/blitz">Make a Blitz</a></nav>
+    <nav class="nav"><a href="/">Home</a><a href="/blitz">Make a Blitz</a><a href="/settings">Settings</a></nav>
     <a href="/"><img class="logo" src="/logo.png" alt="Allentronics Education Services"></a>
     <p class="tagline">Index materials · add a study design and your books, worksheets or question packs.</p>
   </div>
@@ -37,7 +37,22 @@
     </fieldset>
 
     <fieldset>
-      <legend>3. Materials</legend>
+      <legend>3. Context documents (optional)</legend>
+      <p class="hint">What you know about this subject, written down. Blitz keeps it with the
+        subject's material, and installs any concept lexicon it carries — which is what decides how
+        well questions get filed under the right dot point.</p>
+      <p class="hint"><b>To make one:</b> download the briefing questions below, give that file and
+        the subject's VCAA study design to an AI of your choice, ask it to answer every question, and
+        upload its answer here. <a href="/settings">Settings</a> explains it and shows what each
+        subject currently has.</p>
+      <div class="row">
+        <a id="briefing" href="#"><button type="button" class="ghost">Download briefing questions</button></a>
+        <input id="context" type="file" multiple accept=".md,.markdown,.txt,.yaml,.yml,.json">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4. Materials</legend>
       <label for="files">Books, worksheets and question packs</label>
       <input id="files" name="files" type="file" multiple accept=".pdf,.docx,.json,.zip">
       <p class="hint">PDF or Word for books, worksheets and notes. A question pack a model built goes in as a zip

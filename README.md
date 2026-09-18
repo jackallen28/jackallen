@@ -30,6 +30,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Backup | One zip with the index, crops, study designs, student record and every sheet; `blitz restore` puts it back. |
 | First run | A new copy has nothing in it: the setup screen restores a backup, or starts fresh with the subjects you tick plus any study design you upload. |
 | New subjects | A subject with no books yet gets `sources/<subject>/INDEXING-GUIDE.md` and `dot-points.json`: every dot point id, the fingerprint, and the rules for preparing material. |
+| Context documents | `blitz briefing <subject>` writes questions to put to an AI with the study design; its answer comes back as a context document and its concept lexicon is installed, which is what makes tagging good for a new subject. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that

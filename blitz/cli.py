@@ -1,15 +1,24 @@
 """Command line entry points.
 
-    blitz init                      create the index and load the sample bank
+    blitz serve --open              the app: everything below, in a browser
+
+    blitz setup ...                 first run: restore a backup or start fresh
+    blitz root                      print the folder all your data lives in
     blitz subjects                  list subjects and how verified they are
-    blitz index <pdf> ...           study design + book in, index out (start here)
-    blitz extract-pack <pdf>        build a draft pack from a PDF, no model
+
+    blitz index <file> ...          study design + book in, index out (start here)
     blitz import-pack <json>        load a curated question pack (preferred)
-    blitz dot-points <subject>      the dot point ids a pack should tag against
+    blitz extract-pack <pdf>        build a draft pack from a PDF, no model
     blitz ingest <pdf> ...          index a PDF heuristically (no pack available)
+
+    blitz briefing <subject>        questions to ask an AI, to tag this subject well
+    blitz context <subject> <file>  feed its answer back in
+    blitz guide <subject>           rewrite a subject's dot points and notes
+    blitz dot-points <subject>      the dot point ids a pack should tag against
+
     blitz coverage <subject>        show questions held per dot point
     blitz generate <subject> ...    build a sheet from the command line
-    blitz serve                     run the local web UI
+    blitz backup / blitz restore    one zip with everything worth keeping
 """
 
 from __future__ import annotations
@@ -334,6 +343,53 @@ def cmd_guide(args) -> int:
     return 0
 
 
+def cmd_briefing(args) -> int:
+    """Write the questionnaire to hand to a model with the study design."""
+    from .context import briefing_name, briefing_text
+
+    design = load_study_design(args.subject)
+    text = briefing_text(design)
+    if args.out == "-":
+        print(text)
+        return 0
+    out = Path(args.out) if args.out else Path.cwd() / briefing_name(design)
+    out.write_text(text, encoding="utf-8")
+    print(f"wrote {out}")
+    print("\nGive that file and the study design to an AI, then feed its answer "
+          f"back with:\n  blitz context {args.subject} <its answer>.md")
+    return 0
+
+
+def cmd_context(args) -> int:
+    """Store context documents and install any lexicon they carry."""
+    from .context import add_context
+
+    ensure_dirs()
+    uploads = []
+    for name in args.files:
+        path = Path(name)
+        if not path.exists():
+            print(f"\nno such file: {path}\n")
+            return 1
+        uploads.append((path.name, path.read_bytes()))
+    try:
+        result = add_context(args.subject, uploads)
+    except ValueError as exc:
+        print(f"\n{exc}\n")
+        return 1
+    print(f"kept {', '.join(result['stored'])} in {result['folder']}")
+    if result["lexicon"]:
+        lex = result["lexicon"]
+        print(f"installed a concept lexicon covering {lex['dot_points']} dot "
+              f"points ({lex['coverage']:.0%}) → {lex['path']}")
+        if lex["unknown"]:
+            print(f"  ! ignored {len(lex['unknown'])} id(s) not in this study "
+                  f"design: {', '.join(lex['unknown'][:5])}")
+    for note in result["notes"]:
+        print(f"  ! {note}")
+    return 0
+
+
 def cmd_dot_points(args) -> int:
     """The authoritative dot point ids, for whatever is building a pack."""
     import json as _json
@@ -554,6 +610,18 @@ def build_parser() -> argparse.ArgumentParser:
     dots.add_argument("--json", action="store_true",
                       help="machine-readable, including the design fingerprint")
     dots.set_defaults(func=cmd_dot_points)
+
+    br = sub.add_parser("briefing", help="write the questions to ask an AI about "
+                                        "a subject, to improve its indexing")
+    br.add_argument("subject")
+    br.add_argument("-o", "--out", help="where to write it; - for stdout")
+    br.set_defaults(func=cmd_briefing)
+
+    cx = sub.add_parser("context", help="add context documents for a subject, "
+                                        "installing any concept lexicon in them")
+    cx.add_argument("subject")
+    cx.add_argument("files", nargs="+")
+    cx.set_defaults(func=cmd_context)
 
     gd = sub.add_parser("guide", help="write a subject's dot points and "
                                       "indexing notes into its sources folder")

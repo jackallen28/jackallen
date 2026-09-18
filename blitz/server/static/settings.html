@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — Allentronics</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="plain">
+<header class="masthead">
+  <div class="wrap">
+    <nav class="nav"><a href="/">Home</a><a href="/blitz">Make a Blitz</a><a href="/index">Index materials</a></nav>
+    <a href="/"><img class="logo" src="/logo.png" alt="Allentronics Education Services"></a>
+    <p class="tagline">Settings · subjects, context documents and backups.</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <fieldset>
+    <legend>Subjects</legend>
+    <p class="hint">Each subject has a folder holding its dot points, its indexing notes and anything
+      you add. Adding a new subject is done by uploading its study design on the
+      <a href="/index">Index materials</a> page.</p>
+    <div id="subjects"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Teaching Blitz about a subject</legend>
+    <p>Blitz files a question under a dot point by matching the words the question uses against the
+      words a question about that dot point tends to use. The study design does not supply those
+      words, so a subject without a <b>concept lexicon</b> falls back on word overlap, which is much
+      weaker. Three steps to fix that for any subject:</p>
+    <ol>
+      <li>Download its <b>briefing questions</b> above.</li>
+      <li>Give that file and the subject's VCAA study design to an AI of your choice, and ask it to
+        answer every question. It walks through how the study design breaks up, which dot points are
+        confusable, and what vocabulary each one actually attracts.</li>
+      <li>Save the answer and upload it back as a <b>context document</b>. Blitz keeps the notes with
+        the subject and installs the lexicon at the end of it, after checking every dot point id
+        against the study design.</li>
+    </ol>
+    <p class="hint">The study design is a public VCAA document. Do not paste copyrighted textbook
+      content into an AI as part of this.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Backup</legend>
+    <p class="hint" id="root"></p>
+    <p>One zip with the index, every figure, the study designs, the student record and every sheet.
+      Take it with you when the app is updated or moved; restore it with
+      <code>blitz restore &lt;zip&gt;</code>, or on a new machine's first-run screen.</p>
+    <div class="row">
+      <label class="check" style="display:flex;gap:6px"><input id="withsources" type="checkbox"> include the source books</label>
+      <button id="backup" type="button" class="primary">Create backup</button>
+      <span id="backup-result" class="hint" style="margin:0"></span>
+    </div>
+    <div id="backups"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>This installation</legend>
+    <pre id="about"></pre>
+  </fieldset>
+</div>
+<script src="/settings.js"></script>
+</body>
+</html>

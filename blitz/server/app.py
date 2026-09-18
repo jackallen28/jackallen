@@ -453,6 +453,99 @@ def questions_page():
     return FileResponse(STATIC / "questions.html")
 
 
+@app.get("/settings")
+def settings_page():
+    return FileResponse(STATIC / "settings.html")
+
+
+# --- Settings: subjects, their context documents, backups ---------------------
+
+@app.get("/api/settings")
+def api_settings():
+    """Everything the settings page shows, in one call."""
+    from ..config import ROOT
+    from ..context import context_dir, list_context
+    from ..guide import GUIDE_NAME
+    from ..ingest.lexicon import load_lexicon
+    from ..setup import read_settings
+
+    subjects = []
+    with db.session() as conn:
+        held = {s.subject_id: db.coverage(conn, s.subject_id) for s in list_subjects()}
+        for design in list_subjects():
+            counts = held.get(design.subject_id, {})
+            kk_ids = [kk.id for kk in design.all_key_knowledge()]
+            lex = load_lexicon(design.subject_id)
+            subjects.append({
+                "id": design.subject_id,
+                "name": design.subject_name,
+                "verified": design.fully_verified,
+                "dot_points": len(kk_ids),
+                "covered": sum(1 for k in kk_ids if counts.get(k)),
+                "questions": conn.execute(
+                    "SELECT COUNT(*) AS n FROM question WHERE subject_id = ?",
+                    (design.subject_id,)).fetchone()["n"],
+                "lexicon": len(lex.concepts),
+                "context": list_context(design.subject_id),
+                "folder": str(context_dir(design.subject_id).parent),
+                "guide": GUIDE_NAME,
+            })
+    backups = sorted(
+        ({"name": p.name, "bytes": p.stat().st_size} for p in
+         (ROOT / "backups").glob("blitz-backup-*.zip")),
+        key=lambda b: b["name"], reverse=True)[:10]
+    return {"root": str(ROOT), "setup": read_settings(), "subjects": subjects,
+            "backups": backups}
+
+
+@app.get("/api/subjects/{subject_id}/briefing")
+def api_briefing(subject_id: str):
+    """The questionnaire to hand to a model along with the study design."""
+    from fastapi.responses import PlainTextResponse
+
+    from ..context import briefing_name, briefing_text
+
+    design = _design_or_404(subject_id)
+    return PlainTextResponse(
+        briefing_text(design), media_type="text/markdown",
+        headers={"Content-Disposition":
+                 f'attachment; filename="{briefing_name(design)}"'})
+
+
+@app.post("/api/subjects/{subject_id}/context")
+async def api_add_context(subject_id: str, files: list[UploadFile] = File(default=[])):
+    """Store context documents and install any concept lexicon they carry."""
+    from ..context import add_context
+
+    design = _design_or_404(subject_id)
+    uploads = [(f.filename, await f.read()) for f in files if f.filename]
+    if not uploads:
+        raise HTTPException(400, "choose at least one file")
+    try:
+        return add_context(subject_id, uploads, design=design)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.delete("/api/subjects/{subject_id}/context/{name}")
+def api_remove_context(subject_id: str, name: str):
+    from ..context import remove_context
+
+    _design_or_404(subject_id)
+    if not remove_context(subject_id, name):
+        raise HTTPException(404, "no such context document")
+    return {"removed": name}
+
+
+@app.post("/api/subjects/{subject_id}/lexicon/clear")
+def api_clear_lexicon(subject_id: str):
+    """Set a subject's tagging back to word overlap."""
+    from ..context import clear_lexicon
+
+    _design_or_404(subject_id)
+    return {"cleared": clear_lexicon(subject_id)}
+
+
 # --- Students ----------------------------------------------------------------
 
 class StudentIn(BaseModel):
@@ -650,6 +743,7 @@ async def api_index_start(
     subject_name: str | None = Form(None),
     study_design: UploadFile | None = File(None),
     files: list[UploadFile] = File(default=[]),
+    context: list[UploadFile] = File(default=[]),
 ):
     """Stage the upload under sources/<subject>/uploads/ and start the job."""
     from . import indexjob
@@ -660,7 +754,7 @@ async def api_index_start(
             raise HTTPException(400, "a new subject needs its VCAA study design")
     if not subject_id:
         raise HTTPException(400, "pick a subject or name a new one")
-    if not files and study_design is None:
+    if not files and study_design is None and not context:
         raise HTTPException(400, "nothing was uploaded")
     known = {d.subject_id for d in list_subjects()}
     if subject_id not in known and study_design is None:
@@ -675,8 +769,20 @@ async def api_index_start(
     if study_design is not None and study_design.filename:
         design_path = folder / ("study-design" + Path(study_design.filename).suffix.lower())
         design_path.write_bytes(await study_design.read())
+    # Context documents are staged beside the materials, never among them:
+    # a .json of notes is not a question pack.
+    context_paths = []
+    if context:
+        ctx_dir = folder.parent / f"{folder.name}-context"
+        ctx_dir.mkdir(parents=True, exist_ok=True)
+        for f in context:
+            if not f.filename:
+                continue
+            dest = ctx_dir / Path(f.filename).name
+            dest.write_bytes(await f.read())
+            context_paths.append(dest)
     job = indexjob.start(subject_id, folder, study_design=design_path,
-                         subject_name=subject_name)
+                         subject_name=subject_name, context=context_paths)
     return {"id": job.id, "subject_id": subject_id, "folder": str(folder)}
 
 
