@@ -36,6 +36,26 @@
       <span id="kkcount" class="count">0 selected</span>
     </div>
     <div id="tree"></div>
+
+    <div id="browse" class="browse" hidden>
+      <div class="browse-head">
+        <b id="browse-title"></b>
+        <span id="browse-count" class="count"></span>
+        <button type="button" class="ghost" id="browse-close">Close</button>
+      </div>
+      <div id="browse-body" class="browse-body"></div>
+      <div class="browse-foot">
+        <button type="button" class="ghost" id="browse-prev">← Previous</button>
+        <button type="button" class="primary" id="browse-pick">Add to sheet</button>
+        <button type="button" class="ghost" id="browse-next">Next →</button>
+      </div>
+    </div>
+
+    <div id="picked" class="picked" hidden>
+      <b>Chosen by hand</b>
+      <span class="hint">These go on the sheet first; the rest is filled in around them.</span>
+      <ul id="picked-list" class="qlist"></ul>
+    </div>
   </section>
 
   <section class="step">

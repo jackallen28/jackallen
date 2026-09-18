@@ -24,6 +24,9 @@ class SheetSpec:
     # needs the full page width, or the book's own text is scaled to illegibility.
     columns: int | None = None
     exclude_question_ids: list[str] = field(default_factory=list)
+    # Questions picked by hand in browse mode. They go on the sheet first and
+    # the rest is filled automatically around them.
+    pinned_question_ids: list[str] = field(default_factory=list)
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -146,6 +149,8 @@ class SheetPlan:
     # Questions budgeted for a single-column page of their own (page crops
     # too wide to read in a column), in sheet order after the text questions.
     wide_ids: list[str] = field(default_factory=list)
+    # Which of the chosen questions were picked by hand rather than found.
+    pinned_ids: list[str] = field(default_factory=list)
 
     @property
     def total_marks(self) -> int:

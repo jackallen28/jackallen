@@ -93,6 +93,8 @@ class SheetRequest(BaseModel):
     student_id: str | None = None
     student_name: str | None = None
     allow_repeats: bool = False
+    # Questions picked by hand in browse mode.
+    pinned_question_ids: list[str] = Field(default_factory=list)
 
     def to_spec(self) -> SheetSpec:
         fields = self.model_dump(exclude={"student_id", "student_name", "allow_repeats"})
@@ -118,6 +120,10 @@ def _apply_history(conn, spec: SheetSpec, student: dict | None, allow_repeats: b
     if student is None or allow_repeats:
         return []
     had = db.student_history(conn, student["id"])
+    if not had:
+        return []
+    # Something picked by hand is wanted, whatever the history says.
+    had = [q for q in had if q not in set(spec.pinned_question_ids)]
     if not had:
         return []
     spec.exclude_question_ids = sorted(set(spec.exclude_question_ids) | set(had))
@@ -319,10 +325,12 @@ def api_preview(req: SheetRequest):
     return {
         "student": student,
         "skipped": skipped,
+        "pinned": plan.pinned_ids,
         "questions": [
             {
                 "id": q.id,
                 "serial": q.serial,
+                "pinned": q.id in set(plan.pinned_ids),
                 "type": q.question_type,
                 "marks": q.marks,
                 "generated": q.generated,
@@ -644,8 +652,14 @@ def _crop_url(path: str | None) -> str | None:
 
 
 @app.get("/api/questions")
-def api_questions(subject: str, q: str = "", flagged: str = "", limit: int = 40):
-    """Search by serial (exact) or words (full text), optionally flagged only."""
+def api_questions(subject: str, q: str = "", flagged: str = "", limit: int = 40,
+                  kk: str = "", student: str = ""):
+    """Questions for the Questions page and for browse mode.
+
+    `q` searches by serial (exact) or words; `kk` narrows to one dot point,
+    which is what browsing a dot point does; `student` marks the ones that
+    student has already been given.
+    """
     q = q.strip()
     with db.session() as conn:
         design = _design_or_404(subject)
@@ -659,8 +673,13 @@ def api_questions(subject: str, q: str = "", flagged: str = "", limit: int = 40)
             params.append(_fts_query(q))
         else:
             where = "q.subject_id = ?"
+        if kk:
+            where += (" AND q.id IN (SELECT question_id FROM question_kk "
+                      "WHERE kk_id = ?)")
+            params.append(kk)
         if flagged:
             where += " AND q.flag IS NOT NULL"
+        already = set(db.student_history(conn, student)) if student else set()
         total = conn.execute(f"SELECT COUNT(*) AS n FROM question q WHERE {where}",
                              params).fetchone()["n"]
         rows = conn.execute(
@@ -699,6 +718,7 @@ def api_questions(subject: str, q: str = "", flagged: str = "", limit: int = 40)
                 "answer_mode": d.get("answer_mode") or "text", "figures": figs,
                 "flag": d.get("flag"), "flag_note": d.get("flag_note"),
                 "flagged_at": d.get("flagged_at"), "given": given,
+                "already_given": d["id"] in already,
             })
     return {"total": total, "questions": out}
 

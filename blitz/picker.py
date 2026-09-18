@@ -154,6 +154,32 @@ def _score(spec: SheetSpec, q: Question, keywords: list[str], rng: random.Random
     return score
 
 
+def _fetch_pinned(conn: sqlite3.Connection, spec: SheetSpec) -> list[Question]:
+    """Questions picked by hand, in the order they were picked.
+
+    Fetched by id rather than filtered like the rest: someone who went
+    looking for a question and chose it means to have it, even if its dot
+    point is not ticked and even if the student has seen it before. A
+    question that has since been flagged as broken is still refused.
+    """
+    ids = list(dict.fromkeys(spec.pinned_question_ids))
+    if not ids:
+        return []
+    marks = ", ".join("?" for _ in ids)
+    rows = conn.execute(
+        f"SELECT q.*, s.kind AS source_kind FROM question q "
+        f"LEFT JOIN source s ON s.id = q.source_id "
+        f"WHERE q.subject_id = ? AND q.flag IS NULL AND q.id IN ({marks})",
+        [spec.subject_id, *ids]).fetchall()
+    by_id = {}
+    for row in rows:
+        kk = [r["kk_id"] for r in conn.execute(
+            "SELECT kk_id FROM question_kk WHERE question_id = ? "
+            "ORDER BY primary_kk DESC", (row["id"],))]
+        by_id[row["id"]] = Question.from_row(row, kk)
+    return [by_id[qid] for qid in ids if qid in by_id]
+
+
 def build_plan(
     conn: sqlite3.Connection,
     spec: SheetSpec,
@@ -165,6 +191,11 @@ def build_plan(
     keywords = _keywords(spec.notes)
 
     candidates, _ = _fetch_candidates(conn, spec)
+    pinned = _fetch_pinned(conn, spec)
+    # A pinned question is a candidate too, so the automatic passes know not
+    # to pick it twice and the column choice sees what is really on the sheet.
+    known = {q.id for q in candidates}
+    candidates = candidates + [q for q in pinned if q.id not in known]
     plan = SheetPlan(spec=spec)
 
     if not candidates:
@@ -219,6 +250,17 @@ def build_plan(
         chosen: list[Question] = []
         chosen_ids: set[str] = set()
         type_counts: dict[str, int] = defaultdict(int)
+
+        # Pass 0 — what was chosen by hand. These are not negotiable: they go
+        # on even if they fill the sheet, and the budget the automatic passes
+        # then have is whatever is left.
+        for q in pinned:
+            if q.id in chosen_ids:
+                continue
+            chosen.append(q)
+            chosen_ids.add(q.id)
+            type_counts[q.question_type] += 1
+            remaining -= weight(q, columns)
 
         # Pass 1 — breadth. One question per selected dot point.
         #
@@ -344,6 +386,7 @@ def build_plan(
                       + _order_for_sheet(wide_part, spec, design))
     plan.wide_ids = [q.id for q in wide_part]
     plan.uncovered_kk_ids = [kk for kk in spec.kk_ids if kk not in covered]
+    plan.pinned_ids = [q.id for q in pinned]
     plan.estimated_pages = round((budget - remaining) / budget * pages, 2)
 
     if plan.uncovered_kk_ids:

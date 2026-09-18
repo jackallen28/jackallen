@@ -5,6 +5,9 @@ const state = {
   subject: null,
   kk: new Set(),
   types: new Set(),
+  // Questions chosen by hand in browse mode, id -> the question, in the
+  // order they were picked.
+  pinned: new Map(),
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -41,6 +44,11 @@ function renderSubjects() {
 }
 
 function selectSubject(id) {
+  if (state.subject && state.subject.id !== id) {
+    state.pinned.clear();
+    $("#browse").hidden = true;
+    renderPicked();
+  }
   state.subject = state.subjects.find((s) => s.id === id);
   state.kk.clear();
   state.types.clear();
@@ -116,6 +124,15 @@ function renderTree() {
         avail.textContent = kk.available;
         avail.title = `${kk.available} question(s) in the index`;
         row.append(cb, label, avail);
+        if (kk.available) {
+          const browse = document.createElement("button");
+          browse.type = "button";
+          browse.className = "kkbtn";
+          browse.textContent = "browse";
+          browse.title = "Look through this dot point's questions and pick by hand";
+          browse.onclick = () => openBrowse(kk);
+          row.appendChild(browse);
+        }
         box.appendChild(row);
       }
       u.appendChild(box);
@@ -150,7 +167,10 @@ function syncChecks() {
 }
 
 function updateCount() {
-  $("#kkcount").textContent = `${state.kk.size} selected`;
+  const picked = state.pinned.size
+    ? `, ${state.pinned.size} question${state.pinned.size === 1 ? "" : "s"} chosen by hand`
+    : "";
+  $("#kkcount").textContent = `${state.kk.size} selected${picked}`;
 }
 
 document.addEventListener("click", (e) => {
@@ -168,6 +188,113 @@ document.addEventListener("click", (e) => {
   }
   syncChecks();
 });
+
+// ---- Browse mode: flick through one dot point's questions ----------------
+const browse = { kk: null, items: [], at: 0 };
+
+function currentStudent() {
+  const v = $("#student").value;
+  return v && v !== "__new__" ? v : "";
+}
+
+async function openBrowse(kk) {
+  browse.kk = kk;
+  browse.items = [];
+  browse.at = 0;
+  $("#browse").hidden = false;
+  $("#browse-title").textContent = kk.text.length > 90
+    ? kk.text.slice(0, 90) + "…" : kk.text;
+  $("#browse-count").textContent = "Loading…";
+  $("#browse-body").innerHTML = "";
+  const params = new URLSearchParams({
+    subject: state.subject.id, kk: kk.id, limit: "200",
+  });
+  const student = currentStudent();
+  if (student) params.set("student", student);
+  const res = await fetch("/api/questions?" + params);
+  if (!res.ok) { $("#browse-count").textContent = "Could not load."; return; }
+  browse.items = (await res.json()).questions;
+  // Anything already picked, and anything the student has had, sorted last:
+  // the point of browsing is to find something new.
+  browse.items.sort((a, b) => (a.already_given ? 1 : 0) - (b.already_given ? 1 : 0));
+  showBrowse();
+  $("#browse").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function figures(list, role) {
+  return list.filter((f) => f.role === role)
+    .map((f) => `<img src="${f.url}" alt="">`).join("");
+}
+
+function showBrowse() {
+  const body = $("#browse-body");
+  if (!browse.items.length) {
+    $("#browse-count").textContent = "";
+    body.innerHTML = '<p class="hint">No questions for this dot point.</p>';
+    $("#browse-pick").disabled = true;
+    return;
+  }
+  const q = browse.items[browse.at];
+  $("#browse-count").textContent = `${browse.at + 1} of ${browse.items.length}`;
+  const picked = state.pinned.has(q.id);
+  $("#browse-pick").disabled = false;
+  $("#browse-pick").textContent = picked ? "Remove from sheet" : "Add to sheet";
+  const flags = [];
+  if (q.already_given) flags.push('<span class="warn">already given to this student</span>');
+  if (q.pinned) flags.push("on the sheet");
+  const shown = q.render_mode === "crop" && q.figures.some((f) => f.role === "question")
+    ? figures(q.figures, "question")
+    : `<p>${esc(q.context ? q.context + " " : "")}${esc(q.body)}</p>${figures(q.figures, "question")}`;
+  const options = q.options
+    ? `<ol type="A">${q.options.map((o) => `<li>${esc(o)}</li>`).join("")}</ol>` : "";
+  body.innerHTML = `
+    <p class="meta"><b>${esc(q.serial || "")}</b> · ${esc(q.type_label)} ·
+      ${q.marks ?? "?"} mark${q.marks === 1 ? "" : "s"} · ${esc(q.citation || q.source_id)}
+      ${flags.length ? " · " + flags.join(" · ") : ""}</p>
+    ${shown}${options}
+    <details><summary>Worked solution</summary>${
+      q.answer_mode === "crop" && q.figures.some((f) => f.role === "answer")
+        ? figures(q.figures, "answer")
+        : (q.answer ? `<p>${esc(q.answer)}</p>` : '<p class="hint">None in the source.</p>')
+    }</details>`;
+}
+
+function step(by) {
+  if (!browse.items.length) return;
+  browse.at = (browse.at + by + browse.items.length) % browse.items.length;
+  showBrowse();
+}
+
+function togglePick() {
+  const q = browse.items[browse.at];
+  if (!q) return;
+  if (state.pinned.has(q.id)) state.pinned.delete(q.id);
+  else state.pinned.set(q.id, q);
+  renderPicked();
+  showBrowse();
+}
+
+function renderPicked() {
+  const box = $("#picked");
+  const list = $("#picked-list");
+  box.hidden = state.pinned.size === 0;
+  list.innerHTML = [...state.pinned.values()].map((q) => `
+    <li><span><b>${esc(q.serial || "")}</b> ${esc((q.body || "").slice(0, 90))}…</span>
+      <button type="button" class="kkbtn" data-unpick="${esc(q.id)}">remove</button></li>`).join("");
+  for (const btn of list.querySelectorAll("[data-unpick]")) {
+    btn.onclick = () => {
+      state.pinned.delete(btn.dataset.unpick);
+      renderPicked();
+      if (!$("#browse").hidden) showBrowse();
+    };
+  }
+  updateCount();
+}
+
+$("#browse-prev").onclick = () => step(-1);
+$("#browse-next").onclick = () => step(1);
+$("#browse-pick").onclick = togglePick;
+$("#browse-close").onclick = () => { $("#browse").hidden = true; };
 
 async function loadStudents() {
   const res = await fetch("/api/students");
@@ -197,6 +324,7 @@ function payload() {
     student_id: student && student !== "__new__" ? student : null,
     student_name: student === "__new__" ? $("#student_name").value.trim() || null : null,
     allow_repeats: $("#repeats").checked,
+    pinned_question_ids: [...state.pinned.keys()],
     kk_ids: [...state.kk],
     question_type_ids: [...state.types],
     notes: $("#notes").value,
@@ -255,8 +383,8 @@ $("#generate").onclick = async () => {
 };
 
 function guard() {
-  if (state.kk.size) return true;
-  setStatus("Pick at least one dot point first.");
+  if (state.kk.size || state.pinned.size) return true;
+  setStatus("Pick at least one dot point, or choose a question by hand.");
   return false;
 }
 

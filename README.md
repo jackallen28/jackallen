@@ -25,6 +25,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Tagging | 81% right area on an unseen book, before the pack's own chapter tags are used. See below. |
 | Layout | Two columns of text on page one, one column of page crops on page two, solutions after. Chosen per sheet from what the questions need. |
 | Serial numbers | Every question carries one (`PH-0413`), printed on the sheet and its solution; the Questions page finds it. |
+| Browse mode | Any dot point can be browsed question by question and picked from by hand; picks are pinned and the rest fills in around them. |
 | Flags | A question flagged incomplete, corrupt or wrong never goes on a sheet until cleared. |
 | Students | Sheets are logged per student or class; repeats are skipped; `students/MASTER.xlsx` and one workbook each are rewritten after every sheet. |
 | Backup | One zip with the index, crops, study designs, student record and every sheet; `blitz restore` puts it back. |

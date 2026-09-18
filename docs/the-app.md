@@ -77,6 +77,25 @@ Both files are rewritten whenever the subject's study design is imported
 again, so they never describe an older curriculum than the index is using.
 `blitz guide <subject>` rewrites them on demand.
 
+## Picking questions by hand
+
+The sheet is chosen for you, which is the point. When you want a particular
+question on it, every dot point that holds questions has a **browse** link
+beside it on the Make a Blitz page. It opens a panel showing that dot
+point's questions one at a time, with the serial, the marks, the question
+itself (or its page crop) and the worked solution folded underneath. Step
+through with Previous and Next, press **Add to sheet** on the ones you
+want.
+
+What you pick is pinned: it goes on the sheet first and the rest is filled
+in around it. A pinned question goes on even if its own dot point is not
+ticked, and even if the student has already had it, because going looking
+for a question and choosing it says more than the history does. A question
+someone has flagged as broken is still refused.
+
+Picking a question is enough on its own. A sheet made only of hand-picked
+questions needs no dot points ticked at all.
+
 ## Teaching Blitz a subject
 
 Blitz decides which dot point a question belongs to by matching the words
