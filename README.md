@@ -29,6 +29,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Students | Sheets are logged per student or class; repeats are skipped; `students/MASTER.xlsx` and one workbook each are rewritten after every sheet. |
 | Backup | One zip with the index, crops, study designs, student record and every sheet; `blitz restore` puts it back. |
 | First run | A new copy has nothing in it: the setup screen restores a backup, or starts fresh with the subjects you tick plus any study design you upload. |
+| New subjects | A subject with no books yet gets `sources/<subject>/INDEXING-GUIDE.md` and `dot-points.json`: every dot point id, the fingerprint, and the rules for preparing material. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that

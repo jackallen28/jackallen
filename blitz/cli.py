@@ -324,39 +324,26 @@ def cmd_extract_pack(args) -> int:
     return 0
 
 
+def cmd_guide(args) -> int:
+    """Rewrite a subject's dot points and indexing brief."""
+    from .guide import write_subject_guide
+
+    ensure_dirs()
+    for path in write_subject_guide(args.subject):
+        print(f"wrote {path}")
+    return 0
+
+
 def cmd_dot_points(args) -> int:
     """The authoritative dot point ids, for whatever is building a pack."""
     import json as _json
 
     from .corpus.sample import fingerprint
+    from .guide import dot_points_payload
 
     design = load_study_design(args.subject)
     if args.json:
-        payload = {
-            "subject_id": design.subject_id,
-            "subject_name": design.subject_name,
-            "accreditation": design.accreditation,
-            "study_design_fingerprint": fingerprint(design),
-            "verified": design.fully_verified,
-            "question_types": [
-                {"id": qt.id, "label": qt.label, "description": qt.description}
-                for qt in design.question_types
-            ],
-            "dot_points": [
-                {
-                    "id": kk.id,
-                    "unit": unit.number,
-                    "area_of_study": area.id,
-                    "area_title": area.title,
-                    "text": kk.text,
-                    "short": kk.display,
-                }
-                for unit in design.units
-                for area in unit.areas_of_study
-                for kk in area.key_knowledge
-            ],
-        }
-        print(_json.dumps(payload, indent=2, ensure_ascii=False))
+        print(_json.dumps(dot_points_payload(design), indent=2, ensure_ascii=False))
         return 0
 
     for unit in design.units:
@@ -411,6 +398,14 @@ def cmd_import_study_design(args) -> int:
 
     path = import_study_design(args.pdf, args.subject, dry_run=args.dry_run)
     print(f"{'would write' if args.dry_run else 'wrote'} {path}")
+    if not args.dry_run:
+        from .guide import write_subject_guide
+        from .studydesign.loader import load_study_design as _load
+
+        ensure_dirs()
+        _load.cache_clear()
+        for written in write_subject_guide(args.subject):
+            print(f"wrote {written}")
     return 0
 
 
@@ -559,6 +554,11 @@ def build_parser() -> argparse.ArgumentParser:
     dots.add_argument("--json", action="store_true",
                       help="machine-readable, including the design fingerprint")
     dots.set_defaults(func=cmd_dot_points)
+
+    gd = sub.add_parser("guide", help="write a subject's dot points and "
+                                      "indexing notes into its sources folder")
+    gd.add_argument("subject")
+    gd.set_defaults(func=cmd_guide)
 
     srv = sub.add_parser("serve", help="run the local web UI")
     srv.add_argument("--host", default="127.0.0.1")

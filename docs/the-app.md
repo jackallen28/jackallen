@@ -52,6 +52,30 @@ short answer, extended response) until someone writes better ones for it,
 and no concept lexicon, so its tagging leans on word overlap with VCAA's
 own wording. Both are worth improving once the subject has books behind it.
 
+## What a new subject comes with
+
+Adding a study design gives Blitz the dot points and nothing else: no
+books, no questions, an empty coverage table. That is the right answer, but
+it is not a useful place to stop, so creating a subject also creates its
+materials folder and writes two files into it:
+
+```
+sources/<subject>/INDEXING-GUIDE.md    every dot point, and what to do next
+sources/<subject>/dot-points.json      the same list, machine-readable
+```
+
+The guide is the briefing to hand to whoever, or whatever, prepares the
+material. It holds the subject's dot point ids with VCAA's own wording, the
+study design fingerprint that pins them, the question types, what to drop
+in the folder, and the rules that were learned indexing a real 1000-page
+book: tag each question on its own, keep text as text, declare the figure
+scale, crop to the content, marks in `marks`, run the dry run. Hand it and
+the JSON to a model and it has everything it needs.
+
+Both files are rewritten whenever the subject's study design is imported
+again, so they never describe an older curriculum than the index is using.
+`blitz guide <subject>` rewrites them on demand.
+
 ## Where everything lives
 
 One folder, `~/Documents/Blitz/`, shown at the bottom of the home page:
@@ -60,7 +84,8 @@ One folder, `~/Documents/Blitz/`, shown at the bottom of the home page:
 Blitz/
   blitz.json       written at setup; its presence is what "set up" means
   study-designs/   imported study designs (the shipped ones are the fallback)
-  sources/         everything uploaded, per subject
+  sources/         everything uploaded, per subject, plus each subject's
+                   indexing guide and dot points
   index/           the question index and figure crops (rebuildable)
   exports/         "index materials" result folders and their zips
   blitzes/         every sheet ever generated

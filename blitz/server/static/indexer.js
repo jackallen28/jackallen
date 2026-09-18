@@ -5,8 +5,12 @@ const $ = (sel) => document.querySelector(sel);
 const NEW = "__new__";
 
 let subjects = [];
+let root = "";
 
 async function loadSubjects() {
+  if (!root) {
+    try { root = (await (await fetch("/api/root")).json()).root; } catch (_) {}
+  }
   const res = await fetch("/api/subjects");
   const data = await res.json();
   subjects = data.subjects || [];
@@ -30,6 +34,13 @@ function onSubjectChange() {
   const isNew = id === NEW;
   $("#newsubject").hidden = !isNew;
   const s = subjects.find((x) => x.id === id);
+  // Every subject has a folder of its own holding its dot points and the
+  // notes on preparing material; say where, because that is what someone
+  // hands to whoever is doing the indexing.
+  $("#folderhint").textContent = (isNew || !root || !s)
+    ? ""
+    : `You can also drop files straight into ${root}/sources/${s.id}/ — its `
+      + `dot points and indexing notes are already in there.`;
   $("#designhint").textContent = isNew
     ? "Required for a new subject."
     : s && s.verified

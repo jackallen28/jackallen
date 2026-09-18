@@ -141,9 +141,20 @@ def test_a_study_design_uploaded_at_setup_becomes_a_subject(fresh, tmp_path):
                            "application/octet-stream")})
     assert res.status_code == 200, res.text
     body = res.json()
-    assert body["added"] == [{"id": "legal-studies", "name": "Legal Studies",
-                              "path": str(root / "study-designs" / "legal-studies.yaml")}]
+    added = body["added"]
+    assert [a["id"] for a in added] == ["legal-studies"]
+    assert added[0]["name"] == "Legal Studies"
+    assert added[0]["path"] == str(root / "study-designs" / "legal-studies.yaml")
     assert body["subjects"] == ["legal-studies"]
+
+    # The subject has no questions yet, but it is not empty-handed: its
+    # materials folder holds the dot points and what to do next.
+    folder = root / "sources" / "legal-studies"
+    assert added[0]["guide"] == str(folder / "INDEXING-GUIDE.md")
+    guide = (folder / "INDEXING-GUIDE.md").read_text(encoding="utf-8")
+    assert "legal-studies-u3-aos1-kk01" in guide
+    assert "no\nquestions" in guide
+    assert json.loads((folder / "dot-points.json").read_text())["dot_points"]
 
     subjects = client.get("/api/subjects").json()["subjects"]
     assert [s["id"] for s in subjects] == ["legal-studies"]

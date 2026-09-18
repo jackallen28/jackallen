@@ -116,7 +116,12 @@ def add_study_design(path: Path, name: str, root: Path | None = None) -> dict:
     subject_id = slug(name)
     out = import_study_design(path, subject_id, out_dir=root / "study-designs",
                               subject_name=name)
-    return {"id": subject_id, "name": name, "path": str(out)}
+    _clear_caches()
+    from .guide import write_subject_guide
+
+    guide = write_subject_guide(subject_id, root=root)[0]
+    return {"id": subject_id, "name": name, "path": str(out),
+            "guide": str(guide)}
 
 
 def enable_shipped_subject(subject_id: str, root: Path | None = None) -> Path:
@@ -220,6 +225,7 @@ def setup_scratch(subjects: list[str], samples: bool = False,
                 sid = path.stem.removeprefix("sample_")
                 if sid in subjects:
                     loaded[sid] = load_sample(conn, sid)
+    _write_guides(root)
     return _write_settings(root, mode="scratch",
                            subjects=list(subjects) + [a["id"] for a in added],
                            added=added, samples=loaded)
@@ -239,6 +245,7 @@ def setup_restore(zip_path: Path, replace: bool = False,
     result = backup.restore_backup(zip_path, root=root, replace=replace)
     _clear_caches()
     manifest = result["manifest"]
+    _write_guides(root)
     return _write_settings(root, mode="restore", backup=name or zip_path.name,
                            backup_created_at=manifest.get("created_at"),
                            subjects=_subjects_in(root))
@@ -257,7 +264,26 @@ def setup_adopt(root: Path | None = None) -> dict:
         if (config.STUDY_DESIGN_DIR / f"{sid}.yaml").exists():
             enable_shipped_subject(sid, root)
     _clear_caches()
+    _write_guides(root)
     return _write_settings(root, mode="adopt", subjects=_subjects_in(root))
+
+
+def _write_guides(root: Path) -> list[str]:
+    """Give every subject in the folder its dot points and indexing brief.
+
+    Run after the caches are cleared, so the guide describes the study
+    design that was just put in place rather than the one before it.
+    """
+    from .guide import write_subject_guide
+
+    written = []
+    for sid in _subjects_in(root):
+        try:
+            write_subject_guide(sid, root=root)
+            written.append(sid)
+        except Exception:
+            continue          # a design that will not load is reported elsewhere
+    return written
 
 
 def _subjects_in(root: Path) -> list[str]:

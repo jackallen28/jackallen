@@ -157,6 +157,10 @@ def _index(job: IndexJob) -> None:
                                   subject_name=job.subject_name)
         load_study_design.cache_clear()
         say(f"  imported → {out.name}")
+        from ..guide import write_subject_guide
+
+        guide = write_subject_guide(job.subject_id)[0]
+        say(f"  dot points and indexing notes → {guide}")
     design = load_study_design(job.subject_id)
     say(f"Subject: {design.subject_name} "
         f"({'verified' if design.fully_verified else 'draft wording'})")
