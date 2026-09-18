@@ -98,6 +98,12 @@ this environment had no key — so no claim is made about it.
 
 ## Quick start
 
+On a Mac, double-click `mac/Blitz.command`: it opens the browser on a page
+where you pick a subject, add the study design and your books or Word files,
+press Index, and get a folder of the result plus the sheet generator ready to
+use (`docs/indexing-on-a-mac.md`). Everything below is the same thing from a
+terminal.
+
 ```bash
 pip install -e .
 blitz init          # create the index, load the sample bank

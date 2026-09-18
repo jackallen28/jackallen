@@ -244,11 +244,30 @@ def _key_knowledge_entries(aos_id: str, texts: list[str]) -> list[dict]:
     return out
 
 
+# Question types are this tool's editorial data, not VCAA's. A subject that
+# has never been set up gets these until someone writes better ones; they are
+# generic enough to be true of any VCE written exam.
+def default_question_types(subject_id: str) -> list[dict]:
+    prefix = "".join(w[0] for w in subject_id.split("-"))[:4] or subject_id[:2]
+    return [
+        {"id": f"{prefix}-mc", "label": "Multiple choice",
+         "description": "Four-option questions.", "typical_marks": [1],
+         "default_weight": 0.3},
+        {"id": f"{prefix}-short", "label": "Short answer",
+         "description": "One to four mark questions with a written answer.",
+         "typical_marks": [1, 2, 3, 4], "default_weight": 0.6},
+        {"id": f"{prefix}-extended", "label": "Extended response",
+         "description": "Longer questions requiring a developed answer.",
+         "typical_marks": [5, 6, 8, 10], "default_weight": 1.5},
+    ]
+
+
 def import_study_design(
     pdf_path: str | Path,
     subject_id: str,
     out_dir: Path | None = None,
     dry_run: bool = False,
+    subject_name: str | None = None,
 ) -> Path:
     """Parse the PDF and rewrite the subject's YAML, preserving question types.
 
@@ -298,7 +317,8 @@ def import_study_design(
 
     doc = {
         "subject_id": subject_id,
-        "subject_name": existing.get("subject_name", subject_id.replace("-", " ").title()),
+        "subject_name": subject_name or existing.get(
+            "subject_name", subject_id.replace("-", " ").title()),
         "accreditation": (
             _clean(accred_line.group(1)) if accred_line
             else f"{accred.group(1)}-{accred.group(2)}" if accred
@@ -307,7 +327,7 @@ def import_study_design(
         "source": f"Imported from {Path(pdf_path).name}",
         "units": units,
         # Editorial data — ours, not VCAA's — so it survives the import.
-        "question_types": existing.get("question_types", []),
+        "question_types": existing.get("question_types") or default_question_types(subject_id),
         "command_terms": existing.get("command_terms", {}),
     }
 

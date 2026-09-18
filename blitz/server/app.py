@@ -11,7 +11,7 @@ from pathlib import Path
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -208,6 +208,71 @@ def _label(design, kk_id: str) -> str:
         return design.key_knowledge(kk_id).display
     except KeyError:
         return kk_id
+
+
+# --- Index materials: upload, run, hand back a folder -------------------------
+
+@app.get("/index")
+def indexer_page():
+    """The plain page for indexing files: pick a subject, drop files, press Index."""
+    return FileResponse(STATIC / "indexer.html")
+
+
+@app.post("/api/index")
+async def api_index_start(
+    subject_id: str | None = Form(None),
+    subject_name: str | None = Form(None),
+    study_design: UploadFile | None = File(None),
+    files: list[UploadFile] = File(default=[]),
+):
+    """Stage the upload under sources/<subject>/uploads/ and start the job."""
+    from . import indexjob
+
+    if subject_name and not subject_id:
+        subject_id = indexjob.slug(subject_name)
+        if study_design is None:
+            raise HTTPException(400, "a new subject needs its VCAA study design")
+    if not subject_id:
+        raise HTTPException(400, "pick a subject or name a new one")
+    if not files and study_design is None:
+        raise HTTPException(400, "nothing was uploaded")
+    known = {d.subject_id for d in list_subjects()}
+    if subject_id not in known and study_design is None:
+        raise HTTPException(400, f"no subject '{subject_id}'; upload its study design")
+
+    uploads = []
+    for f in files:
+        if f.filename:
+            uploads.append((f.filename, await f.read()))
+    folder = indexjob.stage_uploads(subject_id, uploads)
+    design_path = None
+    if study_design is not None and study_design.filename:
+        design_path = folder / ("study-design" + Path(study_design.filename).suffix.lower())
+        design_path.write_bytes(await study_design.read())
+    job = indexjob.start(subject_id, folder, study_design=design_path,
+                         subject_name=subject_name)
+    return {"id": job.id, "subject_id": subject_id, "folder": str(folder)}
+
+
+@app.get("/api/index/{job_id}")
+def api_index_status(job_id: str):
+    from . import indexjob
+
+    job = indexjob.get_job(job_id)
+    if job is None:
+        raise HTTPException(404, "no such job")
+    return job.snapshot()
+
+
+@app.get("/exports/{name}")
+def get_export(name: str):
+    """A zip of an export folder, by name."""
+    from . import indexjob
+
+    path = indexjob.export_path(name)
+    if path is None:
+        raise HTTPException(404, "no such export")
+    return FileResponse(path, media_type="application/zip", filename=name)
 
 
 app.mount("/", StaticFiles(directory=STATIC, html=True), name="static")

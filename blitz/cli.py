@@ -294,6 +294,14 @@ def cmd_serve(args) -> int:
     where = "http://127.0.0.1" if host in ("127.0.0.1", "localhost") else f"http://{host}"
     lock = " (password required)" if password() else ""
     print(f"Blitz is running at {where}:{port}{lock}")
+    print(f"  make a sheet     {where}:{port}/")
+    print(f"  index materials  {where}:{port}/index")
+    if args.open:
+        import threading
+        import webbrowser
+
+        url = f"{where}:{port}/{args.open if isinstance(args.open, str) else ''}"
+        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
     uvicorn.run("blitz.server.app:app", host=host, port=port,
                 reload=args.reload, log_level="warning")
     return 0
@@ -423,6 +431,9 @@ def build_parser() -> argparse.ArgumentParser:
     srv.add_argument("--host", default="127.0.0.1")
     srv.add_argument("--port", type=int, default=8712)
     srv.add_argument("--reload", action="store_true")
+    srv.add_argument("--open", nargs="?", const="", metavar="PAGE",
+                     help="open the browser once running; --open index goes "
+                          "straight to the indexing page")
     srv.set_defaults(func=cmd_serve)
 
     return p

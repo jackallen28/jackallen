@@ -1,25 +1,51 @@
 # Indexing course materials on a Mac
 
-One script takes a study design and a folder of materials and builds the index
-Blitz draws sheets from. Nothing leaves the machine, no model runs, and there
+Two ways in, same result. Nothing leaves the machine, no model runs, and there
 is no account or key. A 1000-page book takes about a minute.
+
+## The app
+
+Double-click **`mac/Blitz.command`**. It starts Blitz and opens the browser
+on the *Index materials* page:
+
+1. pick the subject, or choose *New subject…* and name it;
+2. add the VCAA study design (PDF or Word) the first time for a subject;
+3. add the materials: PDFs, Word files, or a zip of a question pack with its
+   figures folder; several at once is fine;
+4. press **Index**.
+
+The page shows the run as it goes, then the counts, the coverage table and a
+button to download the whole result as a zip. The folder it names on disk
+(`out/index-<subject>-<date>/`) holds the questions as a re-importable JSON,
+the teaching sections, the coverage table and every figure. The live index
+the sheet generator uses is updated at the same time, so *Make a Blitz →* at
+the top of the page works straight away.
+
+Leave the Terminal window it opened alone while you use it; closing it stops
+the app. Everything uploaded lands under `sources/<subject>/uploads/`, which
+is gitignored.
+
+## The script
+
+The same thing from Terminal, for a folder you already have:
 
 ```
 mac/index-materials.command
 ```
 
-## Once
+### Once
 
 ```bash
 git clone -b claude/vce-exam-prep-tool-eg2dha https://github.com/jackallen28/jackallen.git
 cd jackallen
 ```
 
-That is the whole install. The script makes its own Python environment the
-first time it runs (about a minute). It needs Python 3.11 or newer; macOS
-ships 3.9, so if it complains: `brew install python@3.12` and run it again.
+That is the whole install, for the app and the script alike. Either makes its
+own Python environment the first time it runs (about a minute). It needs
+Python 3.11 or newer; macOS ships 3.9, so if it complains:
+`brew install python@3.12` and run it again.
 
-## Each time
+### Each time
 
 Put the materials for a subject in one folder:
 

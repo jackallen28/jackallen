@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blitz — Index materials</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Ctext x='16' y='22' font-size='18' font-family='Helvetica,Arial' font-weight='700' fill='%23fff' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: #000;
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+  header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 24px;
+           display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { margin: 0; font-size: 22px; }
+  header a { color: #000; }
+  fieldset { border: 1px solid #000; padding: 14px 16px 16px; margin: 0 0 18px; }
+  legend { font-weight: 700; padding: 0 6px; }
+  label { display: block; margin: 8px 0 4px; font-weight: 600; }
+  .hint { color: #444; font-size: 13px; margin: 2px 0 0; }
+  select, input[type=text] { font: inherit; padding: 6px 8px; border: 1px solid #000;
+                             background: #fff; color: #000; width: 100%; max-width: 420px; }
+  input[type=file] { font: inherit; display: block; margin-top: 4px; }
+  button { font: inherit; font-weight: 700; padding: 10px 18px; border: 2px solid #000;
+           background: #000; color: #fff; cursor: pointer; }
+  button.ghost { background: #fff; color: #000; }
+  button[disabled] { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  pre { background: #fff; border: 1px solid #000; padding: 12px; overflow: auto;
+        font: 12.5px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap;
+        max-height: 420px; margin: 0; }
+  #log { min-height: 80px; }
+  .files { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+  .done { border: 2px solid #000; padding: 12px 16px; margin-top: 18px; }
+  .done h2 { margin: 0 0 8px; font-size: 17px; }
+  .stat { display: inline-block; margin-right: 18px; }
+  .stat b { font-size: 20px; margin-right: 4px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Index materials</h1>
+    <a href="/">Make a Blitz →</a>
+  </header>
+
+  <form id="form">
+    <fieldset>
+      <legend>1. Subject</legend>
+      <label for="subject">Which subject is this material for?</label>
+      <select id="subject" name="subject_id"></select>
+      <div id="newsubject" hidden>
+        <label for="subject_name">Name of the new subject</label>
+        <input id="subject_name" name="subject_name" type="text" placeholder="e.g. Chemistry">
+        <p class="hint">A new subject needs its VCAA study design below. It gets generic question types (multiple choice, short answer, extended response) until someone writes better ones.</p>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Study design (optional after the first time)</legend>
+      <label for="design">VCAA study design, PDF or Word</label>
+      <input id="design" name="study_design" type="file" accept=".pdf,.docx">
+      <p class="hint" id="designhint"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. Materials</legend>
+      <label for="files">Books, worksheets and question packs</label>
+      <input id="files" name="files" type="file" multiple accept=".pdf,.docx,.json,.zip">
+      <p class="hint">PDF or Word for books, worksheets and notes. A question pack a model built goes in as a zip
+        containing its JSON and its figures folder (any folder name). Several files at once is fine.</p>
+      <ul id="filelist" class="files"></ul>
+    </fieldset>
+
+    <div class="row">
+      <button id="go" type="submit">Index</button>
+      <span id="status"></span>
+    </div>
+  </form>
+
+  <fieldset id="progress" hidden>
+    <legend>Progress</legend>
+    <pre id="log"></pre>
+  </fieldset>
+
+  <section id="result" class="done" hidden>
+    <h2>Indexed</h2>
+    <div>
+      <span class="stat"><b id="r-q">0</b>questions</span>
+      <span class="stat"><b id="r-p">0</b>teaching sections</span>
+      <span class="stat"><b id="r-f">0</b>figures</span>
+    </div>
+    <p>Everything is in the folder below: the questions as a re-importable JSON, the teaching
+      sections, the coverage table and every figure. The live index the sheet generator uses was
+      updated at the same time.</p>
+    <p><code id="r-folder"></code></p>
+    <div class="row">
+      <a id="r-zip" href="#"><button type="button">Download the folder as a zip</button></a>
+      <a href="/"><button type="button" class="ghost">Make a Blitz from it →</button></a>
+    </div>
+    <h2 style="margin-top:16px">Coverage</h2>
+    <pre id="r-cov"></pre>
+  </section>
+</div>
+<script src="/indexer.js"></script>
+</body>
+</html>
