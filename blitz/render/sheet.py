@@ -508,9 +508,11 @@ def render_sheet(
     plan: SheetPlan,
     path: Path,
     design: StudyDesign | None = None,
-    max_pages: int = QUESTION_PAGES,
+    max_pages: int | None = None,
 ) -> dict:
     """Write the sheet and return a small report about what actually fitted."""
+    if max_pages is None:
+        max_pages = plan.spec.question_pages
     design = design or load_study_design(plan.spec.subject_id)
     ss = stylesheet()
     path = Path(path)

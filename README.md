@@ -15,7 +15,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Thing | State |
 |---|---|
 | Physics study design | **Imported from the VCAA PDF.** 71 dot points, VCAA's own wording. |
-| Business Management study design | **Imported from VCAA's Word file.** 46 dot points, VCAA's own wording. No concept lexicon yet, so tagging falls back on word overlap. |
+| Business Management study design | **Imported from VCAA's Word file.** 46 dot points, VCAA's own wording. Concept lexicon now written, covering all 46 — see the honesty note under Tagging accuracy. |
 | Physics questions | **The whole Checkpoints book imported** from a model-built pack: 841 questions, 1273 crops, 838 with solutions. See `docs/full-book-postmortem.md` for what that run got wrong and what the next one should do. |
 | Physics concept lexicon | Written, covering all 71 dot points. |
 | Question pack import | Schema, validator and importer done; example pack in `packs/`. |
@@ -24,6 +24,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | 81% right area on an unseen book, before the pack's own chapter tags are used. See below. |
 | Layout | Two columns of text on page one, one column of page crops on page two, solutions after. Chosen per sheet from what the questions need. |
+| Sheet length | Quick (1 page), Standard (2), Extended (4). The picker's budget and the renderer's page cap both follow it. |
 | Serial numbers | Every question carries one (`PH-0413`), printed on the sheet and its solution; the Questions page finds it. |
 | Browse mode | Any dot point can be browsed question by question and picked from by hand; picks are pinned and the rest fills in around them. |
 | Flags | A question flagged incomplete, corrupt or wrong never goes on a sheet until cleared. |
@@ -62,8 +63,28 @@ questions landed under special relativity.
 The fix is `blitz/studydesign/data/physics-lexicon.yaml` — a hand-written
 concept lexicon giving each dot point the vocabulary a question about it
 actually uses, plus `requires`/`avoid` vetoes and weights to break ties. See
-`blitz/ingest/lexicon.py`. Business Management has no lexicon yet, so it falls
-back on IDF-weighted word overlap, which is much weaker.
+`blitz/ingest/lexicon.py`.
+
+Business Management now has one too, covering all 46 dot points, and it needs a
+warning rather than a number. Its problem is the opposite of Physics': every dot
+point is written in the same managerial English, so the collisions are between
+dot points, not between the study design and the questions — corporate culture,
+stakeholders, CSR, training, motivation and global sourcing each appear once in
+Unit 3 and again in Unit 4 under change.
+
+It scores 100% on the sample bank and 100% on `evals/bm-probe.yaml`, and
+**neither figure means anything**, because the lexicon was tuned until they did.
+The probe is worth reading anyway for what it caught cold, at 72% coverage and
+71% exact: eight questions came back untagged because several dot points had
+been silently switched off. A bare stem in a `requires` list — `motivat` where
+`motivat*` was meant — matches nothing, so those dot points could never fire and
+nothing said so. `truncated_terms()` now detects that shape and a test holds
+both shipped lexicons to it.
+
+So: Business Management tagging is **untested on real material**. The honest
+number will come from the Checkpoints Business Management book scored by
+chapter, the same way Physics was (`--pack`). Expect it to be worse than
+Physics' 81% until then.
 
 **Both sets have now informed tuning**, so neither is a clean held-out
 measurement any more. The honest number comes from the full Checkpoints book,

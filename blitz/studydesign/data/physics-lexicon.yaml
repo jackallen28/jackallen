@@ -126,7 +126,7 @@ dot_points:
     triggers: [area under a force vs distance, change in gravitational potential
                energy, escape, energy to move a satellite]
   physics-u3-aos2-kk10:
-    triggers: [apparent weight, weightless, weightlessness, normal force,
+    triggers: [apparent weight, weightless*, weightlessness, normal force,
                free fall, astronaut, international space station]
   physics-u3-aos2-kk11:
     triggers: [orbital radius, orbital speed, period of the orbit, kepler,
@@ -285,7 +285,7 @@ dot_points:
     weight: 0.3
   physics-u4-aos2-kk03:
     triggers: [accuracy, accurate, precision, precise, repeatability,
-               reproducibility, resolution, validity, valid, uncertainty,
+               reproducibility, resolution, validity, valid*, uncertainty,
                systematic error, random error, outlier, error bars]
     weight: 0.3
   physics-u4-aos2-kk04:

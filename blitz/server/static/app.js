@@ -329,6 +329,7 @@ function payload() {
     question_type_ids: [...state.types],
     notes: $("#notes").value,
     title: $("#title").value,
+    length: $("#length").value,
     difficulty: $("#difficulty").value,
     include_solutions: $("#solutions").checked,
     prefer_figures: $("#figures").checked,

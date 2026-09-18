@@ -1,0 +1,489 @@
+# Concept lexicon for VCE Business Management Units 3 & 4.
+#
+# See blitz/ingest/lexicon.py for the format and physics-lexicon.yaml for the
+# reasoning behind having one at all. Business Management's problem is not
+# Physics' problem. Physics questions describe scenarios that share no words
+# with the study design. Business Management questions share *too many*: every
+# dot point is written in the same managerial English, so "employees",
+# "objectives", "strategies" and "the business" appear everywhere and separate
+# nothing.
+#
+# Two collisions do most of the damage, and most of the vetoes below exist for
+# them:
+#
+# 1. Unit 3 teaches a topic; Unit 4 teaches the same topic under change.
+#    Corporate culture is u3-aos1-kk09 and again u4-aos2-kk03; stakeholders are
+#    u3-aos1-kk03 and again u4-aos2-kk08; CSR is u3-aos3-kk09 and again
+#    u4-aos2-kk09; training, motivation, lean and global sourcing are all Unit 3
+#    dot points that reappear inside u4-aos2-kk02. Every Unit 4 twin therefore
+#    `requires` change vocabulary and outweighs its Unit 3 counterpart, so a
+#    question only lands in Unit 4 when it is actually about changing something.
+#
+# 2. A named theory is worth more than the words it is made of. "Lewin" alone
+#    cannot separate Force Field Analysis from the Three-step Change Model, so
+#    the model is triggered on unfreeze/refreeze and the analysis on
+#    weighting/ranking, and both are weighted above the general vocabulary they
+#    sit in.
+#
+# Terms are lowercased and matched by blitz/ingest/lexicon.py: a phrase as a
+# substring, a single word on token boundaries. Australian spellings are what
+# VCAA uses; the American ones are here too because textbooks are inconsistent.
+
+subject_id: business-management
+
+dot_points:
+
+  # --- Unit 3 AOS 1: business foundations ----------------------------------
+  bm-u3-aos1-kk01:
+    triggers: [sole trader, sole traders, sole proprietor, partnership,
+               partnerships, private limited company, public listed company,
+               social enterprise, social enterprises,
+               government business enterprise, gbe, pty ltd, proprietary limited,
+               listed on the asx, incorporated, incorporation, unlimited liability,
+               limited liability, legal structure, business structure,
+               type of business, types of business, ownership structure,
+               deed of partnership, float*, floated, board of directors,
+               personally liable, liable for the debts, liability,
+               share the profits, shares the profits, owned by two,
+               partner*, owner of the business]
+    weight: 1.4
+
+  bm-u3-aos1-kk02:
+    triggers: [business objective, business objectives, objective of the business,
+               to make a profit, increase market share, improve efficiency,
+               improve effectiveness, fulfil a market need, fulfill a market need,
+               market need, social need, shareholder expectations,
+               meet the expectations of shareholders, profit maximisation,
+               profitability, objectives of the business]
+    # "market share" on its own is a KPI; the objective is increasing it.
+    avoid: [percentage of market share, key performance indicator]
+
+  bm-u3-aos1-kk03:
+    triggers: [stakeholder, stakeholders, owners, managers, employees, customers,
+               suppliers, general community, shareholders, interested parties]
+    requires: [stakeholder, stakeholders]
+    # Stakeholders under change are u4-aos2-kk08.
+    avoid: [effect of change, impact of the change, impact of change,
+            during the change, business transformation]
+
+  bm-u3-aos1-kk04:
+    # A question rarely says "conflicting interests"; it says "explain how the
+    # interests of each may conflict". The bare words carry it, and `requires`
+    # keeps them from firing outside a stakeholder question.
+    triggers: [interest*, conflict*, competing, at odds,
+               characteristics of stakeholders, potential conflict,
+               stakeholder conflict, two groups, these groups]
+    # An exam question names the groups — "its workforce", "its investors"
+    # — and never uses the word "stakeholder".
+    requires: [stakeholder*, interest*, conflict*, groups, parties]
+    weight: 1.4
+
+  bm-u3-aos1-kk05:
+    triggers: [autocratic, persuasive, consultative, participative, laissez-faire,
+               laissez faire, management style, management styles,
+               style of management, leadership style, directive style]
+    weight: 1.3
+
+  bm-u3-aos1-kk06:
+    triggers: [appropriateness, most appropriate, appropriate style,
+               nature of the task, time available, experience of employees,
+               experience of the employees, manager preference,
+               preference of the manager, suitable style, best suited,
+               when choosing a style, justify the style]
+    requires: [style, styles, autocratic, persuasive, consultative,
+               participative, laissez-faire, laissez faire]
+    weight: 1.5
+
+  bm-u3-aos1-kk07:
+    triggers: [management skill, management skills, communication, delegation,
+               delegating, delegate, planning, leadership, decision-making,
+               decision making, interpersonal, interpersonal skills,
+               skills of a manager]
+    requires: [skill, skills, delegation, delegate, interpersonal,
+               decision-making, decision making]
+
+  bm-u3-aos1-kk08:
+    triggers: [management styles and management skills, styles and skills,
+               relationship between management styles,
+               relationship between styles and skills,
+               skills used with a style, style and the skills]
+    requires: [style, styles, autocratic, persuasive, consultative,
+               participative, laissez-faire, laissez faire]
+    weight: 1.7
+
+  bm-u3-aos1-kk09:
+    triggers: [corporate culture, official culture, real culture, workplace culture,
+               culture of the business, shared values, values and beliefs,
+               rituals, symbols, dress code, slogan, mission statement,
+               vision statement, code of conduct, the way things are done]
+    requires: [culture, values, rituals, symbols, slogan, mission, conduct]
+    # Developing or changing a culture is u4-aos2-kk03.
+    avoid: [strategies for its development, develop a positive culture,
+            cultural change, change the culture, changing the culture,
+            business transformation]
+
+  # --- Unit 3 AOS 2: human resource management -----------------------------
+  bm-u3-aos2-kk01:
+    triggers: [human resource management, human resources, hrm, human resource
+               manager, relationship between human resource management,
+               people management, workforce planning]
+    requires: [objective, objectives]
+    weight: 0.9
+
+  bm-u3-aos2-kk02:
+    triggers: [maslow, hierarchy of needs, self-actualisation, self-actualization,
+               esteem needs, physiological needs, safety needs, belonging,
+               social needs, locke, latham, goal setting theory, goal-setting,
+               lawrence, nohria, four drive theory, four-drive,
+               drive to acquire, drive to bond, drive to learn, drive to defend,
+               theory of motivation, motivation theory, theories of motivation]
+    weight: 1.7
+
+  bm-u3-aos2-kk03:
+    triggers: [motivation strategy, motivation strategies, performance-related pay,
+               performance related pay, career advancement, investment in training,
+               support strategies, support strategy, sanction, sanctions,
+               bonus, bonuses, commission, pay rise, promotion, counselling,
+               employee assistance, mentoring program, demotion, pay cut,
+               motivate employees, motivating employees, motivate staff]
+    requires: [motivat*, sanction, performance-related pay, performance related pay,
+               career advancement, bonus, commission]
+    # Motivation used as a response to a KPI is u4-aos2-kk02.
+    avoid: [business transformation, respond to key performance]
+
+  bm-u3-aos2-kk04:
+    triggers: [advantages and disadvantages, advantage and disadvantage,
+               short-term, short term, long-term, long term, longer term,
+               limitation, limitations, drawback, drawbacks,
+               benefits and limitations, strengths and weaknesses,
+               compare two motivation, one advantage, one disadvantage]
+    requires: [motivat*, sanction, performance-related pay, performance related pay,
+               career advancement, bonus, bonuses, incentive pay]
+    weight: 1.3
+
+  bm-u3-aos2-kk05:
+    triggers: [on-the-job training, off-the-job training, on the job training,
+               off the job training, training option, training options,
+               induction, coaching, job rotation, apprenticeship, traineeship,
+               seminar, external course, training program, training programs,
+               upskilling, retraining, train*, away from the workplace,
+               at their workstation, outside the workplace]
+    requires: [train*, induction, apprenticeship, coaching]
+    weight: 1.3
+
+  bm-u3-aos2-kk06:
+    triggers: [performance management, management by objectives, mbo,
+               appraisal, appraisals, performance appraisal, performance review,
+               self-evaluation, self evaluation, employee observation,
+               observation of employees, 360 degree, feedback interview,
+               performance gap]
+    requires: [performance management, appraisal, appraisals, observation,
+               self-evaluation, self evaluation, management by objectives, mbo]
+    weight: 1.4
+
+  bm-u3-aos2-kk07:
+    triggers: [termination, terminated, retirement, retire*, redundancy, redundant,
+               voluntary redundancy, involuntary redundancy, resignation, resign*,
+               dismissal, dismissed, summary dismissal, unfair dismissal,
+               entitlement, entitlements, long service leave, notice period,
+               transition considerations, exit interview, sacked, let go]
+    weight: 1.4
+
+  bm-u3-aos2-kk08:
+    triggers: [employer association, employer associations, union, unions,
+               trade union, industrial relations, participants in the workplace,
+               fair work commission, fair work ombudsman, workplace relations,
+               role of the human resource manager, representing employees]
+    requires: [union, unions, employer association, employer associations,
+               fair work, participants]
+    weight: 1.4
+
+  bm-u3-aos2-kk09:
+    triggers: [award, awards, modern award, enterprise agreement,
+               collective agreement, individual agreement, enterprise bargaining,
+               bargaining, wages and conditions, conditions of work,
+               national employment standards, minimum wage, pay and conditions,
+               employment contract]
+    requires: [award, awards, agreement, agreements, bargaining, wages,
+               conditions, minimum wage]
+    weight: 1.3
+
+  bm-u3-aos2-kk10:
+    triggers: [dispute, disputes, dispute resolution, resolving a dispute,
+               mediation, mediator, arbitration, arbitrator, conciliation,
+               grievance, grievance procedure, industrial action, strike,
+               work stoppage, third party, resolve the dispute]
+    requires: [dispute*, disagreement, mediat*, arbitrat*, concilia*,
+               grievance, industrial action, third party]
+    weight: 1.6
+
+  # --- Unit 3 AOS 3: operations management ---------------------------------
+  bm-u3-aos3-kk01:
+    triggers: [operations management, operations manager, operations function,
+               relationship between operations, role of operations]
+    requires: [objective, objectives]
+    weight: 0.9
+
+  bm-u3-aos3-kk02:
+    triggers: [operations system, inputs processes and outputs, transformation
+               process, key elements of an operations system, input, inputs,
+               output, outputs, raw materials, processing, converted into,
+               transforming inputs]
+    requires: [input, inputs, output, outputs, operations system,
+               transformation process]
+    weight: 1.3
+
+  bm-u3-aos3-kk03:
+    triggers: [manufacturing business, service business, manufacturer,
+               service provider, tangible, intangible, production line,
+               customer contact, perishability, perishable,
+               characteristics of operations, manufacturing and service,
+               goods and services]
+    # Anchored to the comparison itself. Bare "manufacturer" is just the
+    # setting of half the questions in the course.
+    requires: [tangible, intangible, characteristics of operations,
+               manufacturing and service, manufacturing business,
+               service business, goods and services, customer contact,
+               perishab*]
+
+  bm-u3-aos3-kk04:
+    triggers: [automated production line, automated production, automation,
+               automate, robotics, robot*, robots, computer-aided design,
+               computer aided design, cad, computer-aided manufacturing,
+               computer aided manufacturing, cam, artificial intelligence,
+               online services, 3d printing, technological development,
+               technological developments, new technology, machinery]
+    requires: [technolog*, automat*, robot*, robotics, cad, cam,
+               artificial intelligence, online, 3d printing, machinery]
+    weight: 1.4
+    # Investing in technology as a response to change is u4-aos2-kk02.
+    avoid: [business transformation, respond to key performance]
+
+  bm-u3-aos3-kk05:
+    triggers: [forecasting, forecast*, master production schedule,
+               materials requirement planning, mrp, just in time, just-in-time,
+               jit, inventory, stock levels, stock on hand, supply chain,
+               materials management, materials strategy, holding costs,
+               ordering materials, bill of materials, ordering stock,
+               only as it is needed, as it is needed, as they are needed]
+    requires: [material, materials, forecast*, forecasting, inventory, stock,
+               just in time, just-in-time, jit, supply chain, schedule]
+    weight: 1.5
+
+  bm-u3-aos3-kk06:
+    triggers: [quality control, quality assurance, quality management,
+               total quality management, tqm, quality standards, iso,
+               certification, inspection, inspections, defect, defects,
+               continuous improvement, quality strategy, quality strategies,
+               faulty products, rework]
+    requires: [quality, defect, defects, inspection, inspections,
+               continuous improvement]
+    weight: 1.4
+    # "zero defects" is lean management, kk08.
+    avoid: [zero defects, one-piece flow, takt]
+
+  bm-u3-aos3-kk07:
+    triggers: [waste minimisation, waste minimization, minimise waste,
+               minimize waste, reduce reuse recycle, reuse, recycl*,
+               waste in the production process, offcuts, landfill, scrap,
+               excess materials, sends to landfill]
+    # Not bare "reduce": every question in the study reduces something.
+    requires: [waste, recycl*, reuse, landfill, scrap, offcuts]
+    weight: 1.4
+
+  bm-u3-aos3-kk08:
+    triggers: [lean management, lean production, lean manufacturing,
+               pull strategy, pull system, one-piece flow, one piece flow,
+               takt, takt time, zero defects, eliminate waste,
+               principles of lean, lean strategy, lean strategies]
+    requires: [lean, one-piece flow, one piece flow, takt, zero defects,
+               pull strategy, pull system]
+    weight: 1.7
+
+  bm-u3-aos3-kk09:
+    triggers: [corporate social responsibility, csr, socially responsible,
+               environmental sustainability, environmentally sustainable,
+               sustainable, sustainability, ethical sourcing, ethically sourced,
+               carbon, emissions, environmental impact, recycled materials,
+               responsible disposal]
+    # Anchored to the operations system, or it claims every mention of CSR.
+    requires: [operations, input, inputs, output, outputs, production,
+               supplier, suppliers, manufactur*, waste, materials]
+    avoid: [business transformation, implementing change, during the change]
+    weight: 1.3
+
+  bm-u3-aos3-kk10:
+    triggers: [global sourcing, global sourcing of inputs, overseas manufacture,
+               overseas manufacturing, global outsourcing, offshore, offshoring,
+               outsourced overseas, global considerations, imported inputs,
+               international suppliers, low-cost countries, outsourc*,
+               to a supplier in, moving its component, another country]
+    requires: [global, overseas, offshore, offshoring, international,
+               import*, outsourc*, to a supplier in, another country]
+    # The same three strategies appear in u4-aos2-kk02 as responses to change.
+    avoid: [business transformation, respond to key performance,
+            implementing change]
+    weight: 1.4
+
+  # --- Unit 4 AOS 1: reviewing performance ---------------------------------
+  bm-u4-aos1-kk01:
+    triggers: [business change, concept of business change, change in business,
+               internal environment, external environment, operating environment,
+               macro environment, forces for change, need for change,
+               nature of change]
+    requires: [change, changes, changing]
+
+  bm-u4-aos1-kk02:
+    triggers: [proactive*, reactive*, anticipat*, in anticipation of,
+               ahead of the change, in response to a crisis, pre-empt,
+               only once, before it happens, after it happens]
+    requires: [proactive, reactive, anticipat*, pre-empt]
+    weight: 1.6
+
+  bm-u4-aos1-kk03:
+    triggers: [key performance indicator, key performance indicators, kpi, kpis,
+               percentage of market share, net profit figures, net profit figure,
+               rate of productivity growth, productivity growth, number of sales,
+               rates of staff absenteeism, absenteeism, level of staff turnover,
+               staff turnover, level of wastage, number of customer complaints,
+               customer complaints, number of website hits, website hits,
+               number of workplace accidents, workplace accidents,
+               sources of data, analyse the performance]
+    weight: 1.5
+    # This dot point is the KPIs themselves. Reviewing them after a change to
+    # judge it is u4-aos2-kk10, and a named strategy outranks the numbers it
+    # is being judged on.
+    avoid: [after implementing, after the change, business transformation,
+            reviewing key performance indicators, porter, lower cost,
+            differentiation]
+
+  bm-u4-aos1-kk04:
+    triggers: [force field analysis, force-field analysis, force field,
+               weight*, rank*, implementing a response, evaluating the response,
+               driving and restraining forces, lewin's force field]
+    requires: [force field, force-field, weight*, rank*]
+    weight: 1.8
+
+  bm-u4-aos1-kk05:
+    triggers: [driving force, driving forces, drivers of change, pursuit of profit,
+               reduction of costs, globalisation, globalization, innovation,
+               societal attitudes, competitors, legislation, new technology,
+               push for change, forces driving]
+    requires: [driving, driver, drivers, force, forces, change, changes]
+    avoid: [restraining, resistance, inertia]
+    weight: 1.3
+
+  bm-u4-aos1-kk06:
+    triggers: [restraining force, restraining forces, organisational inertia,
+               organizational inertia, inertia, resistance to change,
+               employees resist*, legislation, financial considerations,
+               time, forces restraining, holding the change back]
+    requires: [restrain*, restraining, inertia, resist*, resistance]
+    weight: 1.5
+
+  bm-u4-aos1-kk07:
+    triggers: [porter, porter's generic strategies, generic strategies,
+               lower cost, lower-cost, cost leadership, differentiat*,
+               competing on price, compete on price, distinctive product,
+               point of difference, competitive advantage, two key approaches,
+               strategic management]
+    requires: [porter, lower cost, lower-cost, differentiat*, competing on price,
+               compete on price, distinctive product, point of difference,
+               generic strategies, cost leadership]
+    weight: 1.7
+
+  # --- Unit 4 AOS 2: implementing change -----------------------------------
+  bm-u4-aos2-kk01:
+    triggers: [leader*, leading the change,
+               change leader, vision for the change, role of the leader,
+               lead the transformation, during the implementation,
+               implementation stage, implementing the change]
+    requires: [change, changes, changing, transformation]
+    weight: 1.4
+
+  bm-u4-aos2-kk02:
+    triggers: [management strategies to respond, respond to key performance,
+               staff training, staff motivation, change in management styles,
+               increased investment in technology, improving quality in production,
+               cost cutting, cost-cutting, lean production techniques,
+               initiating lean production, redeployment of resources,
+               redeployment, innovation, global sourcing of inputs,
+               overseas manufacture, global outsourcing,
+               new business opportunities, seek new opportunities]
+    requires: [change, changes, changing, transformation, key performance,
+               kpi, kpis, respond, opportunities]
+    weight: 1.4
+
+  bm-u4-aos2-kk03:
+    triggers: [corporate culture, strategies for its development,
+               develop a positive culture, developing the culture,
+               cultural change, change the culture, changing the culture,
+               positive culture for change, new culture, culture strategy]
+    requires: [change, changes, changing, develop, developing, development,
+               transformation]
+    weight: 1.5
+
+  bm-u4-aos2-kk04:
+    triggers: [senge, learning organisation, learning organization,
+               systems thinking, personal mastery, mental models, shared vision,
+               team learning, five disciplines, principles of the learning]
+    requires: [senge, learning organisation, learning organization,
+               systems thinking, personal mastery, mental models, team learning]
+    weight: 1.8
+
+  bm-u4-aos2-kk05:
+    triggers: [low-risk strategy, low-risk strategies, low risk strategy,
+               low risk strategies, little risk, overcome employee resistance,
+               reduce resistance, overcome resistance, communication,
+               empower*, support, incentive*, involving employees,
+               invited staff, consulted staff, explain the reasons,
+               two-way communication, held meetings]
+    requires: [low-risk, low risk, little risk, resist*]
+    weight: 1.5
+
+  bm-u4-aos2-kk06:
+    triggers: [high-risk strategy, high-risk strategies, high risk strategy,
+               high risk strategies, manipulation, manipulate, manipulating,
+               threat*, threats, threaten, coercion, coerce,
+               overcome employee resistance]
+    requires: [high-risk, high risk, manipulat*, threat*, threaten, coercion, coerce]
+    weight: 1.6
+
+  bm-u4-aos2-kk07:
+    triggers: [three-step change model, three step change model,
+               unfreeze, unfreezing, refreeze, refreezing, freeze the change,
+               lewin's three-step, lewin's three step, three-step model]
+    requires: [unfreeze, unfreezing, refreeze, refreezing, three-step, three step]
+    weight: 1.8
+
+  bm-u4-aos2-kk08:
+    triggers: [effect of change on stakeholder, effect of change on stakeholders,
+               impact of change on, impact of the change on, stakeholder groups,
+               affect*, surrounding community, general community, suppliers,
+               owners managers employees]
+    requires: [change, changes, changing, transformation, restructur*, closure,
+               close its, closing]
+    weight: 1.5
+
+  bm-u4-aos2-kk09:
+    triggers: [corporate social responsibility, csr, socially responsible,
+               ethical considerations, responsibility when implementing,
+               treating employees fairly during, honest communication about]
+    # Only when the question is about changing something; the operations
+    # version of the same words is u3-aos3-kk09.
+    requires: [change, changes, changing, transformation, restructure,
+               implementing, redundanc*]
+    weight: 1.3
+
+  bm-u4-aos2-kk10:
+    # The dot point is "reviewing KPIs to evaluate the transformation", so what
+    # separates it from u4-aos1-kk03 is the reviewing and the afterwards, not
+    # the KPIs. Both must be there, which is what `requires` enforces.
+    triggers: [review*, evaluat*, after implementing, after the change,
+               after completing, business transformation, compare*,
+               effectiveness of business transformation, before and after,
+               recorded beforehand, beforehand, this comparison]
+    requires: [key performance, kpi, kpis, transformation, restructur*,
+               productivity, after the change, after completing,
+               after implementing]
+    weight: 1.6

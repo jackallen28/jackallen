@@ -26,6 +26,24 @@ def test_questions_fill_two_pages_when_there_is_material(seeded, tmp_path):
     assert result["question_pages"] == 2
 
 
+def test_a_quick_sheet_is_one_page_of_questions(seeded, tmp_path):
+    result = render_sheet(_plan(seeded, seed=1, length="quick"), tmp_path / "s.pdf")
+    assert result["question_pages"] == 1
+
+
+def test_an_extended_sheet_may_run_past_two(seeded, tmp_path):
+    """The cap moves with the length, so a long sheet is not truncated at two.
+
+    The sample bank is small, so this asserts the ceiling rather than that
+    four pages actually fill — running out of questions is the index's
+    business, not the renderer's.
+    """
+    result = render_sheet(_plan(seeded, seed=1, length="extended"), tmp_path / "s.pdf")
+    assert result["question_pages"] <= 4
+    standard = render_sheet(_plan(seeded, seed=1), tmp_path / "t.pdf")
+    assert result["question_pages"] >= standard["question_pages"]
+
+
 def test_solutions_land_after_the_questions(seeded, tmp_path):
     out = tmp_path / "s.pdf"
     result = render_sheet(_plan(seeded, seed=1), out)

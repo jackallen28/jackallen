@@ -25,9 +25,53 @@ def test_lexicon_ids_all_exist_in_the_study_design():
 
 
 def test_a_subject_without_a_lexicon_gets_an_empty_one():
-    lex = load_lexicon("business-management")
+    """Both shipped subjects now have one, so this uses a subject that cannot."""
+    lex = load_lexicon("no-such-subject")
     assert isinstance(lex, Lexicon)
     assert not lex.concepts
+
+
+def test_business_management_has_a_lexicon_covering_every_dot_point():
+    design = load_study_design("business-management")
+    lex = load_lexicon("business-management")
+    missing = {kk.id for kk in design.all_key_knowledge()} - set(lex.concepts)
+    assert not missing, f"dot points with no trigger vocabulary: {sorted(missing)}"
+
+
+@pytest.mark.parametrize("subject", ["physics", "business-management"])
+def test_no_lexicon_term_is_a_truncated_stem(subject):
+    """A bare stem matches nothing, and in `requires` it silently kills the
+    dot point. `motivat*` is the way to write a word family."""
+    from blitz.ingest.lexicon import truncated_terms
+
+    bad = truncated_terms(load_lexicon(subject))
+    assert not bad, f"write these with a trailing '*': {bad}"
+
+
+@pytest.mark.parametrize("term,text,expected", [
+    ("motivat*", "a motivation strategy", True),
+    ("motivat*", "they motivate staff", True),
+    ("motivat", "a motivation strategy", False),   # the trap the star exists for
+    ("train*", "training options", True),
+    ("train", "training options", False),
+    ("train", "the train accelerates", True),
+    ("restructur*", "after its restructure", True),
+])
+def test_star_matches_a_word_family(term, text, expected):
+    from blitz.ingest.lexicon import _present
+
+    assert _present(term, text) is expected
+
+
+def test_one_hit_counts_once():
+    """Listing both singular and plural must not double the score."""
+    from blitz.ingest.lexicon import Concept
+
+    both = Concept("x", triggers=("key performance indicator",
+                                  "key performance indicators"))
+    one = Concept("x", triggers=("key performance indicator",))
+    text = "review the key performance indicators"
+    assert both.matches(text) == one.matches(text)
 
 
 def test_tagger_refuses_a_stale_lexicon():

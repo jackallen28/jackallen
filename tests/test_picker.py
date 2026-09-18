@@ -147,6 +147,41 @@ def test_ordering_groups_by_area_of_study(seeded):
     assert ranks == sorted(ranks)
 
 
+class TestSheetLength:
+    """Quick / standard / extended change how much the picker is allowed to
+    spend. Whether the sheet fills up is then a question about the index."""
+
+    def test_a_longer_sheet_gets_more(self, seeded):
+        got = {}
+        for length in ("quick", "standard", "extended"):
+            plan = build_plan(seeded, _spec(seed=3, length=length))
+            got[length] = sum(q.marks or 1 for q in plan.questions)
+        assert got["quick"] < got["standard"] <= got["extended"]
+
+    def test_standard_is_what_the_default_was(self, seeded):
+        """Two pages, unchanged: every sheet made before this option existed."""
+        a = build_plan(seeded, _spec(seed=9))
+        b = build_plan(seeded, _spec(seed=9, length="standard"))
+        c = build_plan(seeded, _spec(seed=9), pages=2)
+        assert [q.id for q in a.questions] == [q.id for q in b.questions]
+        assert [q.id for q in a.questions] == [q.id for q in c.questions]
+
+    def test_a_quick_sheet_never_splits_into_two_layouts(self, seeded):
+        """One page cannot be a text page and a crop page both."""
+        plan = build_plan(seeded, _spec(seed=4, length="quick"))
+        assert plan.wide_ids == []
+
+    def test_an_unknown_length_falls_back_to_standard(self, seeded):
+        plan = build_plan(seeded, _spec(seed=9, length="enormous"))
+        expected = build_plan(seeded, _spec(seed=9))
+        assert [q.id for q in plan.questions] == [q.id for q in expected.questions]
+
+    def test_a_spec_saved_before_lengths_existed_still_loads(self):
+        """Browse mode and the student log round-trip specs through JSON."""
+        old = '{"subject_id": "physics", "kk_ids": [], "difficulty": "mixed"}'
+        assert SheetSpec.from_json(old).length == "standard"
+
+
 @pytest.mark.parametrize("word,stem", [
     ("relativity", "relat"),
     ("motion", "motion"),

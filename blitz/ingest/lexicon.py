@@ -64,10 +64,17 @@ class Concept:
         if self.vetoed(haystack):
             return 0.0
 
+        hits = [t for t in self.triggers if _present(t, haystack)]
+        # One piece of evidence counts once. Listing "key performance
+        # indicator" and "key performance indicators" is the natural way to
+        # write a lexicon, and both match the plural — which doubled the
+        # score and let a dot point with a long trigger list beat a named
+        # theory that fired precisely. A trigger contained in a longer trigger
+        # that also matched is the same hit, so only the longest counts.
+        hits = [t for t in hits
+                if not any(t != o and t in o for o in hits)]
         score = 0.0
-        for trigger in self.triggers:
-            if not _present(trigger, haystack):
-                continue
+        for trigger in hits:
             words = trigger.count(" ") + 1
             score += 1.0 if words == 1 else 1.0 + 0.8 * (words - 1)
         return score * self.weight
@@ -100,10 +107,25 @@ def _boundary(term: str) -> re.Pattern:
     return re.compile(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])")
 
 
+@functools.lru_cache(maxsize=None)
+def _prefix(stem: str) -> re.Pattern:
+    """A word starting with this stem: "motivat*" for motivate/motivation."""
+    return re.compile(rf"(?<![a-z0-9]){re.escape(stem)}")
+
+
 def _present(term: str, haystack: str) -> bool:
     term = term.lower().strip()
     if not term:
         return False
+    if term.endswith("*"):
+        # A trailing star is the only wildcard, and it earns its keep: a word
+        # family ("motivate", "motivation", "motivating", "motivated") is four
+        # entries without it, and writing the bare stem instead does not work
+        # — a single word is matched on both boundaries, so "motivat" matches
+        # nothing at all. That silently killed several dot points here before
+        # a held-out probe caught it.
+        stem = term[:-1]
+        return bool(stem) and bool(_prefix(stem).search(haystack))
     if " " in term or "-" in term or "/" in term or not term.isalnum():
         # Phrases and symbols are matched as substrings: the surrounding
         # punctuation in a question is unpredictable.
@@ -139,6 +161,44 @@ def load_lexicon(subject_id: str, directory: Path | None = None) -> Lexicon:
         return Lexicon(subject_id=subject_id)
     with path.open(encoding="utf-8") as fh:
         return _parse(yaml.safe_load(fh) or {})
+
+
+def truncated_terms(lexicon: Lexicon) -> list[tuple[str, str]]:
+    """Terms that look like a stem someone forgot to put a `*` on.
+
+    Writing `motivat` where `motivat*` was meant is silent and expensive: a
+    single word is matched on both boundaries, so `motivat` matches neither
+    "motivation" nor "motivate" nor anything else, and in a `requires` list it
+    switches the whole dot point off for good. Nothing complains; the dot point
+    simply stops being used.
+
+    The signature is precise enough to test on: a one-word term that never
+    occurs as a whole word anywhere in the lexicon, but does occur as the start
+    of a longer word that does. Real guard words like "objective" survive,
+    because the lexicon uses them as words somewhere.
+    """
+    # Every word the lexicon uses, and which entries it came from.
+    sources: dict[str, set[str]] = {}
+    for c in lexicon.concepts.values():
+        for term in (*c.triggers, *c.requires, *c.avoid):
+            for word in re.findall(r"[a-z0-9]+", term):
+                sources.setdefault(word, set()).add(term)
+
+    out = []
+    for kk_id, c in lexicon.concepts.items():
+        for term in (*c.triggers, *c.requires, *c.avoid):
+            if term.endswith("*") or not term.isalnum():
+                continue
+            if sources.get(term, set()) - {term}:
+                continue        # some other entry uses it as a word, so it is one
+            longer = [w for w in sources if w != term and w.startswith(term)]
+            # "bonus" beside "bonuses" is a deliberate pair, not a stem: both
+            # forms are listed on purpose and both match what they should.
+            if all(w in (term + "s", term + "es", term + "d") for w in longer):
+                continue
+            if longer:
+                out.append((kk_id, term))
+    return sorted(set(out))
 
 
 def validate(lexicon: Lexicon, valid_kk_ids: set[str]) -> list[str]:

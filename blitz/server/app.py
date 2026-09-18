@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from .. import db
 from ..config import CROPS_DIR, OUT_DIR, STUDENTS_DIR, ensure_dirs
-from ..models import SheetSpec
+from ..models import DEFAULT_LENGTH, SHEET_LENGTHS, SheetSpec
 from ..picker import build_plan
 from ..render import render_sheet
 from ..studydesign import list_subjects, load_study_design
@@ -82,6 +82,9 @@ class SheetRequest(BaseModel):
     question_type_ids: list[str] = Field(default_factory=list)
     notes: str = ""
     title: str = ""
+    # quick | standard | extended. An unknown value falls back to standard
+    # rather than failing the request — a sheet is better than an error.
+    length: str = DEFAULT_LENGTH
     difficulty: str = "mixed"
     include_solutions: bool = True
     prefer_figures: bool = True
@@ -98,6 +101,8 @@ class SheetRequest(BaseModel):
 
     def to_spec(self) -> SheetSpec:
         fields = self.model_dump(exclude={"student_id", "student_name", "allow_repeats"})
+        if fields.get("length") not in SHEET_LENGTHS:
+            fields["length"] = DEFAULT_LENGTH
         return SheetSpec(**fields)
 
 

@@ -184,8 +184,10 @@ def build_plan(
     conn: sqlite3.Connection,
     spec: SheetSpec,
     design: StudyDesign | None = None,
-    pages: int = QUESTION_PAGES,
+    pages: int | None = None,
 ) -> SheetPlan:
+    # The spec carries the sheet length, so no call site has to pass it on.
+    pages = pages if pages is not None else spec.question_pages
     design = design or load_study_design(spec.subject_id)
     rng = random.Random(spec.seed if spec.seed is not None else 0xB117)
     keywords = _keywords(spec.notes)
@@ -343,13 +345,17 @@ def build_plan(
                    if not q.is_cropped or legible_in_columns(q, 2)]
         crops = [q for q in ranked if q not in legible]
         columns = 2
-        if not crops:
-            chosen, type_counts, budget, remaining = select(2, legible)
-        elif not legible:
+        if not legible:
             columns = 1
             chosen, type_counts, budget, remaining = select(1, ranked)
+        elif not crops or pages < 2:
+            # A one-page sheet cannot be a text page and a crop page both, so
+            # it is the text page; a crop that needs the full width is simply
+            # not a candidate for it.
+            chosen, type_counts, budget, remaining = select(2, legible)
         else:
-            page1 = column_height_mm(first_page=True) * 2 * SAFETY
+            # Text fills every page but the last; the crops get the last one.
+            page1 = budget_mm(pages - 1, columns=2)
             page2 = column_height_mm(first_page=False) * SAFETY
             # The crop page holds two or three questions, so they should be
             # the worked problems the text page cannot carry, not more

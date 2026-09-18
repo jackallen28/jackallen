@@ -218,6 +218,45 @@ def score_pack(pack_path: Path, use_model: bool = False) -> dict:
     return stats
 
 
+def score_probe(path: Path, use_model: bool = False) -> dict:
+    """Score a hand-written probe file (see evals/bm-probe.yaml)."""
+    import yaml
+
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    design = load_study_design(raw["subject_id"])
+    items = raw["questions"]
+    if use_model:
+        tagger = ClaudeTagger(design)
+        results = tagger.tag_all([{"text": q["text"]} for q in items])
+    else:
+        tagger = KeywordTagger(design)
+        results = [tagger.tag(q["text"], None, None) for q in items]
+
+    stats = {"total": len(items), "tagged": 0, "exact": 0, "same_area": 0,
+             "rejected": 0, "mistakes": []}
+    for item, result in zip(items, results):
+        gold = item["gold"]
+        if result.rejected or not result.kk_ids:
+            stats["rejected"] += 1
+            stats["mistakes"].append((item["text"][:60], gold, "—", "untagged"))
+            continue
+        stats["tagged"] += 1
+        pred = result.kk_ids[0]
+        if pred == gold:
+            stats["exact"] += 1
+            stats["same_area"] += 1
+        elif area_of(design, pred) == area_of(design, gold):
+            stats["same_area"] += 1
+            stats["mistakes"].append((item["text"][:60], gold, pred, "area ok"))
+        else:
+            stats["mistakes"].append((item["text"][:60], gold, pred, "WRONG AREA"))
+    tagged = stats["tagged"] or 1
+    stats["exact_precision"] = stats["exact"] / tagged
+    stats["area_precision"] = stats["same_area"] / tagged
+    stats["coverage"] = stats["tagged"] / stats["total"]
+    return stats
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("pdf", type=Path, nargs="?",
@@ -228,9 +267,23 @@ def main() -> int:
                     help="score against a question pack's chapter-level tags "
                          "(area-of-study level; the honest number for a book "
                          "the lexicon was not tuned on)")
+    ap.add_argument("--probe", type=Path,
+                    help="score a hand-written probe file, e.g. evals/bm-probe.yaml")
     ap.add_argument("--model", action="store_true",
                     help="score the Claude tagger instead of the keyword fallback")
     args = ap.parse_args()
+
+    if args.probe:
+        s = score_probe(args.probe, use_model=args.model)
+        print(f"\n{args.probe.name}: {s['total']} questions")
+        print(f"  tagged              : {s['tagged']}  ({s['coverage']:.0%})")
+        print(f"  EXACT dot point     : {s['exact']}/{s['tagged']} "
+              f"({s['exact_precision']:.0%})")
+        print(f"  right area of study : {s['same_area']}/{s['tagged']} "
+              f"({s['area_precision']:.0%})")
+        for text, gold, pred, why in s["mistakes"]:
+            print(f"    [{why}] {gold} -> {pred}: {text}")
+        return 0
 
     if args.pack:
         s = score_pack(args.pack, use_model=args.model)

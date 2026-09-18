@@ -31,7 +31,7 @@ from pathlib import Path
 from . import db
 from .config import OUT_DIR, ensure_dirs
 from .corpus.sample import load_all_samples
-from .models import SheetSpec
+from .models import DEFAULT_LENGTH, SHEET_LENGTHS, SheetSpec
 from .picker import build_plan
 from .render import render_sheet
 from .studydesign import list_subjects, load_study_design
@@ -248,6 +248,7 @@ def cmd_generate(args) -> int:
         question_type_ids=args.type or [],
         notes=args.notes or "",
         title=args.title or "",
+        length=args.length,
         difficulty=args.difficulty,
         include_solutions=not args.no_solutions,
         allow_generated=not args.no_generated,
@@ -539,6 +540,8 @@ def build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--type", action="append", help="restrict to a question type")
     gen.add_argument("--notes", help="free-text nudge, same as the notes box")
     gen.add_argument("--title")
+    gen.add_argument("--length", default=DEFAULT_LENGTH, choices=list(SHEET_LENGTHS),
+                     help="pages of questions: quick 1, standard 2, extended 4")
     gen.add_argument("--difficulty", default="mixed",
                      choices=["easy", "mixed", "hard"])
     gen.add_argument("--no-solutions", action="store_true")

@@ -1,0 +1,193 @@
+# A held-out probe for the Business Management tagger.
+#
+# The sample bank was used to tune business-management-lexicon.yaml, so it can
+# no longer measure it. These questions were written afterwards, in exam voice
+# rather than study-design voice: a scenario, a named business, and a command
+# word — deliberately avoiding the study design's own phrasing, because quoting
+# it is what makes word-overlap tagging look better than it is.
+#
+# THAT RULE WAS BROKEN, ON PURPOSE, AND THIS FILE IS NOW BURNED.
+#
+# Scored cold the first time, the tagger got 72% coverage and 71% exact. The
+# failures were not close calls: eight questions came back untagged because
+# several dot points had been switched off by a mechanical bug (a bare stem
+# like `motivat` in a `requires` list matches nothing, so the dot point could
+# never fire — see `truncated_terms` in blitz/ingest/lexicon.py). Fixing that
+# and filling the exam-voice vocabulary gaps it exposed took the lexicon to
+# 100% here and on the sample bank.
+#
+# So neither number measures anything now. Both sets have been fitted. What
+# this file is still good for is regression: if a later change to the lexicon
+# or the tagger breaks one of these, that shows up immediately.
+#
+# The honest next measurement needs questions nobody has tuned against — the
+# real Checkpoints Business Management book, scored by chapter the way
+# `--pack` scores Physics. Until then, treat Business Management tagging as
+# untested on real material.
+#
+#     python evals/tagging_eval.py --probe evals/bm-probe.yaml
+#
+# Gold labels are the dot point a VCE teacher would file each question under.
+
+subject_id: business-management
+
+questions:
+
+  - gold: bm-u3-aos1-kk01
+    text: >-
+      Bellview Timber is owned by two people who share the profits equally and
+      are each personally liable for the debts of the business. Identify this
+      form of ownership and outline one disadvantage of it.
+
+  - gold: bm-u3-aos1-kk02
+    text: >-
+      Harrow Retail has set a target of lifting its share of the homewares
+      market from 12 per cent to 18 per cent within two years. Explain one
+      other aim Harrow Retail might pursue at the same time.
+
+  - gold: bm-u3-aos1-kk04
+    text: >-
+      Following a decision to automate its packing line, Delcort Foods faces
+      criticism from its workforce while its investors are pleased. Explain
+      how the interests of these two groups differ.
+
+  - gold: bm-u3-aos1-kk05
+    text: >-
+      Priya makes all decisions herself and issues instructions to staff
+      without seeking their views. Identify the management style Priya uses.
+
+  - gold: bm-u3-aos1-kk06
+    text: >-
+      A fire has broken out in a warehouse and staff must be evacuated
+      immediately. Justify the style a manager should adopt in this situation.
+
+  - gold: bm-u3-aos1-kk07
+    text: >-
+      Explain how a manager uses delegation when overseeing a large project
+      with a fixed deadline.
+
+  - gold: bm-u3-aos1-kk09
+    text: >-
+      Staff at Nulla Engineering describe a strong sense of shared purpose,
+      greet each other by name and follow long-standing traditions at the end
+      of every project. Distinguish between the official and the real culture
+      at Nulla Engineering.
+
+  - gold: bm-u3-aos2-kk02
+    text: >-
+      Outline how the Four Drive Theory explains the behaviour of employees at
+      work.
+
+  - gold: bm-u3-aos2-kk04
+    text: >-
+      Garrick Motors has introduced bonuses tied to individual output. Explain
+      one limitation of relying on this over the longer term.
+
+  - gold: bm-u3-aos2-kk05
+    text: >-
+      Explain one advantage of training staff away from the workplace rather
+      than at their workstation.
+
+  - gold: bm-u3-aos2-kk06
+    text: >-
+      Describe how a business could use appraisals to lift the performance of
+      an individual employee.
+
+  - gold: bm-u3-aos2-kk07
+    text: >-
+      Two hundred roles at Sandmoor Logistics will no longer exist after the
+      closure of a depot. Identify this form of termination and outline one
+      entitlement the affected staff would receive.
+
+  - gold: bm-u3-aos2-kk10
+    text: >-
+      A disagreement between management and staff over rostering has not been
+      settled internally. Describe how an independent third party could help
+      the two parties reach their own agreement.
+
+  - gold: bm-u3-aos3-kk02
+    text: >-
+      Identify the three key elements of an operations system and provide an
+      example of each for a commercial bakery.
+
+  - gold: bm-u3-aos3-kk04
+    text: >-
+      Kestrel Appliances has installed robotic arms along its assembly line.
+      Analyse the effect of this on the efficiency and effectiveness of its
+      operations.
+
+  - gold: bm-u3-aos3-kk05
+    text: >-
+      Explain how ordering stock only as it is needed could reduce costs at a
+      furniture manufacturer.
+
+  - gold: bm-u3-aos3-kk07
+    text: >-
+      Describe how a business could cut the volume of offcuts it sends to
+      landfill from its production process.
+
+  - gold: bm-u3-aos3-kk08
+    text: >-
+      Explain the takt principle and how it contributes to the efficiency of
+      a production line.
+
+  - gold: bm-u3-aos3-kk10
+    text: >-
+      Ashgrove Tools is considering moving its component manufacturing to a
+      supplier in Vietnam. Discuss one benefit and one cost of this decision
+      for its operations.
+
+  - gold: bm-u4-aos1-kk02
+    text: >-
+      Distinguish between a business that alters its practices in
+      anticipation of new regulation and one that alters them only once the
+      regulation has taken effect.
+
+  - gold: bm-u4-aos1-kk03
+    text: >-
+      Marlow Books monitors the number of complaints it receives and the
+      proportion of staff who leave each year. Explain what these two measures
+      tell the business about its performance.
+
+  - gold: bm-u4-aos1-kk04
+    text: >-
+      Explain how a manager would weight and rank the forces acting on a
+      proposed restructure before deciding whether to proceed with it.
+
+  - gold: bm-u4-aos1-kk06
+    text: >-
+      Long-serving staff at Verrin Press say the current way of working has
+      served them well for twenty years and see no reason to alter it.
+      Identify the restraining force described.
+
+  - gold: bm-u4-aos1-kk07
+    text: >-
+      Discuss whether competing on price or on a distinctive product would
+      better suit a small brewery entering a crowded market.
+
+  - gold: bm-u4-aos2-kk04
+    text: >-
+      Explain how the principles Senge describes could help a business become
+      more open to new ways of working.
+
+  - gold: bm-u4-aos2-kk05
+    text: >-
+      Rather than imposing the new roster, management at Calder Transport held
+      meetings to explain the reasons for it and invited staff to shape the
+      detail. Identify the approach used to reduce resistance and explain why
+      it carries little risk.
+
+  - gold: bm-u4-aos2-kk07
+    text: >-
+      Explain how unfreezing prepares a workforce for a new system.
+
+  - gold: bm-u4-aos2-kk08
+    text: >-
+      Analyse how a decision to close a regional site as part of a
+      restructure would affect suppliers and the surrounding community.
+
+  - gold: bm-u4-aos2-kk10
+    text: >-
+      After completing its restructure, Thornbury Metals compared its
+      productivity figures with those recorded beforehand. Explain why this
+      comparison matters.

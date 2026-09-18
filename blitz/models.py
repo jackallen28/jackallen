@@ -5,6 +5,18 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 
+# How many pages of questions a sheet gets, before solutions. Two pages is a
+# Blitz — front and back of one sheet, which is the whole point of the format.
+# The other two exist because a lesson is not always that shape: one page is a
+# warm-up or an exit ticket, four is a revision set to work through at home.
+SHEET_LENGTHS: dict[str, int] = {"quick": 1, "standard": 2, "extended": 4}
+SHEET_LENGTH_LABELS: dict[str, str] = {
+    "quick": "Quick — 1 page",
+    "standard": "Standard — 2 pages",
+    "extended": "Extended — 4 pages",
+}
+DEFAULT_LENGTH = "standard"
+
 
 @dataclass
 class SheetSpec:
@@ -27,13 +39,24 @@ class SheetSpec:
     # Questions picked by hand in browse mode. They go on the sheet first and
     # the rest is filled automatically around them.
     pinned_question_ids: list[str] = field(default_factory=list)
+    # quick | standard | extended — see SHEET_LENGTHS.
+    length: str = DEFAULT_LENGTH
+
+    @property
+    def question_pages(self) -> int:
+        """Pages of questions this sheet gets, solutions not counted."""
+        return SHEET_LENGTHS.get(self.length, SHEET_LENGTHS[DEFAULT_LENGTH])
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
 
     @classmethod
     def from_json(cls, raw: str) -> "SheetSpec":
-        return cls(**json.loads(raw))
+        data = json.loads(raw)
+        # Specs stored before sheet length existed are "standard" by
+        # definition: two pages was the only thing the tool made.
+        known = {f for f in cls.__dataclass_fields__}
+        return cls(**{k: v for k, v in data.items() if k in known})
 
 
 @dataclass
