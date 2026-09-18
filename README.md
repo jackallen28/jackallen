@@ -15,12 +15,12 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Thing | State |
 |---|---|
 | Physics study design | **Imported from the VCAA PDF.** 71 dot points, VCAA's own wording. |
-| Business Management study design | **Draft.** Reconstructed by hand, flagged `verified: false`. Send the PDF and `blitz import-study-design` replaces it. |
+| Business Management study design | **Imported from VCAA's Word file.** 46 dot points, VCAA's own wording. No concept lexicon yet, so tagging falls back on word overlap. |
 | Physics questions | **The whole Checkpoints book imported** from a model-built pack: 841 questions, 1273 crops, 838 with solutions. See `docs/full-book-postmortem.md` for what that run got wrong and what the next one should do. |
 | Physics concept lexicon | Written, covering all 71 dot points. |
 | Question pack import | Schema, validator and importer done; example pack in `packs/`. |
 | Deterministic pack extraction | `blitz extract-pack` — ~40 s for 1000 pages, flags ~13% for review. |
-| One-command indexing | `blitz index` — study design + book in, questions and content out. Textbook path untested on a real book. `mac/index-materials.command` wraps it for a folder of materials. |
+| One-command indexing | `blitz index` — study design + book in, questions and content out. PDF or Word. Textbook path untested on a real book. `mac/index-materials.command` wraps it for a folder of materials. |
 | Business Management questions | **Sample only** — 24 questions written for this repo. |
 | Tagging | 81% right area on an unseen book, before the pack's own chapter tags are used. See below. |
 | Layout | Two columns of text on page one, one column of page crops on page two, solutions after. Chosen per sheet from what the questions need. |

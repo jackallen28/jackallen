@@ -61,6 +61,11 @@ ACCRED_RE = re.compile(r"\b(20\d{2})\s*[\u2013-]\s*(20\d{2})\b")
 
 
 def extract_text(pdf_path: str | Path) -> str:
+    """The study design as text, from the PDF or the Word file VCAA ships."""
+    if Path(pdf_path).suffix.lower() == ".docx":
+        from ..ingest.docx import docx_text
+
+        return docx_text(pdf_path)
     try:
         import pymupdf as fitz
     except ImportError:
@@ -264,8 +269,8 @@ def import_study_design(
     units_raw = _sections(text)
     if not units_raw:
         raise ValueError(
-            f"Found no 'Unit 3'/'Unit 4' headings in {pdf_path}. If the PDF is a "
-            "scan rather than a text PDF it needs OCR first."
+            f"Found no 'Unit 3'/'Unit 4' headings in {pdf_path}. If it is a "
+            "scanned PDF rather than a text PDF it needs OCR first."
         )
 
     short = existing.get("units", [{}])[0].get("id", "").rsplit("-u", 1)[0]

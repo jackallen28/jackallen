@@ -26,12 +26,19 @@ Put the materials for a subject in one folder:
 ```
 sources/
   vcaa/
-    physics-study-design.pdf        the VCAA study design
+    physics-study-design.pdf         the VCAA study design (.pdf or .docx)
   physics/
     checkpoints-physics.pdf          a Checkpoints book
     heinemann-physics-12.pdf         a textbook
-    physics-checkpoints-full.json    a question pack a model built (optional)
+    motion-revision.docx             a worksheet or notes in Word
+    checkpointscodex/
+      physics-checkpoints-full.json  a question pack a model built (optional)
+      figures/                       its images, any folder name
 ```
+
+PDF and Word (.docx) both work, for books and for the study design. The
+script looks in the folder and one level of subfolders, so a pack can keep
+its own folder with its images beside it, whatever that folder is called.
 
 `sources/` is gitignored; nothing in it is ever committed.
 
@@ -51,13 +58,15 @@ The script:
 1. Imports the study design, if given. That replaces the subject's dot points
    with VCAA's own wording and records a fingerprint, so anything indexed
    against an older version is refused rather than silently misfiled.
-2. Imports every `.json` in the folder as a question pack
-   (`docs/question-pack-schema.md`), refining chapter-level tags to the dot
-   point each question's text names.
-3. Indexes every `.pdf` as a book. It works out per file whether it is a
-   Checkpoints book, a textbook or an exam paper and says so. Questions,
-   figures, worked solutions and (for a textbook) the teaching content itself
-   are all indexed and tagged to the study design.
+2. Imports every question pack (`docs/question-pack-schema.md`), refining
+   chapter-level tags to the dot point each question's text names. Other
+   JSON files in the folder are skipped by name.
+3. Indexes every `.pdf` and `.docx` as a book. It works out per file whether
+   it is a Checkpoints book, a textbook, an exam paper or a worksheet and
+   says so. A Word file is first rendered to a PDF (under `data/converted/`)
+   so headings, numbering and images come through. Questions, figures,
+   worked solutions and the teaching content itself are indexed and tagged
+   to the study design.
 4. Prints the coverage table: how many questions now sit behind each dot
    point.
 
@@ -70,6 +79,15 @@ Then:
 ```bash
 .venv/bin/blitz serve        # http://127.0.0.1:8712
 ```
+
+To compare two indexes of the same book, say a model's pack against
+`blitz index` on the PDF, put both in the folder and run:
+
+```bash
+.venv/bin/blitz coverage physics --by-source
+```
+
+That prints one column per source for every dot point.
 
 ## Reading what it prints
 
@@ -119,8 +137,8 @@ weaker; the index still builds, but expect more untagged items and check the
 coverage table before trusting a sheet. Writing a lexicon for a subject is a
 few hours with the study design open; the Physics one is the template.
 
-The Business Management study design currently comes as a `.docx`, which the
-importer does not read yet. Export it to PDF from Word or Pages first.
+Word files work for study designs too: the Business Management design
+shipped with Blitz was imported from VCAA's `.docx`.
 
 ## If Finder will not run it
 

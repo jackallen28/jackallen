@@ -80,9 +80,23 @@ def test_dot_point_checklist_is_printed(seeded, tmp_path):
 
 
 def test_unverified_study_design_is_declared_on_the_sheet(seeded, tmp_path):
-    """Business Management is still a reconstruction, so its sheets must say so."""
+    """A sheet built on dot points that are not VCAA's own wording must say so.
+
+    Both shipped designs are now imported from VCAA, so the unverified one is
+    made here: the Business Management design with one dot point flagged."""
+    import yaml
+
+    from blitz.config import STUDY_DESIGN_DIR
+    from blitz.studydesign.loader import load_study_design_file
+
+    data = yaml.safe_load((STUDY_DESIGN_DIR / "business-management.yaml").read_text(
+        encoding="utf-8"))
+    data["units"][0]["areas_of_study"][0]["key_knowledge"][0]["verified"] = False
+    path = tmp_path / "business-management.yaml"
+    path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+    design = load_study_design_file(path)
     out = tmp_path / "s.pdf"
-    render_sheet(_plan(seeded, subject="business-management", seed=1), out)
+    render_sheet(_plan(seeded, subject="business-management", seed=1), out, design)
     doc = pymupdf.open(out)
     first = " ".join(doc[0].get_text("text").split())
     doc.close()

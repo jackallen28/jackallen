@@ -255,6 +255,18 @@ def coverage(conn: sqlite3.Connection, subject_id: str) -> dict[str, int]:
     return {r["kk_id"]: r["n"] for r in rows}
 
 
+def coverage_by_source(conn: sqlite3.Connection, subject_id: str
+                       ) -> dict[tuple[str, str], int]:
+    """Questions per (dot point, source), for comparing two indexes of one book."""
+    rows = conn.execute(
+        "SELECT kk.kk_id AS kk_id, q.source_id AS src, COUNT(*) AS n "
+        "FROM question_kk kk JOIN question q ON q.id = kk.question_id "
+        "WHERE q.subject_id = ? GROUP BY kk.kk_id, q.source_id",
+        (subject_id,),
+    ).fetchall()
+    return {(r["kk_id"], r["src"]): r["n"] for r in rows}
+
+
 def coverage_by_type(conn: sqlite3.Connection, subject_id: str) -> dict[tuple[str, str], int]:
     rows = conn.execute(
         "SELECT kk.kk_id AS kk_id, q.question_type AS qt, COUNT(*) AS n "

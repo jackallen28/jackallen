@@ -62,6 +62,15 @@ heinemann-physics-12: 412 pages, detected as textbook (auto: textbook (92%; …)
 "Untagged" means the lexicon found nothing distinctive to hang it on. Those are
 the items worth a human's eye; everything indexed is selectable straight away.
 
+## Word files
+
+A `.docx` goes through the same command. It is rendered to a PDF first, under
+`data/converted/`, with headings set larger than the body, Word's automatic
+list numbering made visible ("1.", "a.", "•") and images placed inline, and
+that PDF is then indexed like any other book. Superscripts set in Word come
+through as text (`m s⁻¹`). Page numbers in citations are the rendered PDF's.
+The study design importer reads `.docx` directly.
+
 ## Kinds of book
 
 | kind | what it looks for | status |

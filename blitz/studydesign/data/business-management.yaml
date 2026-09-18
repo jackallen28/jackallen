@@ -1,194 +1,309 @@
 # VCE Business Management — Units 3 & 4
-#
-# STATUS: DRAFT. Every dot point below is `verified: false`, meaning the wording
-# was reconstructed from memory of the study design, NOT copied from the VCAA
-# document. Replace it with the real thing before relying on it:
-#
-#     blitz import-study-design sources/vcaa/business-management-sd.pdf \
-#         --subject business-management
-#
-# The importer rewrites this file from the PDF and sets verified: true. Until
-# then the UI shows an "unverified study design" banner on every sheet.
-
+# Imported from business-management-sd.docx. Dot point wording is VCAA's.
+# question_types and command_terms below are this tool's own editorial
+# data and are preserved across imports.
 subject_id: business-management
 subject_name: VCE Business Management
-accreditation: ""        # set by the importer from the PDF cover page
-source: "DRAFT — not yet imported from the VCAA study design"
-
+accreditation: 'Units 1–4: 1 January 2023'
+source: Imported from business-management-sd.docx
 units:
-  - id: bm-u3
+- id: bm-u3
+  number: 3
+  title: Managing a business
+  areas_of_study:
+  - id: bm-u3-aos1
+    number: 1
+    title: Business foundations
+    outcome: On completion of this unit the student should be able to analyse the key characteristics
+      of businesses, their stakeholders, management styles and skills, and corporate culture
+    key_knowledge:
+    - id: bm-u3-aos1-kk01
+      text: types of businesses including sole traders, partnerships, private limited companies, public
+        listed companies, social enterprises and government business enterprises
+      verified: true
+    - id: bm-u3-aos1-kk02
+      text: business objectives including to make a profit, to increase market share, to improve efficiency,
+        to improve effectiveness, to fulfil a market need, to fulfill a social need and to meet shareholder
+        expectations
+      verified: true
+    - id: bm-u3-aos1-kk03
+      text: stakeholders of businesses including owners, managers, employees, customers, suppliers and
+        the general community
+      verified: true
+    - id: bm-u3-aos1-kk04
+      text: characteristics of stakeholders of businesses including their interests and potential conflicts
+        between stakeholders
+      verified: true
+    - id: bm-u3-aos1-kk05
+      text: management styles including autocratic, persuasive, consultative, participative and laissez-faire
+      verified: true
+    - id: bm-u3-aos1-kk06
+      text: the appropriateness of management styles in relation to the nature of the task, time, experience
+        of employees and manager preference
+      verified: true
+    - id: bm-u3-aos1-kk07
+      text: management skills including communication, delegation, planning, leadership, decision-making
+        and interpersonal
+      verified: true
+    - id: bm-u3-aos1-kk08
+      text: the relationship between management styles and management skills
+      verified: true
+    - id: bm-u3-aos1-kk09
+      text: corporate culture, both official and real
+      verified: true
+    key_skills:
+    - identify, define, describe and apply business management concepts and terms
+    - interpret, discuss, compare and evaluate business information and ideas
+    - analyse case studies and contemporary examples of business management
+    - apply business management knowledge to practical and/or simulated business situations
+  - id: bm-u3-aos2
+    number: 2
+    title: Human resource management
+    outcome: On completion of this unit the student should be able to explain theories of motivation and
+      apply them to a range of contexts, and analyse and evaluate strategies related to the management
+      of employees
+    key_knowledge:
+    - id: bm-u3-aos2-kk01
+      text: the relationship between human resource management and business objectives
+      verified: true
+    - id: bm-u3-aos2-kk02
+      text: 'key principles of the following theories of motivation: Hierarchy of Needs (Maslow), Goal
+        Setting Theory (Locke and Latham) and the Four Drive Theory (Lawrence and Nohria)'
+      verified: true
+    - id: bm-u3-aos2-kk03
+      text: motivation strategies including performance-related pay, career advancement, investment in
+        training, support strategies and sanction strategies
+      verified: true
+    - id: bm-u3-aos2-kk04
+      text: advantages and disadvantages of motivation strategies and their effect on short- and long-term
+        employee motivation
+      verified: true
+    - id: bm-u3-aos2-kk05
+      text: training options including on-the-job and off-the-job training, and the advantages and disadvantages
+        of each
+      verified: true
+    - id: bm-u3-aos2-kk06
+      text: performance management strategies to achieve both business and employee objectives, including
+        management by objectives, appraisals, self-evaluation and employee observation
+      verified: true
+    - id: bm-u3-aos2-kk07
+      text: termination management including retirement, redundancy, resignation and dismissal, entitlement
+        considerations and transition considerations
+      verified: true
+    - id: bm-u3-aos2-kk08
+      text: the roles of participants in the workplace including human resource managers, employees, employer
+        associations, unions and the
+      verified: true
+    - id: bm-u3-aos2-kk09
+      text: awards and agreements as methods of determining wages and conditions of work
+      verified: true
+    - id: bm-u3-aos2-kk10
+      text: an overview of the dispute resolution process including mediation and arbitration
+      verified: true
+    key_skills:
+    - identify, define, describe and apply business management concepts and terms
+    - interpret, discuss, compare and evaluate business information, theories and ideas
+    - analyse case studies and contemporary examples of business management
+    - apply business management knowledge to practical and/or simulated business situations
+    - propose, justify and evaluate management strategies to improve business performance
+  - id: bm-u3-aos3
     number: 3
-    title: Managing a business
-    areas_of_study:
-      - number: 1
-        title: Business foundations
-        outcome: >-
-          On completion of this unit the student should be able to discuss the
-          key characteristics of businesses and stakeholders, and analyse the
-          relationship between corporate culture, management styles and
-          management skills.
-        key_knowledge:
-          - text: characteristics of businesses, including sole traders, partnerships, private limited companies, public listed companies, social enterprises and government business enterprises
-            label: Types of businesses
-          - text: business objectives, including to make a profit, to increase market share, to fulfil a market need, to fulfil a social need and to meet shareholder expectations
-            label: Business objectives
-          - text: characteristics of stakeholders of businesses, including their interests and potential conflicts between stakeholders
-            label: Stakeholders
-          - text: corporate social responsibility considerations when dealing with stakeholders
-            label: CSR and stakeholders
-          - text: management styles, including autocratic, persuasive, consultative, participative and laissez-faire
-            label: Management styles
-          - text: the appropriateness of management styles in relation to the nature of the task, time, experience of employees and manager preference
-            label: Choosing a style
-          - text: management skills, including communication, delegation, planning, leading, decision-making, interpersonal and emotional intelligence
-            label: Management skills
-          - text: the relationship between management styles and management skills
-            label: Styles and skills
-          - text: corporate culture, both official and real, and strategies for its development
-            label: Corporate culture
-      - number: 2
-        title: Managing employees
-        outcome: >-
-          On completion of this unit the student should be able to explain
-          theories of motivation and apply them to a range of contexts, and
-          analyse and evaluate strategies related to the management of employees.
-        key_knowledge:
-          - text: the relationship between managing employees and business objectives
-            label: Employees and objectives
-          - text: "motivation theories: Maslow's Hierarchy of Needs, Locke and Latham's Goal Setting Theory and Lawrence and Nohria's Four Drive Theory"
-            label: Motivation theories
-          - text: "motivation strategies: performance-related pay, career advancement, investment in training, support and sanction"
-            label: Motivation strategies
-          - text: the advantages and disadvantages of motivation strategies and their effect on short- and long-term employee motivation
-            label: Evaluating motivation strategies
-          - text: "training options: on-the-job and off-the-job training"
-            label: Training options
-          - text: "performance management strategies: management by objectives, appraisals, self-evaluation and employee observation"
-            label: Performance management
-          - text: "termination management: retirement, redundancy, resignation and dismissal, including entitlement and transition considerations"
-            label: Termination management
-          - text: the relationship between the management of employees and corporate culture, business objectives and business performance
-            label: Employees and performance
-          - text: "the roles of participants in the workplace relations process: human resource managers, employees, employer associations, unions and the Fair Work Commission"
-            label: Workplace relations participants
-          - text: "awards and agreements as methods of determining wages and conditions"
-            label: Awards and agreements
-          - text: "dispute resolution: mediation and arbitration"
-            label: Dispute resolution
-      - number: 3
-        title: Operations management
-        outcome: >-
-          On completion of this unit the student should be able to analyse the
-          relationship between business objectives and operations management,
-          and propose and evaluate strategies to improve the efficiency and
-          effectiveness of business operations.
-        key_knowledge:
-          - text: the relationship between operations management and business objectives
-            label: Operations and objectives
-          - text: "key elements of an operations system: inputs, processes and outputs"
-            label: Operations system
-          - text: the characteristics of operations management within both manufacturing and service businesses
-            label: Manufacturing vs service
-          - text: "technological developments: automated production lines, robotics, computer-aided design, computer-aided manufacturing, artificial intelligence, online services and website development"
-            label: Technological developments
-          - text: "materials management strategies: forecasting, master production schedule, materials requirement planning and Just In Time"
-            label: Materials management
-          - text: "quality management strategies: quality control, quality assurance and Total Quality Management"
-            label: Quality management
-          - text: "waste minimisation strategies: the reduction of the overuse of resources and the reduction, reuse and recycling of end-of-life products"
-            label: Waste minimisation
-          - text: "lean management: pull, one-piece flow, takt time and zero defects"
-            label: Lean management
-          - text: "global considerations: global sourcing of inputs, overseas manufacture and global outsourcing"
-            label: Global considerations
-          - text: corporate social responsibility considerations in operations management
-            label: CSR in operations
-  - id: bm-u4
-    number: 4
-    title: Transforming a business
-    areas_of_study:
-      - number: 1
-        title: Reviewing performance — the need for change
-        outcome: >-
-          On completion of this unit the student should be able to explain the
-          way business change may come about, use key performance indicators to
-          analyse the performance of a business, discuss the driving and
-          restraining forces for change and evaluate management strategies to
-          position a business for the future.
-        key_knowledge:
-          - text: "business change, including proactive and reactive approaches to change"
-            label: Business change
-          - text: "key performance indicators as sources of data to analyse the performance of businesses: percentage of market share, net profit figures, rate of productivity growth, number of sales, rates of staff absenteeism, level of staff turnover, level of wastage, number of customer complaints and number of workplace accidents"
-            label: Key performance indicators
-          - text: "Force Field Analysis theory (Lewin), including weighting, ranking and evaluation of the forces for and against change"
-            label: Force Field Analysis
-          - text: "driving forces for change: owners, managers, employees, competitors, legislation, pursuit of profit, reduction of costs, globalisation, technology, innovation and societal attitudes"
-            label: Driving forces
-          - text: "restraining forces for change: managers, employees, time, organisational inertia, legislation and financial considerations"
-            label: Restraining forces
-          - text: "the principles of the Learning Organisation (Senge): systems thinking, personal mastery, mental models, shared vision and team learning"
-            label: Learning Organisation
-          - text: "management strategies to respond to key performance indicators: staff training, staff motivation, change in management styles or management skills, increased investment in technology, improving quality in production, cost cutting, initiating lean production techniques and redeployment of resources"
-            label: Strategies to respond to KPIs
-          - text: "Porter's Generic Strategies (lower cost and differentiation) to enhance business competitiveness"
-            label: Porter's Generic Strategies
-      - number: 2
-        title: Implementing change
-        outcome: >-
-          On completion of this unit the student should be able to evaluate the
-          effectiveness of strategies used to implement change and discuss the
-          effect of change on stakeholders, using a contemporary business case
-          study.
-        key_knowledge:
-          - text: "the importance of leadership in change management"
-            label: Leadership in change
-          - text: "management strategies to seek new business opportunities both domestically and globally"
-            label: New opportunities
-          - text: "the effect of change on stakeholders, including managers, employees, customers, suppliers, the general community and society"
-            label: Effect on stakeholders
-          - text: "corporate social responsibility considerations when implementing change"
-            label: CSR and change
-          - text: "the importance of reviewing key performance indicators to evaluate the effectiveness of business transformation"
-            label: Reviewing KPIs
-          - text: "a contemporary business case study from the last four years to evaluate business transformation"
-            label: Contemporary case study
-
-# Question formats available on a Business Management sheet. Weights are a
-# rough share of one page and are calibrated in blitz/render/layout.py.
+    title: Operations management
+    outcome: On completion of this unit the student should be able to analyse the relationship between
+      business objectives and operations management, and propose and evaluate strategies to improve the
+      efficiency and effectiveness of business operations
+    key_knowledge:
+    - id: bm-u3-aos3-kk01
+      text: the relationship between operations management and business objectives
+      verified: true
+    - id: bm-u3-aos3-kk02
+      text: 'key elements of an operations system: inputs, processes and outputs'
+      verified: true
+    - id: bm-u3-aos3-kk03
+      text: characteristics of operations management within both manufacturing and service businesses
+      verified: true
+    - id: bm-u3-aos3-kk04
+      text: strategies to improve both the efficiency and effectiveness of operations related to technological
+        developments, including the use of automated production lines, robotics, computer-aided design,
+        computer-aided manufacturing techniques, artificial intelligence and online services
+      verified: true
+    - id: bm-u3-aos3-kk05
+      text: strategies to improve both the efficiency and effectiveness of operations related to materials,
+        including forecasting, master production schedule, materials requirement planning and
+      verified: true
+    - id: bm-u3-aos3-kk06
+      text: strategies to improve both the efficiency and effectiveness of operations related to quality,
+        including quality control, quality assurance and
+      verified: true
+    - id: bm-u3-aos3-kk07
+      text: strategies to improve the efficiency and effectiveness of operations through waste minimisation
+        in the production process, including reduce, reuse, recycle
+      verified: true
+    - id: bm-u3-aos3-kk08
+      text: the pull, one-piece flow, takt, zero defects strategy to improve the efficiency and effectiveness
+        of operations related to lean management
+      verified: true
+    - id: bm-u3-aos3-kk09
+      text: corporate social responsibility considerations for an operations system, including the environmental
+        sustainability of inputs and the amount of waste generated from processes and production of outputs
+      verified: true
+    - id: bm-u3-aos3-kk10
+      text: global considerations for operations management including global sourcing of inputs, overseas
+        manufacture and global outsourcing
+      verified: true
+    key_skills:
+    - identify, define, describe and apply business management concepts and terms
+    - interpret, discuss, compare and evaluate business information, theories and ideas
+    - analyse case studies and contemporary examples of business management
+    - apply business management knowledge to practical and/or simulated business situations
+    - propose, justify and evaluate management strategies to improve business performance
+- id: bm-u4
+  number: 4
+  title: Transforming a business
+  areas_of_study:
+  - id: bm-u4-aos1
+    number: 1
+    title: Reviewing performance – the need for change
+    outcome: On completion of this unit the student should be able to explain the way business change
+      may come about, analyse why managers may take a proactive or reactive approach to change, use key
+      performance indicators to analyse the performance of a business, explain the driving and restraining
+      forces for change, and evaluate management strategies to position a business for the future
+    key_knowledge:
+    - id: bm-u4-aos1-kk01
+      text: the concept of business change
+      verified: true
+    - id: bm-u4-aos1-kk02
+      text: proactive and reactive approaches to change
+      verified: true
+    - id: bm-u4-aos1-kk03
+      text: key performance indicators as sources of data to analyse the performance of businesses, percentage
+        of market share, net profit figures, rate of productivity growth, number of sales, rates of staff
+        absenteeism, level of staff turnover, level of wastage, number of customer complaints, number
+        of website hits and number of workplace accidents
+      verified: true
+    - id: bm-u4-aos1-kk04
+      text: key principles of the Force Field Analysis theory (Lewin) including weighting, ranking, implementing
+        a response and evaluating the response
+      verified: true
+    - id: bm-u4-aos1-kk05
+      text: driving forces for change in business including owners, managers, employees, competitors,
+        legislation, pursuit of profit, reduction of costs, globalisation, technology, innovation and
+        societal attitudes
+      verified: true
+    - id: bm-u4-aos1-kk06
+      text: restraining forces in businesses including managers, employees, time, organisational inertia,
+        legislation and financial considerations
+      verified: true
+    - id: bm-u4-aos1-kk07
+      text: the two key approaches (lower cost and differentiation) to strategic management according
+        to Porter’s
+      verified: true
+    key_skills:
+    - identify, define, describe and apply business management concepts and terms
+    - interpret, discuss, compare and evaluate business information, theories and ideas
+    - analyse case studies and contemporary examples of business management
+    - apply business management knowledge to practical and/or simulated business situations
+    - propose, justify and evaluate management strategies to improve business performance
+  - id: bm-u4-aos2
+    number: 2
+    title: Implementing change
+    outcome: On completion of this unit the student should be able to discuss the importance of effective
+      management strategies and leadership in relation to change, evaluate the effectiveness of a variety
+      of strategies used by managers to implement change, and discuss the effect of change on the stakeholders
+      of a business
+    key_knowledge:
+    - id: bm-u4-aos2-kk01
+      text: the importance of leadership in change management
+      verified: true
+    - id: bm-u4-aos2-kk02
+      text: management strategies to respond to key performance indicators and/or seek new business opportunities,
+        including staff training, staff motivation, change in management styles or management skills,
+        increased investment in technology, improving quality in production, cost cutting, initiating
+        lean production techniques, redeployment of resources (natural, labour and capital), innovation,
+        global sourcing of inputs, overseas manufacture and global outsourcing
+      verified: true
+    - id: bm-u4-aos2-kk03
+      text: corporate culture and strategies for its development
+      verified: true
+    - id: bm-u4-aos2-kk04
+      text: an overview of the principles of the Learning Organisation (Senge) and the need to create
+        a positive culture for change
+      verified: true
+    - id: bm-u4-aos2-kk05
+      text: low-risk strategies to overcome employee resistance including communication, empowerment,
+        support and incentives
+      verified: true
+    - id: bm-u4-aos2-kk06
+      text: high-risk strategies to overcome employee resistance including manipulation and threat
+      verified: true
+    - id: bm-u4-aos2-kk07
+      text: key principles of the Three-step Change Model (Lewin)
+      verified: true
+    - id: bm-u4-aos2-kk08
+      text: the effect of change on stakeholder groups including owners, managers, employees, customers,
+        suppliers and the general community
+      verified: true
+    - id: bm-u4-aos2-kk09
+      text: corporate social responsibility considerations when implementing change
+      verified: true
+    - id: bm-u4-aos2-kk10
+      text: the importance of reviewing key performance indicators to evaluate the effectiveness of business
+        transformation
+      verified: true
+    key_skills:
+    - identify, define, describe and apply business management concepts and terms
+    - interpret, discuss, compare and evaluate business information, theories and ideas
+    - analyse case studies and contemporary examples of business management
+    - apply business management knowledge to practical and/or simulated business situations
+    - propose, justify and evaluate management strategies to improve business performance
 question_types:
-  - id: bm-mc
-    label: Multiple choice
-    description: Four-option recall and application questions.
-    typical_marks: [1]
-    default_weight: 0.30
-  - id: bm-short
-    label: Short answer
-    description: One to three mark definition, identification and explanation questions.
-    typical_marks: [1, 2, 3]
-    default_weight: 0.55
-  - id: bm-case-study
-    label: Case study response
-    description: Questions attached to a business scenario, answered with reference to it.
-    typical_marks: [2, 3, 4, 5, 6]
-    default_weight: 1.10
-  - id: bm-extended
-    label: Extended response
-    description: Six to ten mark discuss, analyse or evaluate questions requiring a judgement.
-    typical_marks: [6, 8, 10]
-    default_weight: 1.60
-  - id: bm-theory-application
-    label: Theory application
-    description: Apply a named theory (Maslow, Lewin, Senge, Porter) to a given situation.
-    typical_marks: [3, 4, 6]
-    default_weight: 1.00
-  - id: bm-definition
-    label: Key term drill
-    description: Rapid-fire definitions of the subject's examinable terminology.
-    typical_marks: [1, 2]
-    default_weight: 0.25
-
-# Command terms drive the "what is this question actually asking for" hints
-# printed beside extended responses.
+- id: bm-mc
+  label: Multiple choice
+  description: Four-option recall and application questions.
+  typical_marks:
+  - 1
+  default_weight: 0.3
+- id: bm-short
+  label: Short answer
+  description: One to three mark definition, identification and explanation questions.
+  typical_marks:
+  - 1
+  - 2
+  - 3
+  default_weight: 0.55
+- id: bm-case-study
+  label: Case study response
+  description: Questions attached to a business scenario, answered with reference to it.
+  typical_marks:
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  default_weight: 1.1
+- id: bm-extended
+  label: Extended response
+  description: Six to ten mark discuss, analyse or evaluate questions requiring a judgement.
+  typical_marks:
+  - 6
+  - 8
+  - 10
+  default_weight: 1.6
+- id: bm-theory-application
+  label: Theory application
+  description: Apply a named theory (Maslow, Lewin, Senge, Porter) to a given situation.
+  typical_marks:
+  - 3
+  - 4
+  - 6
+  default_weight: 1.0
+- id: bm-definition
+  label: Key term drill
+  description: Rapid-fire definitions of the subject's examinable terminology.
+  typical_marks:
+  - 1
+  - 2
+  default_weight: 0.25
 command_terms:
   identify: Name or state — no explanation required.
   outline: Give the main features briefly, more than naming but less than explaining.

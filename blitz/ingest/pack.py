@@ -162,6 +162,14 @@ def validate(pack: dict, design: StudyDesign, pack_dir: Path) -> PackReport:
     if zoom is not None and not (isinstance(zoom, (int, float)) and 0.5 <= zoom <= 8):
         err(f"source.figure_zoom must be a number of pixels per PDF point "
             f"(typically 1–4), got {zoom!r}")
+    first_file = next((f["file"] for q in (pack.get("questions") or [])
+                       for f in (q.get("figures") or []) if f.get("file")), None)
+    if first_file and not _resolve(pack_dir, first_file).exists():
+        found = _locate_figure(pack_dir, first_file)
+        if found is not None:
+            warn(f"figures are not where the pack says ({Path(first_file).parent}/) "
+                 f"but were found under {found.parent.relative_to(pack_dir)}/; "
+                 "using those")
     uses_files = any(f.get("file") for q in (pack.get("questions") or [])
                      for f in (q.get("figures") or []))
     if uses_files and zoom is None and not any(
@@ -265,7 +273,7 @@ def _validate_figure(fig: dict, where: str, pack_dir: Path, source_pdf,
         return
 
     if has_file:
-        if not (pack_dir / fig["file"]).exists():
+        if _locate_figure(pack_dir, fig["file"]) is None:
             err(f"{where}: file not found: {fig['file']}")
         return
 
@@ -306,12 +314,47 @@ def _resolve(pack_dir: Path, ref: str) -> Path:
     return path if path.is_absolute() else (pack_dir / path)
 
 
+_FIGURE_INDEX: dict[Path, dict[str, Path]] = {}
+
+
+def _locate_figure(pack_dir: Path, ref: str) -> Path | None:
+    """The image a figure reference points at, or None.
+
+    The pack says "figures/p0544-….png". People unzip a model's output into
+    a folder of their own naming, and the images end up in
+    "checkpointscodexfigures/" instead. Exact path first; failing that, an
+    image of the same name anywhere under the pack's folder, as long as
+    there is only one.
+    """
+    exact = _resolve(pack_dir, ref)
+    if exact.exists():
+        return exact
+    if pack_dir not in _FIGURE_INDEX:
+        import os
+
+        index: dict[str, Path] = {}
+        dupes: set[str] = set()
+        # os.walk rather than rglob so a symlinked figures folder is followed.
+        for root, _dirs, files in os.walk(pack_dir, followlinks=True):
+            for name in files:
+                if Path(name).suffix.lower() in (".png", ".jpg", ".jpeg", ".webp"):
+                    if name in index:
+                        dupes.add(name)
+                    index[name] = Path(root) / name
+        for name in dupes:
+            index.pop(name, None)
+        _FIGURE_INDEX[pack_dir] = index
+    return _FIGURE_INDEX[pack_dir].get(Path(ref).name)
+
+
 def _materialise(fig: dict, pack_dir: Path, doc, tag: str) -> str | None:
     """Turn a figure reference into a PNG on disk, and return its path."""
     from . import extract
 
     if fig.get("file"):
-        src = _resolve(pack_dir, fig["file"])
+        src = _locate_figure(pack_dir, fig["file"])
+        if src is None:
+            return None
         CROPS_DIR.mkdir(parents=True, exist_ok=True)
         dest = CROPS_DIR / f"{tag}-{src.name}"
         if not dest.exists() or src.stat().st_mtime > dest.stat().st_mtime:

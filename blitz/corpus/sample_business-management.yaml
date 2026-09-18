@@ -4,7 +4,7 @@
 # (uncheck "fill gaps with generated questions" in the UI, or pass --no-generated).
 # Guards against a study design re-import silently changing what these
 # dot-point ids mean. Recompute with blitz.corpus.sample.fingerprint().
-study_design_fingerprint: 4056dc976d3a
+study_design_fingerprint: 44ab552a7c67
 
 source:
   id: bm-sample
@@ -24,7 +24,7 @@ questions:
     difficulty: 2
     body: Distinguish between the business objective of increasing market share and the objective of fulfilling a market need.
     answer: "Increasing market share means growing the proportion of total industry sales the business holds, measured against competitors, whereas fulfilling a market need means supplying a good or service that customers want but that is not currently being adequately provided. Market share is competitive and comparative; fulfilling a market need is about the product itself."
-  - kk: bm-u3-aos1-kk03
+  - kk: bm-u3-aos1-kk04
     type: bm-case-study
     marks: 4
     difficulty: 3
@@ -73,7 +73,7 @@ questions:
     difficulty: 4
     body: "A manufacturer is closing one of two production lines and 40 roles will go. Explain the difference between redundancy and dismissal in this context, and outline two transition considerations the business should address."
     answer: "Redundancy occurs when the role itself is no longer required — here the closure of the line removes the positions regardless of employee performance — and attracts redundancy pay and notice under the National Employment Standards. Dismissal is termination because of the employee's own conduct or capacity, and is not what is happening here; treating these as dismissals would expose the business to unfair dismissal claims. Transition considerations: (1) outplacement support such as résumé writing, job-search assistance and referrals to other employers, and (2) counselling or financial advice services to help employees manage the personal and financial effect of losing the role. Both also protect the corporate culture and reputation of the business among remaining staff."
-  - kk: bm-u3-aos2-kk11
+  - kk: bm-u3-aos2-kk10
     type: bm-short
     marks: 3
     difficulty: 3
@@ -103,32 +103,32 @@ questions:
     difficulty: 2
     body: Outline the three Rs of waste minimisation and explain how each reduces a manufacturer's costs.
     answer: "Reduce — using fewer inputs to make the same output, which directly lowers materials spend. Reuse — using an item again in its existing form, such as returning pallets to the supplier, which avoids repurchase. Recycle — reprocessing end-of-life material into new inputs, such as remelting offcuts, which turns what would be a disposal cost into a usable resource. All three also cut waste disposal charges."
-  - kk: bm-u4-aos1-kk02
+  - kk: bm-u4-aos1-kk03
     type: bm-mc
     marks: 1
     difficulty: 2
     body: A business records a rise in the level of staff turnover and a rise in the number of customer complaints. Which management strategy most directly addresses both?
     options: ["Cost cutting", "Staff training", "Redeployment of resources", "Increased investment in technology"]
     answer: "B. Staff training improves employee competence and confidence, which raises the standard of service customers receive (reducing complaints), and signals investment in employees' careers, which improves job satisfaction and reduces turnover. Cost cutting is likely to worsen both indicators."
-  - kk: bm-u4-aos1-kk02
+  - kk: bm-u4-aos1-kk03
     type: bm-case-study
     marks: 4
     difficulty: 3
     body: "Over two years, a retailer's rate of productivity growth fell from 3.1% to 0.4% while its level of wastage rose from 2% to 7%. Analyse what these two key performance indicators, read together, suggest about the business's operations."
     answer: "Productivity growth measures the change in output per unit of input; a fall to 0.4% means the business is converting its resources into output barely more efficiently than before. Wastage measures resources lost in the production process; a rise from 2% to 7% means a growing share of inputs never becomes saleable output. Read together, they point to a problem inside the operations system rather than in demand: inputs are being consumed without producing output, which is precisely what drives productivity down. Likely causes include ageing equipment, inadequate training or a breakdown in quality management, since defective output counts as both waste and lost productivity."
-  - kk: bm-u4-aos1-kk03
+  - kk: bm-u4-aos1-kk04
     type: bm-theory-application
     marks: 6
     difficulty: 4
     body: "A café chain plans to introduce self-service ordering kiosks. Apply Lewin's Force Field Analysis to this proposal, identifying two driving and two restraining forces, and explain how weighting the forces would help the manager decide."
     answer: "Driving forces: the pursuit of profit, since kiosks reduce labour cost per order; and technology, since reliable kiosk hardware and payment integration now exist at low cost. Restraining forces: employees, who may resist because they fear their hours will be cut; and financial considerations, since the up-front purchase and installation cost is significant. In Force Field Analysis the manager assigns each force a weighting (say 1–5) according to its strength, then totals the driving and restraining scores. If driving forces outweigh restraining forces the change is likely to succeed; if not, the manager can see precisely which restraining force is heaviest and target it — for example, by guaranteeing no reduction in employee hours, converting the strongest restraining force into a neutral one rather than abandoning the change."
-  - kk: bm-u4-aos1-kk06
+  - kk: bm-u4-aos2-kk04
     type: bm-short
     marks: 4
     difficulty: 4
     body: Explain two principles of the Learning Organisation and how each supports a business undergoing transformation.
     answer: "Systems thinking — seeing the business as an interrelated whole rather than separate departments. During transformation this ensures a change in one area, such as automating warehousing, is assessed for its effect on sales and customer service, avoiding change that fixes one KPI while damaging another. Shared vision — a genuine, collectively held picture of where the business is going. During transformation this converts compliance into commitment: employees who share the vision are more likely to support change rather than act as a restraining force, which reduces resistance and speeds implementation."
-  - kk: bm-u4-aos1-kk08
+  - kk: bm-u4-aos1-kk07
     type: bm-extended
     marks: 8
     difficulty: 5
@@ -140,19 +140,19 @@ questions:
     difficulty: 3
     body: Explain why leadership is particularly important during the implementation stage of business change.
     answer: "Implementation is where a change stops being a plan and starts affecting people's daily work, so it is the point at which restraining forces such as employee resistance and organisational inertia are strongest. A leader influences and inspires employees to work toward the business's objectives, communicating why the change is necessary and modelling the new behaviours. Without this, employees revert to old practices and the change fails despite sound planning, because the real corporate culture overrides the official policy."
-  - kk: bm-u4-aos2-kk03
+  - kk: bm-u4-aos2-kk08
     type: bm-case-study
     marks: 6
     difficulty: 4
     body: "A supermarket chain replaces half its staffed checkouts with automated ones. Analyse the effect of this change on three different stakeholder groups."
     answer: "Employees: checkout roles are reduced, causing redundancies or a shift to casual hours; remaining staff move to supervising multiple machines, which changes the nature of the work and may raise stress. Customers: waiting times may fall at peak periods and transactions become faster, but customers who value service or find the technology difficult — including older and disabled customers — receive a worse experience, and some may shift to competitors. Shareholders: labour costs fall and, if sales volumes hold, net profit and return on investment rise, which serves their interest in a return on investment; however, if customer complaints rise and market share falls, the gain is short-lived. The general community also bears a cost, as reduced entry-level employment removes a common first job."
-  - kk: bm-u4-aos2-kk05
+  - kk: bm-u4-aos2-kk10
     type: bm-short
     marks: 3
     difficulty: 3
     body: Explain why a business should review its key performance indicators after implementing change, rather than only before.
     answer: "KPIs measured before the change establish the baseline that justified the transformation, but only a post-implementation review shows whether the change actually delivered the intended improvement. Comparing the same indicators — such as productivity growth, wastage and customer complaints — before and after allows the business to evaluate the effectiveness of the strategies chosen, identify unintended consequences in areas that were not targeted, and make further adjustments. Without the second review, the business is assuming success rather than establishing it."
-  - kk: bm-u3-aos1-kk04
+  - kk: bm-u3-aos1-kk03
     type: bm-definition
     marks: 2
     difficulty: 1

@@ -90,19 +90,31 @@ def cmd_coverage(args) -> int:
     with db.session() as conn:
         rows = coverage_report(conn, design)
         content = db.passage_coverage(conn, args.subject)
+        by_source = db.coverage_by_source(conn, args.subject) if args.by_source else {}
+    sources = sorted({src for _, src in by_source})
     current = None
     thin = 0
-    print(f"{'Qs':>4} {'text':>5}   {'':24}  dot point")
+    if sources:
+        # One column per source, so two indexes of the same book (a model's
+        # pack and blitz index on the PDF, say) can be read side by side.
+        heads = "".join(f"{s[-14:]:>15}" for s in sources)
+        print(f"{'Qs':>4} {'text':>5}{heads}   dot point")
+    else:
+        print(f"{'Qs':>4} {'text':>5}   {'':24}  dot point")
     for row in rows:
         if row["aos"] != current:
             current = row["aos"]
             print(f"\n{current}")
         n_text = content.get(row["kk_id"], 0)
-        bar = "█" * min(row["count"], 20) + "░" * min(n_text, 4)
         star = "" if row["verified"] else " *"
         if row["count"] < args.thin:
             thin += 1
-        print(f"  {row['count']:4} {n_text:5}   {bar:<24}  {row['label']}{star}")
+        if sources:
+            cols = "".join(f"{by_source.get((row['kk_id'], s), 0):>15}" for s in sources)
+            print(f"  {row['count']:4} {n_text:5}{cols}   {row['label']}{star}")
+        else:
+            bar = "█" * min(row["count"], 20) + "░" * min(n_text, 4)
+            print(f"  {row['count']:4} {n_text:5}   {bar:<24}  {row['label']}{star}")
     print(f"\n{thin} dot point(s) hold fewer than {args.thin} questions.  "
           f"(█ questions, ░ teaching sections)")
     if not design.fully_verified:
@@ -323,6 +335,9 @@ def build_parser() -> argparse.ArgumentParser:
     cov = sub.add_parser("coverage", help="questions held per dot point")
     cov.add_argument("subject")
     cov.add_argument("--thin", type=int, default=3)
+    cov.add_argument("--by-source", action="store_true",
+                     help="one column per source, to compare two indexes of "
+                          "the same book side by side")
     cov.set_defaults(func=cmd_coverage)
 
     gen = sub.add_parser("generate", help="build a sheet")
@@ -342,8 +357,8 @@ def build_parser() -> argparse.ArgumentParser:
     gen.set_defaults(func=cmd_generate)
 
     imp = sub.add_parser("import-study-design",
-                         help="rebuild a subject's YAML from the VCAA PDF")
-    imp.add_argument("pdf")
+                         help="rebuild a subject's YAML from the VCAA PDF or Word file")
+    imp.add_argument("pdf", help="the study design as .pdf or .docx")
     imp.add_argument("--subject", required=True)
     imp.add_argument("--dry-run", action="store_true")
     imp.set_defaults(func=cmd_import_study_design)
@@ -362,7 +377,8 @@ def build_parser() -> argparse.ArgumentParser:
     ix = sub.add_parser(
         "index",
         help="study design + book in, index out (questions AND content)")
-    ix.add_argument("pdf", help="a Checkpoints book, textbook or exam paper")
+    ix.add_argument("pdf", help="a Checkpoints book, textbook, exam paper or "
+                                "worksheet, as .pdf or .docx")
     ix.add_argument("--subject", required=True)
     ix.add_argument("--study-design", metavar="PDF",
                     help="import the VCAA study design first, from this PDF")

@@ -105,3 +105,22 @@ def test_refiner_never_leaves_the_area_of_study():
     r = TagRefiner(design, [q])
     kk, _ = r.refine(q, q["stem"])
     assert all(k.startswith("physics-u3-aos1") for k in kk)
+
+
+def test_figures_are_found_in_a_folder_of_any_name_beside_the_pack(tmp_path):
+    """The pack says figures/x.png; the person unzipped them into
+    checkpointscodexfigures/. Same file, found anyway, once and unambiguously."""
+    from PIL import Image
+    from blitz.ingest.pack import _FIGURE_INDEX, _locate_figure
+
+    (tmp_path / "checkpointscodexfigures").mkdir()
+    Image.new("L", (30, 30), 255).save(tmp_path / "checkpointscodexfigures" / "p0001-abc.png")
+    _FIGURE_INDEX.pop(tmp_path, None)
+    found = _locate_figure(tmp_path, "figures/p0001-abc.png")
+    assert found == tmp_path / "checkpointscodexfigures" / "p0001-abc.png"
+    assert _locate_figure(tmp_path, "figures/missing.png") is None
+    # Two files of the same name in different folders is ambiguous: refuse.
+    (tmp_path / "other").mkdir()
+    Image.new("L", (30, 30), 255).save(tmp_path / "other" / "p0001-abc.png")
+    _FIGURE_INDEX.pop(tmp_path, None)
+    assert _locate_figure(tmp_path, "figures/p0001-abc.png") is None

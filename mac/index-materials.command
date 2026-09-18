@@ -3,9 +3,10 @@
 #
 #   mac/index-materials.command physics sources/vcaa/physics-study-design.pdf sources/physics/
 #
-# With no arguments it asks. Every PDF in the materials folder is indexed as a
-# book (Checkpoints, textbook or exam paper, detected per file); every .json
-# there is treated as a question pack and imported. Nothing leaves the machine
+# With no arguments it asks. Every PDF and Word file in the materials folder is
+# indexed as a book (Checkpoints, textbook, exam paper or worksheet, detected
+# per file); every .json there that is a question pack is imported. The study
+# design can be VCAA's PDF or their Word file. Nothing leaves the machine
 # and no model runs: this is PyMuPDF, a concept lexicon and SQLite.
 set -euo pipefail
 
@@ -76,7 +77,7 @@ fi
 # --- then every book and pack in the folder ----------------------------------
 shopt -s nullglob nocaseglob
 found=0
-for pack in "$FOLDER"/*.json; do
+for pack in "$FOLDER"/*.json "$FOLDER"/*/*.json; do
   # A pack names its subject and holds questions; any other JSON lying in the
   # folder (a model's own stats or audit files) is not ours to import.
   if ! grep -q '"subject_id"' "$pack" || ! grep -q '"questions"' "$pack"; then
@@ -87,9 +88,9 @@ for pack in "$FOLDER"/*.json; do
   echo; echo "== Pack: $pack"
   "$BLITZ" import-pack "$pack" || echo "   (not imported — fix the errors above and re-run)"
 done
-for pdf in "$FOLDER"/*.pdf; do
+for pdf in "$FOLDER"/*.pdf "$FOLDER"/*.docx "$FOLDER"/*/*.pdf "$FOLDER"/*/*.docx; do
   found=1
-  name="$(basename "$pdf" .pdf | tr 'A-Z ' 'a-z-' | tr -cd 'a-z0-9-')"
+  name="$(basename "${pdf%.*}" | tr 'A-Z ' 'a-z-' | tr -cd 'a-z0-9-')"
   echo; echo "== Book: $pdf"
   # caffeinate keeps the Mac from idle-sleeping mid-book; harmless if absent.
   if command -v caffeinate >/dev/null 2>&1; then
@@ -101,7 +102,7 @@ done
 shopt -u nullglob nocaseglob
 
 if [ "$found" = 0 ]; then
-  echo "Nothing to index in $FOLDER (looked for *.pdf and *.json)."
+  echo "Nothing to index in $FOLDER (looked for PDF, Word and pack JSON files, one folder deep)."
   exit 1
 fi
 

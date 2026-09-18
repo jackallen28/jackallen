@@ -21,6 +21,7 @@ from ..db import insert_passage, insert_question, upsert_source
 from ..studydesign import StudyDesign, load_study_design
 from . import extract
 from .detect import Detection, detect_kind
+from .docx import docx_to_pdf, is_docx
 from .passages import extract_passages, tag_passages
 from .segment import RawQuestion, segment_document
 from .tag import KeywordTagger
@@ -112,6 +113,18 @@ def index_book(
         raise FileNotFoundError(pdf_path)
     title = title or pdf_path.stem.replace("-", " ").replace("_", " ").title()
     report = IndexReport(source_id=source_id)
+
+    converted_from = None
+    if is_docx(pdf_path):
+        # A Word file is rendered to a PDF with the typography the extractors
+        # read (headings larger than body, list numbers visible, images
+        # inline) and then treated as any other book.
+        progress(f"  rendering {pdf_path.name} to PDF…")
+        converted_from = pdf_path
+        pdf_path = docx_to_pdf(pdf_path)
+        report.review.append(
+            f"converted from Word ({converted_from.name}); page numbers in "
+            "citations are the rendered PDF's, not Word's")
 
     # 1. Study design, if one was handed over with the book.
     if study_design_pdf:
