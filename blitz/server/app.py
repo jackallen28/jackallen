@@ -112,6 +112,35 @@ def api_root():
     return {"root": str(ROOT)}
 
 
+# --- Backup: one zip with everything worth keeping ----------------------------
+
+class BackupIn(BaseModel):
+    include_sources: bool = False
+
+
+@app.post("/api/backup")
+def api_backup(body: BackupIn):
+    from .. import backup
+    from ..config import ROOT
+
+    report = backup.create_backup(root=ROOT, include_sources=body.include_sources)
+    return {"name": report.path.name, "path": str(report.path),
+            "files": report.files, "bytes": report.bytes,
+            "counts": report.counts, "summary": report.summary()}
+
+
+@app.get("/backups/{name}")
+def get_backup(name: str):
+    from ..config import ROOT
+
+    folder = (ROOT / "backups").resolve()
+    path = (folder / name).resolve()
+    if not re.fullmatch(r"blitz-backup-[\d-]+\.zip", name) or not path.is_file() \
+            or folder not in path.parents:
+        raise HTTPException(404, "no such backup")
+    return FileResponse(path, media_type="application/zip", filename=name)
+
+
 @app.get("/api/subjects")
 def api_subjects():
     """The full study design tree plus how many questions back each dot point."""

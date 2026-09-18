@@ -22,10 +22,26 @@ Blitz/
   exports/         "index materials" result folders and their zips
   blitzes/         every sheet ever generated
   students/        MASTER.xlsx and one workbook per student or class
+  backups/         zips made by Create backup
 ```
 
 `BLITZ_ROOT` in the environment moves the whole tree. Back that folder up
 and you have backed up the lot.
+
+## Backup
+
+**Create backup** on the home page (or `blitz backup`) writes one zip into
+`backups/` with everything worth keeping: the index, every figure crop, the
+study designs you imported, the student record and its workbooks, and every
+sheet ever made. Left out on purpose: the uploaded source books (tick
+*include the source books* if you want them), the export folders and the
+Word-to-PDF conversions, all of which the app can rebuild.
+
+To move to another machine or come back after an update: install Blitz,
+then `blitz restore <the zip>`, or unzip it into the Blitz folder. Restore
+refuses to overwrite an index that already has questions in it unless you
+pass `--replace`, and even then it moves the old one aside rather than
+deleting it.
 
 ## Serial numbers
 

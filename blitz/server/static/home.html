@@ -39,11 +39,37 @@
       <p>Look a question up by the serial number printed on a sheet, check its solution, and flag it if it is incomplete or wrong.</p>
     </a>
   </div>
-  <p class="hint" id="root"></p>
+  <div class="step" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px">
+      <b>Backup</b>
+      <p class="hint" style="margin:2px 0 0" id="root"></p>
+      <p class="hint" style="margin:2px 0 0">One zip with the index, every figure, the study designs, the student
+        record and every sheet. Take it with you when the app is updated or moved; restore with
+        <code>blitz restore &lt;zip&gt;</code> or by unzipping it into that folder.</p>
+    </div>
+    <label class="check" style="font-size:13px"><input id="withsources" type="checkbox"> include the source books</label>
+    <button id="backup" type="button" class="primary">Create backup</button>
+  </div>
+  <p id="backup-result" class="hint" hidden></p>
   <script>
     fetch("/api/root").then((r) => r.json()).then((d) => {
       document.getElementById("root").textContent = "Everything lives in " + d.root;
     }).catch(() => {});
+    document.getElementById("backup").onclick = async () => {
+      const btn = document.getElementById("backup");
+      const out = document.getElementById("backup-result");
+      btn.disabled = true; out.hidden = false; out.textContent = "Zipping…";
+      try {
+        const res = await fetch("/api/backup", { method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ include_sources: document.getElementById("withsources").checked }) });
+        if (!res.ok) throw new Error(res.statusText);
+        const d = await res.json();
+        out.innerHTML = `Saved ${d.summary.replace(/</g, "&lt;")} — <a href="/backups/${encodeURIComponent(d.name)}">download it</a> or find it in the backups folder.`;
+      } catch (e) {
+        out.textContent = "Backup failed: " + e;
+      } finally { btn.disabled = false; }
+    };
   </script>
 </main>
 </body>

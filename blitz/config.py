@@ -10,6 +10,7 @@ can be found in Finder and backed up as a unit:
       exports/         "index materials" result folders and their zips
       blitzes/         every generated sheet
       students/        the master workbook and one per student or class
+      backups/         zips made by "Create backup" / blitz backup
 
 BLITZ_ROOT in the environment moves the whole tree (a server uses a mounted
 disk; a developer points it at the checkout).
@@ -42,6 +43,7 @@ EXPORTS_DIR = ROOT / "exports"
 # Generated sheets.
 OUT_DIR = ROOT / "blitzes"
 STUDENTS_DIR = ROOT / "students"
+BACKUPS_DIR = ROOT / "backups"
 
 # The study designs shipped with the tool.
 STUDY_DESIGN_DIR = Path(__file__).resolve().parent / "studydesign" / "data"
@@ -53,5 +55,5 @@ CROP_ZOOM = 3.0
 
 def ensure_dirs() -> None:
     for d in (ROOT, USER_DESIGN_DIR, SOURCES_DIR, DATA_DIR, CROPS_DIR,
-              EXPORTS_DIR, OUT_DIR, STUDENTS_DIR):
+              EXPORTS_DIR, OUT_DIR, STUDENTS_DIR, BACKUPS_DIR):
         d.mkdir(parents=True, exist_ok=True)

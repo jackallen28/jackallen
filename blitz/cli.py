@@ -37,6 +37,38 @@ def cmd_root(args) -> int:
     return 0
 
 
+def cmd_backup(args) -> int:
+    """One zip with everything worth keeping."""
+    from . import backup
+
+    ensure_dirs()
+    report = backup.create_backup(include_sources=args.include_sources,
+                                  out_dir=Path(args.out) if args.out else None)
+    print(f"wrote {report.path}")
+    print(f"  {report.summary()}")
+    if not args.include_sources:
+        print("  (source books left out; --include-sources adds them)")
+    return 0
+
+
+def cmd_restore(args) -> int:
+    """Unpack a backup into the Blitz folder."""
+    from . import backup
+
+    ensure_dirs()
+    try:
+        result = backup.restore_backup(Path(args.zip), replace=args.replace)
+    except (FileExistsError, ValueError) as exc:
+        print(f"\n{exc}\n")
+        return 1
+    m = result["manifest"]
+    print(f"restored {result['files']} files into {result['root']}")
+    print(f"  backup from {m.get('created_at', '?')}: "
+          f"{m.get('counts', {}).get('questions', '?')} questions, "
+          f"{m.get('counts', {}).get('students', '?')} students")
+    return 0
+
+
 def cmd_init(args) -> int:
     ensure_dirs()
     with db.session() as conn:
@@ -336,6 +368,16 @@ def build_parser() -> argparse.ArgumentParser:
                    ).set_defaults(func=cmd_init)
     sub.add_parser("root", help="print the folder all your data lives in"
                    ).set_defaults(func=cmd_root)
+    bk = sub.add_parser("backup", help="zip everything worth keeping into backups/")
+    bk.add_argument("--include-sources", action="store_true",
+                    help="also zip the uploaded source books (large)")
+    bk.add_argument("--out", help="folder to write the zip in (default: <root>/backups)")
+    bk.set_defaults(func=cmd_backup)
+    rs = sub.add_parser("restore", help="unpack a backup into the Blitz folder")
+    rs.add_argument("zip")
+    rs.add_argument("--replace", action="store_true",
+                    help="move the current index aside and restore over it")
+    rs.set_defaults(func=cmd_restore)
     sub.add_parser("subjects", help="list subjects").set_defaults(func=cmd_subjects)
 
     ing = sub.add_parser("ingest", help="index one of your own PDFs")

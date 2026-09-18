@@ -21,3 +21,4 @@ venv/
 *.sqlite3-wal
 *.sqlite3-shm
 .env
+/backups/

@@ -27,6 +27,7 @@ Currently set up for **VCE Business Management** and **VCE Physics**, Units 3 & 
 | Serial numbers | Every question carries one (`PH-0413`), printed on the sheet and its solution; the Questions page finds it. |
 | Flags | A question flagged incomplete, corrupt or wrong never goes on a sheet until cleared. |
 | Students | Sheets are logged per student or class; repeats are skipped; `students/MASTER.xlsx` and one workbook each are rewritten after every sheet. |
+| Backup | One zip with the index, crops, study designs, student record and every sheet; `blitz restore` puts it back. |
 
 A subject whose study design is still a draft prints an "unverified" banner on
 every sheet and marks the affected dot points with `*`. A revision tool that
