@@ -265,6 +265,95 @@ def fake_textbook(tmp_path):
     return path
 
 
+def _book_page(path):
+    """A canvas plus a `line` helper, shared by the publisher-shaped fixtures."""
+    c = rl_canvas.Canvas(str(path), pagesize=A4)
+    y = [PAGE_H - 25 * mm]
+
+    def line(text, size=10, bold=False):
+        if y[0] < 25 * mm:
+            c.showPage()
+            y[0] = PAGE_H - 25 * mm
+        c.setFont("Helvetica-Bold" if bold else "Helvetica", size)
+        c.drawString(LEFT, y[0], text)
+        y[0] -= (size + 4)
+
+    def para(*lines):
+        for t in lines:
+            line(t)
+        y[0] -= 6
+
+    return c, line, para
+
+
+@pytest.fixture
+def fake_physics_textbook(tmp_path):
+    """A PDF in the Jacaranda-style Physics vocabulary.
+
+    The real book heads its worked examples "Sample problem 1.6" and drops
+    single questions into the teaching prose as "Revision question 1.5", with
+    no numbered list anywhere. Written from the shape of the real pages, not
+    from their content.
+    """
+    path = tmp_path / "fake-physics-textbook.pdf"
+    c, line, para = _book_page(path)
+
+    line("Chapter 1  Motion", 18, bold=True)
+    line("1.1  Describing motion", 14, bold=True)
+    para("Velocity is the rate of change of displacement. A velocity-time graph",
+         "describes how that velocity changes, and the area under it gives the",
+         "displacement travelled over the interval shown.")
+    line("Sample problem 1.6", 12, bold=True)
+    para("A car accelerates uniformly from rest to 25 m/s in 8.0 s. Calculate the",
+         "acceleration of the car and the distance it travels in that time.")
+    line("Solution", 10, bold=True)
+    para("a = (v - u)/t = 25/8.0 = 3.1 m/s^2, and s = (u + v)t/2 = 100 m.")
+    line("Revision question 1.5", 12, bold=True)
+    para("A tram slows uniformly from 14 m/s to rest over 7.0 s. Determine the",
+         "magnitude of its acceleration and the distance it covers while stopping.")
+    line("1.2  Forces", 14, bold=True)
+    para("A force is a push or a pull, measured in newtons. The net force on a",
+         "body determines its acceleration through Newton's second law.")
+    line("Revision question 1.12", 12, bold=True)
+    para("A crate of mass 45 kg is pushed across a floor by a horizontal force of",
+         "180 N against a friction force of 55 N. Calculate its acceleration.")
+    c.save()
+    return path
+
+
+@pytest.fixture
+def fake_busman_textbook(tmp_path):
+    """A PDF in the Edrolo-style Business Management vocabulary.
+
+    "Case study" above a block of "Exam-style questions", each question headed
+    "Question 1" on its own line with "(2 MARKS)" under it and the exam it came
+    from cited bare underneath. The scenario is invented for the test.
+    """
+    path = tmp_path / "fake-busman-textbook.pdf"
+    c, line, para = _book_page(path)
+
+    line("Chapter 3  Managing employees", 18, bold=True)
+    line("3.1  Motivation strategies", 14, bold=True)
+    para("Motivation is the willingness of an employee to exert effort towards",
+         "the objectives of the business. Financial and non-financial strategies",
+         "are used together, because each addresses a different need.")
+    line("Case study", 12, bold=True)
+    para("Northbrook Cartons is a family-owned packaging manufacturer employing",
+         "120 staff across two sites. Absenteeism has risen sharply and the",
+         "operations manager has proposed a new performance-related pay scheme.")
+    line("Exam-style questions", 12, bold=True)
+    line("Question 1")
+    para("Outline one financial motivation strategy Northbrook Cartons could use.",
+         "(2 MARKS)",
+         "Adapted from VCAA 2020 exam Section A Q1a")
+    line("Question 2")
+    para("Analyse how investment in training could reduce absenteeism at",
+         "Northbrook Cartons over the longer term.",
+         "(6 MARKS)")
+    c.save()
+    return path
+
+
 @pytest.fixture(autouse=True)
 def _never_touch_a_real_folder():
     """Fail loudly if a test writes outside the throwaway root.

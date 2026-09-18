@@ -36,7 +36,13 @@ from .textflow import Line, build_lines, fraction_bars, horizontal_rules
 HEADER = re.compile(r"^Question\s+(\d+)\s*/\s*(\d+)\s*$", re.IGNORECASE)
 SOLUTION = re.compile(r"^\s*Solutions?\s*:?\s*$", re.IGNORECASE)
 # "[VCAA 2019 SA Q14]", "[Adapted VCAA 2018 NHT SA Q8]"
-PROVENANCE = re.compile(r"^\[([^\]]*(?:VCAA|Adapted)[^\]]*)\]\s*$", re.IGNORECASE)
+# Checkpoints fences its attribution in brackets, "[VCAA 2018 SB Q2]". The
+# Edrolo Business Management book prints it bare under the question, "Adapted
+# from VCAA 2020 exam Section A Q1a". Both are the same thing.
+PROVENANCE = re.compile(
+    r"^(?:\[([^\]]*(?:VCAA|Adapted)[^\]]*)\]"
+    r"|((?:adapted\s+from\s+)?VCAA\s+\d{4}[^\n]{0,60}))\s*$",
+    re.IGNORECASE)
 MARKS_LINE = re.compile(r"^\((\d+)\s*marks?\)\s*$", re.IGNORECASE)
 MARKS_INLINE = re.compile(r"\((\d+)\s*marks?\)", re.IGNORECASE)
 PART = re.compile(r"^([a-h])[.)]\s+(?=\S)")
@@ -241,7 +247,7 @@ def _parse_unit(entries: list[_Entry],
     for line in q_lines:
         p = PROVENANCE.match(line)
         if p:
-            provenance = p.group(1).strip()
+            provenance = (p.group(1) or p.group(2)).strip()
         else:
             kept.append(line)
 

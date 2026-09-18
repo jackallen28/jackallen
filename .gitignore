@@ -23,3 +23,6 @@ venv/
 .env
 /backups/
 /blitz.json
+# Question text transcribed out of a licensed textbook. The scripts beside it
+# are code and are tracked; this one is book content and is not.
+/tools/codex-physics/physics_edits.py

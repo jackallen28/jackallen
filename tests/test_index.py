@@ -91,6 +91,61 @@ class TestTextbookQuestions:
         assert "Einstein explained this" not in texts
 
 
+class TestPublisherVocabularies:
+    """The same extractor against two books that agree on almost no wording.
+
+    Each real book was read once, its heading vocabulary written down, and a
+    synthetic page built to that shape — the books themselves are licensed and
+    never enter the repo.
+    """
+
+    @staticmethod
+    def _segment(path):
+        doc = pymupdf.open(path)
+        try:
+            return segment_textbook(doc)
+        finally:
+            doc.close()
+
+    def test_sample_problems_are_worked_examples(self, fake_physics_textbook):
+        qs = self._segment(fake_physics_textbook)
+        we = next(q for q in qs if q.provenance.lower().startswith("sample problem"))
+        assert we.number == "1.6"
+        assert "3.1 m/s^2" in we.answer
+        assert "Solution" not in we.text
+
+    def test_revision_questions_in_the_prose_are_found(self, fake_physics_textbook):
+        qs = self._segment(fake_physics_textbook)
+        rev = [q for q in qs if q.provenance.lower().startswith("revision question")]
+        assert [q.number for q in rev] == ["1.5", "1.12"]
+        assert "tram" in rev[0].text
+
+    def test_teaching_prose_is_not_picked_up_as_a_question(self, fake_physics_textbook):
+        text = " ".join(q.full_text for q in self._segment(fake_physics_textbook))
+        assert "rate of change of displacement" not in text
+        assert "push or a pull" not in text
+
+    def test_question_markers_split_a_block(self, fake_busman_textbook):
+        qs = self._segment(fake_busman_textbook)
+        assert [q.number for q in qs] == ["1", "2"]
+        assert qs[0].text.startswith("Outline one financial")
+        assert "Question 1" not in qs[0].full_text
+
+    def test_a_case_study_travels_with_every_question(self, fake_busman_textbook):
+        qs = self._segment(fake_busman_textbook)
+        assert len(qs) == 2
+        assert all("Northbrook Cartons is a family-owned" in q.stimulus for q in qs)
+        assert all(q.stimulus_page is not None for q in qs)
+
+    def test_marks_and_bare_attribution_are_lifted_out(self, fake_busman_textbook):
+        qs = self._segment(fake_busman_textbook)
+        assert [q.marks for q in qs] == [2, 6]
+        assert qs[0].provenance == "Adapted from VCAA 2020 exam Section A Q1a"
+        assert "VCAA" not in qs[0].text
+        # Without a citation of its own a question keeps its block heading.
+        assert qs[1].provenance == "Exam-style questions"
+
+
 class TestPassages:
     @pytest.fixture
     def passages(self, fake_textbook, design):

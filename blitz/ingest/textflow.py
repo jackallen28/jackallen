@@ -147,6 +147,37 @@ def _render(text: str, script: str) -> str:
     return "".join(out)
 
 
+# Some textbook PDFs subset their font without the "Th" ligature, and every
+# "Th" comes out as "!" or as a bare "T". Seen in a real VCE Physics textbook:
+# "!ese eﬀects", "Te total mass". The "!" form is unambiguous — no English
+# word starts with it. The "T" form is only repaired for broken spellings that
+# are not themselves words: "Trough" stays "Trough", because a wave has one.
+_BROKEN_TH = {
+    "Te": "The", "Tis": "This", "Tese": "These", "Tere": "There",
+    "Tey": "They", "Teir": "Their", "Tose": "Those", "Tus": "Thus",
+    "Terefore": "Therefore", "Tereby": "Thereby", "Tough": "Though",
+}
+_BROKEN_TH.update({k.lower(): v.lower() for k, v in _BROKEN_TH.items()})
+_BANG_WORD = re.compile(r"(?<![A-Za-z0-9])!(?=[a-z])")
+_TH_WORD = re.compile(r"(?<![A-Za-z])(" + "|".join(
+    sorted(_BROKEN_TH, key=len, reverse=True)) + r")(?![A-Za-z])")
+
+
+def repair_ligatures(text: str) -> str:
+    """Put back a "Th" the PDF's font dropped.
+
+    Conservative on purpose: a wrong repair silently rewrites the question a
+    student reads, which is worse than leaving a visible typo in.
+    """
+    if not text:
+        return text
+    if "!" in text:
+        text = _BANG_WORD.sub("Th", text)
+    if "T" in text or "t" in text:
+        text = _TH_WORD.sub(lambda m: _BROKEN_TH[m.group(1)], text)
+    return text
+
+
 def _join(a: str, b: str, gap: float = 0.0, size: float = 10.0) -> str:
     """Join two runs, inserting a space where the page shows one.
 
@@ -190,6 +221,7 @@ def build_lines(page) -> list[Line]:
 
         text = text.replace("\xa0", " ")
         text = re.sub(r"[ \t]{2,}", " ", text).strip()
+        text = repair_ligatures(text)
         if not text:
             continue
         lines.append(Line(

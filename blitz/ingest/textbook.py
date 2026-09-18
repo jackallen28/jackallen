@@ -6,9 +6,19 @@ section, "Chapter review" at the end of a chapter — each a numbered list under
 heading. So the unit of segmentation is the block, found by its heading, and the
 questions are the numbered items inside it.
 
-Written against synthetic pages shaped like a Cambridge/Heinemann/Jacaranda
-textbook, not a real one. The heading vocabulary below is the first thing to
-tune when a real textbook arrives.
+The heading vocabulary below was written against synthetic pages and then
+tuned against two real books, which disagreed about almost every word:
+
+* a Jacaranda-style VCE Physics textbook heads its worked examples
+  "Sample problem 1.6", not "Worked example", and scatters single questions
+  through the prose as "Revision question 1.5";
+* an Edrolo-style VCE Business Management textbook heads each question
+  "Question 1" with "(2 MARKS)" on the line below, opens a block with
+  "Exam-style questions", puts a shared "Case study" above it, and cites
+  "Adapted from VCAA 2020 exam Section A Q1a" under each one.
+
+Both are handled below. A third publisher will use a third vocabulary, and
+this is still the first place to look when a new book comes out empty.
 """
 
 from __future__ import annotations
@@ -17,8 +27,8 @@ import re
 from dataclasses import dataclass
 
 from .segment import (
-    MARKS_INLINE, MARKS_LINE, OPTION, PART, RawQuestion, _Entry, _PageInfo,
-    _split_options, _stream,
+    MARKS_INLINE, MARKS_LINE, OPTION, PART, PROVENANCE, RawQuestion, _Entry,
+    _PageInfo, _split_options, _stream,
 )
 from .textflow import Line
 
@@ -30,50 +40,111 @@ QUESTION_BLOCK = re.compile(
     r"multiple[- ]choice questions?|short[- ]answer questions?|"
     r"key questions?|section questions?)\b[^\n]{0,40}$",
     re.IGNORECASE)
-WORKED_EXAMPLE = re.compile(r"^worked example\s*(\d+(?:\.\d+)*)?", re.IGNORECASE)
+WORKED_EXAMPLE = re.compile(
+    r"^(worked example|sample problem|worked solution)\s*(\d+(?:\.\d+)*)?",
+    re.IGNORECASE)
+# A single question set in the middle of the teaching prose, which is how the
+# Physics book paces its chapters. It opens a block of exactly one question.
+REVISION_QUESTION = re.compile(
+    r"^revision question\s*([a-z]?\d+(?:\.\d+)*)", re.IGNORECASE)
 SOLUTION = re.compile(r"^(solution|answer|working)\s*:?\s*$", re.IGNORECASE)
 NUMBERED = re.compile(r"^\s*(\d{1,3})\s*[.)]\s+(?=\S)")
+# "Question 1" on a line of its own, with the question under it. Distinct from
+# Checkpoints' "Question 12/ 11", which carries a page number after a slash.
+QUESTION_MARKER = re.compile(r"^question\s+(\d{1,3})\s*$", re.IGNORECASE)
+# A shared stimulus every question in the block refers back to. Without it the
+# questions under it are unanswerable, so it travels with them as context.
+CONTEXT_BLOCK = re.compile(
+    r"^(case study|scenario|stimulus( material)?|background|"
+    r"the following information|read the (following|extract))\b[^\n]{0,40}$",
+    re.IGNORECASE)
 # Anything that ends a question block: the next teaching heading.
 BLOCK_END_RATIO = 1.15
 
 
 @dataclass
 class _Block:
-    kind: str                     # "questions" | "worked-example"
+    kind: str        # "questions" | "worked-example" | "revision" | "context"
     label: str
     entries: list[_Entry]
+    # A shared stimulus printed above the block — the Business Management book's
+    # "Case study". Every question in the block needs it to make sense.
+    context: str = ""
+    context_page: int | None = None
 
 
 def _blocks(entries: list[_Entry], body_size: float) -> list[_Block]:
-    """Slice the stream into question blocks and worked examples."""
+    """Slice the stream into question blocks, worked examples and stimuli."""
     blocks: list[_Block] = []
     current: _Block | None = None
+    context = ""
+    context_page: int | None = None
+
+    def close() -> None:
+        """Finish the open block: a stimulus is held back, the rest is kept."""
+        nonlocal current, context, context_page
+        if current is None:
+            return
+        if current.kind == "context":
+            context = " ".join(
+                e.line.text.strip() for e in current.entries).strip()
+            context_page = current.entries[0].page_index if current.entries else None
+        else:
+            blocks.append(current)
+        current = None
 
     for e in entries:
         t = e.line.text.strip()
         is_heading = e.line.size >= body_size * BLOCK_END_RATIO and len(t) < 90
 
         if WORKED_EXAMPLE.match(t):
-            if current:
-                blocks.append(current)
+            close()
+            context, context_page = "", None
             current = _Block("worked-example", t, [])
             continue
+        if REVISION_QUESTION.match(t):
+            close()
+            context, context_page = "", None
+            current = _Block("revision", t, [])
+            continue
+        if CONTEXT_BLOCK.match(t):
+            close()
+            context, context_page = "", None
+            current = _Block("context", t, [])
+            continue
+        if QUESTION_MARKER.match(t):
+            # "Question 1" numbers an item, but QUESTION_BLOCK would read it as
+            # a heading and open an empty block on every question in the book.
+            # It opens a block only when there is none, for a publisher that
+            # prints no heading above the list at all.
+            if current is None:
+                current = _Block("questions", "", [], context, context_page)
+                context, context_page = "", None
+            current.entries.append(e)
+            continue
         if QUESTION_BLOCK.match(t):
-            if current:
-                blocks.append(current)
-            current = _Block("questions", t, [])
+            close()
+            current = _Block("questions", t, [], context, context_page)
+            context, context_page = "", None
             continue
         if is_heading and current:
             # A new teaching heading closes the block.
-            blocks.append(current)
-            current = None
+            close()
             continue
         if current is not None:
             current.entries.append(e)
 
-    if current:
-        blocks.append(current)
+    close()
     return blocks
+
+
+def _item_number(text: str) -> str | None:
+    """The question number opening a line, in either book's notation."""
+    m = QUESTION_MARKER.match(text.strip())
+    if m:
+        return m.group(1)
+    m = NUMBERED.match(text)
+    return m.group(1) if m else None
 
 
 def _split_numbered(entries: list[_Entry]) -> list[list[_Entry]]:
@@ -81,24 +152,46 @@ def _split_numbered(entries: list[_Entry]) -> list[list[_Entry]]:
     items: list[list[_Entry]] = []
     current: list[_Entry] = []
     for e in entries:
-        if NUMBERED.match(e.line.text) and current:
+        if _item_number(e.line.text) is not None and current:
             items.append(current)
             current = [e]
         else:
             current.append(e)
     if current:
         items.append(current)
-    return [i for i in items if NUMBERED.match(i[0].line.text)]
+    return [i for i in items if _item_number(i[0].line.text) is not None]
 
 
 def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
-                   block_label: str, printed_offset: int) -> RawQuestion | None:
+                   block: _Block, printed_offset: int,
+                   number: str | None = None) -> RawQuestion | None:
     from .segment import _bars_inside, _bbox, _looks_mangled
 
     lines = [e.line.text for e in item]
-    m = NUMBERED.match(lines[0])
-    number = m.group(1) if m else None
-    lines[0] = NUMBERED.sub("", lines[0], count=1)
+    if number is None:
+        # "Question 1" stands on its own line and is not part of the question;
+        # "1. " opens the first line and is stripped off it.
+        marker = QUESTION_MARKER.match(lines[0].strip())
+        if marker:
+            number = marker.group(1)
+            lines = lines[1:]
+        else:
+            m = NUMBERED.match(lines[0])
+            number = m.group(1) if m else None
+            lines[0] = NUMBERED.sub("", lines[0], count=1)
+    if not lines:
+        return None
+
+    # The exam this question came from, printed bare under it.
+    provenance = None
+    kept: list[str] = []
+    for line in lines:
+        p = PROVENANCE.match(line.strip())
+        if p:
+            provenance = (p.group(1) or p.group(2)).strip()
+        else:
+            kept.append(line)
+    lines = kept or lines
 
     body_lines, options = _split_options(lines)
     marks = 0
@@ -142,8 +235,9 @@ def _make_question(item: list[_Entry], info: dict[int, _PageInfo],
         text=text, options=options, parts=parts, marks=marks or None,
         page_index=page, end_page_index=item[-1].page_index,
         bbox=_bbox(item, page),
+        stimulus=block.context, stimulus_page=block.context_page,
         needs_crop=mangled, crop_reason=reason,
-        provenance=block_label if block_label else None,
+        provenance=provenance or block.label or None,
     )
 
 
@@ -180,7 +274,7 @@ def _worked_example(block: _Block, info: dict[int, _PageInfo],
     page = q_entries[0].page_index
     m = WORKED_EXAMPLE.match(block.label)
     return RawQuestion(
-        number=m.group(1) if m and m.group(1) else None,
+        number=m.group(2) if m and m.group(2) else None,
         printed_page=str(page + 1 + printed_offset) if printed_offset is not None else None,
         text=text, answer=answer,
         page_index=page, end_page_index=block.entries[-1].page_index,
@@ -207,8 +301,18 @@ def segment_textbook(doc, first: int = 0, last: int | None = None,
             if q:
                 out.append(q)
             continue
+        if block.kind == "revision":
+            # One question, numbered by its own heading rather than a list.
+            if not block.entries:
+                continue
+            m = REVISION_QUESTION.match(block.label)
+            q = _make_question(block.entries, info, block, printed_offset,
+                               number=m.group(1) if m else None)
+            if q:
+                out.append(q)
+            continue
         for item in _split_numbered(block.entries):
-            q = _make_question(item, info, block.label, printed_offset)
+            q = _make_question(item, info, block, printed_offset)
             if q:
                 out.append(q)
     return out
