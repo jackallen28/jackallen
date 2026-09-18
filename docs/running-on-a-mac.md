@@ -22,6 +22,19 @@ macOS ships Python 3.9, which is too old. If `python3 --version` says 3.9
 or lower, `brew install python@3.12` and use `python3.12` above.
 `mac/Blitz.command` does all of this by itself the first time it runs.
 
+**Clone it, do not download the ZIP.** GitHub's "Download ZIP" strips the
+execute bit, so `mac/Blitz.command` will not open when you double-click it,
+and macOS quarantines anything that arrives that way. If you already have a
+ZIP, this fixes it:
+
+```bash
+chmod +x mac/*.command
+xattr -dr com.apple.quarantine .
+```
+
+The first double-click still shows "unidentified developer" — right-click
+the file and choose **Open**, once. After that it opens normally.
+
 ## Set up, once
 
 A fresh install has no index and nobody's subjects. Either:

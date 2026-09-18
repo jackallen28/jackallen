@@ -481,11 +481,11 @@ def build_parser() -> argparse.ArgumentParser:
                     help="with --restore, move an existing index aside first")
     st.add_argument("--keep", action="store_true",
                     help="keep an index that is already in the folder")
-    st.add_argument("--subjects", nargs="*", default=[], metavar="ID",
+    st.add_argument("--subjects", nargs="*", default=[], action="extend", metavar="ID",
                     help="shipped study designs to start with (blitz subjects)")
-    st.add_argument("--design", nargs="*", default=[], metavar="FILE",
+    st.add_argument("--design", nargs="*", default=[], action="extend", metavar="FILE",
                     help="study design PDF or Word files to add as subjects")
-    st.add_argument("--name", nargs="*", default=[], metavar="NAME",
+    st.add_argument("--name", nargs="*", default=[], action="extend", metavar="NAME",
                     help="subject names for those files, in the same order; "
                          "guessed from the filename where missing")
     st.add_argument("--samples", action="store_true",
