@@ -13,7 +13,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
   7 L bucket. The calibration is saved and survives power cuts. The water count always
   starts at 0 L after power-up.
 - Flow rate, limit and count are printed to the Serial Monitor and sent to a spare
-  pin for a future ESP8266/ESP32.
+  pin for a future ESP32 board (Waveshare ESP32-C3-Zero).
 
 ## Parts
 
@@ -25,7 +25,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 | Momentary push button | |
 | 3 × LED + 3 × 220 Ω resistor | 25 L, 50 L, 100 L |
 | 433 MHz RX480E-4 receiver module + 4-button remote (A–D) | 5 V logic outputs |
-| ESP8266 / ESP32 (optional, later) | 3.3 V logic, needs a voltage divider |
+| Waveshare ESP32-C3-Zero (optional, later) | Powered from 5 V; its data pins are 3.3 V only, so it needs a divider |
 
 ## Wiring
 
@@ -45,7 +45,7 @@ is in [`hardware/`](hardware/). The table below is the minimum wiring for a hand
 | **A2** | Receiver D2 (remote button C = 100 L) |
 | **A3** | Receiver D3 (remote button D = FREE FLOW) |
 | **5V / GND** | Receiver +V and GND (VT is not used) |
-| **D11** | Data out to ESP RX, through a 1 kΩ / 2 kΩ divider (see below) |
+| **D11** | Data out to the ESP, through a 1 kΩ / 2 kΩ divider (see below) |
 | **D12** | Reserved for ESP TX → Nano (not used yet) |
 
 **Solenoid:** wire the solenoid supply through the relay's **COM** and **NO**
@@ -84,17 +84,20 @@ watch the Serial Monitor: if a button selects the wrong limit, swap the pins in
 Keep the receiver's coiled antenna away from the relay, the valve wires and any metal, and
 don't mount it inside a metal box.
 
-**ESP8266/ESP32:** these run on 3.3 V, so drop the Nano's 5 V signal with a divider:
+**ESP32-C3-Zero:** power it from 5 V into its **5V** pin (it has its own 3.3 V regulator) and
+connect GND. Its GPIO pins are **3.3 V only**, so drop the Nano's 5 V data signal with a divider
+into a free GPIO such as GPIO20:
 
 ```
-Nano D11 ──[1 kΩ]──┬── ESP RX
+Nano D11 ──[1 kΩ]──┬── ESP GPIO20
                    │
                  [2 kΩ]
                    │
                   GND (shared with the ESP)
 ```
 
-Power the ESP from its own 3.3 V regulator; the Nano's 3.3 V pin cannot supply enough current.
+Avoid GPIO2, 8 and 9 (boot strapping pins) and 18/19 (USB). Its Wi-Fi draws peaks of about
+350 mA from 5 V, so use a regulator rated 1 A for the 5 V supply.
 
 ## Settings to check before uploading
 
@@ -228,5 +231,6 @@ D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic, so use th
 | `ppl` | Calibration in pulses per litre |
 | `calibrated` | `false` = datasheet default, `true` = user calibration |
 
-On the ESP, read lines from its RX (`Serial` or `SoftwareSerial` at 9600) and parse
+On an ESP32-C3, read the lines with a hardware serial port on the data pin, for example
+`Serial1.begin(9600, SERIAL_8N1, 20, -1);` (receive on GPIO20, no transmit pin), and parse
 them with ArduinoJson.

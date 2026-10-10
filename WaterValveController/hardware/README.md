@@ -37,7 +37,7 @@ Mark **GND / button end** and **VT / antenna end** on the PCB silkscreen next to
 | J2 | VALVE POWER (2-way screw) | 1 = +12 V (fused) → relay COM, 2 = GND ← valve − |
 | J3 | RELAY MODULE (3-pin header) | 1 = VCC (+5 V), 2 = IN (D8), 3 = GND |
 | J4 | FLOW SENSOR (3-way screw) | 1 = +5 V (red), 2 = SIG (yellow), 3 = GND (black) |
-| J5 | ESP (3-pin header) | 1 = +5 V, 2 = DATA (3.3 V level, to the ESP's RX), 3 = GND |
+| J5 | ESP (3-pin header) | 1 = +5 V → ESP32-C3-Zero 5V pin, 2 = DATA (3.3 V level) → GPIO20, 3 = GND |
 | U2 | RX480E-4 receiver (7-pin socket) | 1 GND, 2 +V (filtered 5 V), 3–6 D0–D3 → A0–A3, 7 VT (unused) |
 
 The sketch uses the same Nano pins. Its `REMOTE_ACTIVE_LOW` setting must be `false` for this receiver
@@ -63,15 +63,17 @@ The numbers match the notes on the schematic sheet.
    and regulator noise from reducing its range. The firmware debounces both.
 6. **Supply protection.** F1 (2 A slow-blow) and D1. If the supply is connected backwards, D1 conducts and
    blows the fuse instead of damaging the board.
-7. **ESP level shifting.** R11 1.8 kΩ / R12 3.3 kΩ turn the Nano's 5 V data into 3.24 V for an ESP8266/ESP32.
+7. **ESP level shifting.** The ESP32-C3-Zero runs from 5 V, but its GPIO pins are 3.3 V only.
+   R11 1.8 kΩ / R12 3.3 kΩ turn the Nano's 5 V data into 3.24 V before it reaches J5.
 8. **Cable routing.** Twist the flow sensor's signal wire with its GND wire and keep it away from the valve
    and 12 V wires. For a long sensor run, use shielded cable with the shield connected to GND at the
    controller end only.
 9. **PCB layout.** See below.
 
-**Regulator.** U1 is a TO-220 7805 footprint. An L7805 works but needs a small heatsink. Once an ESP is
-added, use a pin-compatible switching regulator such as the R-78E5.0-1.0 (same footprint, runs cool),
-or wire a 5 V buck module to the IN / GND / OUT pads.
+**Regulator.** U1 is a TO-220 7805 footprint. With the ESP32-C3 fitted, its Wi-Fi peaks (about 350 mA)
+take the 5 V load to roughly 0.5 A. Use a pin-compatible switching regulator such as the R-78E5.0-1.0
+(1 A, same footprint, runs cool), or wire a 5 V buck module to the IN / GND / OUT pads. An L7805 also
+works but needs a heatsink.
 
 ### PCB layout rules
 

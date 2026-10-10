@@ -349,9 +349,9 @@ def build():
 
     bus_y = 50.8
     xs = dict(flag=58.42, d1=66.04, c1=81.28, c2=96.52)
-    u1 = s.add('Regulator_Linear:L7805', 'U1', 'L7805 or R-78E5.0-1.0', 109.22, bus_y, fp=FP_TO220,
+    u1 = s.add('Regulator_Linear:L7805', 'U1', 'R-78E5.0-1.0 or L7805', 109.22, bus_y, fp=FP_TO220,
                ref_at=(109.22, 44.45), val_at=(109.22, 46.99), ref_just='center', val_just='center',
-               desc='5 V regulator, TO-220 pinout IN-GND-OUT (L7805 + heatsink, or pin-compatible switcher R-78E5.0-1.0)')
+               desc='5 V regulator, TO-220 pinout IN-GND-OUT: R-78E5.0-1.0 switcher (recommended with the ESP), or L7805 + heatsink')
     d1 = s.add('Device:D', 'D1', '1N5408', xs['d1'], 57.15, rot=270, fp=FP_D,
                ref_at=(xs['d1'] + 2.54, 55.88), val_at=(xs['d1'] + 2.54, 58.42),
                desc='Reverse-polarity crowbar: conducts and blows F1 if the supply is reversed')
@@ -383,8 +383,8 @@ def build():
         s.wire(p, (p[0], 66.04))
         s.power('GND', (p[0], 66.04), show=False)
     s.text('F1 + D1: if the supply is connected backwards, D1 conducts and blows F1.\n'
-           'U1: L7805 needs a small heatsink. Once an ESP is fitted, use a pin-compatible\n'
-           'switching regulator (e.g. R-78E5.0-1.0) or a 5 V buck module wired to IN / GND / OUT.',
+           'U1: the ESP32-C3 Wi-Fi peaks take the 5 V load to about 0.5 A. Use a pin-compatible switching\n'
+           'regulator (e.g. R-78E5.0-1.0) or a 5 V buck module wired to IN / GND / OUT. An L7805 needs a heatsink.',
            (20.32, 72.39))
 
     # ======================= FLOW SENSOR INPUT ===============================
@@ -558,6 +558,9 @@ def build():
 
     # ======================= ESP DATA OUT ====================================
     s.text('ESP DATA OUT (9600 baud, 3.3 V level)', (279.4, 129.54), 2, True)
+    s.text('ESP32-C3-Zero: J5 5V -> 5V pin, DATA -> GPIO20 (RX),\n'
+           'GND -> GND. Its GPIOs are 3.3 V only, so R11 / R12\n'
+           'drop the Nano\'s 5 V data to 3.2 V.', (279.4, 134.62))
     rx = 370.84
     s.wire((rx, 138.43), (rx, 140.97))
     s.label('TX_5V', (rx, 138.43), 90)
@@ -568,9 +571,9 @@ def build():
     s.wire(r11['pins']['2'], node_e, r12['pins']['1'])
     s.wire(r12['pins']['2'], (rx, 163.83))
     s.power('GND', (rx, 163.83), show=False)
-    j5 = s.add('Connector_Generic:Conn_01x03', 'J5', 'ESP', 401.32, 151.13, fp=FP_HDR3,
+    j5 = s.add('Connector_Generic:Conn_01x03', 'J5', 'ESP32-C3', 401.32, 151.13, fp=FP_HDR3,
                ref_at=(401.32, 146.05), val_at=(401.32, 156.21), ref_just='center', val_just='center',
-               desc='ESP header: 1 = +5V, 2 = DATA (3.3 V level, to ESP RX), 3 = GND')
+               desc='ESP header: 1 = +5V (to the ESP board 5V pin), 2 = DATA (3.3 V level, to an ESP GPIO), 3 = GND')
     Q = j5['pins']
     s.wire(node_e, (381, node_e[1]), Q['2'])
     s.label('ESP_DATA', (381, node_e[1]), 0)
