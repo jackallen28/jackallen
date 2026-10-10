@@ -3,15 +3,18 @@
   ======================
   Arduino Nano + YF-G1 hall-effect flow sensor + relay-driven solenoid valve.
 
-  - Pick a limit of 25 L, 50 L, 100 L or FREE FLOW with the push button (or the
-    433 MHz remote). Three LEDs show the limit; all LEDs off = FREE FLOW.
+  - Pick a limit of 25 L, 50 L, 100 L or FREE FLOW with the push button (each
+    press steps to the next limit) or the 433 MHz remote (button 1 = 25 L,
+    2 = 50 L, 3 = 100 L, 4 = FREE FLOW). Three LEDs show the limit; all LEDs
+    off = FREE FLOW.
   - When the limit is reached the valve is pulsed shut 6 times (0.5 s shut,
     0.5 s open) as a warning. Water then keeps flowing and the count starts
     again from 0 L towards the next warning.
-  - Every press of the button or the remote resets the count to 0 L.
-  - Hold the button for 20 s to calibrate with a 7 L bucket. The calibration is
-    saved to EEPROM and survives power loss; the water count always starts at
-    0 L after power-up.
+  - A press of the push button resets the count to 0 L. On the remote, hold any
+    button for 2 s to reset the count; the valve clicks twice to confirm.
+  - Hold the push button, or remote button 4 (FREE FLOW), for 20 s to calibrate
+    with a 7 L bucket. The calibration is saved to EEPROM and survives power
+    loss; the water count always starts at 0 L after power-up.
   - Status (flow rate, limit, count) is printed to the Serial Monitor and sent
     as one JSON line per second on a spare pin for a future ESP8266/ESP32.
 
@@ -32,7 +35,7 @@ const uint8_t PIN_LED_100L    = 7;
 const uint8_t PIN_RELAY       = 8;   // relay module IN (switches the solenoid)
 const uint8_t PIN_ESP_TX      = 11;  // data out to the ESP (through a 5 V -> 3.3 V divider)
 const uint8_t PIN_ESP_RX      = 12;  // reserved for data back from the ESP (not used yet)
-const uint8_t PIN_REMOTE[4]   = { A0, A1, A2, A3 };  // 433 MHz receiver channels A, B, C, D
+const uint8_t PIN_REMOTE[4]   = { A0, A1, A2, A3 };  // 433 MHz receiver channels 1, 2, 3, 4
 
 // ---------------------------------------------------------------------------
 // Hardware options - change these to suit your parts
@@ -49,33 +52,16 @@ const bool VALVE_NORMALLY_CLOSED = true;
 // Set to false if your relay module switches ON when IN is HIGH.
 const bool RELAY_ACTIVE_LOW = true;
 
-// 433 MHz receiver outputs.
+// 433 MHz receiver outputs. The receiver must be in MOMENTARY mode (output on
+// only while the remote button is held) so that 2 s and 20 s holds can be timed.
 //   true  = relay-output receiver: wire each channel's COM to GND and NO to the
 //           Arduino pin. The internal pull-up is used, so pressed = LOW.
 //   false = logic-output receiver whose D0-D3 pins go HIGH while pressed.
 const bool REMOTE_ACTIVE_LOW = true;
 
-// Set to true if the receiver is in toggle/latching mode (its output flips on
-// every press) instead of momentary mode. Every change is then one press.
-const bool REMOTE_TOGGLE_MODE = false;
-
-// What each remote button does.
-enum RemoteAction : uint8_t {
-  REMOTE_NONE,         // channel not wired / not used
-  REMOTE_NEXT_MODE,    // exactly the same as a short press of the push button
-  REMOTE_RESET_COUNT,  // reset the count to 0 L but keep the current limit
-  REMOTE_SELECT_25L,
-  REMOTE_SELECT_50L,
-  REMOTE_SELECT_100L,
-  REMOTE_SELECT_FREE
-};
-
-const RemoteAction REMOTE_ACTIONS[4] = {
-  REMOTE_NEXT_MODE,    // button A
-  REMOTE_RESET_COUNT,  // button B
-  REMOTE_NONE,         // button C
-  REMOTE_NONE          // button D
-};
+// Set to true if choosing a limit on the remote should also reset the count.
+// When false, the count is kept and only a 2 s hold resets it.
+const bool REMOTE_SELECT_RESETS_COUNT = false;
 
 // ---------------------------------------------------------------------------
 // Flow sensor and calibration
@@ -90,11 +76,15 @@ const float MAX_PULSES_PER_LITRE     = 1000.0;  // range are rejected as mistake
 // ---------------------------------------------------------------------------
 // Timing
 // ---------------------------------------------------------------------------
-const unsigned long DEBOUNCE_MS        = 50;
-const unsigned long SHORT_PRESS_MAX_MS = 2000;   // presses between this and CAL_HOLD_MS do nothing
-const unsigned long CAL_HOLD_MS        = 20000;  // hold the button this long to calibrate
-const uint8_t       ALERT_PULSES       = 6;      // valve shut/open cycles when the limit is reached
-const unsigned long ALERT_PHASE_MS     = 500;    // 0.5 s shut, then 0.5 s open
+const unsigned long DEBOUNCE_MS          = 50;
+const unsigned long REMOTE_DEBOUNCE_MS   = 100;    // longer, to ride out brief RF drop-outs while held
+const unsigned long SHORT_PRESS_MAX_MS   = 2000;   // push button presses between this and CAL_HOLD_MS do nothing
+const unsigned long REMOTE_RESET_HOLD_MS = 2000;   // hold any remote button this long to reset the count
+const unsigned long CAL_HOLD_MS          = 20000;  // hold the push button / remote button 4 this long to calibrate
+const uint8_t       ALERT_PULSES         = 6;      // valve shut/open cycles when the limit is reached
+const unsigned long ALERT_PHASE_MS       = 500;    // 0.5 s shut, then 0.5 s open
+const uint8_t       RESET_CLICKS         = 2;      // valve shut/open cycles to confirm a remote count reset
+const unsigned long RESET_CLICK_MS       = 250;    // 0.25 s shut, then 0.25 s open
 const unsigned long CAL_FLASH_MS       = 500;    // LED flash rate in calibration mode
 const unsigned long FEEDBACK_MS        = 2000;   // LED pattern after a calibration attempt
 const unsigned long REPORT_INTERVAL_MS = 1000;   // serial / ESP status rate
@@ -113,7 +103,11 @@ const bool REMEMBER_LIMIT = true;
 enum LimitMode : uint8_t { MODE_25L, MODE_50L, MODE_100L, MODE_FREE, MODE_COUNT };
 const uint8_t LIMIT_LITRES[MODE_COUNT] = { 25, 50, 100, 0 };
 
-enum SystemState : uint8_t { STATE_NORMAL, STATE_LIMIT_ALERT, STATE_CALIBRATING };
+// Limit chosen by remote buttons 1-4. The FREE FLOW button is also the only
+// remote button that can start and finish calibration.
+const LimitMode REMOTE_MODES[4] = { MODE_25L, MODE_50L, MODE_100L, MODE_FREE };
+
+enum SystemState : uint8_t { STATE_NORMAL, STATE_LIMIT_ALERT, STATE_RESET_CLICKS, STATE_CALIBRATING };
 
 enum LedFeedback : uint8_t { FEEDBACK_NONE, FEEDBACK_CAL_OK, FEEDBACK_CAL_FAILED };
 
@@ -121,6 +115,13 @@ struct DebouncedInput {
   bool stable;               // debounced level (true = active/pressed)
   bool lastRaw;
   unsigned long changedAt;
+};
+
+struct RemoteButton {
+  DebouncedInput input;
+  unsigned long pressedAt;
+  bool holdHandled;          // 2 s hold already acted on, so releasing does nothing
+  bool calHoldHandled;       // 20 s hold already acted on
 };
 
 struct CalibrationRecord {
@@ -148,8 +149,8 @@ SystemState state = STATE_NORMAL;
 bool valveOpen = true;
 
 uint32_t lastPulseCount = 0;  // isrPulseCount value already added to the counters below
-uint32_t countPulses = 0;     // towards the limit: back to 0 at the limit and on any press
-uint32_t sessionPulses = 0;   // since power-up or the last press (not reset at the limit)
+uint32_t countPulses = 0;     // towards the limit: back to 0 at the limit and on a reset
+uint32_t sessionPulses = 0;   // since power-up or the last reset (not reset at the limit)
 uint32_t calPulses = 0;       // since calibration mode started
 
 float flowHz = 0;
@@ -160,10 +161,13 @@ bool rateRefValid = false;
 DebouncedInput button = { false, false, 0 };
 unsigned long buttonPressedAt = 0;
 bool buttonHoldHandled = false;
-DebouncedInput remote[4];
+RemoteButton remote[4];
 
-uint8_t alertPhase = 0;       // even = valve shut, odd = valve open
-unsigned long alertPhaseStart = 0;
+// Valve pulse sequence used by the limit alert and the reset clicks.
+uint8_t pulsePhase = 0;       // even = valve shut, odd = valve open
+uint8_t pulsePhases = 0;
+unsigned long pulsePhaseMs = 0;
+unsigned long pulsePhaseStart = 0;
 unsigned long calStartedAt = 0;
 LedFeedback ledFeedback = FEEDBACK_NONE;
 unsigned long ledFeedbackStart = 0;
@@ -297,8 +301,9 @@ const char *limitName(LimitMode mode) {
 
 const char *stateName() {
   switch (state) {
-    case STATE_LIMIT_ALERT: return "LIMIT REACHED";
-    case STATE_CALIBRATING: return "CALIBRATING";
+    case STATE_LIMIT_ALERT:  return "LIMIT REACHED";
+    case STATE_RESET_CLICKS: return "COUNT RESET";
+    case STATE_CALIBRATING:  return "CALIBRATING";
     default:                return "NORMAL";
   }
 }
@@ -306,46 +311,57 @@ const char *stateName() {
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
-void endAlert() {
-  if (state == STATE_LIMIT_ALERT) state = STATE_NORMAL;
+bool valvePulsing() {
+  return state == STATE_LIMIT_ALERT || state == STATE_RESET_CLICKS;
+}
+
+// Shuts the valve, then alternates open/shut every phaseMs for the given
+// number of shut/open cycles, ending with the valve open.
+void startValvePulses(SystemState pulseState, uint8_t pulses, unsigned long phaseMs, unsigned long now) {
+  state = pulseState;
+  pulsePhase = 0;
+  pulsePhases = pulses * 2;
+  pulsePhaseMs = phaseMs;
+  pulsePhaseStart = now;
+  setValveOpen(false);
+}
+
+void endValvePulses() {
+  if (valvePulsing()) state = STATE_NORMAL;
   setValveOpen(true);
+}
+
+void updateValvePulses(unsigned long now) {
+  if (!valvePulsing() || now - pulsePhaseStart < pulsePhaseMs) return;
+  pulsePhaseStart += pulsePhaseMs;
+  pulsePhase++;
+  if (pulsePhase >= pulsePhases) {
+    endValvePulses();
+  } else {
+    setValveOpen(pulsePhase % 2 == 1);
+  }
 }
 
 void resetCount() {
   collectPulses();  // pulses before the reset must not appear after it
   countPulses = 0;
   sessionPulses = 0;
-  endAlert();
+  endValvePulses();
   Serial.println(F(">> Count reset to 0 L"));
 }
 
-void selectMode(LimitMode mode) {
+// Remote 2 s hold: reset, then click the valve to confirm.
+void resetCountWithClicks(unsigned long now) {
+  resetCount();
+  startValvePulses(STATE_RESET_CLICKS, RESET_CLICKS, RESET_CLICK_MS, now);
+}
+
+void selectMode(LimitMode mode, bool resetCounter) {
   limitMode = mode;
   if (REMEMBER_LIMIT) saveMode();
   Serial.print(F(">> Limit set to "));
   Serial.println(limitName(limitMode));
-  resetCount();
-}
-
-void startAlert(unsigned long now) {
-  state = STATE_LIMIT_ALERT;
-  alertPhase = 0;
-  alertPhaseStart = now;
-  setValveOpen(false);
-  Serial.print(F(">> Limit of "));
-  Serial.print(limitName(limitMode));
-  Serial.println(F(" reached - pulsing valve, count restarted at 0 L"));
-}
-
-void updateAlert(unsigned long now) {
-  if (state != STATE_LIMIT_ALERT || now - alertPhaseStart < ALERT_PHASE_MS) return;
-  alertPhaseStart += ALERT_PHASE_MS;
-  alertPhase++;
-  if (alertPhase >= ALERT_PULSES * 2) {
-    endAlert();
-  } else {
-    setValveOpen(alertPhase % 2 == 1);
-  }
+  if (resetCounter) resetCount();
 }
 
 void checkLimit(unsigned long now) {
@@ -353,13 +369,16 @@ void checkLimit(unsigned long now) {
   uint32_t limitPulses = (uint32_t)(LIMIT_LITRES[limitMode] * pulsesPerLitre + 0.5);
   if (countPulses >= limitPulses) {
     countPulses -= limitPulses;  // keep any overshoot so repeated limits stay accurate
-    startAlert(now);
+    startValvePulses(STATE_LIMIT_ALERT, ALERT_PULSES, ALERT_PHASE_MS, now);
+    Serial.print(F(">> Limit of "));
+    Serial.print(limitName(limitMode));
+    Serial.println(F(" reached - pulsing valve, count restarted at 0 L"));
   }
 }
 
 void startCalibration(unsigned long now) {
   collectPulses();  // pulses before calibration starts are not part of the bucket
-  endAlert();
+  endValvePulses();
   state = STATE_CALIBRATING;
   calPulses = 0;
   calStartedAt = now;
@@ -367,7 +386,7 @@ void startCalibration(unsigned long now) {
   Serial.println(F(">> CALIBRATION MODE"));
   Serial.print(F("   Fill a "));
   Serial.print(CAL_BUCKET_LITRES, 1);
-  Serial.println(F(" L bucket, turn the water off, then press the button."));
+  Serial.println(F(" L bucket, turn the water off, then press the button (or remote button 4)."));
   Serial.println(F("   (Pressing without running any water cancels calibration.)"));
 }
 
@@ -400,29 +419,22 @@ void finishCalibration(unsigned long now) {
   resetCount();
 }
 
-// Short press of the push button (or a remote button set to REMOTE_NEXT_MODE).
-void onShortPress(unsigned long now) {
+// Short press of the push button: next limit and reset the count.
+void onButtonShortPress(unsigned long now) {
   if (state == STATE_CALIBRATING) {
     finishCalibration(now);
   } else {
-    selectMode((LimitMode)((limitMode + 1) % MODE_COUNT));
+    selectMode((LimitMode)((limitMode + 1) % MODE_COUNT), true);
   }
 }
 
-void onRemoteAction(RemoteAction action, unsigned long now) {
-  if (action == REMOTE_NEXT_MODE) {
-    onShortPress(now);
-    return;
-  }
-  if (state == STATE_CALIBRATING) return;  // only the push button action ends calibration
-
-  switch (action) {
-    case REMOTE_RESET_COUNT:  resetCount(); break;
-    case REMOTE_SELECT_25L:   selectMode(MODE_25L); break;
-    case REMOTE_SELECT_50L:   selectMode(MODE_50L); break;
-    case REMOTE_SELECT_100L:  selectMode(MODE_100L); break;
-    case REMOTE_SELECT_FREE:  selectMode(MODE_FREE); break;
-    default: break;
+// Remote button released within 2 s: choose that button's limit.
+void onRemoteShortPress(uint8_t channel, unsigned long now) {
+  LimitMode mode = REMOTE_MODES[channel];
+  if (state == STATE_CALIBRATING) {
+    if (mode == MODE_FREE) finishCalibration(now);  // other remote buttons are ignored
+  } else {
+    selectMode(mode, REMOTE_SELECT_RESETS_COUNT);
   }
 }
 
@@ -431,12 +443,12 @@ void onRemoteAction(RemoteAction action, unsigned long now) {
 // ---------------------------------------------------------------------------
 
 // Returns true when the debounced level changes.
-bool debounce(DebouncedInput &input, bool raw, unsigned long now) {
+bool debounce(DebouncedInput &input, bool raw, unsigned long now, unsigned long debounceMs) {
   if (raw != input.lastRaw) {
     input.lastRaw = raw;
     input.changedAt = now;
   }
-  if (raw != input.stable && now - input.changedAt >= DEBOUNCE_MS) {
+  if (raw != input.stable && now - input.changedAt >= debounceMs) {
     input.stable = raw;
     return true;
   }
@@ -450,12 +462,12 @@ bool readRemote(uint8_t channel) {
 void handleButton(unsigned long now) {
   bool pressed = digitalRead(PIN_BUTTON) == LOW;
 
-  if (debounce(button, pressed, now)) {
+  if (debounce(button, pressed, now, DEBOUNCE_MS)) {
     if (button.stable) {
       buttonPressedAt = now;
       buttonHoldHandled = false;
     } else if (!buttonHoldHandled && now - buttonPressedAt <= SHORT_PRESS_MAX_MS) {
-      onShortPress(now);
+      onButtonShortPress(now);
     }
   }
 
@@ -465,11 +477,31 @@ void handleButton(unsigned long now) {
   }
 }
 
+// Remote buttons: release within 2 s = choose that limit, hold any button 2 s =
+// reset the count, hold the FREE FLOW button 20 s = calibration.
 void handleRemote(unsigned long now) {
   for (uint8_t i = 0; i < 4; i++) {
-    if (REMOTE_ACTIONS[i] == REMOTE_NONE) continue;
-    if (debounce(remote[i], readRemote(i), now) && (remote[i].stable || REMOTE_TOGGLE_MODE)) {
-      onRemoteAction(REMOTE_ACTIONS[i], now);
+    RemoteButton &b = remote[i];
+
+    if (debounce(b.input, readRemote(i), now, REMOTE_DEBOUNCE_MS)) {
+      if (b.input.stable) {
+        b.pressedAt = now;
+        b.holdHandled = false;
+        b.calHoldHandled = false;
+      } else if (!b.holdHandled) {
+        onRemoteShortPress(i, now);
+      }
+    }
+    if (!b.input.stable) continue;
+
+    unsigned long heldMs = now - b.pressedAt;
+    if (!b.holdHandled && heldMs >= REMOTE_RESET_HOLD_MS) {
+      b.holdHandled = true;
+      if (state != STATE_CALIBRATING) resetCountWithClicks(now);
+    }
+    if (REMOTE_MODES[i] == MODE_FREE && !b.calHoldHandled && heldMs >= CAL_HOLD_MS) {
+      b.calHoldHandled = true;
+      if (state != STATE_CALIBRATING) startCalibration(now);
     }
   }
 }
@@ -491,8 +523,8 @@ void updateLeds(unsigned long now) {
   } else if (state == STATE_CALIBRATING) {
     led25 = led50 = led100 = ((now - calStartedAt) / CAL_FLASH_MS) % 2 == 0;
   } else {
-    // The selected LED blinks in time with the valve while the limit alert runs.
-    bool on = state != STATE_LIMIT_ALERT || valveOpen;
+    // The selected LED blinks in time with the valve while it is being pulsed.
+    bool on = !valvePulsing() || valveOpen;
     led25  = on && limitMode == MODE_25L;
     led50  = on && limitMode == MODE_50L;
     led100 = on && limitMode == MODE_100L;
@@ -572,7 +604,6 @@ void setup() {
   pinMode(PIN_LED_50L, OUTPUT);
   pinMode(PIN_LED_100L, OUTPUT);
   for (uint8_t i = 0; i < 4; i++) {
-    if (REMOTE_ACTIONS[i] == REMOTE_NONE) continue;
     pinMode(PIN_REMOTE[i], REMOTE_ACTIVE_LOW ? INPUT_PULLUP : INPUT);
   }
 
@@ -590,12 +621,12 @@ void setup() {
     digitalWrite(leds[i], LOW);
   }
 
-  // Start the remote inputs at their current level so a latched receiver
-  // output does not count as a press at power-up.
+  // A remote output that is already on at power-up (stuck, latched or wrongly
+  // configured) is ignored until it has been released.
   unsigned long now = millis();
   for (uint8_t i = 0; i < 4; i++) {
-    bool level = REMOTE_ACTIONS[i] != REMOTE_NONE && readRemote(i);
-    remote[i] = { level, level, now };
+    bool level = readRemote(i);
+    remote[i] = { { level, level, now }, now, level, level };
   }
 
   attachInterrupt(digitalPinToInterrupt(PIN_FLOW_SENSOR), onFlowPulse, FALLING);
@@ -607,7 +638,9 @@ void setup() {
   Serial.println(isCalibrated ? F(" pulses/L (saved)") : F(" pulses/L (datasheet default)"));
   Serial.print(F("Limit: "));
   Serial.println(limitName(limitMode));
-  Serial.println(F("Short press: next limit + reset count | Hold 20 s: calibrate"));
+  Serial.println(F("Button: short press = next limit + reset count | hold 20 s = calibrate"));
+  Serial.println(F("Remote: 1 = 25L, 2 = 50L, 3 = 100L, 4 = FREE FLOW | hold any 2 s = reset count"));
+  Serial.println(F("        hold 4 for 20 s = calibrate"));
   Serial.println(F(""));
 }
 
@@ -618,7 +651,7 @@ void loop() {
   handleButton(now);
   handleRemote(now);
   checkLimit(now);
-  updateAlert(now);
+  updateValvePulses(now);
   updateLeds(now);
   report(now);
 }
