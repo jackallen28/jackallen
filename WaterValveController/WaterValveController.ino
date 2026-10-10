@@ -67,8 +67,9 @@ const bool REMOTE_SELECT_RESETS_COUNT = false;
 // Flow sensor and calibration
 // ---------------------------------------------------------------------------
 
-// YF-G1 datasheet: F (Hz) = 1 x Q (L/min)  ->  1 pulse/s per L/min = 60 pulses per litre.
-const float DEFAULT_PULSES_PER_LITRE = 60.0;
+// YF-G1 spec sheet: F (Hz) = 1.08 x Q (L/min), "about 64.8 P/L"
+//   -> 1.08 pulses/s per L/min x 60 s = 64.8 pulses per litre (+/- 3%).
+const float DEFAULT_PULSES_PER_LITRE = 64.8;
 const float CAL_BUCKET_LITRES        = 7.0;
 const float MIN_PULSES_PER_LITRE     = 5.0;     // calibration results outside this
 const float MAX_PULSES_PER_LITRE     = 1000.0;  // range are rejected as mistakes
@@ -558,7 +559,7 @@ void reportSerial() {
 
 // One JSON object per line for the ESP, e.g.
 // {"flow_lpm":12.34,"limit":"50L","limit_l":50,"count_l":23.45,"session_l":73.45,
-//  "valve":"OPEN","state":"NORMAL","ppl":60.00,"calibrated":false}
+//  "valve":"OPEN","state":"NORMAL","ppl":64.80,"calibrated":false}
 void reportEsp() {
   espSerial.print(F("{\"flow_lpm\":"));
   espSerial.print(flowLitresPerMinute(), 2);

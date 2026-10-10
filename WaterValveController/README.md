@@ -20,7 +20,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 | Part | Notes |
 |------|-------|
 | Arduino Nano (ATmega328P) | |
-| YF-G1 flow sensor (1–100 L/min, F = 1 × Q) | 60 pulses per litre by default |
+| YF-G1 flow sensor (2–100 L/min, F = 1.08 × Q) | 64.8 pulses per litre by default (spec sheet, ±3%) |
 | Solenoid valve + 1-channel relay module | |
 | Momentary push button | |
 | 3 × LED + 3 × 220 Ω resistor | 25 L, 50 L, 100 L |
@@ -31,7 +31,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 
 | Arduino Nano pin | Connects to |
 |------------------|-------------|
-| **D2** | Flow sensor signal (yellow). Red → 5 V, black → GND |
+| **D2** | Flow sensor signal (yellow). Red → **5 V**, black → GND |
 | **D4** | Push button; other side of the button → GND |
 | **D5** | 220 Ω → LED "25 L" → GND |
 | **D6** | 220 Ω → LED "50 L" → GND |
@@ -52,6 +52,11 @@ spike when the coil switches off can reset the Nano or add false flow pulses.
 
 **Power:** a 12 V supply can feed the solenoid, the remote receiver (if it is a 12 V
 board) and the Nano's **VIN** pin. All grounds must be connected together.
+
+**Flow sensor power:** power the sensor from the Nano's **5 V** pin, not the 12 V supply.
+The sensor accepts 3.5–24 V, but its spec sheet gives its output levels for a 5 V
+supply (high about 4.7 V, low under 0.5 V). That suggests the signal swings up to the
+supply voltage, and 12 V on D2 would damage the Nano.
 
 **Remote receiver:** these boards switch a small relay per channel, so they act like
 extra push buttons. The receiver **must be in momentary mode** (output on only while
@@ -151,8 +156,12 @@ or a 2 s remote hold during the warning stops it straight away.
 The limit is not enforced during calibration, so the valve stays open. The count is
 reset to 0 L afterwards.
 
-Out of the box the sketch uses the YF-G1 datasheet value (F = 1 × Q, which is
-60 pulses per litre). A saved calibration replaces it permanently, including after
+Out of the box the sketch uses the YF-G1 spec sheet value: F (Hz) = 1.08 × Q (L/min),
+which is 1.08 × 60 = **64.8 pulses per litre**. The sheet quotes ±3% accuracy, so
+calibrating with the bucket is still worthwhile.
+
+A calibration saved earlier is kept when you upload a new version of the sketch. To go
+back to the spec sheet value, just calibrate again. A saved calibration replaces it permanently, including after
 power cuts, until you calibrate again.
 
 ### After a power cut
@@ -168,7 +177,7 @@ plus a message whenever something happens:
 
 ```
 === Water Valve Controller ===
-Calibration: 60.00 pulses/L (datasheet default)
+Calibration: 64.80 pulses/L (datasheet default)
 Limit: 25L
 Button: short press = next limit + reset count | hold 20 s = calibrate
 Remote: 1 = 25L, 2 = 50L, 3 = 100L, 4 = FREE FLOW | hold any 2 s = reset count
@@ -188,7 +197,7 @@ Flow: 10.00 L/min | Limit: 25L | Count: 0.15 L | Session: 25.15 L | Valve: SHUT 
 D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic, so use the divider above):
 
 ```json
-{"flow_lpm":10.00,"limit":"25L","limit_l":25,"count_l":0.15,"session_l":25.15,"valve":"SHUT","state":"LIMIT REACHED","ppl":60.00,"calibrated":false}
+{"flow_lpm":10.00,"limit":"25L","limit_l":25,"count_l":0.15,"session_l":25.15,"valve":"SHUT","state":"LIMIT REACHED","ppl":64.80,"calibrated":false}
 ```
 
 | Field | Meaning |
