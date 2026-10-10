@@ -68,11 +68,11 @@ def load_lib_symbol(lib, name):
     return sym
 
 
-def custom_symbol(name, ref, value, body, pins, pin_names_hide=False, extra_graphics=()):
+def custom_symbol(name, ref, value, body, pins, pin_names_hide=False, extra_graphics=(), pin_numbers_hide=True):
     """body: (x1, y1, x2, y2) rectangle in lib coords (y up).
     pins: list of (number, name, type, x, y, angle, length)."""
     s = [f'(symbol {q("WaterValve:" + name)}']
-    s.append('(pin_numbers hide)' if True else '')
+    s.append('(pin_numbers hide)' if pin_numbers_hide else '')
     s.append(f'(pin_names (offset 0.762){" hide" if pin_names_hide else ""})')
     s.append('(in_bom yes) (on_board yes)')
     x1, y1, x2, y2 = body
@@ -122,18 +122,17 @@ CUSTOM = {
         [('1', 'VCC-red', 'power_in', 10.16, 2.54, 180, 2.54),
          ('2', 'SIG-yellow', 'open_collector', 10.16, 0, 180, 2.54),
          ('3', 'GND-black', 'power_in', 10.16, -2.54, 180, 2.54)]),
-    'RF_Receiver_4CH': custom_symbol(
-        'RF_Receiver_4CH', 'RX', 'RF_Receiver_4CH', (-10.16, 10.16, 10.16, -10.16),
-        [('1', 'V+', 'power_in', -12.7, 7.62, 0, 2.54),
-         ('2', 'GND', 'power_in', -12.7, 5.08, 0, 2.54),
-         ('3', 'COM1', 'passive', -12.7, 0, 0, 2.54),
-         ('4', 'COM2', 'passive', -12.7, -2.54, 0, 2.54),
-         ('5', 'COM3', 'passive', -12.7, -5.08, 0, 2.54),
-         ('6', 'COM4', 'passive', -12.7, -7.62, 0, 2.54),
-         ('7', 'NO1', 'passive', 12.7, 0, 180, 2.54),
-         ('8', 'NO2', 'passive', 12.7, -2.54, 180, 2.54),
-         ('9', 'NO3', 'passive', 12.7, -5.08, 180, 2.54),
-         ('10', 'NO4', 'passive', 12.7, -7.62, 180, 2.54)]),
+    'RX480E': custom_symbol(
+        'RX480E', 'U', 'RX480E', (-7.62, 7.62, 7.62, -7.62),
+        [('1', 'GND', 'power_in', 0, -10.16, 90, 2.54),
+         ('2', '+V', 'power_in', 0, 10.16, 270, 2.54),
+         ('3', 'D0', 'output', -10.16, 5.08, 0, 2.54),
+         ('4', 'D1', 'output', -10.16, 2.54, 0, 2.54),
+         ('5', 'D2', 'output', -10.16, 0, 0, 2.54),
+         ('6', 'D3', 'output', -10.16, -2.54, 0, 2.54),
+         ('7', 'VT', 'output', -10.16, -5.08, 0, 2.54)],
+        pin_numbers_hide=False,
+        extra_graphics=['(text "433 MHz" (at 2.794 0 900) (effects (font (size 1 1))))']),
 }
 
 
@@ -323,6 +322,9 @@ FP_FUSE = 'Fuse:Fuseholder_Cylinder-5x20mm_Stelvio-Kontek_PTF78_Horizontal_Open'
 FP_TO220 = 'Package_TO_SOT_THT:TO-220-3_Vertical'
 FP_NANO = 'Module:Arduino_Nano'
 FP_SW = 'Button_Switch_THT:SW_PUSH_6mm'
+FP_SOCK7 = 'Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical'
+FP_CP5 = 'Capacitor_THT:CP_Radial_D5.0mm_P2.00mm'
+FP_HOLE = 'MountingHole:MountingHole_3.2mm_M3'
 
 
 def build():
@@ -478,37 +480,54 @@ def build():
     s.wire(g2, (g2[0], gy))
     s.wire((g1[0], gy), (g2[0], gy))
     s.power('GND', (g1[0], gy), show=False)
-    c12 = s.add('Device:C', 'C12', '100nF', 238.76, 101.6, fp=FP_C, desc='Decoupling at the Nano 5V pin')
-    s.power('+5V', c12['pins']['1'])
-    s.power('GND', c12['pins']['2'], show=False)
+    c11 = s.add('Device:C', 'C11', '100nF', 238.76, 101.6, fp=FP_C, desc='Decoupling at the Nano 5V pin')
+    s.power('+5V', c11['pins']['1'])
+    s.power('GND', c11['pins']['2'], show=False)
     s.text('D12 is reserved for a future ESP -> Nano link.\nNano is powered through its 5V pin (VIN unused).', (190.5, 163.83))
 
-    # ======================= REMOTE RECEIVER INPUTS ==========================
-    s.text('REMOTE RECEIVER INPUTS (433 MHz, 4 relay channels)', (279.4, 33.02), 2, True)
-    j5 = s.add('Connector:Screw_Terminal_01x06', 'J5', 'REMOTE RX', 401.32, 50.8, fp=FP_TB6,
-               ref_at=(401.32, 40.64), val_at=(401.32, 62.23), ref_just='center', val_just='center',
-               desc='Remote receiver: 1 = +12V, 2 = GND (to all COM terminals), 3-6 = NO1-NO4')
-    Q = j5['pins']
-    s.wire(Q['1'], (391.16, Q['1'][1]), (391.16, Q['1'][1] - 2.54))
-    s.power('+12V', (391.16, Q['1'][1] - 2.54))
-    s.wire(Q['2'], (391.16, Q['2'][1]))
-    s.power('GND', (391.16, Q['2'][1]), rot=270, show=False)
-    for i, pin in enumerate(('3', '4', '5', '6')):
-        s.wire(Q[pin], (388.62, Q[pin][1]))
-        s.label(f'RF{i + 1}', (388.62, Q[pin][1]), 180)
+    # ======================= REMOTE RECEIVER =================================
+    s.text('REMOTE RECEIVER (RX480E 433 MHz module, plugs into the board)', (279.4, 30.48), 2, True)
+    u2 = s.add('WaterValve:RX480E', 'U2', 'RX480E-4', 398.78, 63.5, fp=FP_SOCK7,
+               ref_at=(397.51, 52.07), val_at=(391.16, 76.2), ref_just='right', val_just='right',
+               desc='RX480E-4 receiver module on a 1x7 female header. Pins: 1 GND, 2 +V, 3-6 D0-D3, 7 VT')
+    U = u2['pins']
+    # Supply filter: 10 R + 47 uF + 100 nF keeps relay and regulator noise off the receiver
+    s.power('+5V', (358.14, 40.64))
+    r17 = s.add('Device:R', 'R17', '10R', 365.76, 40.64, rot=90, fp=FP_R,
+                ref_at=(365.76, 38.1), val_at=(365.76, 43.18), ref_just='center', val_just='center',
+                desc='Receiver supply filter resistor')
+    s.wire((358.14, 40.64), r17['pins']['1'])
+    c8 = s.add('Device:C_Polarized', 'C8', '47uF 16V', 375.92, 46.99, fp=FP_CP5,
+               ref_at=(373.38, 45.72), val_at=(373.38, 48.26), ref_just='right', val_just='right',
+               desc='Receiver supply filter, electrolytic')
+    c9 = s.add('Device:C', 'C9', '100nF', 386.08, 46.99, fp=FP_C, desc='Receiver supply decoupling')
+    s.wire(r17['pins']['2'], (375.92, 40.64), (386.08, 40.64), (398.78, 40.64), U['+V'])
+    for c in (c8, c9):
+        s.wire(c['pins']['1'], (c['pins']['1'][0], 40.64))
+        s.junction((c['pins']['1'][0], 40.64))
+        s.power('GND', c['pins']['2'], show=False)
+    s.power('GND', U['GND'], show=False)
+    s.nc(U['VT'])
+    for i, pin in enumerate(('D0', 'D1', 'D2', 'D3')):
+        s.wire(U[pin], (381, U[pin][1]))
+        s.label(f'RX_{pin}', (381, U[pin][1]), 180)
+    # Series 1k (pin protection, slows edges) + 100k pull-down (no floating input without the module)
     for i in range(4):
-        x = 292.1 + i * 17.78
+        x = 289.56 + i * 17.78
         node = (x, 53.34)
-        r = s.add('Device:R', f'R{7 + i}', '10k', x, 46.99, fp=FP_R, desc=f'Remote channel {i + 1} pull-up')
-        c = s.add('Device:C', f'C{8 + i}', '100nF', x, 59.69, fp=FP_C, desc=f'Remote channel {i + 1} filter')
-        s.wire(r['pins']['1'], (x, 40.64))
-        s.power('+5V', (x, 40.64))
-        s.wire(r['pins']['2'], node, c['pins']['1'])
-        s.wire(c['pins']['2'], (x, 66.04))
+        s.wire((x, 40.64), (x, 43.18))
+        s.label(f'RX_D{i}', (x, 40.64), 90)
+        r = s.add('Device:R', f'R{7 + i}', '1k', x, 46.99, fp=FP_R, desc='Remote channel series resistor')
+        rp = s.add('Device:R', f'R{13 + i}', '100k', x, 59.69, fp=FP_R, desc='Remote channel pull-down')
+        s.wire(r['pins']['2'], node, rp['pins']['1'])
+        s.wire(rp['pins']['2'], (x, 66.04))
         s.power('GND', (x, 66.04), show=False)
         s.wire(node, (x + 5.08, node[1]))
         s.label(f'RF{i + 1}', (x + 5.08, node[1]), 0)
         s.junction(node)
+    s.text('U2 plugs into a 7-pin socket. Check that the labels on the back of your module read\n'
+           'GND, +V, D0, D1, D2, D3, VT in that order before ordering the PCB. Pair the remote\n'
+           'in MOMENTARY mode. Keep the antenna clear of the relay, valve wires and metal.', (279.4, 70.0))
 
     # ======================= RELAY + VALVE CONNECTORS ========================
     s.text('RELAY MODULE AND VALVE POWER', (279.4, 81.28), 2, True)
@@ -522,6 +541,11 @@ def build():
     s.label('RELAY', (386.08, Q['2'][1]), 180)
     s.wire(Q['3'], (391.16, Q['3'][1]), (391.16, Q['3'][1] + 2.54))
     s.power('GND', (391.16, Q['3'][1] + 2.54), show=False)
+    c10 = s.add('Device:C_Polarized', 'C10', '100uF 16V', 365.76, 93.98, fp=FP_CP6,
+                ref_at=(363.22, 92.71), val_at=(363.22, 95.25), ref_just='right', val_just='right',
+                desc='Bulk capacitor at the relay header (relay coil switching)')
+    s.power('+5V', c10['pins']['1'])
+    s.power('GND', c10['pins']['2'], show=False)
     j2 = s.add('Connector:Screw_Terminal_01x02', 'J2', 'VALVE POWER', 401.32, 114.3, fp=FP_TB2,
                ref_at=(401.32, 109.22), val_at=(401.32, 120.65), ref_just='center', val_just='center',
                desc='Valve power out: 1 = +12V (fused) to relay COM, 2 = GND from valve -')
@@ -530,7 +554,7 @@ def build():
     s.power('+12V', (391.16, Q['1'][1] - 2.54))
     s.wire(Q['2'], (391.16, Q['2'][1]), (391.16, Q['2'][1] + 2.54))
     s.power('GND', (391.16, Q['2'][1] + 2.54), show=False)
-    s.text('J2: run the valve +12 V and return as their own pair,\nand keep them away from the sensor and remote cables.', (279.4, 106.68))
+    s.text('J2: run the valve +12 V and return as their own pair, and keep them away\nfrom the sensor cable. Place J1 and J2 side by side.\nC10 sits at J3 to steady 5 V when the relay coil switches.', (279.4, 106.68))
 
     # ======================= ESP DATA OUT ====================================
     s.text('ESP DATA OUT (9600 baud, 3.3 V level)', (279.4, 129.54), 2, True)
@@ -544,10 +568,10 @@ def build():
     s.wire(r11['pins']['2'], node_e, r12['pins']['1'])
     s.wire(r12['pins']['2'], (rx, 163.83))
     s.power('GND', (rx, 163.83), show=False)
-    j6 = s.add('Connector_Generic:Conn_01x03', 'J6', 'ESP', 401.32, 151.13, fp=FP_HDR3,
+    j5 = s.add('Connector_Generic:Conn_01x03', 'J5', 'ESP', 401.32, 151.13, fp=FP_HDR3,
                ref_at=(401.32, 146.05), val_at=(401.32, 156.21), ref_just='center', val_just='center',
                desc='ESP header: 1 = +5V, 2 = DATA (3.3 V level, to ESP RX), 3 = GND')
-    Q = j6['pins']
+    Q = j5['pins']
     s.wire(node_e, (381, node_e[1]), Q['2'])
     s.label('ESP_DATA', (381, node_e[1]), 0)
     s.junction(node_e)
@@ -556,9 +580,15 @@ def build():
     s.wire(Q['3'], (391.16, Q['3'][1]), (391.16, Q['3'][1] + 2.54))
     s.power('GND', (391.16, Q['3'][1] + 2.54), show=False)
 
+    s.text('MOUNTING HOLES (M3)', (279.4, 152.4), 2, True)
+    for i in range(4):
+        s.add('Mechanical:MountingHole', f'H{i + 1}', 'M3', 284.48 + i * 15.24, 165.1, fp=FP_HOLE,
+              ref_at=(284.48 + i * 15.24, 160.02), val_at=(284.48 + i * 15.24, 170.18),
+              ref_just='center', val_just='center', in_bom=False, desc='M3 mounting hole')
+
     # ======================= OFF-BOARD =======================================
-    s.dashed_box(15.24, 190.5, 271.78, 248.92)
-    s.text('OFF-BOARD WIRING (connects to J2-J5; these parts are not placed on the PCB)', (19.05, 196.85), 2, True)
+    s.dashed_box(15.24, 190.5, 185.42, 248.92)
+    s.text('OFF-BOARD WIRING (connects to J2-J4; not placed on the PCB)', (19.05, 196.85), 2, True)
     k1 = s.add('WaterValve:Relay_Module', 'K1', 'Relay module', 45.72, 215.9,
                on_board=False, in_bom=False, ref_at=(38.1, 209.55), val_at=(38.1, 223.52),
                desc='Existing 1-channel 5 V relay module (via J3, and J2 for COM)')
@@ -601,49 +631,26 @@ def build():
     s.wire(F['3'], (152.4, F['3'][1]), (152.4, 223.52))
     s.power('GND', (152.4, 223.52), show=False)
 
-    rx1 = s.add('WaterValve:RF_Receiver_4CH', 'RX1', '433 MHz 4-ch receiver (momentary)', 223.52, 218.44,
-                on_board=False, in_bom=False, ref_at=(213.36, 207.01), val_at=(213.36, 230.505),
-                desc='Existing 433 MHz 4-channel relay receiver, set to momentary mode (via J5)')
-    R = rx1['pins']
-    s.wire(R['V+'], (205.74, R['V+'][1]), (205.74, 205.74))
-    s.power('+12V', (205.74, 205.74))
-    bx = 203.2
-    s.wire(R['GND'], (bx, R['GND'][1]))
-    ys = [R['GND'][1]]
-    for c in ('COM1', 'COM2', 'COM3', 'COM4'):
-        s.wire(R[c], (bx, R[c][1]))
-        ys.append(R[c][1])
-    for a, b in zip(ys, ys[1:]):
-        s.wire((bx, a), (bx, b))
-    for y in ys[1:-1]:
-        s.junction((bx, y))
-    s.wire((bx, ys[-1]), (bx, 236.22))
-    s.junction((bx, ys[-1]))
-    s.power('GND', (bx, 236.22), show=False)
-    for i, c in enumerate(('NO1', 'NO2', 'NO3', 'NO4')):
-        s.wire(R[c], (241.3, R[c][1]))
-        s.label(f'RF{i + 1}', (241.3, R[c][1]), 0)
-    s.text('Remote: all COM terminals to GND, NO1-NO4 to J5 pins 3-6.\n+12 V board shown; power a 5 V board from +5V instead.', (190.5, 238.76))
-
     # ======================= NOTES ===========================================
     s.text('INTERFERENCE AND RELIABILITY MEASURES', (279.4, 177.8), 2, True)
     s.text('1. D2 flyback diode right at the valve terminals (stripe to +).\n'
-           '2. Valve current has its own wire pair (J2) back to J1: star ground at J1.\n'
-           '3. Decoupling: C1 + C2 on 12 V, C3 + C4 at U1, C12 at the Nano, C6 at J4.\n'
+           '2. Valve current has its own pair (J2) back to J1: star ground at J1.\n'
+           '3. Decoupling: C1 + C2 on 12 V, C3 + C4 at U1, C10 at J3, C11 at the Nano, C6 at J4.\n'
            '4. Flow input: R1 10k pull-up, R2 1k + C5 10nF filter, firmware glitch filter.\n'
-           '5. Button and remote inputs: 10k pull-ups + 100nF, firmware debounce.\n'
+           '5. Button: R3 10k + C7 100nF. Remote: R7-R10 1k series, R13-R16 100k pull-downs,\n'
+           '   receiver supply filtered by R17 + C8 + C9. Firmware debounces both.\n'
            '6. F1 fuse + D1 crowbar protect against shorts and a reversed supply.\n'
            '7. R11 / R12 divide the 5 V data line down to 3.2 V for the ESP.\n'
-           '8. Twist each sensor / remote signal with its GND; route away from valve wires.\n'
-           '9. Ground plane on the PCB bottom layer; keep the 12 V valve tracks short and wide.',
+           '8. Twist the flow sensor signal with its GND; route it away from the valve wires.\n'
+           '9. Ground plane on the bottom layer (none under the RF antenna); short, wide 12 V tracks.',
            (279.4, 181.61))
 
     title = [
         '(title "Water Valve Controller")',
         '(date "2026-10-10")',
-        '(rev "1.0")',
+        '(rev "1.1")',
         '(company "Arduino Nano carrier board")',
-        '(comment 1 "YF-G1 flow sensor, relay-switched 12 V DC solenoid valve, 433 MHz remote, ESP data out")',
+        '(comment 1 "YF-G1 flow sensor, relay-switched 12 V DC solenoid valve, RX480E 433 MHz receiver, ESP data out")',
         '(comment 2 "Firmware: WaterValveController.ino")',
         '(comment 3 "Pins: D2 flow, D4 button, D5-D7 LEDs, D8 relay, D11 ESP, A0-A3 remote")',
     ]

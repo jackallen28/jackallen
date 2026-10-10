@@ -7,9 +7,9 @@
   (title_block
     (title "Water Valve Controller")
     (date "2026-10-10")
-    (rev "1.0")
+    (rev "1.1")
     (company "Arduino Nano carrier board")
-    (comment 1 "YF-G1 flow sensor, relay-switched 12 V DC solenoid valve, 433 MHz remote, ESP data out")
+    (comment 1 "YF-G1 flow sensor, relay-switched 12 V DC solenoid valve, RX480E 433 MHz receiver, ESP data out")
     (comment 2 "Firmware: WaterValveController.ino")
     (comment 3 "Pins: D2 flow, D4 button, D5-D7 LEDs, D8 relay, D11 ESP, A0-A3 remote")
   )
@@ -2255,26 +2255,27 @@
               (font
                 (size 1.27 1.27)))))))
     (symbol
-      "Connector:Screw_Terminal_01x06"
+      "WaterValve:RX480E"
       (pin_names
-        (offset 1.016)
-        hide)
+        (offset 0.762))
       (in_bom yes)
       (on_board yes)
       (property
         "Reference"
-        "J"
-        (at 0 7.62 0)
+        "U"
+        (at -7.62 8.89 0)
         (effects
           (font
-            (size 1.27 1.27))))
+            (size 1.27 1.27))
+          (justify left bottom)))
       (property
         "Value"
-        "Screw_Terminal_01x06"
-        (at 0 -10.16 0)
+        "RX480E"
+        (at -7.62 -8.89 0)
         (effects
           (font
-            (size 1.27 1.27))))
+            (size 1.27 1.27))
+          (justify left top)))
       (property
         "Footprint"
         ""
@@ -2285,209 +2286,37 @@
           hide))
       (property
         "Datasheet"
-        "~"
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          hide))
-      (property
-        "ki_keywords"
-        "screw terminal"
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          hide))
-      (property
-        "ki_description"
-        "Generic screw terminal, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)"
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          hide))
-      (property
-        "ki_fp_filters"
-        "TerminalBlock*:*"
+        ""
         (at 0 0 0)
         (effects
           (font
             (size 1.27 1.27))
           hide))
       (symbol
-        "Screw_Terminal_01x06_1_1"
+        "RX480E_0_1"
         (rectangle
-          (start -1.27 6.35)
-          (end 1.27 -8.89)
+          (start -7.62 7.62)
+          (end 7.62 -7.62)
           (stroke
             (width 0.254)
             (type default))
           (fill
             (type background)))
-        (circle
-          (center 0 -7.62)
-          (radius 0.635)
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (circle
-          (center 0 -5.08)
-          (radius 0.635)
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (circle
-          (center 0 -2.54)
-          (radius 0.635)
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.5334 -7.2898)
-            (xy 0.3302 -8.128))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.5334 -4.7498)
-            (xy 0.3302 -5.588))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.5334 -2.2098)
-            (xy 0.3302 -3.048))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.5334 0.3302)
-            (xy 0.3302 -0.508))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.5334 2.8702)
-            (xy 0.3302 2.032))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.5334 5.4102)
-            (xy 0.3302 4.572))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.3556 -7.112)
-            (xy 0.508 -7.9502))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.3556 -4.572)
-            (xy 0.508 -5.4102))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.3556 -2.032)
-            (xy 0.508 -2.8702))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.3556 0.508)
-            (xy 0.508 -0.3302))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.3556 3.048)
-            (xy 0.508 2.2098))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (polyline
-          (pts
-            (xy -0.3556 5.588)
-            (xy 0.508 4.7498))
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (circle
-          (center 0 0)
-          (radius 0.635)
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (circle
-          (center 0 2.54)
-          (radius 0.635)
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
-        (circle
-          (center 0 5.08)
-          (radius 0.635)
-          (stroke
-            (width 0.1524)
-            (type default))
-          (fill
-            (type none)))
+        (text
+          "433 MHz"
+          (at 2.794 0 900)
+          (effects
+            (font
+              (size 1 1)))))
+      (symbol
+        "RX480E_1_1"
         (pin
-          passive
+          power_in
           line
-          (at -5.08 5.08 0)
-          (length 3.81)
+          (at 0 -10.16 90)
+          (length 2.54)
           (name
-            "Pin_1"
+            "GND"
             (effects
               (font
                 (size 1.27 1.27))))
@@ -2497,12 +2326,12 @@
               (font
                 (size 1.27 1.27)))))
         (pin
-          passive
+          power_in
           line
-          (at -5.08 2.54 0)
-          (length 3.81)
+          (at 0 10.16 270)
+          (length 2.54)
           (name
-            "Pin_2"
+            "+V"
             (effects
               (font
                 (size 1.27 1.27))))
@@ -2512,12 +2341,12 @@
               (font
                 (size 1.27 1.27)))))
         (pin
-          passive
+          output
           line
-          (at -5.08 0 0)
-          (length 3.81)
+          (at -10.16 5.08 0)
+          (length 2.54)
           (name
-            "Pin_3"
+            "D0"
             (effects
               (font
                 (size 1.27 1.27))))
@@ -2527,12 +2356,12 @@
               (font
                 (size 1.27 1.27)))))
         (pin
-          passive
+          output
           line
-          (at -5.08 -2.54 0)
-          (length 3.81)
+          (at -10.16 2.54 0)
+          (length 2.54)
           (name
-            "Pin_4"
+            "D1"
             (effects
               (font
                 (size 1.27 1.27))))
@@ -2542,12 +2371,12 @@
               (font
                 (size 1.27 1.27)))))
         (pin
-          passive
+          output
           line
-          (at -5.08 -5.08 0)
-          (length 3.81)
+          (at -10.16 0 0)
+          (length 2.54)
           (name
-            "Pin_5"
+            "D2"
             (effects
               (font
                 (size 1.27 1.27))))
@@ -2557,17 +2386,32 @@
               (font
                 (size 1.27 1.27)))))
         (pin
-          passive
+          output
           line
-          (at -5.08 -7.62 0)
-          (length 3.81)
+          (at -10.16 -2.54 0)
+          (length 2.54)
           (name
-            "Pin_6"
+            "D3"
             (effects
               (font
                 (size 1.27 1.27))))
           (number
             "6"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin
+          output
+          line
+          (at -10.16 -5.08 0)
+          (length 2.54)
+          (name
+            "VT"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number
+            "7"
             (effects
               (font
                 (size 1.27 1.27)))))))
@@ -2711,6 +2555,76 @@
             (effects
               (font
                 (size 1.27 1.27)))))))
+    (symbol
+      "Mechanical:MountingHole"
+      (pin_names
+        (offset 1.016))
+      (in_bom yes)
+      (on_board yes)
+      (property
+        "Reference"
+        "H"
+        (at 0 5.08 0)
+        (effects
+          (font
+            (size 1.27 1.27))))
+      (property
+        "Value"
+        "MountingHole"
+        (at 0 3.175 0)
+        (effects
+          (font
+            (size 1.27 1.27))))
+      (property
+        "Footprint"
+        ""
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          hide))
+      (property
+        "Datasheet"
+        "~"
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          hide))
+      (property
+        "ki_keywords"
+        "mounting hole"
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          hide))
+      (property
+        "ki_description"
+        "Mounting Hole without connection"
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          hide))
+      (property
+        "ki_fp_filters"
+        "MountingHole*"
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          hide))
+      (symbol
+        "MountingHole_0_1"
+        (circle
+          (center 0 0)
+          (radius 1.27)
+          (stroke
+            (width 1.27)
+            (type default))
+          (fill
+            (type none)))))
     (symbol
       "WaterValve:Relay_Module"
       (pin_numbers hide)
@@ -3075,207 +2989,6 @@
                 (size 1.27 1.27))))
           (number
             "3"
-            (effects
-              (font
-                (size 1.27 1.27)))))))
-    (symbol
-      "WaterValve:RF_Receiver_4CH"
-      (pin_numbers hide)
-      (pin_names
-        (offset 0.762))
-      (in_bom yes)
-      (on_board yes)
-      (property
-        "Reference"
-        "RX"
-        (at -10.16 11.43 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (justify left bottom)))
-      (property
-        "Value"
-        "RF_Receiver_4CH"
-        (at -10.16 -11.43 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (justify left top)))
-      (property
-        "Footprint"
-        ""
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          hide))
-      (property
-        "Datasheet"
-        ""
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          hide))
-      (symbol
-        "RF_Receiver_4CH_0_1"
-        (rectangle
-          (start -10.16 10.16)
-          (end 10.16 -10.16)
-          (stroke
-            (width 0.254)
-            (type default))
-          (fill
-            (type background))))
-      (symbol
-        "RF_Receiver_4CH_1_1"
-        (pin
-          power_in
-          line
-          (at -12.7 7.62 0)
-          (length 2.54)
-          (name
-            "V+"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "1"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          power_in
-          line
-          (at -12.7 5.08 0)
-          (length 2.54)
-          (name
-            "GND"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "2"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at -12.7 0 0)
-          (length 2.54)
-          (name
-            "COM1"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "3"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at -12.7 -2.54 0)
-          (length 2.54)
-          (name
-            "COM2"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "4"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at -12.7 -5.08 0)
-          (length 2.54)
-          (name
-            "COM3"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "5"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at -12.7 -7.62 0)
-          (length 2.54)
-          (name
-            "COM4"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "6"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at 12.7 0 180)
-          (length 2.54)
-          (name
-            "NO1"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "7"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at 12.7 -2.54 180)
-          (length 2.54)
-          (name
-            "NO2"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "8"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at 12.7 -5.08 180)
-          (length 2.54)
-          (name
-            "NO3"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "9"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin
-          passive
-          line
-          (at 12.7 -7.62 180)
-          (length 2.54)
-          (name
-            "NO4"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number
-            "10"
             (effects
               (font
                 (size 1.27 1.27)))))))
@@ -4884,8 +4597,8 @@
   )
   (symbol (lib_id "Device:C") (at 238.76 101.6 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 3bd3e988-4a75-58ba-97ba-759cb7504a4e)
-    (property "Reference" "C12" (at 241.3 100.33 0)
+    (uuid 8cafc6ad-45dd-53d8-89f7-deb8e19626ab)
+    (property "Reference" "C11" (at 241.3 100.33 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "100nF" (at 241.3 102.87 0)
@@ -4897,12 +4610,12 @@
     (property "Datasheet" "~" (at 238.76 101.6 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid ca64e676-db0d-5a4c-a827-225231743573))
-    (pin "2" (uuid 8e981005-1c49-55c4-b137-c83ffd99052f))
+    (pin "1" (uuid 0a2e6a1c-8fb5-5e68-bfc9-0b7c29fe20c5))
+    (pin "2" (uuid a72ffeb3-9b1b-5e7d-9123-1a2387ab5654))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "C12") (unit 1)
+          (reference "C11") (unit 1)
         )
       )
     )
@@ -4959,63 +4672,56 @@
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid 77d6fa16-4a5c-5229-8900-b559a63f29ab)
   )
-  (text "REMOTE RECEIVER INPUTS (433 MHz, 4 relay channels)" (at 279.4 33.02 0)
+  (text "REMOTE RECEIVER (RX480E 433 MHz module, plugs into the board)" (at 279.4 30.48 0)
     (effects (font (size 2 2) bold) (justify left bottom))
     (uuid 08be7167-333d-5218-b698-fc339bacd18a)
   )
-  (symbol (lib_id "Connector:Screw_Terminal_01x06") (at 401.32 50.8 0) (unit 1)
+  (symbol (lib_id "WaterValve:RX480E") (at 398.78 63.5 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 970be167-4278-5043-bd2b-d56fd75ed23a)
-    (property "Reference" "J5" (at 401.32 40.64 0)
-      (effects (font (size 1.27 1.27)))
+    (uuid 301c4bbc-b23a-5fa2-a5ec-bd7ff04d9c68)
+    (property "Reference" "U2" (at 397.51 52.07 0)
+      (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Value" "REMOTE RX" (at 401.32 62.23 0)
-      (effects (font (size 1.27 1.27)))
+    (property "Value" "RX480E-4" (at 391.16 76.2 0)
+      (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-6-5.08_1x06_P5.08mm_Horizontal" (at 401.32 50.8 0)
+    (property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical" (at 398.78 63.5 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 401.32 50.8 0)
+    (property "Datasheet" "~" (at 398.78 63.5 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid da1a746f-4653-5d39-82dd-b95f18510fa7))
-    (pin "2" (uuid 66e19129-967d-5b3e-bc95-8228eff041b3))
-    (pin "3" (uuid 23201d73-60df-53b8-92e9-daf0ab89f12e))
-    (pin "4" (uuid afeab795-406a-5eff-a504-5d2e0580760c))
-    (pin "5" (uuid 4e0b4d09-8ae3-530f-af3c-93eea0f3f5b7))
-    (pin "6" (uuid f5f2e6ef-75da-51d3-aa37-4cf2e6f2c6ed))
+    (pin "1" (uuid a80f9e87-5275-5e05-b55d-65efef26e02d))
+    (pin "2" (uuid 5eb387fe-ebcb-59d8-a533-ce613f2a80f8))
+    (pin "3" (uuid eed39c2d-96e0-58f0-8a6e-30bf44fd671e))
+    (pin "4" (uuid f4c0667e-081a-5324-8ed0-3a3cbc2b47b3))
+    (pin "5" (uuid 547df003-a6e9-5f6b-9d2d-43695fcdf38e))
+    (pin "6" (uuid 8c8ba57f-2d07-54f8-949b-99b1675ba872))
+    (pin "7" (uuid 27f8d0ef-8141-53ab-8eb3-50bf3d2097be))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "J5") (unit 1)
+          (reference "U2") (unit 1)
         )
       )
     )
   )
-  (wire (pts (xy 396.24 45.72) (xy 391.16 45.72))
-    (stroke (width 0) (type default))
-    (uuid 4a71e1f9-472e-56fe-a329-72fbdc4e7f90)
-  )
-  (wire (pts (xy 391.16 45.72) (xy 391.16 43.18))
-    (stroke (width 0) (type default))
-    (uuid 75f9ef20-f6f3-5c55-ba48-6298486781d4)
-  )
-  (symbol (lib_id "power:+12V") (at 391.16 43.18 0) (unit 1)
+  (symbol (lib_id "power:+5V") (at 358.14 40.64 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 586268cf-886f-57d3-954d-24ac2e9ff4a0)
-    (property "Reference" "#PWR26" (at 391.16 43.18 0)
+    (uuid ec206fc7-a2a4-5aff-bafd-bf9614a10937)
+    (property "Reference" "#PWR26" (at 358.14 40.64 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
-    (property "Value" "+12V" (at 391.16 39.37 0)
+    (property "Value" "+5V" (at 358.14 36.83 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "" (at 391.16 43.18 0)
+    (property "Footprint" "" (at 358.14 40.64 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "" (at 391.16 43.18 0)
+    (property "Datasheet" "" (at 358.14 40.64 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 0b73cb42-20e4-584c-8d3c-f9590a8a9152))
+    (pin "1" (uuid fdc1635f-42f8-5c79-ba64-ca107dc6b347))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5024,108 +4730,52 @@
       )
     )
   )
-  (wire (pts (xy 396.24 48.26) (xy 391.16 48.26))
-    (stroke (width 0) (type default))
-    (uuid d3a5eff3-b140-5159-b230-10ba46ecc5e4)
-  )
-  (symbol (lib_id "power:GND") (at 391.16 48.26 270) (unit 1)
+  (symbol (lib_id "Device:R") (at 365.76 40.64 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 2de0be00-d26b-5e00-9528-738a092110f0)
-    (property "Reference" "#PWR27" (at 391.16 48.26 90)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
+    (uuid 5696dccc-5440-5918-97a9-fc063f6aac8f)
+    (property "Reference" "R17" (at 365.76 38.1 90)
+      (effects (font (size 1.27 1.27)))
     )
-    (property "Value" "GND" (at 386.85 48.26 90)
-      (effects (font (size 1.27 1.27)) (justify right) hide)
+    (property "Value" "10R" (at 365.76 43.18 90)
+      (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "" (at 391.16 48.26 90)
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 365.76 40.64 90)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "" (at 391.16 48.26 90)
+    (property "Datasheet" "~" (at 365.76 40.64 90)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid b7226365-378d-530d-a7e0-a26a8cda5bc3))
+    (pin "1" (uuid d4d11106-67e7-5bd8-aab2-63a031fe3eea))
+    (pin "2" (uuid f4f3c41a-72b2-5192-bd79-7633dc02ce01))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR27") (unit 1)
+          (reference "R17") (unit 1)
         )
       )
     )
   )
-  (wire (pts (xy 396.24 50.8) (xy 388.62 50.8))
+  (wire (pts (xy 358.14 40.64) (xy 361.95 40.64))
     (stroke (width 0) (type default))
-    (uuid ece5d5c7-3bd1-5da8-aa5c-c8761d87e714)
+    (uuid b3faf1ea-3c83-5bda-ac6f-565efc07dcc4)
   )
-  (label "RF1" (at 388.62 50.8 180) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right bottom))
-    (uuid c0bd9ff3-fb21-52df-a319-01a774fae383)
-  )
-  (wire (pts (xy 396.24 53.34) (xy 388.62 53.34))
-    (stroke (width 0) (type default))
-    (uuid d5356c67-16b1-531b-b2bf-e3b8cf32f661)
-  )
-  (label "RF2" (at 388.62 53.34 180) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right bottom))
-    (uuid e94a5a41-7d49-5270-bfdb-586999451f92)
-  )
-  (wire (pts (xy 396.24 55.88) (xy 388.62 55.88))
-    (stroke (width 0) (type default))
-    (uuid 24e6d9cb-1d6b-5c20-95b1-9e0392593245)
-  )
-  (label "RF3" (at 388.62 55.88 180) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right bottom))
-    (uuid 7bef62db-4eaf-54fa-9fe5-22218ad957b1)
-  )
-  (wire (pts (xy 396.24 58.42) (xy 388.62 58.42))
-    (stroke (width 0) (type default))
-    (uuid 5a3eba6d-a494-5507-9f25-b610282d9a5b)
-  )
-  (label "RF4" (at 388.62 58.42 180) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right bottom))
-    (uuid 251a0d4e-d6f8-5d45-8d38-1a194710fe0d)
-  )
-  (symbol (lib_id "Device:R") (at 292.1 46.99 0) (unit 1)
+  (symbol (lib_id "Device:C_Polarized") (at 375.92 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 0e9e71ac-379c-5277-97de-0a66136cd2ce)
-    (property "Reference" "R7" (at 294.64 45.72 0)
-      (effects (font (size 1.27 1.27)) (justify left))
+    (uuid 216c1edb-4dd5-51aa-a33f-bd33feeafe51)
+    (property "Reference" "C8" (at 373.38 45.72 0)
+      (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Value" "10k" (at 294.64 48.26 0)
-      (effects (font (size 1.27 1.27)) (justify left))
+    (property "Value" "47uF 16V" (at 373.38 48.26 0)
+      (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 292.1 46.99 0)
+    (property "Footprint" "Capacitor_THT:CP_Radial_D5.0mm_P2.00mm" (at 375.92 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 292.1 46.99 0)
+    (property "Datasheet" "~" (at 375.92 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 76a7e41a-d5bc-5bc5-a295-22bc205bccd9))
-    (pin "2" (uuid 8a6a0333-9c31-5b00-bafa-89736b4a2851))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "R7") (unit 1)
-        )
-      )
-    )
-  )
-  (symbol (lib_id "Device:C") (at 292.1 59.69 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid 2ad58e9c-9412-5f12-8db3-09ef8cf8c395)
-    (property "Reference" "C8" (at 294.64 58.42 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "100nF" (at 294.64 60.96 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm" (at 292.1 59.69 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (at 292.1 59.69 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 215e46b5-8ea8-5ec7-acfb-8aa540da0aaf))
-    (pin "2" (uuid 4d936604-d63a-531a-bce0-6135437cec0e))
+    (pin "1" (uuid ab13195c-fad6-57d5-a30a-478e795ac968))
+    (pin "2" (uuid a47a21fa-2df2-576f-918a-d05312e318ce))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5134,123 +4784,23 @@
       )
     )
   )
-  (wire (pts (xy 292.1 43.18) (xy 292.1 40.64))
-    (stroke (width 0) (type default))
-    (uuid 2e14504d-7d18-5f43-b417-897a90273ca6)
-  )
-  (symbol (lib_id "power:+5V") (at 292.1 40.64 0) (unit 1)
+  (symbol (lib_id "Device:C") (at 386.08 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid c333b88f-56e9-527e-abfe-c95f2db3e29c)
-    (property "Reference" "#PWR28" (at 292.1 40.64 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "+5V" (at 292.1 36.83 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "" (at 292.1 40.64 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 292.1 40.64 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 04d6a29a-6cf4-539f-b8ed-3b36b270b3e1))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR28") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 292.1 50.8) (xy 292.1 53.34))
-    (stroke (width 0) (type default))
-    (uuid 4edef760-09da-5cf8-95fa-0ddf4c83f0dd)
-  )
-  (wire (pts (xy 292.1 53.34) (xy 292.1 55.88))
-    (stroke (width 0) (type default))
-    (uuid ba9da997-6f12-5d77-9b37-8a8c441dba5d)
-  )
-  (wire (pts (xy 292.1 63.5) (xy 292.1 66.04))
-    (stroke (width 0) (type default))
-    (uuid 642d5716-96f2-5da3-aabb-46005ec5aab2)
-  )
-  (symbol (lib_id "power:GND") (at 292.1 66.04 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid 8897edcb-f975-5788-b6e9-6ac287c85845)
-    (property "Reference" "#PWR29" (at 292.1 66.04 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "GND" (at 292.1 69.85 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (at 292.1 66.04 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 292.1 66.04 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid c328a7e2-850c-5157-b0e6-4922941ac60e))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR29") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 292.1 53.34) (xy 297.18 53.34))
-    (stroke (width 0) (type default))
-    (uuid 0755bd9b-39d0-53f1-bb72-9101fe7be760)
-  )
-  (label "RF1" (at 297.18 53.34 0) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 6c8abf52-c854-509d-b504-bd15a77a692a)
-  )
-  (junction (at 292.1 53.34) (diameter 0) (color 0 0 0 0)
-    (uuid 75d27255-db58-5fb4-9876-ffcf8402a284)
-  )
-  (symbol (lib_id "Device:R") (at 309.88 46.99 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid b97f28e0-1b92-5c83-a05b-43e4352c6b2e)
-    (property "Reference" "R8" (at 312.42 45.72 0)
+    (uuid e795d4ff-b1c4-5a7f-a9a3-ac1f5dddc5dd)
+    (property "Reference" "C9" (at 388.62 45.72 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "10k" (at 312.42 48.26 0)
+    (property "Value" "100nF" (at 388.62 48.26 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 309.88 46.99 0)
+    (property "Footprint" "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm" (at 386.08 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 309.88 46.99 0)
+    (property "Datasheet" "~" (at 386.08 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 63b96473-cca5-51cd-832b-ec6c493b02cf))
-    (pin "2" (uuid ae90e0d1-3804-5a8c-9d2a-e2df61300c52))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "R8") (unit 1)
-        )
-      )
-    )
-  )
-  (symbol (lib_id "Device:C") (at 309.88 59.69 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid 9712de97-bb3a-53e7-a7b0-9be956097695)
-    (property "Reference" "C9" (at 312.42 58.42 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "100nF" (at 312.42 60.96 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm" (at 309.88 59.69 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (at 309.88 59.69 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 14125500-f28e-5d5c-be27-a3d23181f6ed))
-    (pin "2" (uuid d041b259-5b58-5d16-9bfc-0c14753d8298))
+    (pin "1" (uuid 56d9eacf-5dec-59e7-b139-c0f8ec7c5dcb))
+    (pin "2" (uuid 2d96aafa-2a49-57bb-ab9f-1914da7cdbe6))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5259,26 +4809,227 @@
       )
     )
   )
-  (wire (pts (xy 309.88 43.18) (xy 309.88 40.64))
+  (wire (pts (xy 369.57 40.64) (xy 375.92 40.64))
     (stroke (width 0) (type default))
-    (uuid 4783173f-fda0-50ce-aa42-2399f7b2303d)
+    (uuid 5a3eba6d-a494-5507-9f25-b610282d9a5b)
   )
-  (symbol (lib_id "power:+5V") (at 309.88 40.64 0) (unit 1)
+  (wire (pts (xy 375.92 40.64) (xy 386.08 40.64))
+    (stroke (width 0) (type default))
+    (uuid a9b122c3-1b71-5d1c-b246-83b43d9d432e)
+  )
+  (wire (pts (xy 386.08 40.64) (xy 398.78 40.64))
+    (stroke (width 0) (type default))
+    (uuid de9b1ea1-49bb-531e-a163-3bb7ba3dfe39)
+  )
+  (wire (pts (xy 398.78 40.64) (xy 398.78 53.34))
+    (stroke (width 0) (type default))
+    (uuid 29a91e0e-0b9f-5493-850d-9fed956d12fd)
+  )
+  (wire (pts (xy 375.92 43.18) (xy 375.92 40.64))
+    (stroke (width 0) (type default))
+    (uuid 80f17ca1-f8fa-5db3-bda8-909ce8199dac)
+  )
+  (junction (at 375.92 40.64) (diameter 0) (color 0 0 0 0)
+    (uuid 6989e16d-d345-51fa-8996-6d010aae78af)
+  )
+  (symbol (lib_id "power:GND") (at 375.92 50.8 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 088d3b95-7f5c-554b-a0ba-043023bd75fa)
-    (property "Reference" "#PWR30" (at 309.88 40.64 0)
+    (uuid c2620ff0-c878-575b-8da6-cc93437e7036)
+    (property "Reference" "#PWR27" (at 375.92 50.8 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
-    (property "Value" "+5V" (at 309.88 36.83 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "" (at 309.88 40.64 0)
+    (property "Value" "GND" (at 375.92 54.61 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "" (at 309.88 40.64 0)
+    (property "Footprint" "" (at 375.92 50.8 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid d4c10e8d-4ccf-50c0-a674-6381a227e20d))
+    (property "Datasheet" "" (at 375.92 50.8 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 6627ee41-e962-5bca-9865-af7fd7eb9d97))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "#PWR27") (unit 1)
+        )
+      )
+    )
+  )
+  (wire (pts (xy 386.08 43.18) (xy 386.08 40.64))
+    (stroke (width 0) (type default))
+    (uuid 2e14504d-7d18-5f43-b417-897a90273ca6)
+  )
+  (junction (at 386.08 40.64) (diameter 0) (color 0 0 0 0)
+    (uuid fd9ead71-aa8f-5325-a2a2-05af05ffb011)
+  )
+  (symbol (lib_id "power:GND") (at 386.08 50.8 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 83d0fd92-1ee4-56c5-b287-b4aa9ca4209a)
+    (property "Reference" "#PWR28" (at 386.08 50.8 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Value" "GND" (at 386.08 54.61 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Footprint" "" (at 386.08 50.8 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (at 386.08 50.8 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 27c5dc46-c3cd-5945-be3c-cdfe348a165d))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "#PWR28") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "power:GND") (at 398.78 73.66 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 143d5e4b-a2b1-5ad5-ae7c-f838c266307b)
+    (property "Reference" "#PWR29" (at 398.78 73.66 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Value" "GND" (at 398.78 77.47 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Footprint" "" (at 398.78 73.66 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (at 398.78 73.66 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 1d80127e-a861-5b14-baed-93699bc55d57))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "#PWR29") (unit 1)
+        )
+      )
+    )
+  )
+  (no_connect (at 388.62 68.58) (uuid fdf9ac50-72e7-52b3-aca5-aef0b42917bf))
+  (wire (pts (xy 388.62 58.42) (xy 381 58.42))
+    (stroke (width 0) (type default))
+    (uuid 6d26e710-1055-5e6b-909d-b25e327001bd)
+  )
+  (label "RX_D0" (at 381 58.42 180) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right bottom))
+    (uuid 2bbb6d29-b997-5265-b9f1-58d8d2b3b424)
+  )
+  (wire (pts (xy 388.62 60.96) (xy 381 60.96))
+    (stroke (width 0) (type default))
+    (uuid 99a2a12e-6691-5701-a9f4-a495f472d0b0)
+  )
+  (label "RX_D1" (at 381 60.96 180) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right bottom))
+    (uuid 5ba2892a-d8e9-585e-bf95-03cec6815b80)
+  )
+  (wire (pts (xy 388.62 63.5) (xy 381 63.5))
+    (stroke (width 0) (type default))
+    (uuid 57bf239c-f7ff-5530-8f7c-0745b2227d3d)
+  )
+  (label "RX_D2" (at 381 63.5 180) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right bottom))
+    (uuid c2894010-983b-5baf-a634-4c21e00bd371)
+  )
+  (wire (pts (xy 388.62 66.04) (xy 381 66.04))
+    (stroke (width 0) (type default))
+    (uuid 7fb42a76-9f4f-5e46-84ed-55d295f57630)
+  )
+  (label "RX_D3" (at 381 66.04 180) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right bottom))
+    (uuid 7f72f581-23ed-5956-9495-28b3998da199)
+  )
+  (wire (pts (xy 289.56 40.64) (xy 289.56 43.18))
+    (stroke (width 0) (type default))
+    (uuid b2450c6b-2334-50ae-98c1-7dd35943e38c)
+  )
+  (label "RX_D0" (at 289.56 40.64 90) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid f8a3a52e-255d-5bd9-9334-ce8d5576bab7)
+  )
+  (symbol (lib_id "Device:R") (at 289.56 46.99 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 4558c523-972d-5294-8adc-5f137582968c)
+    (property "Reference" "R7" (at 292.1 45.72 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "1k" (at 292.1 48.26 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 289.56 46.99 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 289.56 46.99 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid f2672772-d6fe-5257-8236-bc3ff771713f))
+    (pin "2" (uuid f6bc3077-677f-5623-aa67-c8162a2bb0db))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "R7") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "Device:R") (at 289.56 59.69 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 7b3c2062-db51-5554-ae7b-9931cc39357f)
+    (property "Reference" "R13" (at 292.1 58.42 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "100k" (at 292.1 60.96 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 289.56 59.69 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 289.56 59.69 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 7d36442a-1c2b-54ad-b129-16be261c0d23))
+    (pin "2" (uuid b8f6b9c0-f754-52fe-a8c4-8bf992f83172))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "R13") (unit 1)
+        )
+      )
+    )
+  )
+  (wire (pts (xy 289.56 50.8) (xy 289.56 53.34))
+    (stroke (width 0) (type default))
+    (uuid 8cd32355-d24b-5206-9341-27e7173135ae)
+  )
+  (wire (pts (xy 289.56 53.34) (xy 289.56 55.88))
+    (stroke (width 0) (type default))
+    (uuid 859c7979-ef6e-5f6a-9904-410fbd489a4a)
+  )
+  (wire (pts (xy 289.56 63.5) (xy 289.56 66.04))
+    (stroke (width 0) (type default))
+    (uuid ab016b20-5253-5a98-9152-8600533cfe09)
+  )
+  (symbol (lib_id "power:GND") (at 289.56 66.04 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid c4da787d-69ad-5ec4-b761-4e74fe29770d)
+    (property "Reference" "#PWR30" (at 289.56 66.04 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Value" "GND" (at 289.56 69.85 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Footprint" "" (at 289.56 66.04 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (at 289.56 66.04 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 28c155d3-0e43-5dbd-9335-ffea28209159))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5287,34 +5038,103 @@
       )
     )
   )
-  (wire (pts (xy 309.88 50.8) (xy 309.88 53.34))
+  (wire (pts (xy 289.56 53.34) (xy 294.64 53.34))
     (stroke (width 0) (type default))
-    (uuid ff3ceaa2-2f4b-5a6b-a395-967808f35261)
+    (uuid 97d9cc5d-c97f-55fc-a7f6-729c96a0ea85)
   )
-  (wire (pts (xy 309.88 53.34) (xy 309.88 55.88))
+  (label "RF1" (at 294.64 53.34 0) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid cc40a318-76a6-5624-83a7-51e38d4ba1b9)
+  )
+  (junction (at 289.56 53.34) (diameter 0) (color 0 0 0 0)
+    (uuid 0035fe27-a155-5c66-9e5c-b6200f66864c)
+  )
+  (wire (pts (xy 307.34 40.64) (xy 307.34 43.18))
     (stroke (width 0) (type default))
-    (uuid 29d9c7d5-914f-5a71-afbd-d882e9692d27)
+    (uuid a2d5c3b2-9b77-5ef6-9fee-b7e29b6c9e9d)
   )
-  (wire (pts (xy 309.88 63.5) (xy 309.88 66.04))
-    (stroke (width 0) (type default))
-    (uuid a34d804b-6d02-5cbb-831b-570e02a1e451)
+  (label "RX_D1" (at 307.34 40.64 90) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 80973d3f-6219-5503-bf23-335807557f39)
   )
-  (symbol (lib_id "power:GND") (at 309.88 66.04 0) (unit 1)
+  (symbol (lib_id "Device:R") (at 307.34 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid afc021dc-c60a-5ed9-bbec-d9062eca1ec1)
-    (property "Reference" "#PWR31" (at 309.88 66.04 0)
+    (uuid 06e832d3-2529-5076-be7f-48ce986b8ce1)
+    (property "Reference" "R8" (at 309.88 45.72 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "1k" (at 309.88 48.26 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 307.34 46.99 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 307.34 46.99 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid de41339e-9c02-5847-8bc4-c246c00c9f04))
+    (pin "2" (uuid 14c0574a-d436-5633-9ddf-e84aea66f7e5))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "R8") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "Device:R") (at 307.34 59.69 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 644487fc-ebf6-5f2a-9900-35553a4c7edb)
+    (property "Reference" "R14" (at 309.88 58.42 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "100k" (at 309.88 60.96 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 307.34 59.69 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 307.34 59.69 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid d520b0e8-6269-57e5-9ac0-ab54c678a466))
+    (pin "2" (uuid 672128ee-8f6a-530a-ac5c-24971233a43a))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "R14") (unit 1)
+        )
+      )
+    )
+  )
+  (wire (pts (xy 307.34 50.8) (xy 307.34 53.34))
+    (stroke (width 0) (type default))
+    (uuid f5e7c76b-968b-5922-b7ec-30bd85ec5e4b)
+  )
+  (wire (pts (xy 307.34 53.34) (xy 307.34 55.88))
+    (stroke (width 0) (type default))
+    (uuid 85bac9bc-f521-545c-aca8-5fc76ee9ac74)
+  )
+  (wire (pts (xy 307.34 63.5) (xy 307.34 66.04))
+    (stroke (width 0) (type default))
+    (uuid c58dab3c-eeb9-500b-8551-144a51665616)
+  )
+  (symbol (lib_id "power:GND") (at 307.34 66.04 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 0ab04c67-5365-5fa3-b89f-09479061266a)
+    (property "Reference" "#PWR31" (at 307.34 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
-    (property "Value" "GND" (at 309.88 69.85 0)
+    (property "Value" "GND" (at 307.34 69.85 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Footprint" "" (at 309.88 66.04 0)
+    (property "Footprint" "" (at 307.34 66.04 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "" (at 309.88 66.04 0)
+    (property "Datasheet" "" (at 307.34 66.04 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 9353fe66-f76d-5a79-9d13-49e7fc2007c8))
+    (pin "1" (uuid 03a61097-919c-5da5-8f74-b5392d87486f))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5323,34 +5143,42 @@
       )
     )
   )
-  (wire (pts (xy 309.88 53.34) (xy 314.96 53.34))
+  (wire (pts (xy 307.34 53.34) (xy 312.42 53.34))
     (stroke (width 0) (type default))
-    (uuid ab016b20-5253-5a98-9152-8600533cfe09)
+    (uuid 84683c38-c0ee-5c67-9738-1d46c42f887c)
   )
-  (label "RF2" (at 314.96 53.34 0) (fields_autoplaced)
+  (label "RF2" (at 312.42 53.34 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid d7ac588c-1659-5f81-9ae9-927112eb4652)
+    (uuid a0276146-5cce-5dce-94ec-77b7d648b83b)
   )
-  (junction (at 309.88 53.34) (diameter 0) (color 0 0 0 0)
-    (uuid c455270c-617d-5fbd-b2f0-769cf5ca67c9)
+  (junction (at 307.34 53.34) (diameter 0) (color 0 0 0 0)
+    (uuid 341ead9e-5137-560a-ad07-129b4d48fe5d)
   )
-  (symbol (lib_id "Device:R") (at 327.66 46.99 0) (unit 1)
+  (wire (pts (xy 325.12 40.64) (xy 325.12 43.18))
+    (stroke (width 0) (type default))
+    (uuid a2ba4188-20c7-5166-9d04-d69ea60b0f10)
+  )
+  (label "RX_D2" (at 325.12 40.64 90) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 9e28bf2c-e83d-5555-ad00-365f9fe0b512)
+  )
+  (symbol (lib_id "Device:R") (at 325.12 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 836dccd7-d6d2-5e45-a615-bbc5ea89ef91)
-    (property "Reference" "R9" (at 330.2 45.72 0)
+    (uuid bf422277-5e5c-587e-8e91-99f84a76f36c)
+    (property "Reference" "R9" (at 327.66 45.72 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "10k" (at 330.2 48.26 0)
+    (property "Value" "1k" (at 327.66 48.26 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 327.66 46.99 0)
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 325.12 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 327.66 46.99 0)
+    (property "Datasheet" "~" (at 325.12 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 6e589946-46a0-518f-9dd0-c159aa7992a3))
-    (pin "2" (uuid 036b7305-4c79-5a07-9776-5c4761750e61))
+    (pin "1" (uuid 01da53fb-ed89-54ad-9ab2-aac48572b337))
+    (pin "2" (uuid a2e35cba-fcf0-5315-a19e-1738714a7ef9))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5359,51 +5187,59 @@
       )
     )
   )
-  (symbol (lib_id "Device:C") (at 327.66 59.69 0) (unit 1)
+  (symbol (lib_id "Device:R") (at 325.12 59.69 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid a911ea4f-f95f-5091-b0b3-68d255510259)
-    (property "Reference" "C10" (at 330.2 58.42 0)
+    (uuid 3bd7a210-309e-571c-95a6-31cecdb4e31b)
+    (property "Reference" "R15" (at 327.66 58.42 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "100nF" (at 330.2 60.96 0)
+    (property "Value" "100k" (at 327.66 60.96 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm" (at 327.66 59.69 0)
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 325.12 59.69 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 327.66 59.69 0)
+    (property "Datasheet" "~" (at 325.12 59.69 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 47eec9b2-f68f-54e9-aee5-46eb22ac2c58))
-    (pin "2" (uuid 4a3d296b-8496-5746-8299-fd464f2d00c5))
+    (pin "1" (uuid 6a91f035-ded9-549d-b724-0ad94d9507ec))
+    (pin "2" (uuid 6792f783-e1bf-51ba-9fb4-90042ca0dbb5))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "C10") (unit 1)
+          (reference "R15") (unit 1)
         )
       )
     )
   )
-  (wire (pts (xy 327.66 43.18) (xy 327.66 40.64))
+  (wire (pts (xy 325.12 50.8) (xy 325.12 53.34))
     (stroke (width 0) (type default))
-    (uuid 0d473515-e763-5ce6-90ea-0aa512ed176e)
+    (uuid 307ecbf9-38b4-5ae7-aadb-fabcafe0e13e)
   )
-  (symbol (lib_id "power:+5V") (at 327.66 40.64 0) (unit 1)
+  (wire (pts (xy 325.12 53.34) (xy 325.12 55.88))
+    (stroke (width 0) (type default))
+    (uuid 7193a7cf-2442-5812-8325-3c96852222ab)
+  )
+  (wire (pts (xy 325.12 63.5) (xy 325.12 66.04))
+    (stroke (width 0) (type default))
+    (uuid 1f0d2104-0bf5-5735-831f-be988019a9ec)
+  )
+  (symbol (lib_id "power:GND") (at 325.12 66.04 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid a2e88a17-b39d-5c99-8756-589bac6455e3)
-    (property "Reference" "#PWR32" (at 327.66 40.64 0)
+    (uuid d2e53cd7-06d8-5ae2-9482-0587ce7951b5)
+    (property "Reference" "#PWR32" (at 325.12 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
-    (property "Value" "+5V" (at 327.66 36.83 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "" (at 327.66 40.64 0)
+    (property "Value" "GND" (at 325.12 69.85 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "" (at 327.66 40.64 0)
+    (property "Footprint" "" (at 325.12 66.04 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 7e179edc-607d-58a5-84d5-836262406567))
+    (property "Datasheet" "" (at 325.12 66.04 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 86c25f74-c369-534b-bed1-7d30e7234e78))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5412,70 +5248,42 @@
       )
     )
   )
-  (wire (pts (xy 327.66 50.8) (xy 327.66 53.34))
+  (wire (pts (xy 325.12 53.34) (xy 330.2 53.34))
     (stroke (width 0) (type default))
-    (uuid 8a7a4b55-8077-5b53-8ee0-ce0d4b8bde4e)
+    (uuid 1f8ec30d-a1c3-5087-9e3f-aa0e12d4b96a)
   )
-  (wire (pts (xy 327.66 53.34) (xy 327.66 55.88))
-    (stroke (width 0) (type default))
-    (uuid a27e1187-6988-5e6e-bb5e-0cab6765d2dd)
-  )
-  (wire (pts (xy 327.66 63.5) (xy 327.66 66.04))
-    (stroke (width 0) (type default))
-    (uuid f5e7c76b-968b-5922-b7ec-30bd85ec5e4b)
-  )
-  (symbol (lib_id "power:GND") (at 327.66 66.04 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid cb421e28-6d1b-52e7-9a1b-26718c6943f2)
-    (property "Reference" "#PWR33" (at 327.66 66.04 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "GND" (at 327.66 69.85 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (at 327.66 66.04 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 327.66 66.04 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid b1bd1804-ba7a-52ce-a2f2-6998f21342a3))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR33") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 327.66 53.34) (xy 332.74 53.34))
-    (stroke (width 0) (type default))
-    (uuid f415cdf0-572a-58c3-8e46-87511f81b28b)
-  )
-  (label "RF3" (at 332.74 53.34 0) (fields_autoplaced)
+  (label "RF3" (at 330.2 53.34 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 21e616ed-5e54-57a2-baff-99861a9df7eb)
+    (uuid bcdfafa0-b7f7-580e-bb77-8faf6c324402)
   )
-  (junction (at 327.66 53.34) (diameter 0) (color 0 0 0 0)
-    (uuid 22df5ae7-348c-5fc5-8424-6bbb24db8402)
+  (junction (at 325.12 53.34) (diameter 0) (color 0 0 0 0)
+    (uuid 7a93c826-ea3a-5e9d-80ef-e2ebbd3b9c20)
   )
-  (symbol (lib_id "Device:R") (at 345.44 46.99 0) (unit 1)
+  (wire (pts (xy 342.9 40.64) (xy 342.9 43.18))
+    (stroke (width 0) (type default))
+    (uuid c6c057b3-2d53-5717-bbbc-c3b60ff3db0b)
+  )
+  (label "RX_D3" (at 342.9 40.64 90) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 176ad82f-9380-5539-8909-cb22bb538a4c)
+  )
+  (symbol (lib_id "Device:R") (at 342.9 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid ca9b8de3-e411-593a-89e2-2510ca148d73)
-    (property "Reference" "R10" (at 347.98 45.72 0)
+    (uuid 4612f103-8b74-5153-8095-b0bd225d1091)
+    (property "Reference" "R10" (at 345.44 45.72 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "10k" (at 347.98 48.26 0)
+    (property "Value" "1k" (at 345.44 48.26 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 345.44 46.99 0)
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 342.9 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 345.44 46.99 0)
+    (property "Datasheet" "~" (at 342.9 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 9d764aa5-d7df-5504-9ee8-4bc76b2336fb))
-    (pin "2" (uuid a7028fae-7b72-595b-861a-6dc70606434a))
+    (pin "1" (uuid 3f136b87-5491-5c23-8bb6-a0b560730a54))
+    (pin "2" (uuid 61d888d5-3aff-5400-aac0-4894a9623692))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5484,113 +5292,89 @@
       )
     )
   )
-  (symbol (lib_id "Device:C") (at 345.44 59.69 0) (unit 1)
+  (symbol (lib_id "Device:R") (at 342.9 59.69 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 9435702c-fc6e-53f8-aa6b-ddb378b0c8c9)
-    (property "Reference" "C11" (at 347.98 58.42 0)
+    (uuid 213e8ccf-f87a-5219-800b-d93118a6a3ca)
+    (property "Reference" "R16" (at 345.44 58.42 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "100nF" (at 347.98 60.96 0)
+    (property "Value" "100k" (at 345.44 60.96 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm" (at 345.44 59.69 0)
+    (property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal" (at 342.9 59.69 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "~" (at 345.44 59.69 0)
+    (property "Datasheet" "~" (at 342.9 59.69 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 7f6ff0a6-888d-5092-8377-3d24a41c7231))
-    (pin "2" (uuid 4ad01cd7-ddf1-525e-bd86-95ba50c2d021))
+    (pin "1" (uuid d8aa6b05-38dc-5fd0-ada7-ce5d59e0ec1f))
+    (pin "2" (uuid 88a30765-f467-565a-9cba-6954aafb2445))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "C11") (unit 1)
+          (reference "R16") (unit 1)
         )
       )
     )
   )
-  (wire (pts (xy 345.44 43.18) (xy 345.44 40.64))
+  (wire (pts (xy 342.9 50.8) (xy 342.9 53.34))
     (stroke (width 0) (type default))
-    (uuid 5b0d7670-68ea-5b94-a786-8bf6eff6e681)
+    (uuid 940b62ad-e3ab-5cb8-b5ed-88d0d7164337)
   )
-  (symbol (lib_id "power:+5V") (at 345.44 40.64 0) (unit 1)
+  (wire (pts (xy 342.9 53.34) (xy 342.9 55.88))
+    (stroke (width 0) (type default))
+    (uuid c4531b37-5e24-5446-91da-6e79a4d45aa1)
+  )
+  (wire (pts (xy 342.9 63.5) (xy 342.9 66.04))
+    (stroke (width 0) (type default))
+    (uuid da541b86-929e-5393-865c-a2e70fadc4ae)
+  )
+  (symbol (lib_id "power:GND") (at 342.9 66.04 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid d01ff744-a477-5bf9-9d12-8c1c4fa5dd50)
-    (property "Reference" "#PWR34" (at 345.44 40.64 0)
+    (uuid 7fed9bfd-c662-5d45-b6e4-9df9c9a95e9c)
+    (property "Reference" "#PWR33" (at 342.9 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
-    (property "Value" "+5V" (at 345.44 36.83 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "" (at 345.44 40.64 0)
+    (property "Value" "GND" (at 342.9 69.85 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Datasheet" "" (at 345.44 40.64 0)
+    (property "Footprint" "" (at 342.9 66.04 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid b74fb9c1-7658-5b97-9c43-5ff527dbaf3d))
+    (property "Datasheet" "" (at 342.9 66.04 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 0c6b19e6-9114-53e7-aba8-8ef1c0faf056))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR34") (unit 1)
+          (reference "#PWR33") (unit 1)
         )
       )
     )
   )
-  (wire (pts (xy 345.44 50.8) (xy 345.44 53.34))
+  (wire (pts (xy 342.9 53.34) (xy 347.98 53.34))
     (stroke (width 0) (type default))
-    (uuid af727ae8-03f4-5e3a-81b1-90c41ad46400)
+    (uuid 7fe7345e-0a1c-52f1-9e69-5a2503427efa)
   )
-  (wire (pts (xy 345.44 53.34) (xy 345.44 55.88))
-    (stroke (width 0) (type default))
-    (uuid 307ecbf9-38b4-5ae7-aadb-fabcafe0e13e)
-  )
-  (wire (pts (xy 345.44 63.5) (xy 345.44 66.04))
-    (stroke (width 0) (type default))
-    (uuid 7193a7cf-2442-5812-8325-3c96852222ab)
-  )
-  (symbol (lib_id "power:GND") (at 345.44 66.04 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid 7c93144f-65c6-5f1f-b3ad-3159cb31c983)
-    (property "Reference" "#PWR35" (at 345.44 66.04 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "GND" (at 345.44 69.85 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (at 345.44 66.04 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 345.44 66.04 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid e8a68e15-020f-5f5d-96a5-1e136d373d37))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR35") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 345.44 53.34) (xy 350.52 53.34))
-    (stroke (width 0) (type default))
-    (uuid 9386067b-93ab-53ec-8dbd-fd2521868b26)
-  )
-  (label "RF4" (at 350.52 53.34 0) (fields_autoplaced)
+  (label "RF4" (at 347.98 53.34 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid b682436b-d2ae-588c-8f2d-cb30cb6a4e6d)
+    (uuid d9c3742e-0204-552d-b65d-83b57f3e8d4f)
   )
-  (junction (at 345.44 53.34) (diameter 0) (color 0 0 0 0)
-    (uuid 2d724cba-13ac-537d-9a5f-6441c5b1cdfd)
+  (junction (at 342.9 53.34) (diameter 0) (color 0 0 0 0)
+    (uuid b0af9f3a-c8ae-5464-874a-7502de8a824e)
+  )
+  (text "U2 plugs into a 7-pin socket. Check that the labels on the back of your module read\nGND, +V, D0, D1, D2, D3, VT in that order before ordering the PCB. Pair the remote\nin MOMENTARY mode. Keep the antenna clear of the relay, valve wires and metal." (at 279.4 70 0)
+    (effects (font (size 1.27 1.27)) (justify left top))
+    (uuid a0be251d-57db-5c0d-9ab2-3cc2bb4a2a10)
   )
   (text "RELAY MODULE AND VALVE POWER" (at 279.4 81.28 0)
     (effects (font (size 2 2) bold) (justify left bottom))
-    (uuid 6b5f6a8b-c769-5315-8491-99608906ac11)
+    (uuid 8818e06b-2aee-56c6-8fcf-e21aad17a20e)
   )
   (symbol (lib_id "Connector_Generic:Conn_01x03") (at 401.32 93.98 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 9dd40d6d-3353-549e-9b8d-1aa3b88a5dc3)
+    (uuid 8bebc8da-8be7-52c5-a9d6-025a7435d341)
     (property "Reference" "J3" (at 401.32 88.9 0)
       (effects (font (size 1.27 1.27)))
     )
@@ -5603,9 +5387,9 @@
     (property "Datasheet" "~" (at 401.32 93.98 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 8935451c-4f54-585c-b717-7a71c8f432e9))
-    (pin "2" (uuid 443fa1b3-0f10-5b68-bd4d-d6df6adacfce))
-    (pin "3" (uuid 4affcfcf-6fa4-5f1a-b786-41b1166ab5dc))
+    (pin "1" (uuid 7ba22d56-1cb3-5256-8166-6a2085977822))
+    (pin "2" (uuid dc96cf25-ad9d-5056-a546-34173f010bca))
+    (pin "3" (uuid a6b0449e-1611-59ac-a8cf-b15ffbe015c0))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5616,16 +5400,16 @@
   )
   (wire (pts (xy 396.24 91.44) (xy 391.16 91.44))
     (stroke (width 0) (type default))
-    (uuid d88bf2ef-7235-55f6-bf2a-834974a5523a)
+    (uuid 54b07e41-2b9f-5e9f-99e0-fde6c4559cee)
   )
   (wire (pts (xy 391.16 91.44) (xy 391.16 88.9))
     (stroke (width 0) (type default))
-    (uuid b3145a15-1f22-5491-9a51-f2b2de175bf6)
+    (uuid d93cad7f-d500-5957-a031-8ada67dbab36)
   )
   (symbol (lib_id "power:+5V") (at 391.16 88.9 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 6af9692a-ee8f-50de-851a-bab2db39e241)
-    (property "Reference" "#PWR36" (at 391.16 88.9 0)
+    (uuid 244dd44f-482c-597e-886d-391bf9d2c8b7)
+    (property "Reference" "#PWR34" (at 391.16 88.9 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "+5V" (at 391.16 85.09 0)
@@ -5637,35 +5421,35 @@
     (property "Datasheet" "" (at 391.16 88.9 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 54dc3878-05af-5088-a8a5-f59caf232848))
+    (pin "1" (uuid 7c039212-91b5-5abc-bb92-0c492b38b69d))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR36") (unit 1)
+          (reference "#PWR34") (unit 1)
         )
       )
     )
   )
   (wire (pts (xy 396.24 93.98) (xy 386.08 93.98))
     (stroke (width 0) (type default))
-    (uuid 940b62ad-e3ab-5cb8-b5ed-88d0d7164337)
+    (uuid 0caabbbe-41ff-5c6d-adfd-36f6bb8158b3)
   )
   (label "RELAY" (at 386.08 93.98 180) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right bottom))
-    (uuid 83458bc7-830d-5c51-9840-53f5d8d571e6)
+    (uuid 464db5ca-c68f-5356-8530-a516296b62fa)
   )
   (wire (pts (xy 396.24 96.52) (xy 391.16 96.52))
     (stroke (width 0) (type default))
-    (uuid da541b86-929e-5393-865c-a2e70fadc4ae)
+    (uuid 77f78cda-c658-505f-a25a-ed5504fb1978)
   )
   (wire (pts (xy 391.16 96.52) (xy 391.16 99.06))
     (stroke (width 0) (type default))
-    (uuid 134b8afa-7e32-5df6-80b5-fbe5f924a023)
+    (uuid 0d5848c6-628e-5e46-a242-1a03f4aa7e58)
   )
   (symbol (lib_id "power:GND") (at 391.16 99.06 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid da72247f-b9d7-568a-aace-7b9be6422e3f)
-    (property "Reference" "#PWR37" (at 391.16 99.06 0)
+    (uuid 808480e7-37ff-531b-b025-85c2c28f03e5)
+    (property "Reference" "#PWR35" (at 391.16 99.06 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Value" "GND" (at 391.16 102.87 0)
@@ -5677,7 +5461,80 @@
     (property "Datasheet" "" (at 391.16 99.06 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 5e8bcb21-6e6a-59c7-ad91-f622ddff14bb))
+    (pin "1" (uuid 05df2d72-2b0e-5051-bedc-9cf12a89c19c))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "#PWR35") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "Device:C_Polarized") (at 365.76 93.98 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 97c07532-b97a-561f-9b3e-b8977f377376)
+    (property "Reference" "C10" (at 363.22 92.71 0)
+      (effects (font (size 1.27 1.27)) (justify right))
+    )
+    (property "Value" "100uF 16V" (at 363.22 95.25 0)
+      (effects (font (size 1.27 1.27)) (justify right))
+    )
+    (property "Footprint" "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm" (at 365.76 93.98 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 365.76 93.98 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid b1c02d94-874a-5318-9d6b-9d7a8c56a3da))
+    (pin "2" (uuid 5308a25f-ea2e-5a41-bd92-c799f13edffd))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "C10") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "power:+5V") (at 365.76 90.17 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 5fd6a477-921c-5698-b400-6b81d7f45ec2)
+    (property "Reference" "#PWR36" (at 365.76 90.17 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Value" "+5V" (at 365.76 86.36 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "" (at 365.76 90.17 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (at 365.76 90.17 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid daa9ab03-8cc1-5e26-b9a2-26ba9f88a8ed))
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "#PWR36") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "power:GND") (at 365.76 97.79 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no)
+    (uuid 014ab194-6db3-5acc-8884-895534ab13b0)
+    (property "Reference" "#PWR37" (at 365.76 97.79 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Value" "GND" (at 365.76 101.6 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Footprint" "" (at 365.76 97.79 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (at 365.76 97.79 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 285c5725-31c5-504f-836c-6b3e2f8d0fc5))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5688,7 +5545,7 @@
   )
   (symbol (lib_id "Connector:Screw_Terminal_01x02") (at 401.32 114.3 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 2e0c4ce6-36e3-5e61-bc8e-ae3a167668d9)
+    (uuid e736511b-54f5-582d-95eb-1de6cd346f21)
     (property "Reference" "J2" (at 401.32 109.22 0)
       (effects (font (size 1.27 1.27)))
     )
@@ -5701,8 +5558,8 @@
     (property "Datasheet" "~" (at 401.32 114.3 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 9c207412-b58b-5cef-bb44-b8128a6d289b))
-    (pin "2" (uuid 65adaa3b-b21d-58f8-bd41-5398c27b0169))
+    (pin "1" (uuid 9cfc576d-fb52-5bf9-ad8e-0a71cfedeb86))
+    (pin "2" (uuid 2857c136-eac1-5b65-9199-48755604a827))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5713,15 +5570,15 @@
   )
   (wire (pts (xy 396.24 114.3) (xy 391.16 114.3))
     (stroke (width 0) (type default))
-    (uuid 9f354c36-59a4-5a69-997c-5465f61a95bc)
+    (uuid db532979-47c1-5ab7-8763-94ef58da0000)
   )
   (wire (pts (xy 391.16 114.3) (xy 391.16 111.76))
     (stroke (width 0) (type default))
-    (uuid a14fb86a-4bc0-54e0-b1a7-599497a89a86)
+    (uuid 45e5e537-d96c-5d65-a72a-5fb68b10b397)
   )
   (symbol (lib_id "power:+12V") (at 391.16 111.76 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 3f4036de-9f48-5632-8ffb-4326f5da1b17)
+    (uuid 21d0d376-ecc1-50ee-8664-d04077a16cf6)
     (property "Reference" "#PWR38" (at 391.16 111.76 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -5734,7 +5591,7 @@
     (property "Datasheet" "" (at 391.16 111.76 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 35b49d00-383d-5c56-8434-7ef2fda3c8ae))
+    (pin "1" (uuid 467a1c82-5196-537a-a213-427064160326))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5745,15 +5602,15 @@
   )
   (wire (pts (xy 396.24 116.84) (xy 391.16 116.84))
     (stroke (width 0) (type default))
-    (uuid 80657ccc-58e3-5cdf-a904-30154cf88888)
+    (uuid ef111d2a-1f26-5c7d-98c1-4d0da5f8ba2d)
   )
   (wire (pts (xy 391.16 116.84) (xy 391.16 119.38))
     (stroke (width 0) (type default))
-    (uuid 54b07e41-2b9f-5e9f-99e0-fde6c4559cee)
+    (uuid 508dcafa-95df-5c1b-824f-49eaef2f586b)
   )
   (symbol (lib_id "power:GND") (at 391.16 119.38 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 14f89f1c-c038-5057-86b6-8c675663b1e5)
+    (uuid 751f4ad0-e293-5255-947d-069e095d19e1)
     (property "Reference" "#PWR39" (at 391.16 119.38 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -5766,7 +5623,7 @@
     (property "Datasheet" "" (at 391.16 119.38 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 1cff3d77-b7c6-50af-b49e-8573996810bf))
+    (pin "1" (uuid 5e3032d2-15ef-57c1-8163-6c065e68ac8f))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5775,25 +5632,25 @@
       )
     )
   )
-  (text "J2: run the valve +12 V and return as their own pair,\nand keep them away from the sensor and remote cables." (at 279.4 106.68 0)
+  (text "J2: run the valve +12 V and return as their own pair, and keep them away\nfrom the sensor cable. Place J1 and J2 side by side.\nC10 sits at J3 to steady 5 V when the relay coil switches." (at 279.4 106.68 0)
     (effects (font (size 1.27 1.27)) (justify left top))
-    (uuid b878d701-91b6-57a6-8fb0-53623344b36c)
+    (uuid 5e295dc2-0bf3-5940-949f-cd73d3b12d07)
   )
   (text "ESP DATA OUT (9600 baud, 3.3 V level)" (at 279.4 129.54 0)
     (effects (font (size 2 2) bold) (justify left bottom))
-    (uuid 8229bf47-2b9b-5603-a54a-52c698efa27e)
+    (uuid 361bfa16-d413-5e00-85e6-8421075415b0)
   )
   (wire (pts (xy 370.84 138.43) (xy 370.84 140.97))
     (stroke (width 0) (type default))
-    (uuid 9c30a3f2-e301-5aa2-a844-c5c3d18901d8)
+    (uuid e367138a-ab85-52e0-a6e4-6014c05333e5)
   )
   (label "TX_5V" (at 370.84 138.43 90) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 097baa20-b67e-5913-8b4d-2a7367d9020a)
+    (uuid dd2e50b9-be73-5a54-ac66-5d7cb988e6dc)
   )
   (symbol (lib_id "Device:R") (at 370.84 144.78 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid a31e4ef7-2dc0-58c6-ad54-c75373cb634d)
+    (uuid 32106a7c-5942-5e6c-9c7a-427f4cb6b3cb)
     (property "Reference" "R11" (at 373.38 143.51 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
@@ -5806,8 +5663,8 @@
     (property "Datasheet" "~" (at 370.84 144.78 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 453a19e8-ed5b-5c16-964c-58d021f62e44))
-    (pin "2" (uuid 3e16e2c6-f67f-5242-9935-b031ebae3faa))
+    (pin "1" (uuid e1fd63c8-37a4-5e7e-a82f-75fe21fe97e2))
+    (pin "2" (uuid c767f947-aa33-5d3e-91bf-53c8570d7d17))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5818,7 +5675,7 @@
   )
   (symbol (lib_id "Device:R") (at 370.84 157.48 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 6d97a984-a16b-5f46-912a-56dc0b555b4a)
+    (uuid aea75a8a-504b-5dfe-9037-09ad9fdceeb5)
     (property "Reference" "R12" (at 373.38 156.21 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
@@ -5831,8 +5688,8 @@
     (property "Datasheet" "~" (at 370.84 157.48 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 47c2c012-81c4-5243-b4cf-c877d285a0d9))
-    (pin "2" (uuid 5c796979-51d0-58d1-a8d1-bc8504b418af))
+    (pin "1" (uuid 2e5c25a1-7ece-5a06-b4aa-07850504750d))
+    (pin "2" (uuid b8324b21-524e-5751-ba85-2f4f9f84807c))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5843,19 +5700,19 @@
   )
   (wire (pts (xy 370.84 148.59) (xy 370.84 151.13))
     (stroke (width 0) (type default))
-    (uuid 5fff50a7-13f8-52ca-a49c-5c4a760b59ae)
+    (uuid a4142cac-7ef5-5b23-ae9c-5ab40c9ccb8e)
   )
   (wire (pts (xy 370.84 151.13) (xy 370.84 153.67))
     (stroke (width 0) (type default))
-    (uuid c4af83c4-b462-5229-b81d-7ae66e1172d1)
+    (uuid dbc196fe-dc08-54c1-bb64-5a195f7f84db)
   )
   (wire (pts (xy 370.84 161.29) (xy 370.84 163.83))
     (stroke (width 0) (type default))
-    (uuid 45282f12-275c-5923-adee-ffe773d14d09)
+    (uuid fbb3626c-5984-57f3-899a-039c1d3bf505)
   )
   (symbol (lib_id "power:GND") (at 370.84 163.83 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid a6b5738a-5856-5077-b143-c66cba024be4)
+    (uuid c7332a2e-28a0-510a-8f4e-273cb58492eb)
     (property "Reference" "#PWR40" (at 370.84 163.83 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -5868,7 +5725,7 @@
     (property "Datasheet" "" (at 370.84 163.83 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 434c6c37-13b6-574c-bd46-1f8714680e26))
+    (pin "1" (uuid 8559b4cd-c248-5196-8605-80408e34cdba))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5879,8 +5736,8 @@
   )
   (symbol (lib_id "Connector_Generic:Conn_01x03") (at 401.32 151.13 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 7437681d-2e5c-5981-bcd0-139f04a25d0f)
-    (property "Reference" "J6" (at 401.32 146.05 0)
+    (uuid cc701c89-5d2f-54d1-aa38-bcf32e0580b5)
+    (property "Reference" "J5" (at 401.32 146.05 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "ESP" (at 401.32 156.21 0)
@@ -5892,43 +5749,43 @@
     (property "Datasheet" "~" (at 401.32 151.13 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid e23d3648-41e4-5125-917a-1cbf7d648368))
-    (pin "2" (uuid 26045b8b-e3cd-5327-87b5-53690597ec9d))
-    (pin "3" (uuid 46d60070-a452-5897-a906-5bbd02e84b4c))
+    (pin "1" (uuid c77ce0ac-9ba6-58b8-9a40-72fe8dff8132))
+    (pin "2" (uuid 76b9baa3-0c4f-5555-85cd-161e9d505b98))
+    (pin "3" (uuid f4c7cd11-3cca-5fa9-b28d-36f11033dc4f))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "J6") (unit 1)
+          (reference "J5") (unit 1)
         )
       )
     )
   )
   (wire (pts (xy 370.84 151.13) (xy 381 151.13))
     (stroke (width 0) (type default))
-    (uuid c6d82ea7-74f5-511d-aa83-5210b707a1ed)
+    (uuid b81a50dd-1ab9-53d3-a33c-1c9bfa926d71)
   )
   (wire (pts (xy 381 151.13) (xy 396.24 151.13))
     (stroke (width 0) (type default))
-    (uuid 469f5585-bb6c-5eac-a8f1-c0e5d6a2e716)
+    (uuid 9ced1419-88b6-5684-8ab4-994e8b21e5bb)
   )
   (label "ESP_DATA" (at 381 151.13 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 9b7a2150-b7f6-5330-a38f-0abd3f72601b)
+    (uuid f0e63d02-cbaa-5b67-802f-d81d5e7244af)
   )
   (junction (at 370.84 151.13) (diameter 0) (color 0 0 0 0)
-    (uuid e790fc1a-91db-5bb7-b7bb-c3a23d587d80)
+    (uuid 1f79ab74-9ad1-5944-a5bb-af1978873fc9)
   )
   (wire (pts (xy 396.24 148.59) (xy 391.16 148.59))
     (stroke (width 0) (type default))
-    (uuid 0b812df1-a3e6-56a0-9c21-44e99f1862b8)
+    (uuid 7f65388c-bc1b-5524-afcb-e1a29aeaf5f4)
   )
   (wire (pts (xy 391.16 148.59) (xy 391.16 146.05))
     (stroke (width 0) (type default))
-    (uuid 507cf6eb-a055-5568-b051-7d73a680c061)
+    (uuid a753053d-3a02-5a1b-a72b-c27f9b522e28)
   )
   (symbol (lib_id "power:+5V") (at 391.16 146.05 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid ab924537-48f4-57eb-a373-7fc900aa8cfd)
+    (uuid 07422a8e-cf3a-506e-939a-508842d12c9f)
     (property "Reference" "#PWR41" (at 391.16 146.05 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -5941,7 +5798,7 @@
     (property "Datasheet" "" (at 391.16 146.05 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid f78c23f4-6226-5828-8c26-f14f72acf02d))
+    (pin "1" (uuid b8c1a121-83b1-5151-83ac-2cc3fa1650ad))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5952,15 +5809,15 @@
   )
   (wire (pts (xy 396.24 153.67) (xy 391.16 153.67))
     (stroke (width 0) (type default))
-    (uuid e367138a-ab85-52e0-a6e4-6014c05333e5)
+    (uuid 5da6a568-7f41-5b7f-a572-0caec3ec5cd3)
   )
   (wire (pts (xy 391.16 153.67) (xy 391.16 156.21))
     (stroke (width 0) (type default))
-    (uuid 6b1f2995-ea4c-5d80-b0f5-91dd4662474c)
+    (uuid 50da6609-da0e-5ead-8f08-6d39b60aa266)
   )
   (symbol (lib_id "power:GND") (at 391.16 156.21 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 4423fbf9-8ee7-543f-ac87-f17883865681)
+    (uuid bae728c8-cff4-5429-bf37-92259b4793b3)
     (property "Reference" "#PWR42" (at 391.16 156.21 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -5973,7 +5830,7 @@
     (property "Datasheet" "" (at 391.16 156.21 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid de91234b-c023-50c4-ac5d-a1e65acda8fc))
+    (pin "1" (uuid a31c7c49-3866-505d-bc0e-6d6f5a42f1c8))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -5982,17 +5839,113 @@
       )
     )
   )
-  (polyline (pts (xy 15.24 190.5) (xy 271.78 190.5) (xy 271.78 248.92) (xy 15.24 248.92) (xy 15.24 190.5))
-    (stroke (width 0) (type dash))
-    (uuid 312092a3-13e4-5a79-9b8e-8a7d1edc8a26)
-  )
-  (text "OFF-BOARD WIRING (connects to J2-J5; these parts are not placed on the PCB)" (at 19.05 196.85 0)
+  (text "MOUNTING HOLES (M3)" (at 279.4 152.4 0)
     (effects (font (size 2 2) bold) (justify left bottom))
-    (uuid b1999cbc-e093-5ba1-b77d-01690ba7a454)
+    (uuid 66c27455-a7af-57b5-945e-ac428b490cdf)
+  )
+  (symbol (lib_id "Mechanical:MountingHole") (at 284.48 165.1 0) (unit 1)
+    (in_bom no) (on_board yes) (dnp no)
+    (uuid cbb4d6a9-ec5d-5534-8130-115c679cf2a0)
+    (property "Reference" "H1" (at 284.48 160.02 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Value" "M3" (at 284.48 170.18 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "MountingHole:MountingHole_3.2mm_M3" (at 284.48 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 284.48 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "H1") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "Mechanical:MountingHole") (at 299.72 165.1 0) (unit 1)
+    (in_bom no) (on_board yes) (dnp no)
+    (uuid 2e6da33e-3d58-5c00-a3de-b7ac35294f1c)
+    (property "Reference" "H2" (at 299.72 160.02 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Value" "M3" (at 299.72 170.18 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "MountingHole:MountingHole_3.2mm_M3" (at 299.72 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 299.72 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "H2") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "Mechanical:MountingHole") (at 314.96 165.1 0) (unit 1)
+    (in_bom no) (on_board yes) (dnp no)
+    (uuid 8e4b356e-74e9-545b-a674-0cc7a5328d2a)
+    (property "Reference" "H3" (at 314.96 160.02 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Value" "M3" (at 314.96 170.18 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "MountingHole:MountingHole_3.2mm_M3" (at 314.96 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 314.96 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "H3") (unit 1)
+        )
+      )
+    )
+  )
+  (symbol (lib_id "Mechanical:MountingHole") (at 330.2 165.1 0) (unit 1)
+    (in_bom no) (on_board yes) (dnp no)
+    (uuid c355d5da-8e18-5797-b008-b696a75c07a6)
+    (property "Reference" "H4" (at 330.2 160.02 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Value" "M3" (at 330.2 170.18 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "MountingHole:MountingHole_3.2mm_M3" (at 330.2 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 330.2 165.1 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (instances
+      (project "WaterValveController"
+        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
+          (reference "H4") (unit 1)
+        )
+      )
+    )
+  )
+  (polyline (pts (xy 15.24 190.5) (xy 185.42 190.5) (xy 185.42 248.92) (xy 15.24 248.92) (xy 15.24 190.5))
+    (stroke (width 0) (type dash))
+    (uuid 81e3bbb8-b00f-5147-b493-72a9402473d4)
+  )
+  (text "OFF-BOARD WIRING (connects to J2-J4; not placed on the PCB)" (at 19.05 196.85 0)
+    (effects (font (size 2 2) bold) (justify left bottom))
+    (uuid 44d98919-fa2c-5720-aca9-b389ba60eb7d)
   )
   (symbol (lib_id "WaterValve:Relay_Module") (at 45.72 215.9 0) (unit 1)
     (in_bom no) (on_board no) (dnp no)
-    (uuid 0f758bf0-247a-522c-a7ff-25dcc94c4f87)
+    (uuid 52170fec-0ff3-57e2-8b25-2851aa844e45)
     (property "Reference" "K1" (at 38.1 209.55 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
@@ -6005,12 +5958,12 @@
     (property "Datasheet" "~" (at 45.72 215.9 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid ef9bfec1-1f34-5550-885c-179a7119d7b6))
-    (pin "2" (uuid 6ecd8999-044c-5e1b-ae85-5fdbcbc77b55))
-    (pin "3" (uuid 0cf878e9-9afa-56ef-bc58-d51b5e3d192a))
-    (pin "4" (uuid 5cbbce5e-7ac8-5d92-b9b4-400151d14076))
-    (pin "5" (uuid 698b2a06-9bfe-584d-a4f8-32ede91f93b2))
-    (pin "6" (uuid c22c1384-14d0-500c-b571-fba9e0c83562))
+    (pin "1" (uuid 4d29a875-204b-54dc-9967-c46f1bbcddfc))
+    (pin "2" (uuid 563c66d2-5e89-5be4-b845-32d165637e24))
+    (pin "3" (uuid 16b6ccc5-7e7c-557c-873a-65458b87e3e1))
+    (pin "4" (uuid 5ac04ed6-c0a2-55f6-bfcd-4a8c57d73de7))
+    (pin "5" (uuid ac7c9443-52cf-52fd-90c4-a9de331c33f2))
+    (pin "6" (uuid a2803d9a-856a-5036-9ff6-b2873b415e0d))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6021,15 +5974,15 @@
   )
   (wire (pts (xy 35.56 213.36) (xy 30.48 213.36))
     (stroke (width 0) (type default))
-    (uuid f28e8868-e9fb-5c85-917e-cad48dd2d3a3)
+    (uuid 706d11b8-14c6-50f3-81cb-a13b889990b2)
   )
   (wire (pts (xy 30.48 213.36) (xy 30.48 210.82))
     (stroke (width 0) (type default))
-    (uuid 7378cf4c-41ab-5c07-9ddd-3c529da9cb0a)
+    (uuid 8dd6b408-6609-53ff-bb08-c84b94ba11f4)
   )
   (symbol (lib_id "power:+5V") (at 30.48 210.82 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid f93ad217-2ba4-5f00-a869-3e1fb8421896)
+    (uuid 9f09e13e-c6e6-5512-a42f-fd53799d5840)
     (property "Reference" "#PWR43" (at 30.48 210.82 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -6042,7 +5995,7 @@
     (property "Datasheet" "" (at 30.48 210.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 8cd3e8af-30fa-50ca-afa1-ec8e06a70ba0))
+    (pin "1" (uuid bd63d270-efab-5fbb-9ef6-65fcd2037c91))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6053,23 +6006,23 @@
   )
   (wire (pts (xy 35.56 215.9) (xy 25.4 215.9))
     (stroke (width 0) (type default))
-    (uuid b81a50dd-1ab9-53d3-a33c-1c9bfa926d71)
+    (uuid af0b7420-403e-5732-8908-9d3f6502336c)
   )
   (label "RELAY" (at 25.4 215.9 180) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right bottom))
-    (uuid 98c1ee50-9fa5-57fe-8d17-fddcf58afe77)
+    (uuid fc75b617-300e-5314-8bf5-c93948970ab2)
   )
   (wire (pts (xy 35.56 218.44) (xy 30.48 218.44))
     (stroke (width 0) (type default))
-    (uuid e1ce2f9b-8e1f-5fbe-9f1c-f1934dcc55ff)
+    (uuid dd64d43b-f149-5ead-8ba2-bbc910ec2c1b)
   )
   (wire (pts (xy 30.48 218.44) (xy 30.48 220.98))
     (stroke (width 0) (type default))
-    (uuid d6579c04-cfb0-5ee3-8c05-0054486b9a4b)
+    (uuid 8d6657fe-9211-5f6f-aee1-69d866169fea)
   )
   (symbol (lib_id "power:GND") (at 30.48 220.98 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 4f533589-a835-54cb-8148-60782bf9406e)
+    (uuid 4a4d0901-e50c-584d-a96a-bf5075622b42)
     (property "Reference" "#PWR44" (at 30.48 220.98 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -6082,7 +6035,7 @@
     (property "Datasheet" "" (at 30.48 220.98 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 8e2533e2-2c89-58e6-8a35-026e3ef0da32))
+    (pin "1" (uuid ce1bd849-351a-500e-8973-86fda6eab7fe))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6091,14 +6044,14 @@
       )
     )
   )
-  (no_connect (at 55.88 218.44) (uuid 3b65003a-00f7-58e8-8b8e-18cff8da1ad9))
+  (no_connect (at 55.88 218.44) (uuid ccefd019-0b6a-5cfd-aaf9-5250575e4aea))
   (wire (pts (xy 55.88 213.36) (xy 60.96 213.36))
     (stroke (width 0) (type default))
-    (uuid 04a1fa03-b38d-5f78-a56f-023786ad5c98)
+    (uuid 1001d87e-06ee-5ee4-a29b-89899845d13e)
   )
   (symbol (lib_id "power:+12V") (at 60.96 213.36 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid bacde358-20ba-5c60-a3aa-61c58ee871d0)
+    (uuid 6ca10512-cd86-5893-9aaa-24d1978160b2)
     (property "Reference" "#PWR45" (at 60.96 213.36 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -6111,7 +6064,7 @@
     (property "Datasheet" "" (at 60.96 213.36 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid db5c1919-a5aa-52e5-b225-f3eaaf54caed))
+    (pin "1" (uuid 53c39b9c-a278-5a76-8430-c33401a4dc26))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6122,7 +6075,7 @@
   )
   (symbol (lib_id "WaterValve:Solenoid_Valve") (at 91.44 220.98 0) (unit 1)
     (in_bom no) (on_board no) (dnp no)
-    (uuid a13d903a-d0c2-50ed-bd37-3a6ee7a4947e)
+    (uuid 141ddc41-68d2-5fa7-b51f-09d81d5382b6)
     (property "Reference" "SV1" (at 95.25 219.71 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
@@ -6135,8 +6088,8 @@
     (property "Datasheet" "~" (at 91.44 220.98 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 98c4d464-b58d-57f2-9d7e-bbb3bb1d6fa3))
-    (pin "2" (uuid ac3b660c-ef16-5a9d-b508-72f73e2e65ce))
+    (pin "1" (uuid 7a50fa82-7742-5e84-abde-170bfb0aae5a))
+    (pin "2" (uuid f93b882d-1d94-57d5-84ad-2f2fbdae264c))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6147,7 +6100,7 @@
   )
   (symbol (lib_id "Device:D") (at 78.74 220.98 270) (unit 1)
     (in_bom yes) (on_board no) (dnp no)
-    (uuid 7038ffad-9f50-5898-b51a-1c68427d341c)
+    (uuid edefb16f-a5e2-551b-ade2-d1a879a7ae9c)
     (property "Reference" "D2" (at 72.39 219.71 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
@@ -6160,8 +6113,8 @@
     (property "Datasheet" "~" (at 78.74 220.98 90)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 5a8c954e-0b2e-5cc9-9ad6-caf4d22cceff))
-    (pin "2" (uuid b0315440-d839-53e4-b39a-a5fe4f6be214))
+    (pin "1" (uuid 70e70526-c9c5-5493-b02d-2ea51d5581dd))
+    (pin "2" (uuid b793c3e1-a819-5aeb-9515-5261f9509f2d))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6172,41 +6125,41 @@
   )
   (wire (pts (xy 55.88 215.9) (xy 78.74 215.9))
     (stroke (width 0) (type default))
-    (uuid 8fb46eeb-c7e6-54bd-8f20-9829f26b2f83)
+    (uuid fb8368d0-cd0b-5ed2-8ebf-2dc960bf1bc7)
   )
   (wire (pts (xy 78.74 215.9) (xy 78.74 217.17))
     (stroke (width 0) (type default))
-    (uuid 8773bfc4-5c22-56ec-8dc7-78cf9945e94d)
+    (uuid 9260e368-0df5-5ce8-b0a0-0484c93ea94a)
   )
   (wire (pts (xy 78.74 215.9) (xy 91.44 215.9))
     (stroke (width 0) (type default))
-    (uuid 4d138983-b324-523c-8c4e-74a17d4796b5)
+    (uuid f0ed5fc9-480b-5cba-92f8-471f76fde9df)
   )
   (junction (at 78.74 215.9) (diameter 0) (color 0 0 0 0)
-    (uuid 7d8610f9-b818-59e3-83b1-c9ef49c5d268)
+    (uuid 02e6c6d7-acb6-51a7-be93-7ba15ac9b825)
   )
   (wire (pts (xy 78.74 224.79) (xy 78.74 228.6))
     (stroke (width 0) (type default))
-    (uuid 6a4257d2-c94c-5759-b01b-ceb5ac75939b)
+    (uuid bff24242-754e-5093-838e-591d78b69e48)
   )
   (wire (pts (xy 78.74 228.6) (xy 91.44 228.6))
     (stroke (width 0) (type default))
-    (uuid c2f14185-62a4-56bd-b1ef-2cc2735605e7)
+    (uuid 34787b97-8b8f-5118-9352-16f899970f44)
   )
   (wire (pts (xy 91.44 226.06) (xy 91.44 228.6))
     (stroke (width 0) (type default))
-    (uuid fe73314b-a7aa-515c-8bd8-b58ab7e7042a)
+    (uuid fb19f958-cc25-5846-9190-5147f474df7b)
   )
   (wire (pts (xy 91.44 228.6) (xy 91.44 233.68))
     (stroke (width 0) (type default))
-    (uuid 9a816e0e-d9a4-5c96-9aac-a9058375ce14)
+    (uuid fea43398-556a-518c-953b-80107f69fcc9)
   )
   (junction (at 91.44 228.6) (diameter 0) (color 0 0 0 0)
-    (uuid 7c150d66-cfc8-5fb2-8f83-c10ba204f68b)
+    (uuid fc84ca23-dd1a-560a-8f41-7418e32f8c5a)
   )
   (symbol (lib_id "power:GND") (at 91.44 233.68 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid 82817e77-5bcc-59b2-b2ba-ed109f4e0f44)
+    (uuid 32a9aa2a-fbae-5883-b278-07d52cfd1cbe)
     (property "Reference" "#PWR46" (at 91.44 233.68 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -6219,7 +6172,7 @@
     (property "Datasheet" "" (at 91.44 233.68 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 6de04fda-2276-519e-93bf-e0e4ac153b09))
+    (pin "1" (uuid ae04d654-4691-577c-82b2-f790b67c323b))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6230,11 +6183,11 @@
   )
   (text "Valve circuit: relay COM <- J2 pin 1 (+12 V), valve - -> J2 pin 2.\nD2 sits on the valve terminals." (at 22.86 238.76 0)
     (effects (font (size 1.27 1.27)) (justify left top))
-    (uuid 1fd6d07a-5167-54c0-a79d-22a2edcdb20d)
+    (uuid 7818a7a4-bc9b-5b2e-a8c7-6e611d9aae68)
   )
   (symbol (lib_id "WaterValve:YF-G1_Flow_Sensor") (at 137.16 215.9 0) (unit 1)
     (in_bom no) (on_board no) (dnp no)
-    (uuid 048bc76e-06ce-5644-8456-0ace825aec7a)
+    (uuid 5ce61689-bb64-5987-b865-fb75c9bad31f)
     (property "Reference" "FS1" (at 127 209.55 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
@@ -6247,9 +6200,9 @@
     (property "Datasheet" "~" (at 137.16 215.9 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 3070e527-a103-5274-a507-2da5ee4fb7ca))
-    (pin "2" (uuid 63d5fabf-63dc-5ad1-970b-e04ed3b4a99a))
-    (pin "3" (uuid 3cffa03d-6be4-5a88-bd16-20bdbc265f54))
+    (pin "1" (uuid 5454ae47-71f1-5a2f-ae1e-ba4000b9072b))
+    (pin "2" (uuid 8d1e4e3e-2e47-5795-a579-9c59faf29f56))
+    (pin "3" (uuid 2ee637e1-ae7c-5615-a508-3cd391e74e51))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6260,15 +6213,15 @@
   )
   (wire (pts (xy 147.32 213.36) (xy 152.4 213.36))
     (stroke (width 0) (type default))
-    (uuid dd64d43b-f149-5ead-8ba2-bbc910ec2c1b)
+    (uuid 2a4c6246-d0ed-5cb0-850e-2311d02f0326)
   )
   (wire (pts (xy 152.4 213.36) (xy 152.4 210.82))
     (stroke (width 0) (type default))
-    (uuid 8d6657fe-9211-5f6f-aee1-69d866169fea)
+    (uuid e47e7978-1812-57ea-bedb-e58ab82f9381)
   )
   (symbol (lib_id "power:+5V") (at 152.4 210.82 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid adab7558-63e3-5830-bf70-03e2db5b9ea1)
+    (uuid 313d0d43-47cb-5ea4-b4bb-3e4351d16f32)
     (property "Reference" "#PWR47" (at 152.4 210.82 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -6281,7 +6234,7 @@
     (property "Datasheet" "" (at 152.4 210.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 8c1d3d9b-7f5c-5200-bf24-504f7dd8128d))
+    (pin "1" (uuid d475dc20-2b70-5ec7-9ead-e7c7fe3cb194))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6292,23 +6245,23 @@
   )
   (wire (pts (xy 147.32 215.9) (xy 154.94 215.9))
     (stroke (width 0) (type default))
-    (uuid 3bde1286-9332-5fec-82ca-71cbb003888c)
+    (uuid 0d3dff79-1c78-547c-b91c-23f7039101ca)
   )
   (label "FLOW_IN" (at 154.94 215.9 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid b7b53893-4427-5b16-9bea-9a6dac246695)
+    (uuid adec1305-a63f-5dbe-9555-054effb3c997)
   )
   (wire (pts (xy 147.32 218.44) (xy 152.4 218.44))
     (stroke (width 0) (type default))
-    (uuid 3777ad25-f9a2-588f-b4b5-9703028d546f)
+    (uuid a722c657-b713-567a-bc38-69a57674ec7b)
   )
   (wire (pts (xy 152.4 218.44) (xy 152.4 223.52))
     (stroke (width 0) (type default))
-    (uuid 21c9dcac-5457-574d-8211-7677fb387e96)
+    (uuid 2954c099-52b3-585b-b6c9-fc25d6c79b4a)
   )
   (symbol (lib_id "power:GND") (at 152.4 223.52 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
-    (uuid dbc8fb17-96c7-585d-a463-7f66a1cd3f2f)
+    (uuid 95025904-77ee-57ae-aeba-2d6b6f9f7804)
     (property "Reference" "#PWR48" (at 152.4 223.52 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
@@ -6321,7 +6274,7 @@
     (property "Datasheet" "" (at 152.4 223.52 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid b25947eb-a8eb-5e70-8546-d754d91e3cfa))
+    (pin "1" (uuid 1f6879fc-7111-5657-80d7-73b67e86a4c6))
     (instances
       (project "WaterValveController"
         (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
@@ -6330,190 +6283,13 @@
       )
     )
   )
-  (symbol (lib_id "WaterValve:RF_Receiver_4CH") (at 223.52 218.44 0) (unit 1)
-    (in_bom no) (on_board no) (dnp no)
-    (uuid ee4d6311-8a85-5202-89a4-59d35ac72ce0)
-    (property "Reference" "RX1" (at 213.36 207.01 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "433 MHz 4-ch receiver (momentary)" (at 213.36 230.505 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "" (at 223.52 218.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (at 223.52 218.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid d42bf62f-5ac6-573e-a4be-8f4b450989ac))
-    (pin "2" (uuid e8e62e15-c425-5294-82b6-32dee6035c75))
-    (pin "3" (uuid de670cad-0349-57bb-a34d-ea6b58b3fbcc))
-    (pin "4" (uuid ae429b0d-81ea-5356-b1eb-df1f098173f7))
-    (pin "5" (uuid 6f1d2aad-d01c-5050-a4e8-80346a9ed309))
-    (pin "6" (uuid c3c37d9c-4ee5-56ca-b8cb-1b56af63a763))
-    (pin "7" (uuid 9eef59a9-5235-5d66-934d-802033553b2a))
-    (pin "8" (uuid b00dd522-68e2-58f5-b4d0-5ec80167c36a))
-    (pin "9" (uuid a3fb9700-1645-5471-b250-29bc36e90332))
-    (pin "10" (uuid be6eb6d8-97fb-5448-b79a-1ea588904825))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "RX1") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 210.82 210.82) (xy 205.74 210.82))
-    (stroke (width 0) (type default))
-    (uuid fea43398-556a-518c-953b-80107f69fcc9)
-  )
-  (wire (pts (xy 205.74 210.82) (xy 205.74 205.74))
-    (stroke (width 0) (type default))
-    (uuid 035c9944-73d0-5ebf-9192-c6cf1a0adb60)
-  )
-  (symbol (lib_id "power:+12V") (at 205.74 205.74 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid 0ffb9ed4-7527-599b-91c3-45d748849ce2)
-    (property "Reference" "#PWR49" (at 205.74 205.74 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "+12V" (at 205.74 201.93 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "" (at 205.74 205.74 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 205.74 205.74 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 2c9d27c9-94a7-58da-8def-f3a655bb16d6))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR49") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 210.82 213.36) (xy 203.2 213.36))
-    (stroke (width 0) (type default))
-    (uuid 89dfbfc5-9b6a-5079-8f7c-b1d76866f0b6)
-  )
-  (wire (pts (xy 210.82 218.44) (xy 203.2 218.44))
-    (stroke (width 0) (type default))
-    (uuid ecbd1335-1dcf-5223-a178-e5cdf058054c)
-  )
-  (wire (pts (xy 210.82 220.98) (xy 203.2 220.98))
-    (stroke (width 0) (type default))
-    (uuid e836b932-f7c4-5bc0-a2dd-3b6e8ab1f497)
-  )
-  (wire (pts (xy 210.82 223.52) (xy 203.2 223.52))
-    (stroke (width 0) (type default))
-    (uuid d5172ad0-c87d-5fee-8ef2-177786eb198b)
-  )
-  (wire (pts (xy 210.82 226.06) (xy 203.2 226.06))
-    (stroke (width 0) (type default))
-    (uuid edd03566-cb34-5d03-bdbb-2ed1febcc7e2)
-  )
-  (wire (pts (xy 203.2 213.36) (xy 203.2 218.44))
-    (stroke (width 0) (type default))
-    (uuid 2a4c6246-d0ed-5cb0-850e-2311d02f0326)
-  )
-  (wire (pts (xy 203.2 218.44) (xy 203.2 220.98))
-    (stroke (width 0) (type default))
-    (uuid e47e7978-1812-57ea-bedb-e58ab82f9381)
-  )
-  (wire (pts (xy 203.2 220.98) (xy 203.2 223.52))
-    (stroke (width 0) (type default))
-    (uuid 075a3bf2-30cb-56bf-82ba-41803f6079fd)
-  )
-  (wire (pts (xy 203.2 223.52) (xy 203.2 226.06))
-    (stroke (width 0) (type default))
-    (uuid 03e67ca3-4665-5c12-a8d1-3759cd458571)
-  )
-  (junction (at 203.2 218.44) (diameter 0) (color 0 0 0 0)
-    (uuid 2c34f65d-f6cf-5a4f-938f-9a8ca098639a)
-  )
-  (junction (at 203.2 220.98) (diameter 0) (color 0 0 0 0)
-    (uuid 9d4fec3d-fcea-5cb1-89de-c4a5b4f7c0b8)
-  )
-  (junction (at 203.2 223.52) (diameter 0) (color 0 0 0 0)
-    (uuid 7f11d9ba-8213-5d81-bf64-410839dd8c32)
-  )
-  (wire (pts (xy 203.2 226.06) (xy 203.2 236.22))
-    (stroke (width 0) (type default))
-    (uuid 2954c099-52b3-585b-b6c9-fc25d6c79b4a)
-  )
-  (junction (at 203.2 226.06) (diameter 0) (color 0 0 0 0)
-    (uuid f55301f1-f934-5d49-bd8d-c1ea97b471e9)
-  )
-  (symbol (lib_id "power:GND") (at 203.2 236.22 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid da0ceba2-d52d-5843-a396-128325db3ced)
-    (property "Reference" "#PWR50" (at 203.2 236.22 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "GND" (at 203.2 240.03 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (at 203.2 236.22 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 203.2 236.22 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 9a68ffa9-4f4e-5592-aba7-8feb46bf9818))
-    (instances
-      (project "WaterValveController"
-        (path "/fc7bf799-10c8-5e75-9e1f-ea0430906cca"
-          (reference "#PWR50") (unit 1)
-        )
-      )
-    )
-  )
-  (wire (pts (xy 236.22 218.44) (xy 241.3 218.44))
-    (stroke (width 0) (type default))
-    (uuid 068c49cf-6fc1-5a3f-8598-b404c4c9d111)
-  )
-  (label "RF1" (at 241.3 218.44 0) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 4d8f601a-d3cf-5687-8033-8514d686ed1b)
-  )
-  (wire (pts (xy 236.22 220.98) (xy 241.3 220.98))
-    (stroke (width 0) (type default))
-    (uuid d29a3c82-476f-5d3f-9d9d-d1792750e2d5)
-  )
-  (label "RF2" (at 241.3 220.98 0) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid ecf62622-e5d3-55d6-b267-bea488d92e04)
-  )
-  (wire (pts (xy 236.22 223.52) (xy 241.3 223.52))
-    (stroke (width 0) (type default))
-    (uuid a0ddf3c5-de5a-5571-befa-91d7aed63986)
-  )
-  (label "RF3" (at 241.3 223.52 0) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid cd6db87f-c114-52b9-9656-3155a12517d0)
-  )
-  (wire (pts (xy 236.22 226.06) (xy 241.3 226.06))
-    (stroke (width 0) (type default))
-    (uuid c71cdb25-7f95-5af5-9177-be0801d05f2a)
-  )
-  (label "RF4" (at 241.3 226.06 0) (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 12813c19-c1dc-5915-b1d2-b8a4dd547273)
-  )
-  (text "Remote: all COM terminals to GND, NO1-NO4 to J5 pins 3-6.\n+12 V board shown; power a 5 V board from +5V instead." (at 190.5 238.76 0)
-    (effects (font (size 1.27 1.27)) (justify left top))
-    (uuid eb584e35-a355-595c-a89b-0f7e0e240517)
-  )
   (text "INTERFERENCE AND RELIABILITY MEASURES" (at 279.4 177.8 0)
     (effects (font (size 2 2) bold) (justify left bottom))
-    (uuid 0dfadc70-0d06-5d09-a519-e4f2be7a051b)
+    (uuid cb47d61a-ce4e-5c75-9322-a510aea6c54e)
   )
-  (text "1. D2 flyback diode right at the valve terminals (stripe to +).\n2. Valve current has its own wire pair (J2) back to J1: star ground at J1.\n3. Decoupling: C1 + C2 on 12 V, C3 + C4 at U1, C12 at the Nano, C6 at J4.\n4. Flow input: R1 10k pull-up, R2 1k + C5 10nF filter, firmware glitch filter.\n5. Button and remote inputs: 10k pull-ups + 100nF, firmware debounce.\n6. F1 fuse + D1 crowbar protect against shorts and a reversed supply.\n7. R11 / R12 divide the 5 V data line down to 3.2 V for the ESP.\n8. Twist each sensor / remote signal with its GND; route away from valve wires.\n9. Ground plane on the PCB bottom layer; keep the 12 V valve tracks short and wide." (at 279.4 181.61 0)
+  (text "1. D2 flyback diode right at the valve terminals (stripe to +).\n2. Valve current has its own pair (J2) back to J1: star ground at J1.\n3. Decoupling: C1 + C2 on 12 V, C3 + C4 at U1, C10 at J3, C11 at the Nano, C6 at J4.\n4. Flow input: R1 10k pull-up, R2 1k + C5 10nF filter, firmware glitch filter.\n5. Button: R3 10k + C7 100nF. Remote: R7-R10 1k series, R13-R16 100k pull-downs,\n   receiver supply filtered by R17 + C8 + C9. Firmware debounces both.\n6. F1 fuse + D1 crowbar protect against shorts and a reversed supply.\n7. R11 / R12 divide the 5 V data line down to 3.2 V for the ESP.\n8. Twist the flow sensor signal with its GND; route it away from the valve wires.\n9. Ground plane on the bottom layer (none under the RF antenna); short, wide 12 V tracks." (at 279.4 181.61 0)
     (effects (font (size 1.27 1.27)) (justify left top))
-    (uuid 00ab8b5b-b1d5-5777-99b8-b56af7f5a6c2)
+    (uuid c0369b3f-ef34-5606-a36d-836f8389672d)
   )
 
   (sheet_instances

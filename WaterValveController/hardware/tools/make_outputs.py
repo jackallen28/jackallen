@@ -34,15 +34,17 @@ def refkey(r):
 
 
 GROUP_DESC = {
-    '100nF': 'Ceramic or MKT 100 nF: supply decoupling (C2, C3, C6, C12) and input filters (C7-C11)',
-    '10k': 'Pull-ups: flow signal (R1), button (R3), remote channels (R7-R10)',
+    '100nF': 'Ceramic or MKT 100 nF: decoupling (C2, C3, C6, C9, C11) and button filter (C7)',
+    '10k': 'Pull-ups: flow signal (R1), button (R3)',
+    '1k': 'Series resistors: flow signal (R2), remote channels (R7-R10)',
+    '100uF 16V': 'Electrolytic: 5 V rail at U1 (C4), relay header (C10)',
     '330': 'LED current limit, about 9 mA',
 }
 rows = []
 for (value, fp, on_board), ps in groups.items():
     refs = sorted((p['ref'] for p in ps), key=refkey)
     descs = sorted({p['desc'] for p in ps})
-    desc = descs[0] if len(descs) == 1 else GROUP_DESC[value]
+    desc = descs[0] if len(descs) == 1 else GROUP_DESC.get(value, '; '.join(descs))
     rows.append([', '.join(refs), len(refs), value, desc,
                  fp.split(':')[-1] if fp else '', 'PCB' if on_board else 'off-board (at the valve)'])
 rows.sort(key=lambda r: refkey(r[0].split(',')[0]))

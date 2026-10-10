@@ -367,24 +367,23 @@
             (font
               (size 1.27 1.27)))))))
   (symbol
-    "RF_Receiver_4CH"
-    (pin_numbers hide)
+    "RX480E"
     (pin_names
       (offset 0.762))
     (in_bom yes)
     (on_board yes)
     (property
       "Reference"
-      "RX"
-      (at -10.16 11.43 0)
+      "U"
+      (at -7.62 8.89 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left bottom)))
     (property
       "Value"
-      "RF_Receiver_4CH"
-      (at -10.16 -11.43 0)
+      "RX480E"
+      (at -7.62 -8.89 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -406,24 +405,30 @@
           (size 1.27 1.27))
         hide))
     (symbol
-      "RF_Receiver_4CH_0_1"
+      "RX480E_0_1"
       (rectangle
-        (start -10.16 10.16)
-        (end 10.16 -10.16)
+        (start -7.62 7.62)
+        (end 7.62 -7.62)
         (stroke
           (width 0.254)
           (type default))
         (fill
-          (type background))))
+          (type background)))
+      (text
+        "433 MHz"
+        (at 2.794 0 900)
+        (effects
+          (font
+            (size 1 1)))))
     (symbol
-      "RF_Receiver_4CH_1_1"
+      "RX480E_1_1"
       (pin
         power_in
         line
-        (at -12.7 7.62 0)
+        (at 0 -10.16 90)
         (length 2.54)
         (name
-          "V+"
+          "GND"
           (effects
             (font
               (size 1.27 1.27))))
@@ -435,10 +440,10 @@
       (pin
         power_in
         line
-        (at -12.7 5.08 0)
+        (at 0 10.16 270)
         (length 2.54)
         (name
-          "GND"
+          "+V"
           (effects
             (font
               (size 1.27 1.27))))
@@ -448,12 +453,12 @@
             (font
               (size 1.27 1.27)))))
       (pin
-        passive
+        output
         line
-        (at -12.7 0 0)
+        (at -10.16 5.08 0)
         (length 2.54)
         (name
-          "COM1"
+          "D0"
           (effects
             (font
               (size 1.27 1.27))))
@@ -463,12 +468,12 @@
             (font
               (size 1.27 1.27)))))
       (pin
-        passive
+        output
         line
-        (at -12.7 -2.54 0)
+        (at -10.16 2.54 0)
         (length 2.54)
         (name
-          "COM2"
+          "D1"
           (effects
             (font
               (size 1.27 1.27))))
@@ -478,12 +483,12 @@
             (font
               (size 1.27 1.27)))))
       (pin
-        passive
+        output
         line
-        (at -12.7 -5.08 0)
+        (at -10.16 0 0)
         (length 2.54)
         (name
-          "COM3"
+          "D2"
           (effects
             (font
               (size 1.27 1.27))))
@@ -493,12 +498,12 @@
             (font
               (size 1.27 1.27)))))
       (pin
-        passive
+        output
         line
-        (at -12.7 -7.62 0)
+        (at -10.16 -2.54 0)
         (length 2.54)
         (name
-          "COM4"
+          "D3"
           (effects
             (font
               (size 1.27 1.27))))
@@ -508,62 +513,17 @@
             (font
               (size 1.27 1.27)))))
       (pin
-        passive
+        output
         line
-        (at 12.7 0 180)
+        (at -10.16 -5.08 0)
         (length 2.54)
         (name
-          "NO1"
+          "VT"
           (effects
             (font
               (size 1.27 1.27))))
         (number
           "7"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        passive
-        line
-        (at 12.7 -2.54 180)
-        (length 2.54)
-        (name
-          "NO2"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "8"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        passive
-        line
-        (at 12.7 -5.08 180)
-        (length 2.54)
-        (name
-          "NO3"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "9"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        passive
-        line
-        (at 12.7 -7.62 180)
-        (length 2.54)
-        (name
-          "NO4"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "10"
           (effects
             (font
               (size 1.27 1.27)))))))

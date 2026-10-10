@@ -24,14 +24,13 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 | Solenoid valve + 1-channel relay module | |
 | Momentary push button | |
 | 3 × LED + 3 × 220 Ω resistor | 25 L, 50 L, 100 L |
-| 433 MHz 4-channel relay receiver + remote | |
+| 433 MHz RX480E-4 receiver module + 4-button remote (A–D) | 5 V logic outputs |
 | ESP8266 / ESP32 (optional, later) | 3.3 V logic, needs a voltage divider |
 
 ## Wiring
 
-A full schematic, with extra filtering and protection parts and KiCad files you can import into
-EasyEDA or KiCad to make a PCB, is in [`hardware/`](hardware/). The table below is the minimum
-wiring for a hand-built version.
+A full schematic, with extra filtering and protection parts and KiCad files for making a PCB,
+is in [`hardware/`](hardware/). The table below is the minimum wiring for a hand-built version.
 
 | Arduino Nano pin | Connects to |
 |------------------|-------------|
@@ -41,10 +40,11 @@ wiring for a hand-built version.
 | **D6** | 220 Ω → LED "50 L" → GND |
 | **D7** | 220 Ω → LED "100 L" → GND |
 | **D8** | Relay module IN (relay VCC → 5 V, GND → GND) |
-| **A0** | Remote receiver channel 1 (25 L): NO terminal (COM terminal → GND) |
-| **A1** | Remote receiver channel 2 (50 L): NO terminal (COM terminal → GND) |
-| **A2** | Remote receiver channel 3 (100 L): NO terminal (COM terminal → GND) |
-| **A3** | Remote receiver channel 4 (FREE FLOW): NO terminal (COM terminal → GND) |
+| **A0** | Receiver D0 (remote button A = 25 L) |
+| **A1** | Receiver D1 (remote button B = 50 L) |
+| **A2** | Receiver D2 (remote button C = 100 L) |
+| **A3** | Receiver D3 (remote button D = FREE FLOW) |
+| **5V / GND** | Receiver +V and GND (VT is not used) |
 | **D11** | Data out to ESP RX, through a 1 kΩ / 2 kΩ divider (see below) |
 | **D12** | Reserved for ESP TX → Nano (not used yet) |
 
@@ -54,23 +54,35 @@ terminals. The sketch handles both normally-closed and normally-open valves (see
 (e.g. 1N4007) across the coil, with the stripe towards +. Without it, the voltage
 spike when the coil switches off can reset the Nano or add false flow pulses.
 
-**Power:** a 12 V supply can feed the solenoid, the remote receiver (if it is a 12 V
-board) and the Nano's **VIN** pin. All grounds must be connected together.
+**Power:** a 12 V supply can feed the solenoid and the Nano's **VIN** pin (or a separate
+5 V regulator into the Nano's **5V** pin). All grounds must be connected together.
 
 **Flow sensor power:** power the sensor from the Nano's **5 V** pin, not the 12 V supply.
 The sensor accepts 3.5–24 V, but its spec sheet gives its output levels for a 5 V
 supply (high about 4.7 V, low under 0.5 V). That suggests the signal swings up to the
 supply voltage, and 12 V on D2 would damage the Nano.
 
-**Remote receiver:** these boards switch a small relay per channel, so they act like
-extra push buttons. The receiver **must be in momentary mode** (output on only while
-the remote button is held), because the 2 s and 20 s holds are timed from it. The
-receiver's instructions explain how; on most boards it is a jumper or a learn-button
-sequence. In latching/toggle mode, a channel that stays on would reset the count after
-2 s, and channel 4 would start calibration after 20 s.
+**Remote receiver (RX480E-4):** a small 433 MHz module with a learn button and a 7-pin
+header (GND, +V, D0, D1, D2, D3, VT; the labels are on the back). Power it from **5 V
+only**, never 12 V. Each D output goes HIGH (5 V) while its remote button is held.
 
-Remotes label their buttons differently (A/B/C/D, 1–4). Button 1 is whichever button
-switches the receiver channel wired to A0.
+Pair the remote in **momentary mode**, because the 2 s and 20 s holds are timed from the
+output. On most RX480E modules:
+
+1. Press the learn button 8 times to clear any stored remotes (the LED flashes).
+2. Press the learn button **once** (once = momentary, twice = toggle, three times = latched).
+3. Press any button on the remote. The LED flashes 3 times when it has learned it.
+
+Check the leaflet that came with your module in case its sequence differs. In toggle or
+latched mode an output stays on, which would reset the count after 2 s and, on button D,
+start calibration after 20 s.
+
+Some modules map the remote buttons to D0–D3 in a different order. Press each button and
+watch the Serial Monitor: if a button selects the wrong limit, swap the pins in
+`PIN_REMOTE` at the top of the sketch.
+
+Keep the receiver's coiled antenna away from the relay, the valve wires and any metal, and
+don't mount it inside a metal box.
 
 **ESP8266/ESP32:** these run on 3.3 V, so drop the Nano's 5 V signal with a divider:
 
@@ -92,7 +104,7 @@ These are at the top of `WaterValveController.ino`.
 |---------|---------|----------------|
 | `VALVE_NORMALLY_CLOSED` | `true` | Your valve lets water through with **no** power (normally open) → set `false` |
 | `RELAY_ACTIVE_LOW` | `true` | Your relay clicks on when IN is HIGH → set `false` |
-| `REMOTE_ACTIVE_LOW` | `true` | Your receiver has logic outputs that go HIGH when pressed (no relays) → set `false` |
+| `REMOTE_ACTIVE_LOW` | `false` | Your receiver has relay outputs (COM/NO) instead of logic outputs → set `true` |
 | `REMOTE_SELECT_RESETS_COUNT` | `false` | You want choosing a limit on the remote to also reset the count → set `true` |
 | `REMEMBER_LIMIT` | `true` | You want it to start in FREE FLOW after every power-up → set `false` |
 

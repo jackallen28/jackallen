@@ -2,28 +2,29 @@
 
 A carrier board for the Arduino Nano that brings every connection out to screw terminals or headers,
 with the filtering and protection parts that keep the flow count reliable next to a switching solenoid.
+The 433 MHz receiver module plugs straight into the board.
 
 | File | What it is |
 |------|------------|
 | `WaterValveController-schematic.pdf` / `.svg` | The schematic, ready to print or view |
-| `WaterValveController-KiCad.zip` | The KiCad project zipped for importing into EasyEDA Pro (or opening in KiCad) |
-| `WaterValveController.kicad_pro`, `.kicad_sch` | The same KiCad 7 project, unzipped |
-| `WaterValve.kicad_sym`, `sym-lib-table` | Symbols for the off-board parts (relay module, valve, flow sensor, receiver) |
+| `WaterValveController.kicad_pro`, `.kicad_sch` | The KiCad 7 project |
+| `WaterValveController-KiCad.zip` | The same project in one zip, for downloading |
+| `WaterValve.kicad_sym`, `sym-lib-table` | Symbols for the receiver module and the off-board parts |
 | `WaterValveController.net` | KiCad netlist |
 | `WaterValveController-BOM.csv` | Parts list |
 | `tools/` | Scripts that generate all of the above (see the end of this file) |
 
 ## Opening the design
 
-**EasyEDA Pro (free):** File → Import → KiCad, then choose `WaterValveController-KiCad.zip`.
-EasyEDA lists KiCad `.kicad_sch` / `.kicad_pro` files as importable, but its importer can be fussy
-with newer KiCad versions. Check the imported schematic against the PDF. Footprints use KiCad's
-standard library names, so in EasyEDA you may need to pick matching footprints from its own
-library (all parts are common through-hole sizes, listed in the BOM).
+Open `WaterValveController.kicad_pro` in KiCad 7 or newer (free). For the PCB, open the PCB editor and
+run Tools → Update PCB from Schematic. The off-board parts (K1, SV1, D2, FS1) are marked "exclude from
+board", so only the carrier-board parts are placed. All footprints come from KiCad's standard library.
 
-**KiCad 7 or newer (free, and also lays out PCBs):** open `WaterValveController.kicad_pro`.
-For a PCB, open the PCB editor and run Tools → Update PCB from Schematic. The off-board parts
-(K1, SV1, D2, FS1, RX1) are marked "exclude from board", so only the carrier-board parts are placed.
+## Before ordering a PCB: check the receiver pin order
+
+U2, the RX480E-4 receiver, plugs into a 7-pin socket wired as **1 GND, 2 +V, 3 D0, 4 D1, 5 D2, 6 D3,
+7 VT**. Turn your module over and check its printed labels read in that order. If they differ, the
+socket footprint must be changed before the board is made. A swapped GND and +V would destroy the module.
 
 ## Board connectors
 
@@ -33,40 +34,59 @@ For a PCB, open the PCB editor and run Tools → Update PCB from Schematic. The 
 | J2 | VALVE POWER (2-way screw) | 1 = +12 V (fused) → relay COM, 2 = GND ← valve − |
 | J3 | RELAY MODULE (3-pin header) | 1 = VCC (+5 V), 2 = IN (D8), 3 = GND |
 | J4 | FLOW SENSOR (3-way screw) | 1 = +5 V (red), 2 = SIG (yellow), 3 = GND (black) |
-| J5 | REMOTE RX (6-way screw) | 1 = +12 V, 2 = GND (to all four COM terminals), 3–6 = NO1–NO4 |
-| J6 | ESP (3-pin header) | 1 = +5 V, 2 = DATA (3.3 V level, to the ESP's RX), 3 = GND |
+| J5 | ESP (3-pin header) | 1 = +5 V, 2 = DATA (3.3 V level, to the ESP's RX), 3 = GND |
+| U2 | RX480E-4 receiver (7-pin socket) | 1 GND, 2 +V (filtered 5 V), 3–6 D0–D3 → A0–A3, 7 VT (unused) |
 
-The firmware needs no changes for this board: the pins are the same as in the sketch.
+The sketch uses the same Nano pins. Its `REMOTE_ACTIVE_LOW` setting must be `false` for this receiver
+(the default).
 
 ## How the board reduces interference
+
+The numbers match the notes on the schematic sheet.
 
 1. **Flyback diode at the valve (D2).** A 1N5408 (or 1N4007) across the valve's own terminals, stripe on +.
    It stops the switch-off spike at its source.
 2. **Separate valve current path.** The valve's +12 V and return run on their own pair (J2) straight back
    to the supply input (J1). The large valve current never flows through the Nano's ground wiring.
-3. **Decoupling.** C1 470 µF + C2 100 nF on 12 V, C3 100 nF + C4 100 µF on 5 V, C12 100 nF at the Nano,
-   and C6 100 nF at the flow sensor connector.
+3. **Decoupling.** C1 470 µF + C2 100 nF on 12 V, C3 100 nF + C4 100 µF on 5 V, C10 100 µF at the relay
+   header (the relay coil pulls current each time it switches), C11 100 nF at the Nano and C6 100 nF at the
+   flow sensor connector.
 4. **Flow input filter.** R1 10 kΩ pull-up gives clean edges. R2 1 kΩ + C5 10 nF filter out short spikes
    (10 µs time constant, far faster than the sensor's maximum ~108 Hz), and R2 also protects the pin.
    The firmware also ignores pulses less than 2 ms apart.
-5. **Button and remote inputs.** 10 kΩ pull-ups (stronger than the Nano's built-in ~35 kΩ) and 100 nF to GND
-   on each line. The firmware also debounces them.
+5. **Button and remote inputs.** The button has a 10 kΩ pull-up and 100 nF filter. Each receiver output
+   goes through a 1 kΩ series resistor (R7–R10) with a 100 kΩ pull-down (R13–R16), so the Nano's inputs
+   never float. The receiver's supply is filtered by R17 10 Ω + C8 47 µF + C9 100 nF, which keeps relay
+   and regulator noise from reducing its range. The firmware debounces both.
 6. **Supply protection.** F1 (2 A slow-blow) and D1. If the supply is connected backwards, D1 conducts and
    blows the fuse instead of damaging the board.
 7. **ESP level shifting.** R11 1.8 kΩ / R12 3.3 kΩ turn the Nano's 5 V data into 3.24 V for an ESP8266/ESP32.
-8. **Regulator.** U1 is a TO-220 7805 footprint. An L7805 works but needs a small heatsink. Once an ESP is
-   added, use a pin-compatible switching regulator such as the R-78E5.0-1.0 (same footprint, runs cool),
-   or wire a 5 V buck module to the IN / GND / OUT pads.
+8. **Cable routing.** Twist the flow sensor's signal wire with its GND wire and keep it away from the valve
+   and 12 V wires. For a long sensor run, use shielded cable with the shield connected to GND at the
+   controller end only.
+9. **PCB layout.** See below.
 
-### Wiring and layout tips
+**Regulator.** U1 is a TO-220 7805 footprint. An L7805 works but needs a small heatsink. Once an ESP is
+added, use a pin-compatible switching regulator such as the R-78E5.0-1.0 (same footprint, runs cool),
+or wire a 5 V buck module to the IN / GND / OUT pads.
 
-- Keep the flow sensor and remote cables away from the valve and 12 V wires, and cross them at right
-  angles where they have to meet.
-- Twist each signal wire with its GND wire. For a long sensor run, use shielded cable with the shield
-  connected to GND at the controller end only.
-- On the PCB, fill the bottom layer with a ground plane. Keep the 12 V valve tracks (J1 → F1 → J2) short
-  and wide (≥ 1 mm), and place C5 and C8–C11 close to the Nano.
-- Mount the board in a sealed box with cable glands, above the valve, with drip loops on the cables.
+### PCB layout rules
+
+1. **Zones.** Power and valve parts along one edge (J1, F1, D1, C1, U1, J2, J3, C10). The flow sensor
+   input (J4, R1, R2, C5) and the ESP header (J5) on the opposite side. The Nano in between.
+2. **J1 and J2 side by side.** The valve current then only travels a few centimetres. Make the 12 V valve
+   tracks (J1 → F1 → J2) at least 1.5 mm wide, and run a direct wide track from J2 GND to J1 GND.
+3. **Ground plane** on the bottom layer, connected to J1 GND.
+4. **Receiver at a board edge,** with its antenna pointing off the board, away from the relay and J2. Keep
+   copper (including the ground plane) out from under the antenna.
+5. **Capacitors next to the pins they protect:** C2 at U1 IN, C3 at U1 OUT, C11 at the Nano's 5V pin,
+   C5 at D2, C8/C9 at the receiver's +V pin, C10 at J3, C6 at J4.
+6. **Signal tracks away from 12 V.** Cross at right angles if they must meet; never run the flow track
+   alongside a 12 V track.
+7. **Heat.** Keep U1 away from the electrolytic capacitors and leave room for a heatsink.
+8. **Silkscreen.** Label every connector pin and mark the polarity of C1, C4, C8, C10, the diodes and the LEDs.
+9. **Mounting.** Four M3 holes (H1–H4) at the corners. Mount the board in a sealed box with cable glands,
+   above the valve, with drip loops in the cables.
 
 ## Regenerating the files
 

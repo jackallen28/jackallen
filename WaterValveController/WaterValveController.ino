@@ -35,7 +35,10 @@ const uint8_t PIN_LED_100L    = 7;
 const uint8_t PIN_RELAY       = 8;   // relay module IN (switches the solenoid)
 const uint8_t PIN_ESP_TX      = 11;  // data out to the ESP (through a 5 V -> 3.3 V divider)
 const uint8_t PIN_ESP_RX      = 12;  // reserved for data back from the ESP (not used yet)
-const uint8_t PIN_REMOTE[4]   = { A0, A1, A2, A3 };  // 433 MHz receiver channels 1, 2, 3, 4
+// 433 MHz receiver outputs D0-D3 for remote buttons A-D (1-4). Some receivers
+// map the buttons in a different order: if a button picks the wrong limit,
+// swap the pins here to match.
+const uint8_t PIN_REMOTE[4]   = { A0, A1, A2, A3 };
 
 // ---------------------------------------------------------------------------
 // Hardware options - change these to suit your parts
@@ -52,12 +55,13 @@ const bool VALVE_NORMALLY_CLOSED = true;
 // Set to false if your relay module switches ON when IN is HIGH.
 const bool RELAY_ACTIVE_LOW = true;
 
-// 433 MHz receiver outputs. The receiver must be in MOMENTARY mode (output on
-// only while the remote button is held) so that 2 s and 20 s holds can be timed.
+// 433 MHz receiver outputs. The remote must be paired in MOMENTARY mode (output
+// on only while the remote button is held) so that 2 s and 20 s holds can be timed.
+//   false = logic-output receiver such as the RX480E: D0-D3 go HIGH while a
+//           button is pressed. The board's 100k pull-downs keep them LOW otherwise.
 //   true  = relay-output receiver: wire each channel's COM to GND and NO to the
 //           Arduino pin. The internal pull-up is used, so pressed = LOW.
-//   false = logic-output receiver whose D0-D3 pins go HIGH while pressed.
-const bool REMOTE_ACTIVE_LOW = true;
+const bool REMOTE_ACTIVE_LOW = false;
 
 // Set to true if choosing a limit on the remote should also reset the count.
 // When false, the count is kept and only a 2 s hold resets it.
