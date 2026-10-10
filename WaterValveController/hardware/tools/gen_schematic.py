@@ -525,9 +525,9 @@ def build():
         s.wire(node, (x + 5.08, node[1]))
         s.label(f'RF{i + 1}', (x + 5.08, node[1]), 0)
         s.junction(node)
-    s.text('U2 plugs into a 7-pin socket. Check that the labels on the back of your module read\n'
-           'GND, +V, D0, D1, D2, D3, VT in that order before ordering the PCB. Pair the remote\n'
-           'in MOMENTARY mode. Keep the antenna clear of the relay, valve wires and metal.', (279.4, 70.0))
+    s.text('U2 stands upright in a 7-pin socket: pin 1 GND at the learn-button end, pin 7 VT at the\n'
+           'antenna end (checked against the RX480R_4CH V4 labels). Mark both ends on the silkscreen:\n'
+           'plugged in backwards it puts 5 V on an output. Pair the remote in MOMENTARY mode.', (279.4, 70.0))
 
     # ======================= RELAY + VALVE CONNECTORS ========================
     s.text('RELAY MODULE AND VALVE POWER', (279.4, 81.28), 2, True)
@@ -642,7 +642,7 @@ def build():
            '6. F1 fuse + D1 crowbar protect against shorts and a reversed supply.\n'
            '7. R11 / R12 divide the 5 V data line down to 3.2 V for the ESP.\n'
            '8. Twist the flow sensor signal with its GND; route it away from the valve wires.\n'
-           '9. Ground plane on the bottom layer (none under the RF antenna); short, wide 12 V tracks.',
+           '9. Ground plane on the bottom layer; short, wide 12 V tracks; antenna away from relay and J2.',
            (279.4, 181.61))
 
     title = [

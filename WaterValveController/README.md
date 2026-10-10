@@ -63,7 +63,7 @@ supply (high about 4.7 V, low under 0.5 V). That suggests the signal swings up t
 supply voltage, and 12 V on D2 would damage the Nano.
 
 **Remote receiver (RX480E-4):** a small 433 MHz module with a learn button and a 7-pin
-header (GND, +V, D0, D1, D2, D3, VT; the labels are on the back). Power it from **5 V
+header (GND, +V, D0, D1, D2, D3, VT from the learn-button end; the labels are on the back). Power it from **5 V
 only**, never 12 V. Each D output goes HIGH (5 V) while its remote button is held.
 
 Pair the remote in **momentary mode**, because the 2 s and 20 s holds are timed from the

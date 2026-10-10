@@ -20,11 +20,14 @@ Open `WaterValveController.kicad_pro` in KiCad 7 or newer (free). For the PCB, o
 run Tools → Update PCB from Schematic. The off-board parts (K1, SV1, D2, FS1) are marked "exclude from
 board", so only the carrier-board parts are placed. All footprints come from KiCad's standard library.
 
-## Before ordering a PCB: check the receiver pin order
+## Receiver orientation
 
-U2, the RX480E-4 receiver, plugs into a 7-pin socket wired as **1 GND, 2 +V, 3 D0, 4 D1, 5 D2, 6 D3,
-7 VT**. Turn your module over and check its printed labels read in that order. If they differ, the
-socket footprint must be changed before the board is made. A swapped GND and +V would destroy the module.
+U2, the RX480E-4 / RX480R_4CH receiver, stands upright in a 7-pin socket wired as **1 GND, 2 +V, 3 D0,
+4 D1, 5 D2, 6 D3, 7 VT**. On the module, GND is the pin at the learn-button end and VT is the pin at the
+antenna end (checked against the labels on the back of the V4 board).
+
+The header is straight, so the module would also fit the socket backwards, which puts 5 V onto an output.
+Mark **GND / button end** and **VT / antenna end** on the PCB silkscreen next to the socket.
 
 ## Board connectors
 
@@ -77,8 +80,9 @@ or wire a 5 V buck module to the IN / GND / OUT pads.
 2. **J1 and J2 side by side.** The valve current then only travels a few centimetres. Make the 12 V valve
    tracks (J1 → F1 → J2) at least 1.5 mm wide, and run a direct wide track from J2 GND to J1 GND.
 3. **Ground plane** on the bottom layer, connected to J1 GND.
-4. **Receiver at a board edge,** with its antenna pointing off the board, away from the relay and J2. Keep
-   copper (including the ground plane) out from under the antenna.
+4. **Receiver at a board edge,** standing upright with its antenna end facing away from the relay and J2.
+   Keep tall parts (the relay module, C1, U1's heatsink) and the 12 V wiring clear of the antenna coil,
+   and leave about 25 mm of headroom above the socket for the module and antenna.
 5. **Capacitors next to the pins they protect:** C2 at U1 IN, C3 at U1 OUT, C11 at the Nano's 5V pin,
    C5 at D2, C8/C9 at the receiver's +V pin, C10 at J3, C6 at J4.
 6. **Signal tracks away from 12 V.** Cross at right angles if they must meet; never run the flow track
