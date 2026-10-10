@@ -29,6 +29,10 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 
 ## Wiring
 
+A full schematic, with extra filtering and protection parts and KiCad files you can import into
+EasyEDA or KiCad to make a PCB, is in [`hardware/`](hardware/). The table below is the minimum
+wiring for a hand-built version.
+
 | Arduino Nano pin | Connects to |
 |------------------|-------------|
 | **D2** | Flow sensor signal (yellow). Red → **5 V**, black → GND |

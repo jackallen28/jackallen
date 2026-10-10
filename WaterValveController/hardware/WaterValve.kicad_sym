@@ -1,0 +1,570 @@
+(kicad_symbol_lib (version 20220914) (generator kicad_symbol_editor)
+  (symbol
+    "Relay_Module"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "K"
+      (at -7.62 6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "Relay_Module"
+      (at -7.62 -6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "Relay_Module_0_1"
+      (rectangle
+        (start -7.62 5.08)
+        (end 7.62 -5.08)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background))))
+    (symbol
+      "Relay_Module_1_1"
+      (pin
+        power_in
+        line
+        (at -10.16 2.54 0)
+        (length 2.54)
+        (name
+          "VCC"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        input
+        line
+        (at -10.16 0 0)
+        (length 2.54)
+        (name
+          "IN"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        power_in
+        line
+        (at -10.16 -2.54 0)
+        (length 2.54)
+        (name
+          "GND"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 2.54 180)
+        (length 2.54)
+        (name
+          "COM"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "4"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 0 180)
+        (length 2.54)
+        (name
+          "NO"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "5"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 -2.54 180)
+        (length 2.54)
+        (name
+          "NC"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "6"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "Solenoid_Valve"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762)
+      hide)
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "SV"
+      (at -2.54 3.81 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "Solenoid_Valve"
+      (at -2.54 -3.81 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "Solenoid_Valve_0_1"
+      (rectangle
+        (start -2.54 2.54)
+        (end 2.54 -2.54)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background)))
+      (arc
+        (start 0 2.54)
+        (mid 0.635 1.905)
+        (end 0 1.27)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (arc
+        (start 0 1.27)
+        (mid 0.635 0.635)
+        (end 0 0)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (arc
+        (start 0 0)
+        (mid 0.635 -0.635)
+        (end 0 -1.27)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (arc
+        (start 0 -1.27)
+        (mid 0.635 -1.905)
+        (end 0 -2.54)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (text
+        "+"
+        (at -1.524 3.81 0)
+        (effects
+          (font
+            (size 1.27 1.27))))
+      (text
+        "-"
+        (at -1.524 -3.81 0)
+        (effects
+          (font
+            (size 1.27 1.27)))))
+    (symbol
+      "Solenoid_Valve_1_1"
+      (pin
+        passive
+        line
+        (at 0 5.08 270)
+        (length 2.54)
+        (name
+          "+"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 0 -5.08 90)
+        (length 2.54)
+        (name
+          "-"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "YF-G1_Flow_Sensor"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "FS"
+      (at -10.16 6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "YF-G1"
+      (at -10.16 -6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "YF-G1_Flow_Sensor_0_1"
+      (rectangle
+        (start -10.16 5.08)
+        (end 7.62 -5.08)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background))))
+    (symbol
+      "YF-G1_Flow_Sensor_1_1"
+      (pin
+        power_in
+        line
+        (at 10.16 2.54 180)
+        (length 2.54)
+        (name
+          "VCC-red"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        open_collector
+        line
+        (at 10.16 0 180)
+        (length 2.54)
+        (name
+          "SIG-yellow"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        power_in
+        line
+        (at 10.16 -2.54 180)
+        (length 2.54)
+        (name
+          "GND-black"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "RF_Receiver_4CH"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "RX"
+      (at -10.16 11.43 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "RF_Receiver_4CH"
+      (at -10.16 -11.43 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "RF_Receiver_4CH_0_1"
+      (rectangle
+        (start -10.16 10.16)
+        (end 10.16 -10.16)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background))))
+    (symbol
+      "RF_Receiver_4CH_1_1"
+      (pin
+        power_in
+        line
+        (at -12.7 7.62 0)
+        (length 2.54)
+        (name
+          "V+"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        power_in
+        line
+        (at -12.7 5.08 0)
+        (length 2.54)
+        (name
+          "GND"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at -12.7 0 0)
+        (length 2.54)
+        (name
+          "COM1"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at -12.7 -2.54 0)
+        (length 2.54)
+        (name
+          "COM2"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "4"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at -12.7 -5.08 0)
+        (length 2.54)
+        (name
+          "COM3"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "5"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at -12.7 -7.62 0)
+        (length 2.54)
+        (name
+          "COM4"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "6"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 12.7 0 180)
+        (length 2.54)
+        (name
+          "NO1"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "7"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 12.7 -2.54 180)
+        (length 2.54)
+        (name
+          "NO2"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "8"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 12.7 -5.08 180)
+        (length 2.54)
+        (name
+          "NO3"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "9"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 12.7 -7.62 180)
+        (length 2.54)
+        (name
+          "NO4"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "10"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+)
