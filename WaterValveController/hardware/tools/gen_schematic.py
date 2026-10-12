@@ -12,6 +12,7 @@ import uuid as uuidlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sexp import parse, dump  # noqa: E402
+import jlc_parts  # noqa: E402
 
 PROJECT = "WaterValveController"
 VARIANT = 'tht'
@@ -195,6 +196,10 @@ class Sch:
             if ref in SMD_PART:
                 fp, value, desc = SMD_PART[ref]
             desc = SMD_DESC.get(desc, desc)
+        part_no = jlc_parts.lcsc(value, fp) if fp and on_board else ''
+        if part_no:
+            # read by KiCad's JLCPCB Fabrication Toolkit and by JLCPCB's BOM matching
+            fields = dict(fields or {}, **{'LCSC Part #': part_no})
         sym = self.libsym(lib_id)
         pins = pins_of(sym)
         u = uid(ref)

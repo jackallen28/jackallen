@@ -71,10 +71,11 @@ def read_netlist(sch):
         props = {p.get('name'): p.get('value') for p in c.findall('property')}
         if 'exclude_from_board' in props:
             continue
+        fields = {f.get('name'): f.text or '' for f in (c.find('fields') or [])}
         comps[c.get('ref')] = dict(
             value=c.findtext('value'), footprint=c.findtext('footprint'),
             path=c.find('sheetpath').get('tstamps') + c.findtext('tstamps'),
-            in_bom='exclude_from_bom' not in props)
+            in_bom='exclude_from_bom' not in props, lcsc=fields.get('LCSC Part #', ''))
     nets = {}
     for n in root.find('nets'):
         nodes = [(x.get('ref'), x.get('pin')) for x in n.findall('node') if x.get('ref') in comps]
@@ -234,6 +235,8 @@ def add_footprints(board, comps, nets, place, project):
         fp.SetProperty('Sheetfile', project + '.kicad_sch')
         if not c['in_bom']:
             fp.SetAttributes(fp.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM)
+        if c['lcsc']:
+            fp.SetProperty('LCSC Part #', c['lcsc'])     # for KiCad's JLCPCB Fabrication Toolkit
         board.Add(fp)
         fp.SetPosition(P(x, y))
         fp.SetOrientationDegrees(rot)

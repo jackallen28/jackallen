@@ -138,8 +138,8 @@ everything JLCPCB needs:
 | File | Upload it as |
 |------|--------------|
 | `*-gerbers.zip` | The PCB: gerbers (Protel file names, no X2 attributes) plus drill files and drill maps |
-| `*-BOM-JLCPCB.csv` | Bill of materials: Comment, Designator, Footprint, JLCPCB Part # |
-| `*-CPL-JLCPCB.csv` | Pick-and-place file: Designator, Mid X, Mid Y, Layer, Rotation |
+| `*-BOM-JLCPCB.csv` (or `.xlsx`) | Bill of materials: Comment, Designator, Footprint, JLCPCB Part #, laid out like JLCPCB's sample BOM |
+| `*-CPL-JLCPCB.csv` | Pick-and-place file: Designator, Mid X, Mid Y, Rotation, Layer (mm), as in JLCPCB's KiCad guide |
 
 1. On jlcpcb.com, choose **Order now** and upload the gerber zip. Keep the defaults: **2 layers,
    1.6 mm, 1 oz copper**; any colour, HASL or ENIG. The design rules suit any low-cost maker: 0.25 mm
@@ -159,6 +159,10 @@ soldered; its JLCPCB files are there if you want them (3 parts have no confirmed
 
 Not on either JLCPCB order: the two 15-pin sockets for the Nano (one reference, A1, covers both,
 and JLCPCB places one part per reference), the blade fuse, and the off-board parts.
+
+Every part also carries its number in an **LCSC Part #** field, on the schematic symbol and on the
+footprint. If you change the design in KiCad 8, 9 or 10, the free **Fabrication Toolkit** plugin
+(Plugin and Content Manager) makes the gerbers, BOM and CPL in the same format in one click.
 
 The clear **LOGO / TEXT AREA** (about 17 × 8 mm) has no tracks or vias, only the flat ground pour,
 so a silkscreen logo or text printed there will be crisp. In KiCad, place your logo there on the

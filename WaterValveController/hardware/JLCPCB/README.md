@@ -4,8 +4,10 @@ Upload these three files on jlcpcb.com:
 
 1. **`WaterValveController-gerbers.zip`**: the PCB itself (copper, solder mask, silkscreen, outline, drill files).
    PCB options: 2 layers, 1.6 mm, 1 oz copper (the defaults), any colour, HASL or ENIG.
-2. **`WaterValveController-BOM-JLCPCB.csv`**: the parts list (Comment, Designator, Footprint, JLCPCB Part #).
-3. **`WaterValveController-CPL-JLCPCB.csv`**: where each part goes (Designator, Mid X, Mid Y, Layer, Rotation).
+2. **`WaterValveController-BOM-JLCPCB.csv`** (or the same list as `.xlsx`, laid out like JLCPCB's sample
+   BOM): the parts list (Comment, Designator, Footprint, JLCPCB Part #).
+3. **`WaterValveController-CPL-JLCPCB.csv`**: where each part goes (Designator, Mid X, Mid Y, Rotation,
+   Layer; millimetres and degrees).
 
 Turn on **PCB Assembly**, assemble the **top side**, then upload the BOM and CPL files when asked.
 All 46 parts are on the top side: 0 SMD and 46 through-hole.
@@ -25,6 +27,14 @@ on its pads, and check these in particular:
   outline's tab line.
 - **Q2 (2N7000):** the flat face matches the flat side of the outline.
 - **C1, C4, C8:** the + lead goes to the square pad (+ mark).
+
+## Making these files again in KiCad
+
+Every part carries its number in an **LCSC Part #** field (on the schematic symbol and on
+the footprint). After changing the design in KiCad 8, 9 or 10, the free **Fabrication
+Toolkit** plugin (KiCad Plugin and Content Manager) makes the gerbers, `bom.csv` and
+`positions.csv` in this same format in one click, applying the same rotation corrections.
+Exclude A1 and the mounting holes from its BOM, as here.
 
 ## Not on the JLCPCB order
 
