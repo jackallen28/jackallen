@@ -7,10 +7,10 @@
   Wiring (nothing else is needed):
     Receiver GND -> Nano GND
     Receiver +V  -> Nano 5V
-    Receiver D0  -> A0   (remote button A)
-    Receiver D1  -> A1   (remote button B)
-    Receiver D2  -> A2   (remote button C)
-    Receiver D3  -> A3   (remote button D)
+    Receiver D0  -> A0   (remote button D on the tested RX480R_4CH V4)
+    Receiver D1  -> A1   (button C)
+    Receiver D2  -> A2   (button B)
+    Receiver D3  -> A3   (button A)
     Receiver VT  -> A4   (optional, set WATCH_VT to true)
 
   Open the Serial Monitor at 115200 baud. Press each remote button once, then
@@ -21,13 +21,16 @@
 const bool WATCH_VT = false;                  // true if VT is wired to A4
 
 const uint8_t PINS[5] = { A0, A1, A2, A3, A4 };
-const char *const NAMES[5] = { "D0 / button A", "D1 / button B", "D2 / button C",
-                               "D3 / button D", "VT / any button" };
+// Button letters are for the tested board, which drives D3 for button A. If
+// yours differs, the D numbers are still right.
+const char *const NAMES[5] = { "D0 / button D", "D1 / button C", "D2 / button B",
+                               "D3 / button A", "VT / any button" };
+const uint8_t FREE_FLOW_CHANNEL = 0;          // D0 = button D = FREE FLOW in the main sketch
 
 const int HIGH_THRESHOLD = 307;               // 1.5 V, the same level the main sketch uses
 const int WEAK_HIGH = 512;                    // below 2.5 V counts as a weak signal
 const unsigned long PRESS_GAP_MS = 300;       // LOW for longer than this = the press has ended
-const unsigned long MAIN_DEBOUNCE_MS = 100;   // gaps this long would split a hold in the main sketch
+const unsigned long MAIN_RELEASE_MS = 150;    // gaps this long would split a hold in the main sketch
 const unsigned long STUCK_MS = 5000;          // HIGH for this long = probably not momentary mode
 const unsigned long IDLE_REPORT_MS = 10000;
 
@@ -88,13 +91,13 @@ void reportPress(uint8_t i, const Channel &c) {
   if (c.peak < WEAK_HIGH) {
     Serial.println(F("   Weak signal: check the receiver is powered from 5 V and GND is shared."));
   }
-  if (c.longestGap >= MAIN_DEBOUNCE_MS) {
-    Serial.println(F("   Gaps of 0.1 s or more would split a long hold in the main sketch."));
+  if (c.longestGap >= MAIN_RELEASE_MS) {
+    Serial.println(F("   Gaps of 0.15 s or more would split a long hold in the main sketch."));
     Serial.println(F("   Check the antenna is straight and clear of metal, and test closer."));
   }
   if (i < 4) {
     Serial.print(F("   In the main sketch this is "));
-    if (held >= 20000 && i == 3) {
+    if (held >= 20000 && i == FREE_FLOW_CHANNEL) {
       Serial.println(F("a 20 s hold: calibration."));
     } else if (held >= 2000) {
       Serial.println(F("a 2 s hold: count reset."));

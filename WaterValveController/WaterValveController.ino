@@ -3,20 +3,21 @@
   ======================
   Arduino Nano + YF-G1 hall-effect flow sensor + relay-driven solenoid valve.
 
-  - Pick a limit of 25 L, 50 L, 100 L or FREE FLOW with the push button (each
-    press steps to the next limit) or the 433 MHz remote (button 1 = 25 L,
-    2 = 50 L, 3 = 100 L, 4 = FREE FLOW). Three LEDs show the limit; all LEDs
-    off = FREE FLOW.
+  - Pick one of three limits (25 L, 50 L, 100 L by default, see LIMIT VOLUMES
+    below) or FREE FLOW with the push button (each press steps to the next
+    limit) or the 433 MHz remote (button A = limit 1, B = limit 2, C = limit 3,
+    D = FREE FLOW; the valve clicks twice to confirm). Three LEDs show the
+    limit; all LEDs off = FREE FLOW.
   - When the limit is reached the valve is pulsed shut 6 times (0.5 s shut,
     0.5 s open) as a warning. Water then keeps flowing and the count starts
     again from 0 L towards the next warning.
   - A press of the push button resets the count to 0 L. On the remote, hold any
     button for 2 s to reset the count; the valve clicks twice to confirm.
-  - Hold the push button, or remote button 4 (FREE FLOW), for 20 s to calibrate
+  - Hold the push button, or remote button D (FREE FLOW), for 20 s to calibrate
     with a 7 L bucket. The calibration is saved to EEPROM and survives power
     loss; the water count always starts at 0 L after power-up.
   - Status (flow rate, limit, count) is printed to the Serial Monitor and sent
-    as one JSON line per second on a spare pin for a future ESP8266/ESP32.
+    as one JSON line per second on a spare pin for an ESP32 board.
 
   See README.md for wiring and full instructions.
 */
@@ -24,21 +25,32 @@
 #include <EEPROM.h>
 #include <SoftwareSerial.h>
 
+// ===========================================================================
+// LIMIT VOLUMES - change these numbers to set the three limits, in litres.
+//   Limit 1: LED on D5, remote button A
+//   Limit 2: LED on D6, remote button B
+//   Limit 3: LED on D7, remote button C
+//   FREE FLOW (all LEDs off): remote button D
+// ===========================================================================
+const uint16_t LIMIT_1_LITRES = 25;
+const uint16_t LIMIT_2_LITRES = 50;
+const uint16_t LIMIT_3_LITRES = 100;
+
 // ---------------------------------------------------------------------------
 // Pin assignments (Arduino Nano)
 // ---------------------------------------------------------------------------
 const uint8_t PIN_FLOW_SENSOR = 2;   // must be D2 or D3 (external interrupt pins)
 const uint8_t PIN_BUTTON      = 4;   // momentary push button to GND
-const uint8_t PIN_LED_25L     = 5;
-const uint8_t PIN_LED_50L     = 6;
-const uint8_t PIN_LED_100L    = 7;
+const uint8_t PIN_LED_LIMIT_1 = 5;
+const uint8_t PIN_LED_LIMIT_2 = 6;
+const uint8_t PIN_LED_LIMIT_3 = 7;
 const uint8_t PIN_RELAY       = 8;   // relay module IN (switches the solenoid)
 const uint8_t PIN_ESP_TX      = 11;  // data out to the ESP (through a 5 V -> 3.3 V divider)
 const uint8_t PIN_ESP_RX      = 12;  // reserved for data back from the ESP (not used yet)
-// 433 MHz receiver outputs D0-D3 for remote buttons A-D (1-4). Some receivers
-// map the buttons in a different order: if a button picks the wrong limit,
-// swap the pins here to match.
-const uint8_t PIN_REMOTE[4]   = { A0, A1, A2, A3 };
+// Receiver outputs for remote buttons A, B, C, D. On the RX480R_4CH V4 that was
+// tested, button A drives D3 (wired to A3) and button D drives D0 (A0). If a
+// button picks the wrong limit, change the order here.
+const uint8_t PIN_REMOTE[4]   = { A3, A2, A1, A0 };
 
 // ---------------------------------------------------------------------------
 // Hardware options - change these to suit your parts
@@ -63,9 +75,10 @@ const bool RELAY_ACTIVE_LOW = true;
 //           Arduino pin. The internal pull-up is used, so pressed = LOW.
 const bool REMOTE_ACTIVE_LOW = false;
 
-// The RX480E's outputs only reach about 3 V, which is right at the Nano's minimum
-// for a guaranteed digital HIGH. Logic-output receivers are therefore read with the
-// analog converter, and anything above this level counts as pressed.
+// Some RX480E boards only drive their outputs to about 3 V, right at the Nano's
+// minimum for a guaranteed digital HIGH (the tested board gave 4.9 V). Logic-output
+// receivers are therefore read with the analog converter, and anything above this
+// level counts as pressed.
 const int REMOTE_HIGH_THRESHOLD = 307;  // 0-1023 scale: 307 = 1.5 V on a 5 V supply
 
 // Set to true if choosing a limit on the remote should also reset the count.
@@ -87,14 +100,15 @@ const float MAX_PULSES_PER_LITRE     = 1000.0;  // range are rejected as mistake
 // Timing
 // ---------------------------------------------------------------------------
 const unsigned long DEBOUNCE_MS          = 50;
-const unsigned long REMOTE_DEBOUNCE_MS   = 100;    // longer, to ride out brief RF drop-outs while held
+const unsigned long REMOTE_PRESS_MS      = 20;     // remote output ON this long = pressed (catches 0.1 s pulses)
+const unsigned long REMOTE_RELEASE_MS    = 150;    // OFF this long = released (rides out brief RF drop-outs)
 const unsigned long SHORT_PRESS_MAX_MS   = 2000;   // push button presses between this and CAL_HOLD_MS do nothing
 const unsigned long REMOTE_RESET_HOLD_MS = 2000;   // hold any remote button this long to reset the count
-const unsigned long CAL_HOLD_MS          = 20000;  // hold the push button / remote button 4 this long to calibrate
+const unsigned long CAL_HOLD_MS          = 20000;  // hold the push button / remote button D this long to calibrate
 const uint8_t       ALERT_PULSES         = 6;      // valve shut/open cycles when the limit is reached
 const unsigned long ALERT_PHASE_MS       = 500;    // 0.5 s shut, then 0.5 s open
-const uint8_t       RESET_CLICKS         = 2;      // valve shut/open cycles to confirm a remote count reset
-const unsigned long RESET_CLICK_MS       = 250;    // 0.25 s shut, then 0.25 s open
+const uint8_t       CONFIRM_CLICKS       = 2;      // valve shut/open cycles to confirm a remote limit choice or reset
+const unsigned long CONFIRM_CLICK_MS     = 250;    // 0.25 s shut, then 0.25 s open
 const unsigned long CAL_FLASH_MS       = 500;    // LED flash rate in calibration mode
 const unsigned long FEEDBACK_MS        = 2000;   // LED pattern after a calibration attempt
 const unsigned long REPORT_INTERVAL_MS = 1000;   // serial / ESP status rate
@@ -110,14 +124,14 @@ const bool REMEMBER_LIMIT = true;
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-enum LimitMode : uint8_t { MODE_25L, MODE_50L, MODE_100L, MODE_FREE, MODE_COUNT };
-const uint8_t LIMIT_LITRES[MODE_COUNT] = { 25, 50, 100, 0 };
+enum LimitMode : uint8_t { MODE_LIMIT_1, MODE_LIMIT_2, MODE_LIMIT_3, MODE_FREE, MODE_COUNT };
+const uint16_t LIMIT_LITRES[MODE_COUNT] = { LIMIT_1_LITRES, LIMIT_2_LITRES, LIMIT_3_LITRES, 0 };
 
-// Limit chosen by remote buttons 1-4. The FREE FLOW button is also the only
+// Limit chosen by remote buttons A-D. The FREE FLOW button is also the only
 // remote button that can start and finish calibration.
-const LimitMode REMOTE_MODES[4] = { MODE_25L, MODE_50L, MODE_100L, MODE_FREE };
+const LimitMode REMOTE_MODES[4] = { MODE_LIMIT_1, MODE_LIMIT_2, MODE_LIMIT_3, MODE_FREE };
 
-enum SystemState : uint8_t { STATE_NORMAL, STATE_LIMIT_ALERT, STATE_RESET_CLICKS, STATE_CALIBRATING };
+enum SystemState : uint8_t { STATE_NORMAL, STATE_LIMIT_ALERT, STATE_CONFIRM_CLICKS, STATE_CALIBRATING };
 
 enum LedFeedback : uint8_t { FEEDBACK_NONE, FEEDBACK_CAL_OK, FEEDBACK_CAL_FAILED };
 
@@ -138,6 +152,22 @@ struct CalibrationRecord {
   uint16_t magic;
   float pulsesPerLitre;
   uint16_t checksum;
+};
+
+// The ESP status line is built here, then sent one character per loop. Sending
+// it in one go at 9600 baud would stall the sketch for about 0.14 s, long
+// enough to miss a short remote press.
+char espLine[200];
+uint8_t espLength = 0;
+uint8_t espSent = 0;
+
+class EspLineBuffer : public Print {
+ public:
+  size_t write(uint8_t c) override {
+    if (espLength >= sizeof(espLine)) return 0;
+    espLine[espLength++] = c;
+    return 1;
+  }
 };
 
 const int      EEPROM_CAL_ADDR  = 0;
@@ -173,7 +203,7 @@ unsigned long buttonPressedAt = 0;
 bool buttonHoldHandled = false;
 RemoteButton remote[4];
 
-// Valve pulse sequence used by the limit alert and the reset clicks.
+// Valve pulse sequence used by the limit alert and the confirmation clicks.
 uint8_t pulsePhase = 0;       // even = valve shut, odd = valve open
 uint8_t pulsePhases = 0;
 unsigned long pulsePhaseMs = 0;
@@ -300,19 +330,20 @@ void saveMode() {
 // ---------------------------------------------------------------------------
 // Text helpers
 // ---------------------------------------------------------------------------
-const char *limitName(LimitMode mode) {
-  switch (mode) {
-    case MODE_25L:  return "25L";
-    case MODE_50L:  return "50L";
-    case MODE_100L: return "100L";
-    default:        return "FREE FLOW";
+// Prints a limit as "25L" (using the LIMIT VOLUMES settings) or "FREE FLOW".
+void printLimit(Print &out, LimitMode mode) {
+  if (mode == MODE_FREE) {
+    out.print(F("FREE FLOW"));
+  } else {
+    out.print(LIMIT_LITRES[mode]);
+    out.print('L');
   }
 }
 
 const char *stateName() {
   switch (state) {
     case STATE_LIMIT_ALERT:  return "LIMIT REACHED";
-    case STATE_RESET_CLICKS: return "COUNT RESET";
+    case STATE_CONFIRM_CLICKS: return "CONFIRM CLICKS";
     case STATE_CALIBRATING:  return "CALIBRATING";
     default:                return "NORMAL";
   }
@@ -322,7 +353,7 @@ const char *stateName() {
 // Actions
 // ---------------------------------------------------------------------------
 bool valvePulsing() {
-  return state == STATE_LIMIT_ALERT || state == STATE_RESET_CLICKS;
+  return state == STATE_LIMIT_ALERT || state == STATE_CONFIRM_CLICKS;
 }
 
 // Shuts the valve, then alternates open/shut every phaseMs for the given
@@ -360,17 +391,23 @@ void resetCount() {
   Serial.println(F(">> Count reset to 0 L"));
 }
 
+// Two quick valve clicks, so a remote press can be heard from a distance.
+void confirmWithClicks(unsigned long now) {
+  startValvePulses(STATE_CONFIRM_CLICKS, CONFIRM_CLICKS, CONFIRM_CLICK_MS, now);
+}
+
 // Remote 2 s hold: reset, then click the valve to confirm.
 void resetCountWithClicks(unsigned long now) {
   resetCount();
-  startValvePulses(STATE_RESET_CLICKS, RESET_CLICKS, RESET_CLICK_MS, now);
+  confirmWithClicks(now);
 }
 
 void selectMode(LimitMode mode, bool resetCounter) {
   limitMode = mode;
   if (REMEMBER_LIMIT) saveMode();
   Serial.print(F(">> Limit set to "));
-  Serial.println(limitName(limitMode));
+  printLimit(Serial, limitMode);
+  Serial.println();
   if (resetCounter) resetCount();
 }
 
@@ -381,7 +418,7 @@ void checkLimit(unsigned long now) {
     countPulses -= limitPulses;  // keep any overshoot so repeated limits stay accurate
     startValvePulses(STATE_LIMIT_ALERT, ALERT_PULSES, ALERT_PHASE_MS, now);
     Serial.print(F(">> Limit of "));
-    Serial.print(limitName(limitMode));
+    printLimit(Serial, limitMode);
     Serial.println(F(" reached - pulsing valve, count restarted at 0 L"));
   }
 }
@@ -396,7 +433,7 @@ void startCalibration(unsigned long now) {
   Serial.println(F(">> CALIBRATION MODE"));
   Serial.print(F("   Fill a "));
   Serial.print(CAL_BUCKET_LITRES, 1);
-  Serial.println(F(" L bucket, turn the water off, then press the button (or remote button 4)."));
+  Serial.println(F(" L bucket, turn the water off, then press the button (or remote button D)."));
   Serial.println(F("   (Pressing without running any water cancels calibration.)"));
 }
 
@@ -438,13 +475,15 @@ void onButtonShortPress(unsigned long now) {
   }
 }
 
-// Remote button released within 2 s: choose that button's limit.
+// Remote button released within 2 s: choose that button's limit, then click
+// the valve twice to confirm.
 void onRemoteShortPress(uint8_t channel, unsigned long now) {
   LimitMode mode = REMOTE_MODES[channel];
   if (state == STATE_CALIBRATING) {
     if (mode == MODE_FREE) finishCalibration(now);  // other remote buttons are ignored
   } else {
     selectMode(mode, REMOTE_SELECT_RESETS_COUNT);
+    confirmWithClicks(now);
   }
 }
 
@@ -452,13 +491,14 @@ void onRemoteShortPress(uint8_t channel, unsigned long now) {
 // Inputs
 // ---------------------------------------------------------------------------
 
-// Returns true when the debounced level changes.
-bool debounce(DebouncedInput &input, bool raw, unsigned long now, unsigned long debounceMs) {
+// Returns true when the debounced level changes. onMs is how long the input must
+// stay active to count as pressed, offMs how long inactive to count as released.
+bool debounce(DebouncedInput &input, bool raw, unsigned long now, unsigned long onMs, unsigned long offMs) {
   if (raw != input.lastRaw) {
     input.lastRaw = raw;
     input.changedAt = now;
   }
-  if (raw != input.stable && now - input.changedAt >= debounceMs) {
+  if (raw != input.stable && now - input.changedAt >= (raw ? onMs : offMs)) {
     input.stable = raw;
     return true;
   }
@@ -473,7 +513,7 @@ bool readRemote(uint8_t channel) {
 void handleButton(unsigned long now) {
   bool pressed = digitalRead(PIN_BUTTON) == LOW;
 
-  if (debounce(button, pressed, now, DEBOUNCE_MS)) {
+  if (debounce(button, pressed, now, DEBOUNCE_MS, DEBOUNCE_MS)) {
     if (button.stable) {
       buttonPressedAt = now;
       buttonHoldHandled = false;
@@ -494,7 +534,7 @@ void handleRemote(unsigned long now) {
   for (uint8_t i = 0; i < 4; i++) {
     RemoteButton &b = remote[i];
 
-    if (debounce(b.input, readRemote(i), now, REMOTE_DEBOUNCE_MS)) {
+    if (debounce(b.input, readRemote(i), now, REMOTE_PRESS_MS, REMOTE_RELEASE_MS)) {
       if (b.input.stable) {
         b.pressedAt = now;
         b.holdHandled = false;
@@ -521,29 +561,29 @@ void handleRemote(unsigned long now) {
 // Outputs
 // ---------------------------------------------------------------------------
 void updateLeds(unsigned long now) {
-  bool led25 = false, led50 = false, led100 = false;
+  bool led1 = false, led2 = false, led3 = false;
 
   if (ledFeedback != FEEDBACK_NONE && now - ledFeedbackStart >= FEEDBACK_MS) {
     ledFeedback = FEEDBACK_NONE;
   }
 
   if (ledFeedback == FEEDBACK_CAL_OK) {
-    led25 = led50 = led100 = true;                                   // solid = saved
+    led1 = led2 = led3 = true;                                   // solid = saved
   } else if (ledFeedback == FEEDBACK_CAL_FAILED) {
-    led25 = led50 = led100 = ((now - ledFeedbackStart) / 100) % 2 == 0;  // fast flash = rejected
+    led1 = led2 = led3 = ((now - ledFeedbackStart) / 100) % 2 == 0;  // fast flash = rejected
   } else if (state == STATE_CALIBRATING) {
-    led25 = led50 = led100 = ((now - calStartedAt) / CAL_FLASH_MS) % 2 == 0;
+    led1 = led2 = led3 = ((now - calStartedAt) / CAL_FLASH_MS) % 2 == 0;
   } else {
     // The selected LED blinks in time with the valve while it is being pulsed.
     bool on = !valvePulsing() || valveOpen;
-    led25  = on && limitMode == MODE_25L;
-    led50  = on && limitMode == MODE_50L;
-    led100 = on && limitMode == MODE_100L;
+    led1 = on && limitMode == MODE_LIMIT_1;
+    led2 = on && limitMode == MODE_LIMIT_2;
+    led3 = on && limitMode == MODE_LIMIT_3;
   }
 
-  digitalWrite(PIN_LED_25L, led25 ? HIGH : LOW);
-  digitalWrite(PIN_LED_50L, led50 ? HIGH : LOW);
-  digitalWrite(PIN_LED_100L, led100 ? HIGH : LOW);
+  digitalWrite(PIN_LED_LIMIT_1, led1 ? HIGH : LOW);
+  digitalWrite(PIN_LED_LIMIT_2, led2 ? HIGH : LOW);
+  digitalWrite(PIN_LED_LIMIT_3, led3 ? HIGH : LOW);
 }
 
 // Human-readable line for the Serial Monitor.
@@ -551,7 +591,7 @@ void reportSerial() {
   Serial.print(F("Flow: "));
   Serial.print(flowLitresPerMinute(), 2);
   Serial.print(F(" L/min | Limit: "));
-  Serial.print(limitName(limitMode));
+  printLimit(Serial, limitMode);
   Serial.print(F(" | Count: "));
   Serial.print(pulsesToLitres(countPulses), 2);
   Serial.print(F(" L | Session: "));
@@ -570,26 +610,34 @@ void reportSerial() {
 // One JSON object per line for the ESP, e.g.
 // {"flow_lpm":12.34,"limit":"50L","limit_l":50,"count_l":23.45,"session_l":73.45,
 //  "valve":"OPEN","state":"NORMAL","ppl":64.80,"calibrated":false}
-void reportEsp() {
-  espSerial.print(F("{\"flow_lpm\":"));
-  espSerial.print(flowLitresPerMinute(), 2);
-  espSerial.print(F(",\"limit\":\""));
-  espSerial.print(limitName(limitMode));
-  espSerial.print(F("\",\"limit_l\":"));
-  espSerial.print(LIMIT_LITRES[limitMode]);
-  espSerial.print(F(",\"count_l\":"));
-  espSerial.print(pulsesToLitres(countPulses), 2);
-  espSerial.print(F(",\"session_l\":"));
-  espSerial.print(pulsesToLitres(sessionPulses), 2);
-  espSerial.print(F(",\"valve\":\""));
-  espSerial.print(valveOpen ? F("OPEN") : F("SHUT"));
-  espSerial.print(F("\",\"state\":\""));
-  espSerial.print(stateName());
-  espSerial.print(F("\",\"ppl\":"));
-  espSerial.print(pulsesPerLitre, 2);
-  espSerial.print(F(",\"calibrated\":"));
-  espSerial.print(isCalibrated ? F("true") : F("false"));
-  espSerial.println(F("}"));
+// The line is only built here; sendEspCharacter() sends it.
+void buildEspLine() {
+  espLength = 0;
+  espSent = 0;
+  EspLineBuffer out;
+  out.print(F("{\"flow_lpm\":"));
+  out.print(flowLitresPerMinute(), 2);
+  out.print(F(",\"limit\":\""));
+  printLimit(out, limitMode);
+  out.print(F("\",\"limit_l\":"));
+  out.print(LIMIT_LITRES[limitMode]);
+  out.print(F(",\"count_l\":"));
+  out.print(pulsesToLitres(countPulses), 2);
+  out.print(F(",\"session_l\":"));
+  out.print(pulsesToLitres(sessionPulses), 2);
+  out.print(F(",\"valve\":\""));
+  out.print(valveOpen ? F("OPEN") : F("SHUT"));
+  out.print(F("\",\"state\":\""));
+  out.print(stateName());
+  out.print(F("\",\"ppl\":"));
+  out.print(pulsesPerLitre, 2);
+  out.print(F(",\"calibrated\":"));
+  out.print(isCalibrated ? F("true") : F("false"));
+  out.println(F("}"));
+}
+
+void sendEspCharacter() {
+  if (espSent < espLength) espSerial.write(espLine[espSent++]);
 }
 
 void report(unsigned long now) {
@@ -597,7 +645,7 @@ void report(unsigned long now) {
   lastReportAt = now;
   updateFlowRate();
   reportSerial();
-  reportEsp();
+  if (espSent >= espLength) buildEspLine();  // skip a line if the last one is still going out
 }
 
 // ---------------------------------------------------------------------------
@@ -611,9 +659,9 @@ void setup() {
 
   pinMode(PIN_BUTTON, INPUT_PULLUP);
   pinMode(PIN_FLOW_SENSOR, INPUT_PULLUP);
-  pinMode(PIN_LED_25L, OUTPUT);
-  pinMode(PIN_LED_50L, OUTPUT);
-  pinMode(PIN_LED_100L, OUTPUT);
+  pinMode(PIN_LED_LIMIT_1, OUTPUT);
+  pinMode(PIN_LED_LIMIT_2, OUTPUT);
+  pinMode(PIN_LED_LIMIT_3, OUTPUT);
   for (uint8_t i = 0; i < 4; i++) {
     pinMode(PIN_REMOTE[i], REMOTE_ACTIVE_LOW ? INPUT_PULLUP : INPUT);
   }
@@ -625,7 +673,7 @@ void setup() {
   loadMode();
 
   // LED self-test so a wiring fault is obvious at power-up.
-  const uint8_t leds[3] = { PIN_LED_25L, PIN_LED_50L, PIN_LED_100L };
+  const uint8_t leds[3] = { PIN_LED_LIMIT_1, PIN_LED_LIMIT_2, PIN_LED_LIMIT_3 };
   for (uint8_t i = 0; i < 3; i++) {
     digitalWrite(leds[i], HIGH);
     delay(200);
@@ -648,10 +696,18 @@ void setup() {
   Serial.print(pulsesPerLitre, 2);
   Serial.println(isCalibrated ? F(" pulses/L (saved)") : F(" pulses/L (datasheet default)"));
   Serial.print(F("Limit: "));
-  Serial.println(limitName(limitMode));
+  printLimit(Serial, limitMode);
+  Serial.println();
+  Serial.print(F("Limits: A = "));
+  printLimit(Serial, MODE_LIMIT_1);
+  Serial.print(F(", B = "));
+  printLimit(Serial, MODE_LIMIT_2);
+  Serial.print(F(", C = "));
+  printLimit(Serial, MODE_LIMIT_3);
+  Serial.println(F(", D = FREE FLOW"));
   Serial.println(F("Button: short press = next limit + reset count | hold 20 s = calibrate"));
-  Serial.println(F("Remote: 1 = 25L, 2 = 50L, 3 = 100L, 4 = FREE FLOW | hold any 2 s = reset count"));
-  Serial.println(F("        hold 4 for 20 s = calibrate"));
+  Serial.println(F("Remote: press = choose limit (2 clicks) | hold any 2 s = reset count (2 clicks)"));
+  Serial.println(F("        hold D for 20 s = calibrate"));
   Serial.println(F(""));
 }
 
@@ -665,4 +721,5 @@ void loop() {
   updateValvePulses(now);
   updateLeds(now);
   report(now);
+  sendEspCharacter();
 }

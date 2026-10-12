@@ -4,12 +4,13 @@ Counts the water going through a YF-G1 flow sensor and warns the user when a
 chosen amount has been used by briefly pulsing the solenoid valve shut.
 
 - Choose **25 L**, **50 L**, **100 L** or **FREE FLOW** with the push button or the 433 MHz remote
-  (remote button 1 = 25 L, 2 = 50 L, 3 = 100 L, 4 = FREE FLOW).
+  (button A = 25 L, B = 50 L, C = 100 L, D = FREE FLOW; the valve clicks twice to confirm).
+  The three volumes can be changed in the sketch (see [Changing the limit volumes](#changing-the-limit-volumes)).
 - When the limit is reached, the valve shuts and opens 6 times (0.5 s shut, 0.5 s open),
   then water keeps flowing and the count starts again at 0 L.
 - A press of the push button resets the count to 0 L. On the remote, hold any button
   for 2 s to reset the count; the valve clicks twice to confirm.
-- Hold the push button, or remote button 4 (FREE FLOW), for 20 s to calibrate with a
+- Hold the push button, or remote button D (FREE FLOW), for 20 s to calibrate with a
   7 L bucket. The calibration is saved and survives power cuts. The water count always
   starts at 0 L after power-up.
 - Flow rate, limit and count are printed to the Serial Monitor and sent to a spare
@@ -40,10 +41,10 @@ is in [`hardware/`](hardware/). The table below is the minimum wiring for a hand
 | **D6** | 220 Ω → LED "50 L" → GND |
 | **D7** | 220 Ω → LED "100 L" → GND |
 | **D8** | Relay module IN (relay VCC → 5 V, GND → GND) |
-| **A0** | Receiver D0 (remote button A = 25 L) |
-| **A1** | Receiver D1 (remote button B = 50 L) |
-| **A2** | Receiver D2 (remote button C = 100 L) |
-| **A3** | Receiver D3 (remote button D = FREE FLOW) |
+| **A0** | Receiver D0 (remote button D = FREE FLOW on the tested board) |
+| **A1** | Receiver D1 (button C = 100 L) |
+| **A2** | Receiver D2 (button B = 50 L) |
+| **A3** | Receiver D3 (button A = 25 L) |
 | **5V / GND** | Receiver +V and GND (VT is not used) |
 | **D11** | Data out to the ESP, through a 1 kΩ / 2 kΩ divider (see below) |
 | **D12** | Reserved for ESP TX → Nano (not used yet) |
@@ -64,10 +65,12 @@ supply voltage, and 12 V on D2 would damage the Nano.
 
 **Remote receiver (RX480E-4):** a small 433 MHz module with a learn button and a 7-pin
 header (GND, +V, D0, D1, D2, D3, VT from the learn-button end; the labels are on the back). Power it from **5 V
-only**, never 12 V. Each D output goes HIGH while its remote button is held. HIGH is only
-about **3 V**, because the module's decoder runs at 3.3 V. That is right at the Nano's minimum
-for a reliable digital HIGH, so the sketch reads A0–A3 with the analog converter and treats
-anything above 1.5 V as pressed (`REMOTE_HIGH_THRESHOLD`).
+only**, never 12 V. Each D output goes HIGH while its remote button is held: 4.9 V on the
+tested RX480R_4CH V4, but some boards only reach about 3 V, right at the Nano's minimum for
+a reliable digital HIGH. The sketch therefore reads A0–A3 with the analog converter and
+treats anything above 1.5 V as pressed (`REMOTE_HIGH_THRESHOLD`). A press counts after
+20 ms, so even a 0.1 s pulse is caught. A release needs 150 ms of silence, so brief radio
+drop-outs during a hold are ignored.
 
 Pair the remote in **momentary mode**, because the 2 s and 20 s holds are timed from the
 output. On most RX480E modules:
@@ -80,9 +83,9 @@ Check the leaflet that came with your module in case its sequence differs. In to
 latched mode an output stays on, which would reset the count after 2 s and, on button D,
 start calibration after 20 s.
 
-Some modules map the remote buttons to D0–D3 in a different order. Press each button and
-watch the Serial Monitor: if a button selects the wrong limit, swap the pins in
-`PIN_REMOTE` at the top of the sketch.
+The tested RX480R_4CH V4 drives D3 for button A and D0 for button D, so `PIN_REMOTE` at the
+top of the sketch is set to `{ A3, A2, A1, A0 }`. Other boards may differ: press each button
+and watch the Serial Monitor, and if a button selects the wrong limit, change that order.
 
 Keep the receiver's coiled antenna away from the relay, the valve wires and any metal, and
 don't mount it inside a metal box.
@@ -152,23 +155,29 @@ needed (`EEPROM` and `SoftwareSerial` are built in).
 **Push button:** each short press (under 2 s) steps to the next limit
 (25 L → 50 L → 100 L → FREE FLOW → 25 L …) and resets the count to 0 L.
 
-**Remote:** a short press (under 2 s) chooses a limit directly. The count is **kept**,
-so if more water has already been used than the new limit, the limit warning starts
-straight away.
+**Remote:** a short press (under 2 s) chooses a limit directly, and the valve clicks twice
+(0.25 s shut, 0.25 s open, twice) to confirm. The count is **kept**, so if more water has
+already been used than the new limit, the limit warning starts once the clicks finish.
 
-| Remote button | Limit |
-|---------------|-------|
-| 1 | 25 L |
-| 2 | 50 L |
-| 3 | 100 L |
-| 4 | FREE FLOW |
+| Remote button | Limit (default) | LED |
+|---------------|-----------------|-----|
+| A | Limit 1 (25 L) | D5 LED on |
+| B | Limit 2 (50 L) | D6 LED on |
+| C | Limit 3 (100 L) | D7 LED on |
+| D | FREE FLOW | All off (counts, never pulses) |
 
-| LEDs | Limit |
-|------|-------|
-| 25 L LED on | 25 L |
-| 50 L LED on | 50 L |
-| 100 L LED on | 100 L |
-| All off | FREE FLOW (counts, never pulses) |
+### Changing the limit volumes
+
+The three volumes are at the very top of `WaterValveController.ino`:
+
+```cpp
+const uint16_t LIMIT_1_LITRES = 25;
+const uint16_t LIMIT_2_LITRES = 50;
+const uint16_t LIMIT_3_LITRES = 100;
+```
+
+Change the numbers (whole litres) and upload again. The LEDs, remote buttons, Serial
+Monitor and ESP data all follow these values.
 
 ### Resetting the count
 
@@ -186,13 +195,13 @@ or a 2 s remote hold during the warning stops it straight away.
 ### Calibration (7 L bucket)
 
 1. Turn the water off and put a 7 L bucket under the outlet.
-2. Hold the push button **or remote button 4 (FREE FLOW)** for **20 seconds** until
+2. Hold the push button **or remote button D (FREE FLOW)** for **20 seconds** until
    all three LEDs start flashing, then let go.
    - Push button: presses between 2 s and 20 s are ignored, so you can let go early to cancel.
-   - Remote button 4: the valve clicks twice at 2 s (that is the count reset); keep holding.
-   - Remote buttons 1–3 cannot start or finish calibration.
+   - Remote button D: the valve clicks twice at 2 s (that is the count reset); keep holding.
+   - Remote buttons A–C cannot start or finish calibration.
 3. Turn the water on and fill the bucket to exactly 7 L, then turn the water off.
-4. Short-press the push button or remote button 4.
+4. Short-press the push button or remote button D.
    - **All LEDs on for 2 s:** calibration saved.
    - **All LEDs flash quickly for 2 s:** the result was not sensible (for example
      no water ran), so the previous calibration is kept. Pressing straight away
@@ -224,9 +233,10 @@ plus a message whenever something happens:
 === Water Valve Controller ===
 Calibration: 64.80 pulses/L (datasheet default)
 Limit: 25L
+Limits: A = 25L, B = 50L, C = 100L, D = FREE FLOW
 Button: short press = next limit + reset count | hold 20 s = calibrate
-Remote: 1 = 25L, 2 = 50L, 3 = 100L, 4 = FREE FLOW | hold any 2 s = reset count
-        hold 4 for 20 s = calibrate
+Remote: press = choose limit (2 clicks) | hold any 2 s = reset count (2 clicks)
+        hold D for 20 s = calibrate
 
 Flow: 10.00 L/min | Limit: 25L | Count: 24.83 L | Session: 24.83 L | Valve: OPEN | NORMAL
 >> Limit of 25L reached - pulsing valve, count restarted at 0 L
@@ -253,7 +263,7 @@ D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic, so use th
 | `count_l` | Current count towards the limit, L |
 | `session_l` | Total since power-up or last count reset, L |
 | `valve` | `"OPEN"` or `"SHUT"` |
-| `state` | `"NORMAL"`, `"LIMIT REACHED"`, `"COUNT RESET"` (during the 2 clicks) or `"CALIBRATING"` |
+| `state` | `"NORMAL"`, `"LIMIT REACHED"`, `"CONFIRM CLICKS"` (during the 2 clicks) or `"CALIBRATING"` |
 | `ppl` | Calibration in pulses per litre |
 | `calibrated` | `false` = datasheet default, `true` = user calibration |
 
