@@ -42,6 +42,7 @@ THT = dict(
     logo=(39.0, 66.6, 55.8, 75.4),
     keepouts=[(47.0, 27.4, 65.4, 46.6, 'U1 HEATSINK (L7805 only)')],
     labelled=('J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'J8'),
+    refs={'R1': (22.75, 23.0, 0)},          # beside R1: the J7 label takes the space above it
     place={
         'A1': (_NX, _NY, 270),
         'H1': (5, 5, 0), 'H2': (61, 5, 0), 'H3': (5, 71, 0), 'H4': (61, 71, 0),
@@ -86,9 +87,9 @@ THT = dict(
         # J1 12 V in, J2 main switch
         ('12V+', 13.04, 64.0, _L), ('GND', 18.12, 64.0, _L),
         ('SW IN', 24.64, 64.0, _L), ('SW OUT', 29.72, 64.0, _L), ('LAMP-', 34.8, 64.0, _L),
-        ('FUSE 2A', 20.25, 53.8, _L), ('USB', 0.95, _NY + 7.62, _V),
-        ('WATER VALVE CONTROLLER', 47.4, 69.6, dict(size=1.2, bottom=True)),
-        ('THROUGH-HOLE  rev 1.2', 47.4, 72.2, dict(size=1.0, bottom=True)),
+        ('FUSE 3A', 20.25, 53.8, _L), ('USB', 0.95, _NY + 7.62, _V),
+        ('WATER VALVE CONTROLLER', 47.4, 69.6, dict(size=1.0, bottom=True)),
+        ('THROUGH-HOLE  rev 1.3', 47.4, 72.2, dict(size=1.0, bottom=True)),
     ],
 )
 
@@ -115,9 +116,12 @@ SMD = dict(
     logo=(38.6, 60.4, 55.8, 68.8),
     keepouts=[(47.0, 21.9, 65.6, 41.0, 'U1 HEATSINK (L7805 only)')],
     labelled=('J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'J8'),
-    # 12 V feed from the regulator input up the right edge to the valve switch Q1 (source pad)
-    preroute=[('+12V', 2.0, 'F.Cu', [(53.71, 44.8), (53.71, 38.0), (60.5, 31.2), (60.5, 13.5), (57.25, 10.25),
-                                     (53.38, 10.25)])],
+    refs={'C10': (36.1, 31.05, 0)},          # leaves the space below R2 for its label
+    # 12 V feed from C1 past the regulator and up the right edge to the valve switch Q1 (source pad).
+    # It passes beside U1 and C2 rather than through their pads, so the valve current has the full
+    # track width all the way.
+    preroute=[('+12V', 2.5, 'F.Cu', [(44.24, 53.64), (44.24, 47.6), (51.1, 47.6), (51.1, 38.0), (60.5, 28.6),
+                                     (60.5, 13.5), (57.25, 10.25), (53.38, 10.25)])],
     place={
         'A1': (_SX, _SY, 270),
         'H1': (5, 5, 0), 'H2': (61, 5, 0), 'H3': (5, 64.2, 0), 'H4': (61, 64.2, 0),
@@ -154,9 +158,9 @@ SMD = dict(
         ('VT / ANT END', 0.8, 45.45, dict(size=0.8, just='left')), ('GND END', 19.2, 45.45, dict(size=0.8, just='right')),
         ('12V+', 13.04, 57.2, _L), ('GND', 18.12, 57.2, _L),
         ('SW IN', 24.64, 57.2, _L), ('SW OUT', 29.72, 57.2, _L), ('LAMP-', 34.8, 57.2, _L),
-        ('FUSE 2A', 20.25, 47.2, _L), ('USB', _sx[0], _sy[1], _L),
-        ('WATER VALVE CONTROLLER', 47.2, 63.2, dict(size=1.2, bottom=True)),
-        ('MIXED SMD + THT  rev 1.2', 47.2, 65.8, dict(size=1.0, bottom=True)),
+        ('FUSE 3A', 20.25, 47.2, _L), ('USB', _sx[0], _sy[1], _L),
+        ('WATER VALVE CONTROLLER', 47.2, 63.2, dict(size=1.0, bottom=True)),
+        ('MIXED SMD + THT  rev 1.3', 47.2, 65.8, dict(size=1.0, bottom=True)),
     ],
 )
 

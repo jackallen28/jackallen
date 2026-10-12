@@ -369,9 +369,9 @@ def build():
     j1 = s.add('Connector:Screw_Terminal_01x02', 'J1', '12V DC IN', 30.48, 50.8, mirror=True, fp=FP_TB2,
                ref_at=(27.94, 45.72), val_at=(27.94, 58.42), ref_just='center', val_just='center',
                desc='12 V DC supply input: 1 = +12 V, 2 = GND. 2-way 5.08 mm screw terminal')
-    f1 = s.add('Device:Fuse', 'F1', '2A blade (ATO)', 50.8, 50.8, rot=90, fp=FP_FUSE,
+    f1 = s.add('Device:Fuse', 'F1', '3A blade (ATO)', 50.8, 50.8, rot=90, fp=FP_FUSE,
                ref_at=(50.8, 46.99), val_at=(50.8, 54.61), ref_just='center', val_just='center',
-               desc='PCB holder for standard ATO/ATC blade fuses (Keystone 3557-2) + 2 A blade fuse')
+               desc='PCB holder for standard ATO/ATC blade fuses (Keystone 3557-2) + 3 A blade fuse')
     s.wire(j1['pins']['1'], (40.64, 50.8), f1['pins']['1'])
     s.label('12V_IN', (40.64, 50.8))
     # GND return from J1 pin 2
@@ -726,7 +726,7 @@ def build():
     title = [
         '(title "Water Valve Controller")',
         '(date "2026-10-12")',
-        '(rev "1.2")',
+        '(rev "1.3")',
         '(company "Arduino Nano carrier board")',
         '(comment 1 "YF-G1 flow sensor, MOSFET valve driver, RX480E 433 MHz receiver, ESP link")',
         '(comment 2 "Firmware: WaterValveController.ino")',

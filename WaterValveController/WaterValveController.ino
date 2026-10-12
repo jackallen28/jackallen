@@ -57,11 +57,11 @@ const uint8_t PIN_REMOTE[4]   = { A3, A2, A1, A0 };
 // ---------------------------------------------------------------------------
 
 // Solenoid valve type.
-//   true  = normally CLOSED valve (the most common 12 V type): it must be
-//           powered to let water through, so it is powered while water flows.
-//   false = normally OPEN valve: it is powered to stop the water, so it
-//           is OFF while water flows.
-const bool VALVE_NORMALLY_CLOSED = true;
+//   false = normally OPEN valve (the one this controller is built for): water flows
+//           with the valve unpowered, so D8 powers it only to stop the water.
+//   true  = normally CLOSED valve: it must be powered to let water through, so it
+//           is powered while water flows.
+const bool VALVE_NORMALLY_CLOSED = false;
 
 // How D8 switches the valve on.
 //   false = the controller PCB's MOSFET driver: D8 HIGH powers the valve. Also right for

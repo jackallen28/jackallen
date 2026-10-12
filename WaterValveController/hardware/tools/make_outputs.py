@@ -14,6 +14,7 @@ import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render_pcb  # noqa: E402
+from make_jlc import PARTS  # noqa: E402
 
 VARIANT = sys.argv[1] if len(sys.argv) > 1 else 'tht'
 HW = os.getcwd()
@@ -55,17 +56,20 @@ for (value, fp, on_board), ps in groups.items():
     refs = sorted((p['ref'] for p in ps), key=refkey)
     descs = sorted({p['desc'] for p in ps})
     desc = '; '.join(descs) if len(descs) <= 2 else GROUP_DESC.get(value, '; '.join(descs))
-    rows.append([', '.join(refs), len(refs), value, desc,
-                 fp.split(':')[-1] if fp else '', 'PCB' if on_board else 'off-board (panel)'])
+    name = fp.split(':')[-1] if fp else ''
+    # The receiver's entry in PARTS is its socket, listed on its own line below
+    lcsc = '' if value == 'RX480E-4' else PARTS.get((value, name), ('', ''))[1]
+    rows.append([', '.join(refs), len(refs), value, desc, name, 'PCB' if on_board else 'off-board (panel)', lcsc])
 rows.sort(key=lambda r: refkey(r[0].split(',')[0]))
 with open(f'{P}-BOM.csv', 'w', newline='') as f:
     w = csv.writer(f)
-    w.writerow(['References', 'Qty', 'Value', 'Description', 'Footprint', 'Where'])
+    w.writerow(['References', 'Qty', 'Value', 'Description', 'Footprint', 'Where', 'JLCPCB / LCSC'])
     w.writerows(rows)
     w.writerow(['(A1)', 2, '15-pin female header 2.54 mm',
-                'Sockets for the Nano. Solder the parts that sit under the Nano first', '', 'PCB'])
-    w.writerow(['(U2)', 1, '7-pin female header 2.54 mm', 'Socket for the RX480E-4 receiver module', '', 'PCB'])
-    w.writerow(['(F1)', 1, '2 A ATO/ATC blade fuse', 'Standard automotive blade fuse for the F1 holder', '', 'PCB'])
+                'Sockets for the Nano. Solder the parts that sit under the Nano first', '', 'PCB', 'C2897378'])
+    w.writerow(['(U2)', 1, '7-pin female header 2.54 mm', 'Socket for the RX480E-4 receiver module', '', 'PCB',
+                PARTS[('RX480E-4', 'PinSocket_1x07_P2.54mm_Vertical')][1]])
+    w.writerow(['(F1)', 1, '3 A ATO/ATC blade fuse', 'Standard automotive blade fuse for the F1 holder', '', 'PCB'])
     w.writerow(['(J4)', 1, 'JST-XH 4-pin housing + crimped lead', 'ESP32 link lead', '', 'off-board'])
     w.writerow(['(J5-J8)', 4, 'JST-XH 2-pin housing + crimped lead', 'Leads to the panel button and LEDs', '',
                 'off-board'])

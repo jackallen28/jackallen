@@ -30,11 +30,10 @@ boards use them). On the through-hole board most small parts already lie flat un
 | `WaterValveController-schematic.pdf` / `.svg` | The schematic (the same for both boards) |
 | `WaterValveController.kicad_pro`, `.kicad_sch`, `.kicad_pcb` | KiCad 7 project, through-hole board |
 | `smd/WaterValveController-SMD.*` | KiCad 7 project, mixed SMD + THT board |
-| `*-gerbers.zip` | Gerber and drill files: upload this to the board maker |
-| `*-BOM.csv` | Parts list for that board |
-| `*-positions.csv` | Part positions, for an assembly service |
+| `JLCPCB/`, `smd/JLCPCB/` | **Order files** for each board: gerber zip, JLCPCB BOM, JLCPCB placement (CPL) file and a README with the upload steps |
+| `*-BOM.csv` | Full parts list for that board, with JLCPCB/LCSC part numbers and the off-board parts |
 | `*-PCB-top.pdf` | Top copper and silkscreen, printable at 1:1 to check part fits |
-| `*-KiCad.zip` | The whole KiCad project in one zip |
+| `*-KiCad.zip` | The whole KiCad project in one zip: unzip it and open the `.kicad_pro` in KiCad 7 or later to edit the design |
 | `WaterValve.pretty/` | Two board footprints: the socketed Nano and the Keystone 3557-2 fuse holder |
 | `tools/` | Scripts that generate all of the above (see the end of this file) |
 
@@ -68,28 +67,34 @@ plugged in backwards, the module puts 5 V onto an output.
 connector at the left edge (marked **USB**). Pin 1 (D1/TX) is the square pad at the right.
 
 The sketch uses the same pins as the schematic. With this board, keep `VALVE_DRIVE_ACTIVE_LOW = false`
-and `REMOTE_ACTIVE_LOW = false` (the defaults).
+and `REMOTE_ACTIVE_LOW = false` (the defaults). The sketch is set for a **normally open** valve
+(`VALVE_NORMALLY_CLOSED = false`).
 
 ## Valve driver
 
 The valve is switched on the board, so no relay module is needed. Q1, a P-channel MOSFET, switches
 the 12 V to J3 pin 1 (high-side switching, so the valve's other wire goes to GND).
 
-- **D8 HIGH:** Q2 pulls Q1's gate low and the valve gets 12 V.
+- **D8 HIGH:** Q2 pulls Q1's gate low and the valve gets 12 V. The normally open valve closes and
+  the water stops.
 - **D8 LOW, or the Nano unplugged or starting up:** R20 holds Q2 off and R18 holds Q1 off, so the valve
-  stays unpowered.
+  stays unpowered and open: the water flows. The controller only powers the valve to stop the water,
+  and a power cut always leaves the water on.
 - **D2** is the flyback diode for the switch-off spike. It sits right at J3. An extra diode on the
   valve terminals does no harm.
 
 At 1 A of valve current Q1 dissipates about 0.12 W (IRF9540N) or 0.07 W (IRFR5305), so it needs no
-heatsink. Either part handles valves up to about 2 A without one.
+heatsink. Even at the 3 A fuse rating it is about 1.1 W or 0.6 W: warm, but within both parts'
+ratings without a heatsink. Most 12 V valves draw 0.3 to 1 A. A normally open valve is powered for
+as long as the water is held off after a limit, so its coil stays warm then; that is normal for
+valves rated for continuous duty.
 
 ## Power, fuse and switch
 
 J1 → F1 (blade fuse) → J2 pin 1 → main switch → J2 pin 2 → +12 V for the board and the valve.
 
 - **F1** is a Keystone 3557-2 holder for standard ATO/ATC blade fuses (4 legs on a 13.5 × 3.4 mm
-  pattern). Use a **2 A** fuse; 3 A if your valve draws more than 1 A.
+  pattern). Use a **3 A** fuse.
 - **D1** crowbar: if the supply is connected backwards, D1 conducts and blows the fuse. It sits before
   the switch, so this works with the switch off too.
 - **U1:** a TO-220-footprint 5 V regulator. The **R-78E5.0-1.0** switching regulator is recommended:
@@ -98,10 +103,14 @@ J1 → F1 (blade fuse) → J2 pin 1 → main switch → J2 pin 2 → +12 V for t
 
 ## Current, heat and weight
 
-- **Copper.** The board uses standard 1 oz (35 µm) copper. The 12 V and valve tracks are 2.0 mm wide
-  (about 4 A for a 10 °C rise, IPC-2221), twice the 2 A fuse rating. +5 V and GND tracks are 1.0 mm
-  (about 2.4 A), and GND is also poured over both layers and stitched together with vias, so the valve
-  current has a wide return path. 2 oz copper isn't needed.
+- **Copper.** The board uses standard 1 oz (35 µm) copper. The 12 V and valve tracks are 2.5 mm wide:
+  about 4.6 A for a 10 °C rise (IPC-2221), more than 1.5 times the 3 A fuse rating. Where a track
+  meets a pad it narrows to the pad's width for the last few millimetres (the narrowest is 1.9 mm,
+  about 3.8 A, at Q1 on the through-hole board). GND tracks are 1.5 mm (about 3.2 A) and GND is also
+  poured over both layers and stitched together with vias, so the valve current has a wide return
+  path. +5 V tracks are 1.0 mm (about 2.4 A, against 0.6 A of load). None of the 12 V tracks change
+  layer, so no via carries the valve current; vias on the power nets would be 1.2 mm with a 0.6 mm
+  hole. 2 oz copper isn't needed.
 - **Heatsink space.** The area marked **U1 HEATSINK** on the board (about 18 × 19 mm, above the
   regulator's tab) is kept free of parts, so a TO-220 heatsink fits there. The electrolytic capacitors
   are kept away from it.
@@ -121,12 +130,35 @@ J1 → F1 (blade fuse) → J2 pin 1 → main switch → J2 pin 2 → +12 V for t
 4. Before plugging in the Nano and receiver, power the board from 12 V and check for 5 V between
    J3 pins 3 and 2.
 
-## Ordering the boards
+## Ordering the boards from JLCPCB
 
-Upload `WaterValveController-gerbers.zip` (or `smd/WaterValveController-SMD-gerbers.zip`) to any
-low-cost PCB maker (JLCPCB, PCBWay, OSH Park …) with these options: **2 layers, 1.6 mm thick, 1 oz
-copper, HASL or ENIG**. The design rules suit all of them: 0.25 mm minimum track, 0.2 mm clearance,
-0.6 / 0.3 mm vias. For an assembly service, also send the BOM and the positions file.
+Each board has a `JLCPCB` folder ([`JLCPCB/`](JLCPCB/) and [`smd/JLCPCB/`](smd/JLCPCB/)) with
+everything JLCPCB needs:
+
+| File | Upload it as |
+|------|--------------|
+| `*-gerbers.zip` | The PCB: gerbers (Protel file names, no X2 attributes) plus drill files and drill maps |
+| `*-BOM-JLCPCB.csv` | Bill of materials: Comment, Designator, Footprint, JLCPCB Part # |
+| `*-CPL-JLCPCB.csv` | Pick-and-place file: Designator, Mid X, Mid Y, Layer, Rotation |
+
+1. On jlcpcb.com, choose **Order now** and upload the gerber zip. Keep the defaults: **2 layers,
+   1.6 mm, 1 oz copper**; any colour, HASL or ENIG. The design rules suit any low-cost maker: 0.25 mm
+   minimum track, 0.2 mm clearance, 0.6 / 0.3 mm vias.
+2. Turn on **PCB Assembly**, top side, and upload the BOM and CPL files.
+3. In the BOM step, check every line is matched and in stock. Untick anything you would rather
+   solder yourself.
+4. In the placement preview, check the diodes, MOSFETs and electrolytic capacitors are the right
+   way round (the folder's README lists what to look for), then order.
+
+**Which board for assembly?** The **mixed SMD + THT board** (`smd/JLCPCB/`) is the one to have
+JLCPCB assemble: every part in its BOM has a confirmed part number, and its 32 small parts are
+machine-placed. The through-hole parts on it (terminals, JST headers, fuse holder, regulator,
+electrolytic capacitors) cost extra per solder joint, so you may prefer to solder those yourself.
+The through-hole board is nearly all through-hole parts, so it is better ordered bare and hand
+soldered; its JLCPCB files are there if you want them (3 parts have no confirmed part number).
+
+Not on either JLCPCB order: the two 15-pin sockets for the Nano (one reference, A1, covers both,
+and JLCPCB places one part per reference), the blade fuse, and the off-board parts.
 
 The clear **LOGO / TEXT AREA** (about 17 × 8 mm) has no tracks or vias, only the flat ground pour,
 so a silkscreen logo or text printed there will be crisp. In KiCad, place your logo there on the
@@ -135,8 +167,8 @@ F.Silkscreen layer. The board's name is on the back silkscreen.
 ## How the board reduces interference
 
 1. **Valve switch-off spike:** D2 flyback diode right at J3.
-2. **Valve current:** 2 mm tracks, and GND poured on both layers, so the valve current doesn't disturb
-   the Nano's ground.
+2. **Valve current:** 2.5 mm tracks, and GND poured on both layers, so the valve current doesn't
+   disturb the Nano's ground.
 3. **Decoupling:** C1 470 µF + C2 100 nF on 12 V, C3 100 nF + C4 100 µF at U1, C10 at the Nano's 5V
    pin, C6 at J3 for the flow sensor.
 4. **Flow input filter:** R1 10 kΩ pull-up gives clean edges. R2 1 kΩ + C5 10 nF filter out short
@@ -171,9 +203,12 @@ kicad-cli sch export netlist --format kicadxml -o /tmp/net.xml WaterValveControl
 python3 tools/check_netlist.py /tmp/net.xml      # compares every net against the intended design
 python3 tools/gen_pcb.py tht --jar freerouting-1.9.0.jar   # place, autoroute, pour, DRC, gerbers
 python3 tools/gen_pcb.py smd --jar freerouting-1.9.0.jar
+python3 tools/make_jlc.py                        # JLCPCB BOM, CPL and README
+python3 tools/make_jlc.py smd
 python3 tools/make_outputs.py                    # schematic PDF/SVG, BOM, images, zip
 python3 tools/make_outputs.py smd
 ```
 
 Part positions, the logo and heatsink areas and the silkscreen labels are in `tools/pcb_layout.py`.
+The JLCPCB part numbers are in `tools/make_jlc.py`.
 `gen_pcb.py --place-only` stops before routing, for checking a new layout.

@@ -58,7 +58,8 @@ MOSFET switches the 12 V to the valve and the flyback diode is on the board. In 
 version, wire the solenoid supply through the relay's **COM** and **NO** terminals and fit a
 flyback diode (e.g. 1N4007) across the coil, with the stripe towards +. Without it, the voltage
 spike when the coil switches off can reset the Nano or add false flow pulses. The sketch handles
-both normally-closed and normally-open valves (see `VALVE_NORMALLY_CLOSED` below).
+both valve types and is set for a **normally open** valve: water flows while the valve is unpowered,
+and the controller powers it only to stop the water (see `VALVE_NORMALLY_CLOSED` below).
 
 **Power:** a 12 V supply feeds the solenoid and a 5 V regulator into the Nano's **5V** pin. On the
 PCB the 12 V goes through the blade fuse first, then out to the illuminated rocker switch (J2) and
@@ -143,7 +144,7 @@ These are at the top of `WaterValveController.ino`.
 
 | Setting | Default | Change it when |
 |---------|---------|----------------|
-| `VALVE_NORMALLY_CLOSED` | `true` | Your valve lets water through with **no** power (normally open) → set `false` |
+| `VALVE_NORMALLY_CLOSED` | `false` | Set for a normally **open** valve (water flows with no power). If your valve needs power to let water through (normally closed) → set `true` |
 | `VALVE_DRIVE_ACTIVE_LOW` | `false` | Right for the PCB's MOSFET driver. A hand-built version with a relay module that switches on when IN is LOW (most of them) → set `true` |
 | `REMOTE_ACTIVE_LOW` | `false` | Your receiver has relay outputs (COM/NO) instead of logic outputs → set `true` |
 | `REMOTE_SELECT_RESETS_COUNT` | `false` | You want choosing a limit on the remote to also reset the count → set `true` |
@@ -235,6 +236,8 @@ power cuts, until you calibrate again.
 - Calibration: kept (stored in EEPROM).
 - Selected limit: kept (unless `REMEMBER_LIMIT = false`).
 - Water count: starts again at 0 L.
+- Valve: a normally open valve lets water through while the power is off, so a limit that
+  was reached before the power cut no longer holds the water back.
 
 ## Serial Monitor
 

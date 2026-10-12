@@ -42,11 +42,12 @@ VARIANTS = {
 # Design rules: fine for any low-cost 2-layer service (JLCPCB, PCBWay, OSH Park ...)
 RULES = dict(clearance=0.2, track=0.25, via=0.6, via_drill=0.3, edge=0.3)
 NETCLASSES = {
-    # name: (track width mm, clearance mm, nets). Widths are for 1 oz (35 um) copper and a 10 C rise
-    # (IPC-2221, outer layer): 2.0 mm carries about 4 A and 1.0 mm about 2.4 A. The fuse is 2 A.
-    'Power12V': (2.0, 0.3, ['+12V', '/12V_IN', '/12V_FUSED', '/SOL_OUT']),   # supply and valve current
-    'Power5V': (1.0, 0.25, ['+5V']),                     # Nano, ESP32, sensor (about 0.6 A peak)
-    'Ground': (1.0, 0.25, ['GND']),                      # plus a GND pour on both layers
+    # name: (track width, clearance, via diameter, via drill (all mm), nets). Widths are for 1 oz
+    # (35 um) copper and a 10 C rise (IPC-2221, outer layer): 2.5 mm carries about 4.6 A, 1.5 mm
+    # about 3.2 A and 1.0 mm about 2.4 A. The fuse is 3 A.
+    'Power12V': (2.5, 0.3, 1.2, 0.6, ['+12V', '/12V_IN', '/12V_FUSED', '/SOL_OUT']),  # supply and valve
+    'Power5V': (1.0, 0.25, 0.8, 0.4, ['+5V']),          # Nano, ESP32, sensor (about 0.6 A peak)
+    'Ground': (1.5, 0.25, 0.8, 0.4, ['GND']),           # valve return, plus a GND pour on both layers
 }
 
 F = pcbnew.FromMM
@@ -191,18 +192,18 @@ def new_board(path):
     dflt.SetClearance(F(RULES['clearance']))
     dflt.SetViaDiameter(F(RULES['via']))
     dflt.SetViaDrill(F(RULES['via_drill']))
-    for name, (width, clear, _nets) in NETCLASSES.items():
+    for name, (width, clear, via, drill, _nets) in NETCLASSES.items():
         nc = pcbnew.NETCLASS(name)
         nc.SetTrackWidth(F(width))
         nc.SetClearance(F(clear))
-        nc.SetViaDiameter(F(0.8))
-        nc.SetViaDrill(F(0.4))
+        nc.SetViaDiameter(F(via))
+        nc.SetViaDrill(F(drill))
         ns.m_NetClasses[name] = nc
     return board
 
 
 def netclass_of(name):
-    for cls, (_w, _c, nets) in NETCLASSES.items():
+    for cls, (*_dims, nets) in NETCLASSES.items():
         if name in nets:
             return cls
     return None
@@ -251,9 +252,11 @@ def add_footprints(board, comps, nets, place, project):
         fp.Value().SetVisible(False)
 
 
-def place_refs(board, w, h, avoid, labelled=()):
+def place_refs(board, w, h, avoid, labelled=(), fixed=None):
     """Puts each reference designator where it touches no pad, no other part's silkscreen and no
-    other text: inside the part's own outline if it fits there, otherwise just outside it."""
+    other text: inside the part's own outline if it fits there, otherwise just outside it.
+    fixed = {ref: (x, y, angle)} places those first, where the automatic search finds no room. The
+    angle is relative to the part, as KiCad stores it."""
     def box(x1, y1, x2, y2):
         return pcbnew.BOX2I(P(x1, y1), pcbnew.VECTOR2I(F(x2 - x1), F(y2 - y1)))
 
@@ -271,9 +274,22 @@ def place_refs(board, w, h, avoid, labelled=()):
     taken += [box(*a) for a in avoid]
     inside = box(0.35, 0.35, w - 0.35, h - 0.35)
     hidden = []
+    fixed = fixed or {}
+    for fp in fps:
+        if fp.GetReference() in fixed:
+            x, y, ang = fixed[fp.GetReference()]
+            t = fp.Reference()
+            t.SetTextSize(pcbnew.VECTOR2I(F(0.8), F(0.8)))
+            t.SetTextThickness(F(0.12))
+            t.SetTextAngleDegrees(ang)
+            t.SetPosition(P(x, y))
+            t.ClearBoundingBoxCache()
+            taken.append(grown(t.GetBoundingBox(), 0.1))
     order = sorted(fps, key=lambda fp: -fp.GetArea() if hasattr(fp, 'GetArea') else 0)
     for fp in order:
         ref, t = fp.GetReference(), fp.Reference()
+        if ref in fixed:
+            continue
         if ref.startswith('H') or ref in labelled or not t.IsVisible():
             t.SetVisible(False)
             continue
@@ -440,6 +456,12 @@ def stitch(board, w, h, pitch=4.5):
     zones = [z for z in board.Zones() if not z.GetIsRuleArea() and z.GetNetname() == 'GND']
     keep = [z for z in board.Zones() if z.GetIsRuleArea()]
     holes = [fp for fp in board.GetFootprints() if fp.GetReference().startswith('H')]
+    # Keep the via holes out of silkscreen text, which would otherwise lose part of a letter
+    texts = [d.GetBoundingBox() for d in board.GetDrawings() if d.GetClass() == 'PCB_TEXT'
+             and d.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS)]
+    texts += [fp.Reference().GetBoundingBox() for fp in board.GetFootprints() if fp.Reference().IsVisible()]
+    for bb in texts:
+        bb.Inflate(F(0.5))
     added = 0
     ring = [(math.cos(a) * 0.8, math.sin(a) * 0.8) for a in [i * math.pi / 4 for i in range(8)]]
     y = 1.5
@@ -450,6 +472,7 @@ def stitch(board, w, h, pitch=4.5):
             ok = all(all(z.GetFilledPolysList(z.GetLayer()).Contains(p) for p in pts) for z in zones)
             ok = ok and not any(k.GetDoNotAllowVias() and k.Outline().Contains(p) for k in keep for p in pts)
             ok = ok and all((fp.GetPosition() - P(x, y)).EuclideanNorm() > F(4.2) for fp in holes)
+            ok = ok and not any(bb.Contains(P(x, y)) for bb in texts)
             if ok:
                 v = pcbnew.PCB_VIA(board)
                 v.SetPosition(P(x, y))
@@ -493,6 +516,46 @@ def autoroute(board, work, jar, passes):
     if not os.path.exists(ses):
         raise SystemExit('Freerouting failed, see ' + os.path.join(work, 'freerouting.log'))
     import_ses(board, ses)
+    split_tees(board)
+
+
+def split_tees(board):
+    """Splits a track where another track of the same net ends partway along it, so the joint is
+    at a track end (KiCad's DRC otherwise reports the branch as dangling)."""
+    changed = True
+    while changed:
+        changed = False
+        tracks = [t for t in board.GetTracks() if t.GetClass() == 'PCB_TRACK']
+        for t in tracks:
+            a, b = t.GetStart(), t.GetEnd()
+            d = b - a
+            length2 = float(d.x) ** 2 + float(d.y) ** 2
+            if length2 == 0:
+                continue
+            for o in tracks:
+                if o is t or o.GetNetCode() != t.GetNetCode() or o.GetLayer() != t.GetLayer():
+                    continue
+                for p in (o.GetStart(), o.GetEnd()):
+                    u = ((p.x - a.x) * d.x + (p.y - a.y) * d.y) / length2
+                    if not 0.001 < u < 0.999:
+                        continue
+                    if abs((p.x - a.x) * d.y - (p.y - a.y) * d.x) / math.sqrt(length2) > 1000:  # 1 um
+                        continue
+                    rest = pcbnew.PCB_TRACK(board)
+                    rest.SetStart(p)
+                    rest.SetEnd(b)
+                    rest.SetWidth(t.GetWidth())
+                    rest.SetLayer(t.GetLayer())
+                    rest.SetNet(t.GetNet())
+                    rest.SetLocked(t.IsLocked())
+                    board.Add(rest)
+                    t.SetEnd(p)
+                    changed = True
+                    break
+                if changed:
+                    break
+            if changed:
+                break
 
 
 def import_ses(board, path):
@@ -553,10 +616,10 @@ def write_project_rules(pro_path):
                 track_width=RULES['track'], via_diameter=RULES['via'], via_drill=RULES['via_drill'],
                 wire_width=6)
     classes = [dict(base, name='Default')]
-    for name, (width, clear, _nets) in NETCLASSES.items():
-        classes.append(dict(base, name=name, track_width=width, clearance=clear, via_diameter=0.8, via_drill=0.4))
+    for name, (width, clear, via, drill, _nets) in NETCLASSES.items():
+        classes.append(dict(base, name=name, track_width=width, clearance=clear, via_diameter=via, via_drill=drill))
     ns['classes'] = classes
-    ns['netclass_patterns'] = [dict(netclass=name, pattern=n) for name, (_w, _c, nets) in NETCLASSES.items()
+    ns['netclass_patterns'] = [dict(netclass=name, pattern=n) for name, (*_dims, nets) in NETCLASSES.items()
                                for n in nets]
     ns.setdefault('meta', {'version': 3})
     bd = pro.setdefault('board', {}).setdefault('design_settings', {})
@@ -564,8 +627,9 @@ def write_project_rules(pro_path):
     rules.update(min_clearance=RULES['clearance'], min_track_width=0.2, min_via_diameter=RULES['via'],
                  min_through_hole_diameter=RULES['via_drill'], min_copper_edge_clearance=RULES['edge'],
                  min_hole_clearance=0.25, min_hole_to_hole=0.25)
-    bd['track_widths'] = [0.0, 0.25, 0.5, 1.0, 1.5]
-    bd['via_dimensions'] = [dict(diameter=0.0, drill=0.0), dict(diameter=0.6, drill=0.3), dict(diameter=0.8, drill=0.4)]
+    bd['track_widths'] = [0.0, 0.25, 0.5, 1.0, 1.5, 2.5]
+    bd['via_dimensions'] = [dict(diameter=0.0, drill=0.0), dict(diameter=0.6, drill=0.3), dict(diameter=0.8, drill=0.4),
+                          dict(diameter=1.2, drill=0.6)]
     with open(pro_path, 'w') as f:
         json.dump(pro, f, indent=2)
 
@@ -582,19 +646,20 @@ def kicad_cli(*args):
 def exports(pcb, outdir, name):
     gdir = tempfile.mkdtemp()
     layers = 'F.Cu,B.Cu,F.Paste,B.Paste,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts'
-    kicad_cli('pcb', 'export', 'gerbers', '--layers', layers, '--subtract-soldermask', '--no-x2',
+    kicad_cli('pcb', 'export', 'gerbers', '--layers', layers, '--subtract-soldermask', '--no-x2', '--no-netlist',
               '-o', gdir + '/', pcb)
     kicad_cli('pcb', 'export', 'drill', '--format', 'excellon', '--excellon-separate-th',
               '--generate-map', '--map-format', 'gerberx2', '-o', gdir + '/', pcb)
-    zpath = os.path.join(outdir, f'{name}-gerbers.zip')
+    # The gerber zip goes in the board's JLCPCB folder, with the BOM and placement files that
+    # tools/make_jlc.py writes there
+    os.makedirs(os.path.join(outdir, 'JLCPCB'), exist_ok=True)
+    zpath = os.path.join(outdir, 'JLCPCB', f'{name}-gerbers.zip')
     with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED) as z:
         for f in sorted(os.listdir(gdir)):
             z.write(os.path.join(gdir, f), f)
     shutil.rmtree(gdir)
     kicad_cli('pcb', 'export', 'pdf', '--layers', 'F.Cu,F.SilkS,Edge.Cuts,Dwgs.User', '-o',
               os.path.join(outdir, f'{name}-PCB-top.pdf'), pcb)
-    kicad_cli('pcb', 'export', 'pos', '--format', 'csv', '--units', 'mm', '--side', 'front', '-o',
-              os.path.join(outdir, f'{name}-positions.csv'), pcb)
     return zpath
 
 
@@ -627,7 +692,7 @@ def main():
         keepout(board, *k)
     for t in lay.get('texts', []):
         text(board, *t[:3], **(t[3] if len(t) > 3 else {}))
-    hidden = place_refs(board, w, h, [lay['logo']], lay.get('labelled', ()))
+    hidden = place_refs(board, w, h, [lay['logo']], lay.get('labelled', ()), lay.get('refs'))
     if hidden:
         print('no room on the silkscreen for:', ', '.join(hidden))
 

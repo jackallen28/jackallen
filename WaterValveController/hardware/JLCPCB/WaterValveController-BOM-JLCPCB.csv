@@ -1,0 +1,25 @@
+Comment,Designator,Footprint,JLCPCB Part #
+"470uF 25V electrolytic, 10 x 12.5 mm",C1,CP_Radial_D10.0mm_P5.00mm,C368591
+"100nF 50V X7R ceramic, 5.08 mm lead spacing","C2,C3,C6,C7,C9,C10",C_Disc_D5.0mm_W2.5mm_P5.00mm,C84772
+"100uF 16V electrolytic, 6.3 x 11 mm",C4,CP_Radial_D6.3mm_P2.50mm,C911212
+"10nF 50V X7R ceramic, 5.08 mm lead spacing",C5,C_Disc_D5.0mm_W2.5mm_P5.00mm,
+"47uF 16V electrolytic, 5 x 11 mm",C8,CP_Radial_D5.0mm_P2.00mm,C134586
+1N5408 3A 1000V diode,"D1,D2",D_DO-201AD_P5.08mm_Vertical_KathodeUp,C2460
+Keystone 3557-2 ATO blade fuse holder,F1,Fuseholder_Blade_ATO_Keystone_3557-2,C352820
+Screw terminal 2P 5.08 mm (KF128L-5.08-2P),J1,"TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",C474940
+Screw terminal 3P 5.08 mm (KF128L-5.08-3P),J2,"TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal",C474941
+Screw terminal 4P 5.08 mm (DB128L-5.08-4P),J3,"TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal",C2827883
+JST XH 4-pin header B4B-XH-A,J4,JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,C144395
+JST XH 2-pin header B2B-XH-A,"J5,J6,J7,J8",JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,C158012
+IRF9540NPBF P-MOSFET,Q1,TO-220-3_Vertical,C2575
+2N7000 N-MOSFET,Q2,TO-92_Inline_Wide,C232838
+10k 1% 1/4W metal film,"R1,R3,R18,R20",R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical,C57436
+1k 1% 1/4W metal film,"R2,R7,R8,R9,R10,R21",R_Axial_DIN0207_L6.3mm_D2.5mm,C57435
+330R 1% 1/4W metal film,"R4,R5,R6",R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical,C58608
+1.8k 1% 1/4W metal film,R11,R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal,
+3.3k 1% 1/4W metal film,R12,R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal,
+100k 1% 1/4W metal film,"R13,R14,R15,R16",R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal,C58597
+10R 1% 1/4W metal film,R17,R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical,C57437
+100R 1% 1/4W metal film,R19,R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical,C57438
+RECOM R-78E5.0-1.0 5 V switching regulator,U1,TO-220-3_Vertical,C3033024
+7-pin female header 2.54 mm (receiver socket),U2,PinSocket_1x07_P2.54mm_Vertical,C6684533
