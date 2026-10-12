@@ -54,7 +54,7 @@ The Nano boards in [`../hardware`](../hardware) are not changed by this one.
 | R37, R38 1 kΩ | serial lines between the CH340N and D0 / D1 |
 | D3 B5819W | lets the board run from USB alone for uploads, and stops 5 V flowing back into the computer |
 | D5 + R40 | the "L" LED on D13 |
-| J10 ICSP | for burning the bootloader once |
+| J10 ICSP | standard 6-pin AVR ISP header, for burning the bootloader once (see Programming) |
 
 Not included, to save space: a reset button (unplugging the power, or uploading, resets it) and a
 power LED (the rocker switch's lamp shows the power).
@@ -79,16 +79,59 @@ nearest the USB socket and its **ANT** end towards the bottom.
 
 ## Programming
 
-The ATmega328P from JLCPCB is blank, so it needs the Arduino bootloader once. Your Nano can do it:
+**Day to day:** once the chip has its bootloader, the board uploads over USB-C like any Arduino:
+choose **Tools → Board → Arduino Uno** and the board's port. Windows 10/11, macOS and Linux have
+the CH340 driver built in.
 
-1. On the Nano, upload **File → Examples → ArduinoISP**.
-2. Unplug the ESP32 from J4 (it shares D11 and D12 with the ICSP pins). Push a 2 × 3 pin header
-   into J10, or solder one in, and wire it to the Nano: J10 pin 1 MISO → Nano D12, pin 2 → 5V,
-   pin 3 SCK → D13, pin 4 MOSI → D11, pin 5 RESET → D10, pin 6 → GND. Pin 1 is the square pad.
-3. In the IDE choose **Tools → Board → Arduino Uno**, **Tools → Programmer → Arduino as ISP**, then
-   **Tools → Burn Bootloader**. This also sets the fuses (16 MHz crystal, brown-out reset at 2.7 V).
-4. From then on, plug in USB-C and upload as **Arduino Uno**, like any Arduino. Windows 10/11, macOS
-   and Linux have the CH340 driver built in.
+**Once, with an external programmer:** the ATmega328P from JLCPCB is blank (no bootloader, running
+on its 1 MHz internal clock), so the Arduino bootloader goes in once through the ICSP header **J10**.
+J10 has the standard 6-pin AVR ISP pinout, so any AVR ISP programmer plugs straight on:
+
+```
+            J10 (looking at the top of the board)
+   pin 1  MISO (D12)   ■ ●  pin 2  +5V
+   pin 3  SCK  (D13)   ● ●  pin 4  MOSI (D11)
+   pin 5  RESET        ● ●  pin 6  GND
+   (pin 1 is the square pad)
+```
+
+The extra parts on these lines are what an Arduino Uno has (10 kΩ pull-up and 100 nF auto-reset on
+RESET, the D13 LED on SCK) plus the ESP divider on MOSI, all light enough for any programmer. J10 is
+left empty: solder in a 2 × 3 pin header (2.54 mm), or cut one from a 2 × 40 strip. There is room
+around it for a 6-pin ribbon-cable plug.
+
+### Recommended: Pololu USB AVR Programmer v2.1
+
+About A$30 (Core Electronics stocks it as POLOLU-3172). It comes with the 6-pin cable, its default
+ISP speed (114 kHz) suits a blank 1 MHz chip, it adapts to 5 V by itself, and the Arduino IDE
+supports it.
+
+1. Unplug the ESP32 from J4 (it shares D11 and D12 with the ICSP pins).
+2. Power the board from its own USB-C (any USB charger or computer port). The programmer does not
+   supply power by default, and the board has more capacitance on 5 V than its power output can start.
+3. Plug the 6-pin cable onto J10 with the cable's pin 1 (red stripe / triangle on the plug) on the
+   square pad, and the programmer into the computer.
+4. In the Arduino IDE: **Tools → Board → Arduino Uno**, **Tools → Programmer → Atmel STK500
+   development board**, **Tools → Port →** the programmer's *programming* port (it shows two ports),
+   then **Tools → Burn Bootloader**. This sets the fuses (16 MHz crystal, brown-out reset at 2.7 V)
+   and writes the Uno bootloader. It takes about a minute.
+5. Unplug the programmer and upload the sketch over the board's USB-C as an Arduino Uno.
+
+### Free: your Arduino Nano as the programmer
+
+1. Upload **File → Examples → 11.ArduinoISP → ArduinoISP** to the Nano.
+2. Put a 10 µF capacitor between the Nano's RESET and GND (+ leg to RESET), so the IDE does not
+   reset the Nano while it is programming.
+3. Unplug the ESP32 from J4, then wire the Nano to J10: D12 → pin 1, D13 → pin 3, D11 → pin 4,
+   D10 → pin 5, GND → pin 6, and 5V → pin 2 (or leave 5V off and power the board from its USB-C).
+4. In the IDE: **Tools → Board → Arduino Uno**, **Tools → Programmer → Arduino as ISP**, the Nano's
+   port, then **Tools → Burn Bootloader**.
+
+### Not recommended for this: cheap USBasp clones
+
+They work, but they come with a 10-pin cable (you need a 10-to-6-pin adapter), need a driver
+installed with Zadig on Windows, and many still have old firmware that is too fast for a blank chip
+unless you fit their "slow SCK" jumper.
 
 The board runs from USB alone for programming and testing; the valve only switches with 12 V
 connected.
