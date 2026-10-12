@@ -1,0 +1,3 @@
+(version 1)
+(rule "One thermal spoke is enough: every GND pad also has a routed track"
+  (constraint min_resolved_spokes 1))

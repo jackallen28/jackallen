@@ -1,0 +1,491 @@
+(kicad_symbol_lib (version 20220914) (generator kicad_symbol_editor)
+  (symbol
+    "Solenoid_Valve"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762)
+      hide)
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "SV"
+      (at -2.54 3.81 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "Solenoid_Valve"
+      (at -2.54 -3.81 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "Solenoid_Valve_0_1"
+      (rectangle
+        (start -2.54 2.54)
+        (end 2.54 -2.54)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background)))
+      (arc
+        (start 0 2.54)
+        (mid 0.635 1.905)
+        (end 0 1.27)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (arc
+        (start 0 1.27)
+        (mid 0.635 0.635)
+        (end 0 0)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (arc
+        (start 0 0)
+        (mid 0.635 -0.635)
+        (end 0 -1.27)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (arc
+        (start 0 -1.27)
+        (mid 0.635 -1.905)
+        (end 0 -2.54)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type none)))
+      (text
+        "+"
+        (at -1.524 3.81 0)
+        (effects
+          (font
+            (size 1.27 1.27))))
+      (text
+        "-"
+        (at -1.524 -3.81 0)
+        (effects
+          (font
+            (size 1.27 1.27)))))
+    (symbol
+      "Solenoid_Valve_1_1"
+      (pin
+        passive
+        line
+        (at 0 5.08 270)
+        (length 2.54)
+        (name
+          "+"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 0 -5.08 90)
+        (length 2.54)
+        (name
+          "-"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "YF-G1_Flow_Sensor"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "FS"
+      (at -10.16 6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "YF-G1"
+      (at -10.16 -6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "YF-G1_Flow_Sensor_0_1"
+      (rectangle
+        (start -10.16 5.08)
+        (end 7.62 -5.08)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background))))
+    (symbol
+      "YF-G1_Flow_Sensor_1_1"
+      (pin
+        power_in
+        line
+        (at 10.16 2.54 180)
+        (length 2.54)
+        (name
+          "VCC-red"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        open_collector
+        line
+        (at 10.16 0 180)
+        (length 2.54)
+        (name
+          "SIG-yellow"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        power_in
+        line
+        (at 10.16 -2.54 180)
+        (length 2.54)
+        (name
+          "GND-black"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "Rocker_Switch_LED"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "SW"
+      (at -10.16 6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "Rocker_Switch_LED"
+      (at -10.16 -6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "Rocker_Switch_LED_0_1"
+      (rectangle
+        (start -10.16 5.08)
+        (end 7.62 -5.08)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background)))
+      (text
+        "rocker + lamp"
+        (at -8.255 0 900)
+        (effects
+          (font
+            (size 1 1)))))
+    (symbol
+      "Rocker_Switch_LED_1_1"
+      (pin
+        passive
+        line
+        (at 10.16 2.54 180)
+        (length 2.54)
+        (name
+          "POWER"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 0 180)
+        (length 2.54)
+        (name
+          "LOAD"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 -2.54 180)
+        (length 2.54)
+        (name
+          "LAMP-GND"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "RX480E"
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "U"
+      (at -7.62 8.89 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "RX480E"
+      (at -7.62 -8.89 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "RX480E_0_1"
+      (rectangle
+        (start -7.62 7.62)
+        (end 7.62 -7.62)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background)))
+      (text
+        "433 MHz"
+        (at 2.794 0 900)
+        (effects
+          (font
+            (size 1 1)))))
+    (symbol
+      "RX480E_1_1"
+      (pin
+        power_in
+        line
+        (at 0 -10.16 90)
+        (length 2.54)
+        (name
+          "GND"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        power_in
+        line
+        (at 0 10.16 270)
+        (length 2.54)
+        (name
+          "+V"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        output
+        line
+        (at -10.16 5.08 0)
+        (length 2.54)
+        (name
+          "D0"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        output
+        line
+        (at -10.16 2.54 0)
+        (length 2.54)
+        (name
+          "D1"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "4"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        output
+        line
+        (at -10.16 0 0)
+        (length 2.54)
+        (name
+          "D2"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "5"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        output
+        line
+        (at -10.16 -2.54 0)
+        (length 2.54)
+        (name
+          "D3"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "6"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        output
+        line
+        (at -10.16 -5.08 0)
+        (length 2.54)
+        (name
+          "VT"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "7"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+)

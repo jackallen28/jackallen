@@ -1,7 +1,7 @@
 /*
   Water Valve Controller
   ======================
-  Arduino Nano + YF-G1 hall-effect flow sensor + relay-driven solenoid valve.
+  Arduino Nano + YF-G1 hall-effect flow sensor + MOSFET-switched 12 V solenoid valve.
 
   - Pick one of three limits (25 L, 50 L, 100 L by default, see LIMIT VOLUMES
     below) or FREE FLOW with the push button (each press steps to the next
@@ -44,9 +44,9 @@ const uint8_t PIN_BUTTON      = 4;   // momentary push button to GND
 const uint8_t PIN_LED_LIMIT_1 = 5;
 const uint8_t PIN_LED_LIMIT_2 = 6;
 const uint8_t PIN_LED_LIMIT_3 = 7;
-const uint8_t PIN_RELAY       = 8;   // relay module IN (switches the solenoid)
+const uint8_t PIN_VALVE       = 8;   // valve driver: the PCB's MOSFET switch (or a relay module's IN)
 const uint8_t PIN_ESP_TX      = 11;  // data out to the ESP (through a 5 V -> 3.3 V divider)
-const uint8_t PIN_ESP_RX      = 12;  // reserved for data back from the ESP (not used yet)
+const uint8_t PIN_ESP_RX      = 12;  // data from the ESP (PCB connector J4 pin 4), for later use
 // Receiver outputs for remote buttons A, B, C, D. On the RX480R_4CH V4 that was
 // tested, button A drives D3 (wired to A3) and button D drives D0 (A0). If a
 // button picks the wrong limit, change the order here.
@@ -58,14 +58,17 @@ const uint8_t PIN_REMOTE[4]   = { A3, A2, A1, A0 };
 
 // Solenoid valve type.
 //   true  = normally CLOSED valve (the most common 12 V type): it must be
-//           powered to let water through, so the relay is ON while water flows.
-//   false = normally OPEN valve: it is powered to stop the water, so the relay
+//           powered to let water through, so it is powered while water flows.
+//   false = normally OPEN valve: it is powered to stop the water, so it
 //           is OFF while water flows.
 const bool VALVE_NORMALLY_CLOSED = true;
 
-// Most cheap relay modules switch ON when their IN pin is pulled LOW.
-// Set to false if your relay module switches ON when IN is HIGH.
-const bool RELAY_ACTIVE_LOW = true;
+// How D8 switches the valve on.
+//   false = the controller PCB's MOSFET driver: D8 HIGH powers the valve. Also right for
+//           relay modules that switch ON when IN is HIGH.
+//   true  = a relay module that switches ON when IN is pulled LOW (most cheap ones,
+//           as used in the hand-wired version).
+const bool VALVE_DRIVE_ACTIVE_LOW = false;
 
 // 433 MHz receiver outputs. The remote must be paired in MOMENTARY mode (output
 // on only while the remote button is held) so that 2 s and 20 s holds can be timed.
@@ -271,8 +274,8 @@ float pulsesToLitres(uint32_t pulses) {
 // ---------------------------------------------------------------------------
 void setValveOpen(bool open) {
   valveOpen = open;
-  bool relayOn = VALVE_NORMALLY_CLOSED ? open : !open;
-  digitalWrite(PIN_RELAY, (relayOn != RELAY_ACTIVE_LOW) ? HIGH : LOW);
+  bool powered = VALVE_NORMALLY_CLOSED ? open : !open;
+  digitalWrite(PIN_VALVE, (powered != VALVE_DRIVE_ACTIVE_LOW) ? HIGH : LOW);
 }
 
 // ---------------------------------------------------------------------------
@@ -658,9 +661,9 @@ void report(unsigned long now) {
 // Setup and main loop
 // ---------------------------------------------------------------------------
 void setup() {
-  // Set the relay level before enabling the output so the valve does not glitch.
+  // Set the valve level before enabling the output so the valve does not glitch.
   setValveOpen(true);
-  pinMode(PIN_RELAY, OUTPUT);
+  pinMode(PIN_VALVE, OUTPUT);
   setValveOpen(true);
 
   pinMode(PIN_BUTTON, INPUT_PULLUP);

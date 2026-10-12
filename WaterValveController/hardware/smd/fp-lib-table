@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "WaterValve")(type "KiCad")(uri "${KIPRJMOD}/../WaterValve.pretty")(options "")(descr "Arduino Nano footprint for a socketed Nano"))
+)

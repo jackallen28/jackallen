@@ -1,146 +1,5 @@
 (kicad_symbol_lib (version 20220914) (generator kicad_symbol_editor)
   (symbol
-    "Relay_Module"
-    (pin_numbers hide)
-    (pin_names
-      (offset 0.762))
-    (in_bom yes)
-    (on_board yes)
-    (property
-      "Reference"
-      "K"
-      (at -7.62 6.35 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (justify left bottom)))
-    (property
-      "Value"
-      "Relay_Module"
-      (at -7.62 -6.35 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (justify left top)))
-    (property
-      "Footprint"
-      ""
-      (at 0 0 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        hide))
-    (property
-      "Datasheet"
-      ""
-      (at 0 0 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        hide))
-    (symbol
-      "Relay_Module_0_1"
-      (rectangle
-        (start -7.62 5.08)
-        (end 7.62 -5.08)
-        (stroke
-          (width 0.254)
-          (type default))
-        (fill
-          (type background))))
-    (symbol
-      "Relay_Module_1_1"
-      (pin
-        power_in
-        line
-        (at -10.16 2.54 0)
-        (length 2.54)
-        (name
-          "VCC"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "1"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        input
-        line
-        (at -10.16 0 0)
-        (length 2.54)
-        (name
-          "IN"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "2"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        power_in
-        line
-        (at -10.16 -2.54 0)
-        (length 2.54)
-        (name
-          "GND"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "3"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        passive
-        line
-        (at 10.16 2.54 180)
-        (length 2.54)
-        (name
-          "COM"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "4"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        passive
-        line
-        (at 10.16 0 180)
-        (length 2.54)
-        (name
-          "NO"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "5"
-          (effects
-            (font
-              (size 1.27 1.27)))))
-      (pin
-        passive
-        line
-        (at 10.16 -2.54 180)
-        (length 2.54)
-        (name
-          "NC"
-          (effects
-            (font
-              (size 1.27 1.27))))
-        (number
-          "6"
-          (effects
-            (font
-              (size 1.27 1.27)))))))
-  (symbol
     "Solenoid_Valve"
     (pin_numbers hide)
     (pin_names
@@ -358,6 +217,108 @@
         (length 2.54)
         (name
           "GND-black"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "3"
+          (effects
+            (font
+              (size 1.27 1.27)))))))
+  (symbol
+    "Rocker_Switch_LED"
+    (pin_numbers hide)
+    (pin_names
+      (offset 0.762))
+    (in_bom yes)
+    (on_board yes)
+    (property
+      "Reference"
+      "SW"
+      (at -10.16 6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left bottom)))
+    (property
+      "Value"
+      "Rocker_Switch_LED"
+      (at -10.16 -6.35 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left top)))
+    (property
+      "Footprint"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (property
+      "Datasheet"
+      ""
+      (at 0 0 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        hide))
+    (symbol
+      "Rocker_Switch_LED_0_1"
+      (rectangle
+        (start -10.16 5.08)
+        (end 7.62 -5.08)
+        (stroke
+          (width 0.254)
+          (type default))
+        (fill
+          (type background)))
+      (text
+        "rocker + lamp"
+        (at -8.255 0 900)
+        (effects
+          (font
+            (size 1 1)))))
+    (symbol
+      "Rocker_Switch_LED_1_1"
+      (pin
+        passive
+        line
+        (at 10.16 2.54 180)
+        (length 2.54)
+        (name
+          "POWER"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "1"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 0 180)
+        (length 2.54)
+        (name
+          "LOAD"
+          (effects
+            (font
+              (size 1.27 1.27))))
+        (number
+          "2"
+          (effects
+            (font
+              (size 1.27 1.27)))))
+      (pin
+        passive
+        line
+        (at 10.16 -2.54 180)
+        (length 2.54)
+        (name
+          "LAMP-GND"
           (effects
             (font
               (size 1.27 1.27))))

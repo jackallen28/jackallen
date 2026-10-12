@@ -1,6 +1,8 @@
 """Generates the Water Valve Controller KiCad 7 project.
 
-Usage: python3 gen.py OUT_DIR
+Usage: python3 gen_schematic.py OUT_DIR [tht|smd]
+
+The schematic is the same for both boards; the variant only changes footprints and part values.
 """
 import json
 import math
@@ -12,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sexp import parse, dump  # noqa: E402
 
 PROJECT = "WaterValveController"
+VARIANT = 'tht'
 LIBDIR = "/usr/share/kicad/symbols/"
 NS = uuidlib.UUID("6b1d8f9e-3c0a-4c55-9e2e-5a7d2b9c1f00")
 _uuid_counter = [0]
@@ -96,14 +99,6 @@ def custom_symbol(name, ref, value, body, pins, pin_names_hide=False, extra_grap
 
 
 CUSTOM = {
-    'Relay_Module': custom_symbol(
-        'Relay_Module', 'K', 'Relay_Module', (-7.62, 5.08, 7.62, -5.08),
-        [('1', 'VCC', 'power_in', -10.16, 2.54, 0, 2.54),
-         ('2', 'IN', 'input', -10.16, 0, 0, 2.54),
-         ('3', 'GND', 'power_in', -10.16, -2.54, 0, 2.54),
-         ('4', 'COM', 'passive', 10.16, 2.54, 180, 2.54),
-         ('5', 'NO', 'passive', 10.16, 0, 180, 2.54),
-         ('6', 'NC', 'passive', 10.16, -2.54, 180, 2.54)]),
     'Solenoid_Valve': custom_symbol(
         'Solenoid_Valve', 'SV', 'Solenoid_Valve', (-2.54, 2.54, 2.54, -2.54),
         [('1', '+', 'passive', 0, 5.08, 270, 2.54),
@@ -122,6 +117,12 @@ CUSTOM = {
         [('1', 'VCC-red', 'power_in', 10.16, 2.54, 180, 2.54),
          ('2', 'SIG-yellow', 'open_collector', 10.16, 0, 180, 2.54),
          ('3', 'GND-black', 'power_in', 10.16, -2.54, 180, 2.54)]),
+    'Rocker_Switch_LED': custom_symbol(
+        'Rocker_Switch_LED', 'SW', 'Rocker_Switch_LED', (-10.16, 5.08, 7.62, -5.08),
+        [('1', 'POWER', 'passive', 10.16, 2.54, 180, 2.54),
+         ('2', 'LOAD', 'passive', 10.16, 0, 180, 2.54),
+         ('3', 'LAMP-GND', 'passive', 10.16, -2.54, 180, 2.54)],
+        extra_graphics=['(text "rocker + lamp" (at -8.255 0 900) (effects (font (size 1 1))))']),
     'RX480E': custom_symbol(
         'RX480E', 'U', 'RX480E', (-7.62, 7.62, 7.62, -7.62),
         [('1', 'GND', 'power_in', 0, -10.16, 90, 2.54),
@@ -186,6 +187,14 @@ class Sch:
     def add(self, lib_id, ref, value, x, y, rot=0, mirror=False, fp='', ref_at=None, val_at=None,
             ref_just='left', val_just='left', hide_value=False, on_board=True, in_bom=True,
             fields=None, desc=''):
+        if VARIANT == 'tht' and ref in THT_UPRIGHT:
+            fp = FP_R_UPRIGHT
+        if VARIANT == 'smd':
+            lib_id = SMD_SYMBOL.get(ref, lib_id)
+            fp = SMD_FP.get(fp, fp)
+            if ref in SMD_PART:
+                fp, value, desc = SMD_PART[ref]
+            desc = SMD_DESC.get(desc, desc)
         sym = self.libsym(lib_id)
         pins = pins_of(sym)
         u = uid(ref)
@@ -196,7 +205,7 @@ class Sch:
         is_power = ref.startswith('#')
 
         fang = 90 if rot in (90, 270) else 0
-        if rot == 90:
+        if rot == 90 or (rot == 180 and not mirror):
             # KiCad flips text that would read upside down, which mirrors its justification
             swap = {'left': 'right', 'right': 'left'}
             ref_just, val_just = swap.get(ref_just, ref_just), swap.get(val_just, val_just)
@@ -308,149 +317,201 @@ class Sch:
 # ---------------------------------------------------------------------------
 # Footprints
 # ---------------------------------------------------------------------------
-FP_R = 'Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal'
+# Through-hole board. Resistors lie flat (7.62 mm pitch) so most of them fit under the Nano, which
+# stands on female headers; the rest stand upright.
+FP_R = 'Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal'
+FP_R_UPRIGHT = 'Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical'
+THT_UPRIGHT = ('R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R17', 'R18', 'R19', 'R20')
 FP_C = 'Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm'
 FP_CP10 = 'Capacitor_THT:CP_Radial_D10.0mm_P5.00mm'
 FP_CP6 = 'Capacitor_THT:CP_Radial_D6.3mm_P2.50mm'
-FP_D = 'Diode_THT:D_DO-201AD_P15.24mm_Horizontal'
-FP_LED = 'LED_THT:LED_D5.0mm'
+FP_CP5 = 'Capacitor_THT:CP_Radial_D5.0mm_P2.00mm'
+FP_D = 'Diode_THT:D_DO-201AD_P5.08mm_Vertical_KathodeUp'
 FP_TB2 = 'TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal'
 FP_TB3 = 'TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal'
-FP_TB6 = 'TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-6-5.08_1x06_P5.08mm_Horizontal'
-FP_HDR3 = 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical'
-FP_FUSE = 'Fuse:Fuseholder_Cylinder-5x20mm_Stelvio-Kontek_PTF78_Horizontal_Open'
+FP_TB4 = 'TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal'
+FP_XH2 = 'Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical'
+FP_XH4 = 'Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical'
+# Keystone 3557-2 "2 in 1" holder for standard ATO/ATC blade fuses (made by gen_pcb.py)
+FP_FUSE = 'WaterValve:Fuseholder_Blade_ATO_Keystone_3557-2'
 FP_TO220 = 'Package_TO_SOT_THT:TO-220-3_Vertical'
-FP_NANO = 'Module:Arduino_Nano'
-FP_SW = 'Button_Switch_THT:SW_PUSH_6mm'
+FP_TO92 = 'Package_TO_SOT_THT:TO-92_Inline_Wide'
+# Arduino_Nano with a courtyard round the pin rows only: low parts fit under a socketed Nano.
+FP_NANO = 'WaterValve:Arduino_Nano_Socketed'
 FP_SOCK7 = 'Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical'
-FP_CP5 = 'Capacitor_THT:CP_Radial_D5.0mm_P2.00mm'
-FP_HOLE = 'MountingHole:MountingHole_3.2mm_M3'
+FP_HOLE = 'MountingHole:MountingHole_4.3mm_M4'
+
+# Mixed SMD + THT board: SMD wherever it is smaller and just as robust (resistors, ceramic capacitors,
+# diodes, MOSFETs). Parts that take mechanical load, or are no smaller in SMD, stay through-hole: screw
+# terminals, JST connectors, the receiver socket, the regulator (TO-220 / R-78E SIP), the fuse holder,
+# the electrolytic capacitors (radial cans are smaller than SMD ones) and the Nano.
+SMD_FP = {
+    FP_R: 'Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder',
+    FP_R_UPRIGHT: 'Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder',
+    FP_C: 'Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder',
+}
+SMD_PART = {
+    'D1': ('Diode_SMD:D_SMC', 'S3M', 'Reverse-polarity crowbar (3 A 1000 V, SMD 1N5408): conducts and blows F1 '
+                                    'if the supply is reversed'),
+    'D2': ('Diode_SMD:D_SMC', 'S3M', 'Flyback diode across the valve output (3 A 1000 V, SMD 1N5408)'),
+    'Q1': ('Package_TO_SOT_SMD:TO-252-2', 'IRFR5305', 'High-side P-MOSFET valve switch (DPAK, -55 V, -31 A, 65 mOhm)'),
+    'Q2': ('Package_TO_SOT_SMD:SOT-23', '2N7002', 'Logic-level N-MOSFET that drives the Q1 gate'),
+}
+SMD_SYMBOL = {'Q2': 'Transistor_FET:2N7002'}   # IRFR5305 (DPAK) has the IRF9540N pin order: G, D, S
+SMD_DESC = {}
 
 
 def build():
     s = Sch()
-    G = 2.54
 
     # ======================= POWER ==========================================
-    s.text('POWER: 12 V IN, FUSE, REVERSE-POLARITY CROWBAR, 5 V REGULATOR', (20.32, 33.02), 2, True)
+    s.text('POWER IN: BLADE FUSE, MAIN SWITCH, REVERSE-POLARITY CROWBAR, 5 V REGULATOR', (20.32, 33.02), 2, True)
     j1 = s.add('Connector:Screw_Terminal_01x02', 'J1', '12V DC IN', 30.48, 50.8, mirror=True, fp=FP_TB2,
                ref_at=(27.94, 45.72), val_at=(27.94, 58.42), ref_just='center', val_just='center',
-               desc='12 V DC supply input, 2-way 5.08 mm screw terminal')
-    f1 = s.add('Device:Fuse', 'F1', '2A slow', 50.8, 50.8, rot=90, fp=FP_FUSE,
+               desc='12 V DC supply input: 1 = +12 V, 2 = GND. 2-way 5.08 mm screw terminal')
+    f1 = s.add('Device:Fuse', 'F1', '2A blade (ATO)', 50.8, 50.8, rot=90, fp=FP_FUSE,
                ref_at=(50.8, 46.99), val_at=(50.8, 54.61), ref_just='center', val_just='center',
-               desc='5x20 mm fuse holder + 2 A slow-blow fuse')
-    s.wire(j1['pins']['1'], f1['pins']['1'])
-    # GND return from J1 pin 2 (star point for the valve return is J1)
+               desc='PCB holder for standard ATO/ATC blade fuses (Keystone 3557-2) + 2 A blade fuse')
+    s.wire(j1['pins']['1'], (40.64, 50.8), f1['pins']['1'])
+    s.label('12V_IN', (40.64, 50.8))
+    # GND return from J1 pin 2
     gx = 38.1
     s.wire(j1['pins']['2'], (gx, 53.34), (gx, 60.96))
     s.wire((gx, 60.96), (gx, 66.04))
     s.power('GND', (gx, 66.04), show=False)
     s.flag((gx, 60.96), rot=270)
-
-    bus_y = 50.8
-    xs = dict(flag=58.42, d1=66.04, c1=81.28, c2=96.52)
-    u1 = s.add('Regulator_Linear:L7805', 'U1', 'R-78E5.0-1.0 or L7805', 109.22, bus_y, fp=FP_TO220,
-               ref_at=(109.22, 44.45), val_at=(109.22, 46.99), ref_just='center', val_just='center',
-               desc='5 V regulator, TO-220 pinout IN-GND-OUT: R-78E5.0-1.0 switcher (recommended with the ESP), or L7805 + heatsink')
-    d1 = s.add('Device:D', 'D1', '1N5408', xs['d1'], 57.15, rot=270, fp=FP_D,
-               ref_at=(xs['d1'] + 2.54, 55.88), val_at=(xs['d1'] + 2.54, 58.42),
+    # Fused 12 V: crowbar diode, then out to the main switch
+    s.wire(f1['pins']['2'], (58.42, 50.8), (71.12, 50.8), (76.2, 50.8), (81.28, 50.8))
+    s.label('12V_FUSED', (58.42, 50.8))
+    s.flag((76.2, 50.8))
+    d1 = s.add('Device:D', 'D1', '1N5408', 71.12, 57.15, rot=270, fp=FP_D,
+               ref_at=(68.58, 55.88), val_at=(68.58, 58.42), ref_just='right', val_just='right',
                desc='Reverse-polarity crowbar: conducts and blows F1 if the supply is reversed')
-    c1 = s.add('Device:C_Polarized', 'C1', '470uF 25V', xs['c1'], 57.15, fp=FP_CP10,
+    s.junction((71.12, 50.8))
+    s.junction((76.2, 50.8))
+    s.wire((71.12, 50.8), d1['pins']['K'])
+    s.wire(d1['pins']['A'], (71.12, 66.04))
+    s.power('GND', (71.12, 66.04), show=False)
+    j2 = s.add('Connector:Screw_Terminal_01x03', 'J2', 'MAIN SWITCH', 86.36, 53.34, fp=FP_TB3,
+               ref_at=(88.9, 46.99), val_at=(88.9, 59.69), ref_just='center', val_just='center',
+               desc='Main (rocker) switch: 1 = fused 12 V to the switch, 2 = switched 12 V back, 3 = GND for '
+                    'the switch lamp')
+    Q = j2['pins']
+    s.wire(Q['2'], (76.2, Q['2'][1]), (76.2, 71.12), (76.2, 81.28))
+    s.flag((76.2, 71.12), rot=90)
+    s.junction((76.2, 71.12))
+    s.wire(Q['3'], (78.74, Q['3'][1]), (78.74, 66.04))
+    s.power('GND', (78.74, 66.04), show=False)
+    # Switched 12 V: bulk capacitor, regulator
+    bus = 81.28
+    xs = dict(p12=81.28, c1=86.36, c2=101.6, u1=116.84, c3=132.08, c4=144.78, p5=154.94)
+    u1 = s.add('Regulator_Linear:L7805', 'U1', 'R-78E5.0-1.0 or L7805', xs['u1'], bus, fp=FP_TO220,
+               ref_at=(xs['u1'], 74.93), val_at=(xs['u1'], 77.47), ref_just='center', val_just='center',
+               desc='5 V regulator, TO-220 pinout IN-GND-OUT: R-78E5.0-1.0 switcher (recommended, runs cool), '
+                    'or L7805 with a heatsink')
+    c1 = s.add('Device:C_Polarized', 'C1', '470uF 25V', xs['c1'], 87.63, fp=FP_CP10,
                desc='Bulk capacitor, 12 V rail, 105 C electrolytic')
-    c2 = s.add('Device:C', 'C2', '100nF', xs['c2'], 57.15, fp=FP_C, desc='Ceramic, 12 V rail at U1 input')
-    pts = [f1['pins']['2'], (xs['flag'], bus_y), (xs['d1'], bus_y), (xs['c1'], bus_y), (xs['c2'], bus_y), u1['pins']['IN']]
-    s.wire(*pts)
-    s.flag((xs['flag'], bus_y))
-    for k in ('d1', 'c1', 'c2'):
-        s.junction((xs[k], bus_y))
-    s.power('+12V', (xs['d1'], bus_y))
-    s.wire((xs['d1'], bus_y), d1['pins']['K'])
-    s.wire((xs['c1'], bus_y), c1['pins']['1'])
-    s.wire((xs['c2'], bus_y), c2['pins']['1'])
-    for p in (d1['pins']['A'], c1['pins']['2'], c2['pins']['2'], u1['pins']['GND']):
-        s.wire(p, (p[0], 66.04))
-        s.power('GND', (p[0], 66.04), show=False)
-    c3x, c4x, p5x = 124.46, 137.16, 147.32
-    c3 = s.add('Device:C', 'C3', '100nF', c3x, 57.15, fp=FP_C, desc='Ceramic, 5 V rail at U1 output')
-    c4 = s.add('Device:C_Polarized', 'C4', '100uF 16V', c4x, 57.15, fp=FP_CP6, desc='Electrolytic, 5 V rail')
-    s.wire(u1['pins']['OUT'], (c3x, bus_y), (c4x, bus_y), (p5x, bus_y))
-    s.junction((c3x, bus_y))
-    s.junction((c4x, bus_y))
-    s.power('+5V', (p5x, bus_y))
-    s.wire((c3x, bus_y), c3['pins']['1'])
-    s.wire((c4x, bus_y), c4['pins']['1'])
-    for p in (c3['pins']['2'], c4['pins']['2']):
-        s.wire(p, (p[0], 66.04))
-        s.power('GND', (p[0], 66.04), show=False)
-    s.text('F1 + D1: if the supply is connected backwards, D1 conducts and blows F1.\n'
-           'U1: the ESP32-C3 Wi-Fi peaks take the 5 V load to about 0.5 A. Use a pin-compatible switching\n'
-           'regulator (e.g. R-78E5.0-1.0) or a 5 V buck module wired to IN / GND / OUT. An L7805 needs a heatsink.',
-           (20.32, 72.39))
+    c2 = s.add('Device:C', 'C2', '100nF', xs['c2'], 87.63, fp=FP_C, desc='Ceramic, 12 V rail at U1 input')
+    c3 = s.add('Device:C', 'C3', '100nF', xs['c3'], 87.63, fp=FP_C, desc='Ceramic, 5 V rail at U1 output')
+    c4 = s.add('Device:C_Polarized', 'C4', '100uF 16V', xs['c4'], 87.63, fp=FP_CP6, desc='Electrolytic, 5 V rail')
+    s.wire((76.2, bus), (xs['p12'], bus), (xs['c1'], bus), (xs['c2'], bus), u1['pins']['IN'])
+    s.power('+12V', (xs['p12'], bus))
+    s.wire(u1['pins']['OUT'], (xs['c3'], bus), (xs['c4'], bus), (xs['p5'], bus))
+    s.power('+5V', (xs['p5'], bus))
+    for k, c in (('c1', c1), ('c2', c2), ('c3', c3), ('c4', c4)):
+        s.junction((xs[k], bus))
+        s.wire((xs[k], bus), c['pins']['1'])
+    for p in (c1['pins']['2'], c2['pins']['2'], c3['pins']['2'], c4['pins']['2'], u1['pins']['GND']):
+        s.wire(p, (p[0], 96.52))
+        s.power('GND', (p[0], 96.52), show=False)
+    s.junction((xs['p12'], bus))
+    s.text('F1 + D1: if the supply is connected backwards, D1 conducts and blows F1 (the fuse comes before\n'
+           'the main switch, so this works with the switch off too). J2 goes to the illuminated rocker switch;\n'
+           'without a switch, link J2 pins 1 and 2. U1: the ESP32-C3 Wi-Fi peaks take the 5 V load to about\n'
+           '0.5 A. Use a pin-compatible switching regulator (R-78E5.0-1.0), or an L7805 on a heatsink.',
+           (20.32, 102.87))
 
-    # ======================= FLOW SENSOR INPUT ===============================
-    s.text('FLOW SENSOR INPUT (YF-G1, NPN open collector)', (20.32, 91.44), 2, True)
-    j4 = s.add('Connector:Screw_Terminal_01x03', 'J4', 'FLOW SENSOR', 27.94, 109.22, mirror=True, fp=FP_TB3,
-               ref_at=(26.67, 102.87), val_at=(26.67, 119.38), ref_just='center', val_just='center',
-               desc='Flow sensor: 1 = +5V (red), 2 = SIG (yellow), 3 = GND (black)')
-    p1, p2, p3 = j4['pins']['1'], j4['pins']['2'], j4['pins']['3']
-    s.wire(p1, (35.56, p1[1]), (35.56, 101.6))
-    s.power('+5V', (35.56, 101.6))
-    s.wire(p3, (35.56, p3[1]), (35.56, 116.84))
-    s.power('GND', (35.56, 116.84), show=False)
-    node_in = (48.26, p2[1])
-    s.wire(p2, (43.18, p2[1]), node_in)
-    s.label('FLOW_IN', (43.18, p2[1]), 180)
-    r1 = s.add('Device:R', 'R1', '10k', 48.26, 102.87, fp=FP_R, desc='Flow signal pull-up')
-    s.wire(r1['pins']['2'], node_in)
-    s.power('+5V', r1['pins']['1'])
-    r2 = s.add('Device:R', 'R2', '1k', 55.88, p2[1], rot=90, fp=FP_R,
-               ref_at=(55.88, p2[1] - 2.54), val_at=(55.88, p2[1] + 2.54), ref_just='center', val_just='center',
-               desc='Flow signal series resistor (RC filter / pin protection)')
-    s.wire(node_in, r2['pins']['1'])
-    s.junction(node_in)
-    node_f = (66.04, p2[1])
-    c5 = s.add('Device:C', 'C5', '10nF', 66.04, 115.57, fp=FP_C, desc='Flow signal filter capacitor')
-    s.wire(r2['pins']['2'], node_f, (73.66, p2[1]))
-    s.wire(node_f, c5['pins']['1'])
-    s.junction(node_f)
-    s.wire(c5['pins']['2'], (66.04, 121.92))
-    s.power('GND', (66.04, 121.92), show=False)
-    s.label('FLOW', (73.66, p2[1]), 0)
-    c6 = s.add('Device:C', 'C6', '100nF', 91.44, 109.22, fp=FP_C, desc='Sensor supply decoupling, at J4')
+    # ======================= VALVE DRIVER + VALVE/FLOW TERMINAL ==============
+    s.text('VALVE DRIVER (high-side P-MOSFET) AND VALVE / FLOW SENSOR TERMINAL', (20.32, 119.38), 2, True)
+    q1 = s.add('Transistor_FET:IRF9540N', 'Q1', 'IRF9540N', 68.58, 134.62, rot=180, mirror=True, fp=FP_TO220,
+               ref_at=(74.93, 133.35), val_at=(74.93, 135.89),
+               desc='High-side P-MOSFET valve switch (-100 V, -23 A, TO-220; no heatsink needed below 3 A)')
+    G, S_, D_ = q1['pins']['G'], q1['pins']['S'], q1['pins']['D']
+    s.wire(S_, (S_[0], 124.46))
+    s.power('+12V', (S_[0], 124.46))
+    r18 = s.add('Device:R', 'R18', '10k', 58.42, 130.81, fp=FP_R,
+                desc='Q1 gate pull-up: the valve is off unless Q2 pulls the gate down')
+    s.wire(r18['pins']['1'], (58.42, 124.46), (S_[0], 124.46))
+    s.junction((S_[0], 124.46))
+    gate = r18['pins']['2']
+    s.wire(gate, G)
+    q2 = s.add('Transistor_FET:2N7000', 'Q2', '2N7000', 55.88, 147.32, fp=FP_TO92,
+               ref_at=(60.96, 146.05), val_at=(60.96, 148.59),
+               desc='Logic-level N-MOSFET that drives the Q1 gate from D8')
+    s.wire(q2['pins']['D'], gate)
+    s.junction(gate)
+    s.wire(q2['pins']['S'], (q2['pins']['S'][0], 157.48))
+    s.power('GND', (q2['pins']['S'][0], 157.48), show=False)
+    r19 = s.add('Device:R', 'R19', '100', 45.72, 147.32, rot=90, fp=FP_R,
+                ref_at=(45.72, 144.78), val_at=(45.72, 149.86), ref_just='center', val_just='center',
+                desc='Q2 gate resistor')
+    s.wire(r19['pins']['2'], q2['pins']['G'])
+    r20 = s.add('Device:R', 'R20', '10k', 49.53, 151.13, fp=FP_R, ref_at=(50.8, 152.4), val_at=(50.8, 154.94),
+                desc='Q2 gate pull-down: the valve stays off while the Nano starts')
+    s.junction(r19['pins']['2'])
+    s.wire(r20['pins']['2'], (49.53, 157.48))
+    s.power('GND', (49.53, 157.48), show=False)
+    s.wire(r19['pins']['1'], (36.83, 147.32))
+    s.label('VALVE', (36.83, 147.32), 180)
+    d2 = s.add('Device:D', 'D2', '1N5408', 78.74, 146.05, rot=270, fp=FP_D,
+               ref_at=(76.2, 144.78), val_at=(76.2, 147.32), ref_just='right', val_just='right',
+               desc='Flyback diode across the valve output: clamps the switch-off spike')
+    s.wire(D_, (D_[0], 142.24), (78.74, 142.24), (86.36, 142.24), (96.52, 142.24))
+    s.junction((78.74, 142.24))
+    s.wire((78.74, 142.24), d2['pins']['K'])
+    s.label('SOL_OUT', (86.36, 142.24))
+    s.wire(d2['pins']['A'], (78.74, 157.48))
+    s.power('GND', (78.74, 157.48), show=False)
+    j3 = s.add('Connector:Screw_Terminal_01x04', 'J3', 'VALVE / FLOW', 101.6, 144.78, fp=FP_TB4,
+               ref_at=(104.14, 137.16), val_at=(104.14, 153.67), ref_just='center', val_just='center',
+               desc='1 = valve + (switched 12 V), 2 = GND (valve - and sensor black), 3 = +5V (sensor red), '
+                    '4 = sensor signal (yellow). 4-way 5.08 mm screw terminal')
+    Q = j3['pins']
+    s.wire(Q['2'], (88.9, Q['2'][1]))
+    s.power('GND', (88.9, Q['2'][1]), rot=270, show=False)
+    s.wire(Q['3'], (88.9, Q['3'][1]))
+    s.power('+5V', (88.9, Q['3'][1]), rot=90)
+    s.wire(Q['4'], (91.44, Q['4'][1]))
+    s.label('FLOW_IN', (91.44, Q['4'][1]), 180)
+    c6 = s.add('Device:C', 'C6', '100nF', 116.84, 146.05, fp=FP_C, desc='Sensor supply decoupling, at J3')
     s.power('+5V', c6['pins']['1'])
     s.power('GND', c6['pins']['2'], show=False)
-    s.text('R2 + C5 filter fast spikes (time constant 10 us);\nthe firmware also ignores pulses < 2 ms apart.\nC6 sits right at J4.', (20.32, 125.73))
+    s.text('D8 HIGH: Q2 pulls the Q1 gate low and the valve gets 12 V.\n'
+           'R20 keeps the valve off while the Nano starts. D2 clamps the\n'
+           'switch-off spike right at the terminal.', (121.92, 128.27))
 
-    # ======================= BUTTON + LEDS ===================================
-    s.text('BUTTON AND LIMIT LEDS', (20.32, 144.78), 2, True)
-    nb = (45.72, 165.1)
-    r3 = s.add('Device:R', 'R3', '10k', 45.72, 158.75, fp=FP_R, desc='Button pull-up')
-    c7 = s.add('Device:C', 'C7', '100nF', 45.72, 171.45, fp=FP_C, desc='Button filter capacitor')
-    s.power('+5V', r3['pins']['1'])
-    s.wire(r3['pins']['2'], nb, c7['pins']['1'])
-    s.wire(c7['pins']['2'], (45.72, 177.8))
-    s.power('GND', (45.72, 177.8), show=False)
-    s.wire(nb, (38.1, nb[1]))
-    s.label('BTN', (38.1, nb[1]), 180)
-    sw1 = s.add('Switch:SW_Push', 'SW1', 'MODE / CAL', 60.96, nb[1], fp=FP_SW,
-                ref_at=(60.96, nb[1] - 5.08), val_at=(60.96, nb[1] - 3.175), ref_just='center', val_just='center',
-                desc='Momentary push button (or panel button wired to these pads)')
-    s.wire(nb, sw1['pins']['1'])
-    s.junction(nb)
-    s.wire(sw1['pins']['2'], (71.12, nb[1]), (71.12, 170.18))
-    s.power('GND', (71.12, 170.18), show=False)
-    for i, (lbl, ref, rref, x, colour) in enumerate([
-            ('LED25', 'D3', 'R4', 86.36, 'green'), ('LED50', 'D4', 'R5', 101.6, 'yellow'),
-            ('LED100', 'D5', 'R6', 116.84, 'red')]):
-        s.wire((x, 151.13), (x, 153.67))
-        s.label(lbl, (x, 151.13), 90)
-        r = s.add('Device:R', rref, '330', x, 157.48, fp=FP_R, desc=f'{lbl} current limit (~9 mA)')
-        s.wire((x, 153.67), r['pins']['1'])
-        led = s.add('Device:LED', ref, f'{lbl[3:]}L {colour}', x, 167.64, rot=90, fp=FP_LED,
-                    desc=f'{lbl[3:]} L limit indicator, 5 mm')
-        s.wire(r['pins']['2'], led['pins']['A'])
-        s.wire(led['pins']['K'], (x, 175.26))
-        s.power('GND', (x, 175.26), show=False)
+    # ======================= FLOW SENSOR INPUT ===============================
+    s.text('FLOW SENSOR INPUT (YF-G1, NPN open collector)', (20.32, 165.1), 2, True)
+    node_in = (30.48, 180.34)
+    s.wire((22.86, node_in[1]), node_in)
+    s.label('FLOW_IN', (22.86, node_in[1]), 180)
+    r1 = s.add('Device:R', 'R1', '10k', 30.48, 175.26, fp=FP_R, desc='Flow signal pull-up')
+    s.power('+5V', r1['pins']['1'])
+    s.wire(r1['pins']['2'], node_in)
+    r2 = s.add('Device:R', 'R2', '1k', 39.37, node_in[1], rot=90, fp=FP_R,
+               ref_at=(39.37, node_in[1] - 2.54), val_at=(39.37, node_in[1] + 2.54), ref_just='center',
+               val_just='center', desc='Flow signal series resistor (RC filter / pin protection)')
+    s.wire(node_in, r2['pins']['1'])
+    s.junction(node_in)
+    node_f = (48.26, node_in[1])
+    c5 = s.add('Device:C', 'C5', '10nF', 48.26, 184.15, fp=FP_C, desc='Flow signal filter capacitor')
+    s.wire(r2['pins']['2'], node_f, (55.88, node_f[1]))
+    s.junction(node_f)
+    s.wire(c5['pins']['2'], (48.26, 189.23))
+    s.power('GND', (48.26, 189.23), show=False)
+    s.label('FLOW', (55.88, node_f[1]), 0)
+    s.text('R2 + C5 filter fast spikes (time constant 10 us);\nthe firmware also ignores pulses < 2 ms apart.',
+           (66.04, 177.8))
 
     # ======================= ARDUINO NANO ====================================
     s.text('CONTROLLER', (190.5, 91.44), 2, True)
@@ -460,7 +521,7 @@ def build():
                desc='Arduino Nano v3 (ATmega328P), on 2 x 15 female headers')
     P = a1['pins']
     used_left = {'D2': 'FLOW', 'D4': 'BTN', 'D5': 'LED25', 'D6': 'LED50', 'D7': 'LED100',
-                 'D8': 'RELAY', 'D11': 'TX_5V'}
+                 'D8': 'VALVE', 'D11': 'TX_5V', 'D12': 'ESP_IN'}
     used_right = {'A0': 'RF1', 'A1': 'RF2', 'A2': 'RF3', 'A3': 'RF4'}
     for pin, net in used_left.items():
         p = P[pin]
@@ -470,7 +531,7 @@ def build():
         p = P[pin]
         s.wire(p, (p[0] + 5.08, p[1]))
         s.label(net, (p[0] + 5.08, p[1]), 0)
-    for num in ('1', '2', '6', '12', '13', '15', '16', '3', '28', '18', '23', '24', '25', '26', '17', '30'):
+    for num in ('1', '2', '6', '12', '13', '16', '3', '28', '18', '23', '24', '25', '26', '17', '30'):
         s.nc(P[num])
     s.wire(P['27'], (P['27'][0], NY - 30.48))
     s.power('+5V', (P['27'][0], NY - 30.48))
@@ -480,10 +541,10 @@ def build():
     s.wire(g2, (g2[0], gy))
     s.wire((g1[0], gy), (g2[0], gy))
     s.power('GND', (g1[0], gy), show=False)
-    c11 = s.add('Device:C', 'C11', '100nF', 238.76, 101.6, fp=FP_C, desc='Decoupling at the Nano 5V pin')
-    s.power('+5V', c11['pins']['1'])
-    s.power('GND', c11['pins']['2'], show=False)
-    s.text('D12 is reserved for a future ESP -> Nano link.\nNano is powered through its 5V pin (VIN unused).', (190.5, 163.83))
+    c10 = s.add('Device:C', 'C10', '100nF', 238.76, 101.6, fp=FP_C, desc='Decoupling at the Nano 5V pin')
+    s.power('+5V', c10['pins']['1'])
+    s.power('GND', c10['pins']['2'], show=False)
+    s.text('D11 sends status to the ESP; D12 receives from it\n(ESP control, for later). Nano is powered through\nits 5V pin (VIN unused).', (190.5, 163.83))
 
     # ======================= REMOTE RECEIVER =================================
     s.text('REMOTE RECEIVER (RX480E 433 MHz module, plugs into the board)', (279.4, 30.48), 2, True)
@@ -491,7 +552,7 @@ def build():
                ref_at=(397.51, 52.07), val_at=(391.16, 76.2), ref_just='right', val_just='right',
                desc='RX480E-4 receiver module on a 1x7 female header. Pins: 1 GND, 2 +V, 3-6 D0-D3, 7 VT')
     U = u2['pins']
-    # Supply filter: 10 R + 47 uF + 100 nF keeps relay and regulator noise off the receiver
+    # Supply filter: 10 R + 47 uF + 100 nF keeps valve and regulator noise off the receiver
     s.power('+5V', (358.14, 40.64))
     r17 = s.add('Device:R', 'R17', '10R', 365.76, 40.64, rot=90, fp=FP_R,
                 ref_at=(365.76, 38.1), val_at=(365.76, 43.18), ref_just='center', val_just='center',
@@ -529,103 +590,98 @@ def build():
            'antenna end (checked against the RX480R_4CH V4 labels). Mark both ends on the silkscreen:\n'
            'plugged in backwards it puts 5 V on an output. Pair the remote in MOMENTARY mode.', (279.4, 70.0))
 
-    # ======================= RELAY + VALVE CONNECTORS ========================
-    s.text('RELAY MODULE AND VALVE POWER', (279.4, 81.28), 2, True)
-    j3 = s.add('Connector_Generic:Conn_01x03', 'J3', 'RELAY MODULE', 401.32, 93.98, fp=FP_HDR3,
-               ref_at=(401.32, 88.9), val_at=(401.32, 99.06), ref_just='center', val_just='center',
-               desc='Relay module header: 1 = VCC (+5V), 2 = IN (D8), 3 = GND')
-    Q = j3['pins']
-    s.wire(Q['1'], (391.16, Q['1'][1]), (391.16, Q['1'][1] - 2.54))
-    s.power('+5V', (391.16, Q['1'][1] - 2.54))
-    s.wire(Q['2'], (386.08, Q['2'][1]))
-    s.label('RELAY', (386.08, Q['2'][1]), 180)
-    s.wire(Q['3'], (391.16, Q['3'][1]), (391.16, Q['3'][1] + 2.54))
-    s.power('GND', (391.16, Q['3'][1] + 2.54), show=False)
-    c10 = s.add('Device:C_Polarized', 'C10', '100uF 16V', 365.76, 93.98, fp=FP_CP6,
-                ref_at=(363.22, 92.71), val_at=(363.22, 95.25), ref_just='right', val_just='right',
-                desc='Bulk capacitor at the relay header (relay coil switching)')
-    s.power('+5V', c10['pins']['1'])
-    s.power('GND', c10['pins']['2'], show=False)
-    j2 = s.add('Connector:Screw_Terminal_01x02', 'J2', 'VALVE POWER', 401.32, 114.3, fp=FP_TB2,
-               ref_at=(401.32, 109.22), val_at=(401.32, 120.65), ref_just='center', val_just='center',
-               desc='Valve power out: 1 = +12V (fused) to relay COM, 2 = GND from valve -')
-    Q = j2['pins']
-    s.wire(Q['1'], (391.16, Q['1'][1]), (391.16, Q['1'][1] - 2.54))
-    s.power('+12V', (391.16, Q['1'][1] - 2.54))
-    s.wire(Q['2'], (391.16, Q['2'][1]), (391.16, Q['2'][1] + 2.54))
-    s.power('GND', (391.16, Q['2'][1] + 2.54), show=False)
-    s.text('J2: run the valve +12 V and return as their own pair, and keep them away\nfrom the sensor cable. Place J1 and J2 side by side.\nC10 sits at J3 to steady 5 V when the relay coil switches.', (279.4, 106.68))
+    # ======================= PANEL BUTTON + LEDS ============================
+    s.text('PANEL BUTTON AND LIMIT LEDS (JST-XH 2-pin connectors)', (279.4, 81.28), 2, True)
+    nb = (289.56, 96.52)
+    r3 = s.add('Device:R', 'R3', '10k', nb[0], 92.71, fp=FP_R, ref_at=(287.02, 91.44), val_at=(287.02, 93.98),
+               ref_just='right', val_just='right', desc='Button pull-up')
+    c7 = s.add('Device:C', 'C7', '100nF', nb[0], 100.33, fp=FP_C, ref_at=(287.02, 99.06), val_at=(287.02, 101.6),
+               ref_just='right', val_just='right', desc='Button filter capacitor')
+    s.power('+5V', r3['pins']['1'])
+    s.wire(c7['pins']['2'], (nb[0], 105.41))
+    s.power('GND', (nb[0], 105.41), show=False)
+    j5 = s.add('Connector_Generic:Conn_01x02', 'J5', 'BUTTON', 314.96, nb[1], fp=FP_XH2,
+               ref_at=(314.96, 92.71), val_at=(322.58, 97.79), ref_just='center',
+               desc='Panel push button (MODE / CAL): 1 = button, 2 = GND. JST-XH 2-pin')
+    s.wire((281.94, nb[1]), nb, j5['pins']['1'])
+    s.junction(nb)
+    s.label('BTN', (281.94, nb[1]), 180)
+    s.wire(j5['pins']['2'], (307.34, j5['pins']['2'][1]))
+    s.power('GND', (307.34, j5['pins']['2'][1]), rot=270, show=False)
+    for i, (lbl, jref, rref) in enumerate((('LED25', 'J6', 'R4'), ('LED50', 'J7', 'R5'), ('LED100', 'J8', 'R6'))):
+        y = 116.84 + i * 10.16
+        r = s.add('Device:R', rref, '330', 289.56, y, rot=90, fp=FP_R,
+                  ref_at=(289.56, y - 2.54), val_at=(289.56, y + 2.54), ref_just='center', val_just='center',
+                  desc=f'{lbl} current limit (~9 mA)')
+        j = s.add('Connector_Generic:Conn_01x02', jref, f'LED {lbl[3:]}L', 314.96, y, fp=FP_XH2,
+                  ref_at=(314.96, y - 3.81), val_at=(322.58, y + 1.27), ref_just='center',
+                  desc=f'Panel LED for the {lbl[3:]} L limit: 1 = LED + (anode), 2 = LED - (cathode). JST-XH 2-pin')
+        s.wire((281.94, y), r['pins']['1'])
+        s.label(lbl, (281.94, y), 180)
+        s.wire(r['pins']['2'], (295.91, y), j['pins']['1'])
+        s.label(f'{lbl}_A', (295.91, y))
+        s.wire(j['pins']['2'], (307.34, j['pins']['2'][1]))
+        s.power('GND', (307.34, j['pins']['2'][1]), rot=270, show=False)
 
-    # ======================= ESP DATA OUT ====================================
-    s.text('ESP DATA OUT (9600 baud, 3.3 V level)', (279.4, 129.54), 2, True)
-    s.text('ESP32-C3-Zero: J5 5V -> 5V pin, DATA -> GPIO20 (RX),\n'
-           'GND -> GND. Its GPIOs are 3.3 V only, so R11 / R12\n'
-           'drop the Nano\'s 5 V data to 3.2 V.', (279.4, 134.62))
-    rx = 370.84
-    s.wire((rx, 138.43), (rx, 140.97))
-    s.label('TX_5V', (rx, 138.43), 90)
-    r11 = s.add('Device:R', 'R11', '1.8k', rx, 144.78, fp=FP_R, desc='ESP data divider (top)')
-    s.wire((rx, 140.97), r11['pins']['1'])
-    node_e = (rx, 151.13)
-    r12 = s.add('Device:R', 'R12', '3.3k', rx, 157.48, fp=FP_R, desc='ESP data divider (bottom), 5 V -> 3.24 V')
-    s.wire(r11['pins']['2'], node_e, r12['pins']['1'])
-    s.wire(r12['pins']['2'], (rx, 163.83))
-    s.power('GND', (rx, 163.83), show=False)
-    j5 = s.add('Connector_Generic:Conn_01x03', 'J5', 'ESP32-C3', 401.32, 151.13, fp=FP_HDR3,
-               ref_at=(401.32, 146.05), val_at=(401.32, 156.21), ref_just='center', val_just='center',
-               desc='ESP header: 1 = +5V (to the ESP board 5V pin), 2 = DATA (3.3 V level, to an ESP GPIO), 3 = GND')
-    Q = j5['pins']
-    s.wire(node_e, (381, node_e[1]), Q['2'])
-    s.label('ESP_DATA', (381, node_e[1]), 0)
+    # ======================= ESP LINK ========================================
+    s.text('ESP32 LINK (JST-XH 4-pin)', (279.4, 147.32), 2, True)
+    r11 = s.add('Device:R', 'R11', '1.8k', 299.72, 160.02, fp=FP_R, ref_at=(297.18, 158.75), val_at=(297.18, 161.29),
+                ref_just='right', val_just='right', desc='Data to ESP divider (top)')
+    s.wire((299.72, 153.67), r11['pins']['1'])
+    s.label('TX_5V', (299.72, 153.67), 90)
+    node_e = r11['pins']['2']
+    r12 = s.add('Device:R', 'R12', '3.3k', 299.72, 167.64, fp=FP_R, ref_at=(297.18, 166.37), val_at=(297.18, 168.91),
+                ref_just='right', val_just='right', desc='Data to ESP divider (bottom), 5 V -> 3.24 V')
+    s.wire(r12['pins']['2'], (299.72, 173.99))
+    s.power('GND', (299.72, 173.99), show=False)
+    j4 = s.add('Connector_Generic:Conn_01x04', 'J4', 'ESP32', 340.36, 161.29, fp=FP_XH4,
+               ref_at=(340.36, 154.94), val_at=(340.36, 170.18), ref_just='center', val_just='center',
+               desc='ESP32-C3-Zero link: 1 = +5V (ESP 5V pin), 2 = GND, 3 = data to ESP (3.3 V, ESP RX, GPIO20), '
+                    '4 = data from ESP (ESP TX, GPIO21). JST-XH 4-pin')
+    Q = j4['pins']
+    s.wire(Q['1'], (330.2, Q['1'][1]))
+    s.power('+5V', (330.2, Q['1'][1]), rot=90)
+    s.wire(Q['2'], (332.74, Q['2'][1]))
+    s.power('GND', (332.74, Q['2'][1]), rot=270, show=False)
+    s.wire(node_e, (312.42, node_e[1]), (Q['3'][0], node_e[1]))
+    s.label('TO_ESP', (312.42, node_e[1]))
     s.junction(node_e)
-    s.wire(Q['1'], (391.16, Q['1'][1]), (391.16, Q['1'][1] - 2.54))
-    s.power('+5V', (391.16, Q['1'][1] - 2.54))
-    s.wire(Q['3'], (391.16, Q['3'][1]), (391.16, Q['3'][1] + 2.54))
-    s.power('GND', (391.16, Q['3'][1] + 2.54), show=False)
+    r21 = s.add('Device:R', 'R21', '1k', 326.39, Q['4'][1], rot=90, fp=FP_R,
+                ref_at=(326.39, Q['4'][1] + 2.54), val_at=(326.39, Q['4'][1] + 5.08), ref_just='center',
+                val_just='center', desc='Data from ESP: series resistor (pin protection)')
+    s.wire(Q['4'], r21['pins']['2'])
+    s.wire(r21['pins']['1'], (314.96, Q['4'][1]))
+    s.label('ESP_IN', (314.96, Q['4'][1]), 180)
 
-    s.text('MOUNTING HOLES (M3)', (279.4, 152.4), 2, True)
+    s.text('MOUNTING HOLES (M4)', (358.14, 147.32), 2, True)
     for i in range(4):
-        s.add('Mechanical:MountingHole', f'H{i + 1}', 'M3', 284.48 + i * 15.24, 165.1, fp=FP_HOLE,
-              ref_at=(284.48 + i * 15.24, 160.02), val_at=(284.48 + i * 15.24, 170.18),
-              ref_just='center', val_just='center', in_bom=False, desc='M3 mounting hole')
+        s.add('Mechanical:MountingHole', f'H{i + 1}', 'M4', 363.22 + i * 11.43, 162.56, fp=FP_HOLE,
+              ref_at=(363.22 + i * 11.43, 157.48), val_at=(363.22 + i * 11.43, 167.64),
+              ref_just='center', val_just='center', in_bom=False, desc='M4 mounting hole')
 
     # ======================= OFF-BOARD =======================================
-    s.dashed_box(15.24, 190.5, 185.42, 248.92)
-    s.text('OFF-BOARD WIRING (connects to J2-J4; not placed on the PCB)', (19.05, 196.85), 2, True)
-    k1 = s.add('WaterValve:Relay_Module', 'K1', 'Relay module', 45.72, 215.9,
-               on_board=False, in_bom=False, ref_at=(38.1, 209.55), val_at=(38.1, 223.52),
-               desc='Existing 1-channel 5 V relay module (via J3, and J2 for COM)')
-    K = k1['pins']
-    s.wire(K['VCC'], (30.48, K['VCC'][1]), (30.48, K['VCC'][1] - 2.54))
-    s.power('+5V', (30.48, K['VCC'][1] - 2.54))
-    s.wire(K['IN'], (25.4, K['IN'][1]))
-    s.label('RELAY', (25.4, K['IN'][1]), 180)
-    s.wire(K['GND'], (30.48, K['GND'][1]), (30.48, K['GND'][1] + 2.54))
-    s.power('GND', (30.48, K['GND'][1] + 2.54), show=False)
-    s.nc(K['NC'])
-    s.wire(K['COM'], (60.96, K['COM'][1]))
-    s.power('+12V', (60.96, K['COM'][1]))
-    sv = s.add('WaterValve:Solenoid_Valve', 'SV1', '12 V DC solenoid valve', 91.44, 220.98,
-               on_board=False, in_bom=False, ref_at=(95.25, 219.71), val_at=(95.25, 222.25),
+    s.dashed_box(15.24, 193.04, 185.42, 266.7)
+    s.text('OFF-BOARD PARTS (wired to J2, J3, J5-J8; not placed on the PCB)', (19.05, 199.39), 2, True)
+    sw2 = s.add('WaterValve:Rocker_Switch_LED', 'SW2', 'Rocker switch, 12 V lamp', 38.1, 215.9,
+                on_board=False, ref_at=(30.48, 208.28), val_at=(30.48, 223.52),
+                desc='Illuminated SPST rocker switch, 12 V lamp, rated 5 A or more (panel mount)')
+    W = sw2['pins']
+    s.wire(W['1'], (55.88, W['1'][1]))
+    s.label('12V_FUSED', (55.88, W['1'][1]))
+    s.wire(W['2'], (53.34, W['2'][1]))
+    s.power('+12V', (53.34, W['2'][1]), rot=270)
+    s.wire(W['3'], (53.34, W['3'][1]))
+    s.power('GND', (53.34, W['3'][1]), rot=90, show=False)
+    sv = s.add('WaterValve:Solenoid_Valve', 'SV1', '12 V DC solenoid valve', 91.44, 215.9,
+               on_board=False, in_bom=False, ref_at=(95.25, 214.63), val_at=(95.25, 217.17),
                desc='Existing 12 V DC normally-closed solenoid valve')
-    d2 = s.add('Device:D', 'D2', '1N5408', 78.74, 220.98, rot=270, fp='', on_board=False,
-               ref_at=(72.39, 219.71), val_at=(68.58, 222.25),
-               desc='Flyback diode across the valve terminals, stripe (K) to valve +')
-    top = sv['pins']['1']
-    s.wire(K['NO'], (78.74, K['NO'][1]))
-    s.wire((78.74, K['NO'][1]), d2['pins']['K'])
-    s.wire((78.74, K['NO'][1]), (91.44, K['NO'][1]), top)
-    s.junction((78.74, K['NO'][1]))
-    bot = sv['pins']['2']
-    s.wire(d2['pins']['A'], (78.74, bot[1] + 2.54), (91.44, bot[1] + 2.54))
-    s.wire(bot, (91.44, bot[1] + 2.54), (91.44, 233.68))
-    s.junction((91.44, bot[1] + 2.54))
-    s.power('GND', (91.44, 233.68), show=False)
-    s.text('Valve circuit: relay COM <- J2 pin 1 (+12 V), valve - -> J2 pin 2.\nD2 sits on the valve terminals.', (22.86, 238.76))
-
+    s.wire(sv['pins']['1'], (91.44, 205.74), (83.82, 205.74))
+    s.label('SOL_OUT', (83.82, 205.74), 180)
+    s.wire(sv['pins']['2'], (91.44, 226.06))
+    s.power('GND', (91.44, 226.06), show=False)
     fs = s.add('WaterValve:YF-G1_Flow_Sensor', 'FS1', 'YF-G1 (64.8 pulses/L)', 137.16, 215.9,
                on_board=False, in_bom=False, ref_at=(127, 209.55), val_at=(127, 222.25),
-               desc='Existing YF-G1 flow sensor, powered from 5 V (via J4)')
+               desc='Existing YF-G1 flow sensor, powered from 5 V (via J3)')
     F = fs['pins']
     s.wire(F['1'], (152.4, F['1'][1]), (152.4, 210.82))
     s.power('+5V', (152.4, 210.82))
@@ -633,34 +689,57 @@ def build():
     s.label('FLOW_IN', (154.94, F['2'][1]), 0)
     s.wire(F['3'], (152.4, F['3'][1]), (152.4, 223.52))
     s.power('GND', (152.4, 223.52), show=False)
+    sw1 = s.add('Switch:SW_Push', 'SW1', 'MODE / CAL', 38.1, 243.84, on_board=False,
+                ref_at=(38.1, 236.22), val_at=(38.1, 238.76), ref_just='center', val_just='center',
+                desc='Panel momentary push button (normally open), with a JST-XH 2-pin lead to J5')
+    s.wire(sw1['pins']['1'], (27.94, 243.84))
+    s.label('BTN', (27.94, 243.84), 180)
+    s.wire(sw1['pins']['2'], (48.26, 243.84), (48.26, 248.92))
+    s.power('GND', (48.26, 248.92), show=False)
+    for i, (lbl, ref, colour) in enumerate((('LED25', 'D3', 'green'), ('LED50', 'D4', 'yellow'),
+                                            ('LED100', 'D5', 'red'))):
+        y = 236.22 + i * 8.89
+        led = s.add('Device:LED', ref, f'{lbl[3:]}L {colour}', 91.44, y, rot=180, on_board=False,
+                    ref_at=(91.44, y - 3.81), val_at=(101.6, y), ref_just='center', val_just='left',
+                    desc=f'{lbl[3:]} L limit indicator: panel LED (plain, no built-in resistor), JST-XH 2-pin lead')
+        s.wire(led['pins']['A'], (81.28, y))
+        s.label(f'{lbl}_A', (81.28, y), 180)
+        s.wire(led['pins']['K'], (99.06, y), (99.06, y + 2.54))
+        s.power('GND', (99.06, y + 2.54), show=False)
+    s.text('J2 -> SW2: 1 = 12 V in (switch power terminal),\n2 = 12 V out (switch load terminal), 3 = lamp GND.\n'
+           'J3 -> valve: 1 = valve +, 2 = valve -. Valve flyback\ndiode D2 is on the board.', (115.57, 238.76))
 
     # ======================= NOTES ===========================================
-    s.text('INTERFERENCE AND RELIABILITY MEASURES', (279.4, 177.8), 2, True)
-    s.text('1. D2 flyback diode right at the valve terminals (stripe to +).\n'
-           '2. Valve current has its own pair (J2) back to J1: star ground at J1.\n'
-           '3. Decoupling: C1 + C2 on 12 V, C3 + C4 at U1, C10 at J3, C11 at the Nano, C6 at J4.\n'
+    s.text('INTERFERENCE AND RELIABILITY MEASURES', (279.4, 182.88), 2, True)
+    s.text('1. D2 flyback diode at the valve output; Q1 switches the valve + (high side), valve - goes to GND.\n'
+           '2. 2 mm tracks for the 12 V and valve current; GND poured on both layers.\n'
+           '3. Decoupling: C1 + C2 on 12 V, C3 + C4 at U1, C10 at the Nano, C6 at J3.\n'
            '4. Flow input: R1 10k pull-up, R2 1k + C5 10nF filter, firmware glitch filter.\n'
            '5. Button: R3 10k + C7 100nF. Remote: R7-R10 1k series, R13-R16 100k pull-downs,\n'
            '   receiver supply filtered by R17 + C8 + C9. Firmware debounces both.\n'
-           '6. F1 fuse + D1 crowbar protect against shorts and a reversed supply.\n'
-           '7. R11 / R12 divide the 5 V data line down to 3.2 V for the ESP.\n'
-           '8. Twist the flow sensor signal with its GND; route it away from the valve wires.\n'
-           '9. Ground plane on the bottom layer; short, wide 12 V tracks; antenna away from relay and J2.',
-           (279.4, 181.61))
+           '6. F1 fuse (before the main switch) + D1 crowbar protect against shorts and a reversed supply.\n'
+           '7. R11 / R12 divide the 5 V data line to 3.2 V for the ESP; R21 protects D12 from the ESP.\n'
+           '8. Twist the flow sensor signal with its GND; route it away from the valve and 12 V wires.\n'
+           '9. Receiver antenna end at a board edge, away from the valve driver and the regulator.',
+           (279.4, 186.69))
 
     title = [
         '(title "Water Valve Controller")',
-        '(date "2026-10-10")',
-        '(rev "1.1")',
+        '(date "2026-10-12")',
+        '(rev "1.2")',
         '(company "Arduino Nano carrier board")',
-        '(comment 1 "YF-G1 flow sensor, relay-switched 12 V DC solenoid valve, RX480E 433 MHz receiver, ESP data out")',
+        '(comment 1 "YF-G1 flow sensor, MOSFET valve driver, RX480E 433 MHz receiver, ESP link")',
         '(comment 2 "Firmware: WaterValveController.ino")',
-        '(comment 3 "Pins: D2 flow, D4 button, D5-D7 LEDs, D8 relay, D11 ESP, A0-A3 remote")',
+        '(comment 3 "Pins: D2 flow, D4 button, D5-D7 LEDs, D8 valve, D11/D12 ESP, A0-A3 remote")',
     ]
     return s, title
 
 
-def main(out):
+def main(out, variant='tht'):
+    global VARIANT, PROJECT
+    VARIANT = variant
+    if variant == 'smd':
+        PROJECT = 'WaterValveController-SMD'
     os.makedirs(out, exist_ok=True)
     s, title = build()
     with open(os.path.join(out, PROJECT + '.kicad_sch'), 'w') as f:
@@ -682,9 +761,14 @@ def main(out):
     with open(os.path.join(out, 'sym-lib-table'), 'w') as f:
         f.write('(sym_lib_table\n  (lib (name "WaterValve")(type "KiCad")(uri "${KIPRJMOD}/WaterValve.kicad_sym")'
                 '(options "")(descr "Off-board parts for the Water Valve Controller"))\n)\n')
+    # One footprint library (made by gen_pcb.py) shared by both boards
+    pretty = '${KIPRJMOD}/WaterValve.pretty' if variant == 'tht' else '${KIPRJMOD}/../WaterValve.pretty'
+    with open(os.path.join(out, 'fp-lib-table'), 'w') as f:
+        f.write(f'(fp_lib_table\n  (lib (name "WaterValve")(type "KiCad")(uri "{pretty}")'
+                '(options "")(descr "Arduino Nano footprint for a socketed Nano"))\n)\n')
     json.dump([{k: v for k, v in p.items() if k != 'pins'} | {'pins': {k: list(v) for k, v in p['pins'].items()}}
                for p in s.parts], open(os.path.join(out, '.parts.json'), 'w'))
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main(sys.argv[1], *sys.argv[2:3])

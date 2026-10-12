@@ -13,8 +13,9 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 - Hold the push button, or remote button D (FREE FLOW), for 20 s to calibrate with a
   7 L bucket. The calibration is saved and survives power cuts. The water count always
   starts at 0 L after power-up.
-- Flow rate, limit and count are printed to the Serial Monitor and sent to a spare
-  pin for a future ESP32 board (Waveshare ESP32-C3-Zero).
+- Flow rate, limit and count are printed to the Serial Monitor and sent to an ESP32 board
+  (Waveshare ESP32-C3-Zero) over a two-way serial link, so the ESP can also send commands
+  to the Nano in a later version.
 
 ## Parts
 
@@ -22,16 +23,19 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 |------|-------|
 | Arduino Nano (ATmega328P) | |
 | YF-G1 flow sensor (2–100 L/min, F = 1.08 × Q) | 64.8 pulses per litre by default (spec sheet, ±3%) |
-| Solenoid valve + 1-channel relay module | |
-| Momentary push button | |
-| 3 × LED + 3 × 220 Ω resistor | 25 L, 50 L, 100 L |
+| 12 V DC solenoid valve | Switched by a MOSFET on the controller PCB (a relay module works for a hand-built version) |
+| Panel momentary push button | MODE / CAL |
+| 3 × panel LED | 25 L, 50 L, 100 L. Plain LEDs: the resistors are on the PCB |
+| Illuminated rocker switch (12 V lamp) + 2 A ATO blade fuse | Main power switch and fuse (PCB version) |
 | 433 MHz RX480E-4 receiver module + 4-button remote (A–D) | 5 V logic outputs |
 | Waveshare ESP32-C3-Zero (optional, later) | Powered from 5 V; its data pins are 3.3 V only, so it needs a divider |
 
 ## Wiring
 
-A full schematic, with extra filtering and protection parts and KiCad files for making a PCB,
-is in [`hardware/`](hardware/). The table below is the minimum wiring for a hand-built version.
+The controller PCB in [`hardware/`](hardware/) has screw terminals and JST-XH connectors for
+everything, plus the filtering and protection parts. Its connector pinouts are in the
+[hardware README](hardware/README.md#board-connectors). The table below is the minimum wiring for a
+hand-built version.
 
 | Arduino Nano pin | Connects to |
 |------------------|-------------|
@@ -40,23 +44,25 @@ is in [`hardware/`](hardware/). The table below is the minimum wiring for a hand
 | **D5** | 220 Ω → LED "25 L" → GND |
 | **D6** | 220 Ω → LED "50 L" → GND |
 | **D7** | 220 Ω → LED "100 L" → GND |
-| **D8** | Relay module IN (relay VCC → 5 V, GND → GND) |
+| **D8** | Valve driver. Hand-built: relay module IN (relay VCC → 5 V, GND → GND); set `VALVE_DRIVE_ACTIVE_LOW = true` for most relay modules |
 | **A0** | Receiver D0 (remote button D = FREE FLOW on the tested board) |
 | **A1** | Receiver D1 (button C = 100 L) |
 | **A2** | Receiver D2 (button B = 50 L) |
 | **A3** | Receiver D3 (button A = 25 L) |
 | **5V / GND** | Receiver +V and GND (VT is not used) |
 | **D11** | Data out to the ESP, through a 1 kΩ / 2 kΩ divider (see below) |
-| **D12** | Reserved for ESP TX → Nano (not used yet) |
+| **D12** | Data from the ESP (ESP TX), through 1 kΩ. For ESP control later; not used by the sketch yet |
 
-**Solenoid:** wire the solenoid supply through the relay's **COM** and **NO**
-terminals. The sketch handles both normally-closed and normally-open valves (see
-`VALVE_NORMALLY_CLOSED` below). If the valve is a DC solenoid, fit a flyback diode
-(e.g. 1N4007) across the coil, with the stripe towards +. Without it, the voltage
-spike when the coil switches off can reset the Nano or add false flow pulses.
+**Solenoid:** on the PCB, the valve goes to terminal J3: pin 1 = valve +, pin 2 = valve −. A
+MOSFET switches the 12 V to the valve and the flyback diode is on the board. In a hand-built
+version, wire the solenoid supply through the relay's **COM** and **NO** terminals and fit a
+flyback diode (e.g. 1N4007) across the coil, with the stripe towards +. Without it, the voltage
+spike when the coil switches off can reset the Nano or add false flow pulses. The sketch handles
+both normally-closed and normally-open valves (see `VALVE_NORMALLY_CLOSED` below).
 
-**Power:** a 12 V supply can feed the solenoid and the Nano's **VIN** pin (or a separate
-5 V regulator into the Nano's **5V** pin). All grounds must be connected together.
+**Power:** a 12 V supply feeds the solenoid and a 5 V regulator into the Nano's **5V** pin. On the
+PCB the 12 V goes through the blade fuse first, then out to the illuminated rocker switch (J2) and
+back. All grounds must be connected together.
 
 **Flow sensor power:** power the sensor from the Nano's **5 V** pin, not the 12 V supply.
 The sensor accepts 3.5–24 V, but its spec sheet gives its output levels for a 5 V
@@ -87,7 +93,7 @@ The tested RX480R_4CH V4 drives D3 for button A and D0 for button D, so `PIN_REM
 top of the sketch is set to `{ A3, A2, A1, A0 }`. Other boards may differ: press each button
 and watch the Serial Monitor, and if a button selects the wrong limit, change that order.
 
-Keep the receiver's coiled antenna away from the relay, the valve wires and any metal, and
+Keep the receiver's coiled antenna away from the valve wires, the regulator and any metal, and
 don't mount it inside a metal box.
 
 ### Checking the receiver on its own
@@ -114,8 +120,11 @@ only the receiver connected (GND → GND, +V → 5V, D0–D3 → A0–A3). Open 
 - a warning if an output stays on after you let go (toggle or latched mode)
 
 **ESP32-C3-Zero:** power it from 5 V into its **5V** pin (it has its own 3.3 V regulator) and
-connect GND. Its GPIO pins are **3.3 V only**, so drop the Nano's 5 V data signal with a divider
-into a free GPIO such as GPIO20:
+connect GND. On the PCB it plugs into the 4-pin JST-XH connector J4: **5V**, **GND**, **RX** (to
+ESP GPIO20) and **TX** (from ESP GPIO21). The board already drops the Nano's 5 V data to 3.2 V for
+the ESP, and the ESP's 3.3 V output reads as HIGH on the Nano (D12, through 1 kΩ). In a hand-built
+version, its GPIO pins are **3.3 V only**, so drop the Nano's 5 V data signal with a divider into a
+free GPIO such as GPIO20:
 
 ```
 Nano D11 ──[1 kΩ]──┬── ESP GPIO20
@@ -135,14 +144,14 @@ These are at the top of `WaterValveController.ino`.
 | Setting | Default | Change it when |
 |---------|---------|----------------|
 | `VALVE_NORMALLY_CLOSED` | `true` | Your valve lets water through with **no** power (normally open) → set `false` |
-| `RELAY_ACTIVE_LOW` | `true` | Your relay clicks on when IN is HIGH → set `false` |
+| `VALVE_DRIVE_ACTIVE_LOW` | `false` | Right for the PCB's MOSFET driver. A hand-built version with a relay module that switches on when IN is LOW (most of them) → set `true` |
 | `REMOTE_ACTIVE_LOW` | `false` | Your receiver has relay outputs (COM/NO) instead of logic outputs → set `true` |
 | `REMOTE_SELECT_RESETS_COUNT` | `false` | You want choosing a limit on the remote to also reset the count → set `true` |
 | `REMEMBER_LIMIT` | `true` | You want it to start in FREE FLOW after every power-up → set `false` |
 
 **Quick check:** power it up in FREE FLOW (all LEDs off) with the water on. Water
-should flow. If it doesn't, flip `VALVE_NORMALLY_CLOSED`. If the relay is in the
-wrong state, flip `RELAY_ACTIVE_LOW`.
+should flow. If it doesn't, flip `VALVE_NORMALLY_CLOSED`. If the valve output is in the
+wrong state, flip `VALVE_DRIVE_ACTIVE_LOW`.
 
 Upload with the Arduino IDE: **Tools → Board → Arduino Nano**. If the upload fails,
 try **Tools → Processor → ATmega328P (Old Bootloader)**. No extra libraries are
@@ -250,9 +259,10 @@ Flow: 10.00 L/min | Limit: 25L | Count: 0.15 L | Session: 25.15 L | Valve: SHUT 
 - **Session:** total litres since power-up or the last count reset.
   This is not reset when the limit is reached.
 
-## ESP data output (D11)
+## ESP data link (D11 out, D12 in)
 
-D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic, so use the divider above):
+D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic: the PCB divides it to 3.2 V;
+in a hand-built version use the divider above):
 
 ```json
 {"flow_lpm":10.00,"limit":"25L","limit_l":25,"count_l":0.15,"session_l":25.15,"valve":"SHUT","state":"LIMIT REACHED","ppl":64.80,"calibrated":false}
@@ -270,6 +280,7 @@ D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic, so use th
 | `ppl` | Calibration in pulses per litre |
 | `calibrated` | `false` = datasheet default, `true` = user calibration |
 
-On an ESP32-C3, read the lines with a hardware serial port on the data pin, for example
-`Serial1.begin(9600, SERIAL_8N1, 20, -1);` (receive on GPIO20, no transmit pin), and parse
-them with ArduinoJson.
+On an ESP32-C3, read the lines with a hardware serial port, for example
+`Serial1.begin(9600, SERIAL_8N1, 20, 21);` (receive on GPIO20, transmit on GPIO21), and parse
+them with ArduinoJson. The return path (ESP GPIO21 → Nano D12) is wired on the PCB for a later
+version where the ESP's web page sends commands to the Nano; the sketch does not read it yet.
