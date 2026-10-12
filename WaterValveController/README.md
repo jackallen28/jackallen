@@ -6,7 +6,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 - Choose **25 L**, **50 L**, **100 L** or **FREE FLOW** with the push button or the 433 MHz remote
   (button A = 25 L, B = 50 L, C = 100 L, D = FREE FLOW; the valve clicks twice to confirm).
   The three volumes can be changed in the sketch (see [Changing the limit volumes](#changing-the-limit-volumes)).
-- When the limit is reached, the valve shuts and opens 6 times (0.5 s shut, 0.5 s open),
+- When the limit is reached, the valve shuts and opens 4 times (0.5 s shut, 0.5 s open),
   then water keeps flowing and the count starts again at 0 L.
 - A press of the push button resets the count to 0 L. On the remote, hold any button
   for 2 s to reset the count; the valve clicks twice to confirm.
@@ -187,9 +187,12 @@ Monitor and ESP data all follow these values.
 
 ### When the limit is reached
 
-The valve shuts for 0.5 s and opens for 0.5 s, six times (6 seconds in total). The
-selected LED blinks along with it. The count goes back to 0 L and keeps counting, so
-the warning repeats every 25/50/100 L until the count is reset. A push-button press
+The valve shuts for 0.5 s and opens for 0.5 s, four times (4 seconds in total). The
+selected LED blinks along with it. When the pulses finish, the count starts again from
+0 L, so the next warning comes after another full limit's worth of water (water that ran
+during the warning isn't counted towards it, but is still in the session total). The
+warning repeats every limit until the count is reset. The number of pulses and their
+timing are `ALERT_PULSES` and `ALERT_PHASE_MS` in the sketch. A push-button press
 or a 2 s remote hold during the warning stops it straight away.
 
 ### Calibration (7 L bucket)

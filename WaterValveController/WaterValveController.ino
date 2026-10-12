@@ -8,9 +8,9 @@
     limit) or the 433 MHz remote (button A = limit 1, B = limit 2, C = limit 3,
     D = FREE FLOW; the valve clicks twice to confirm). Three LEDs show the
     limit; all LEDs off = FREE FLOW.
-  - When the limit is reached the valve is pulsed shut 6 times (0.5 s shut,
+  - When the limit is reached the valve is pulsed shut 4 times (0.5 s shut,
     0.5 s open) as a warning. Water then keeps flowing and the count starts
-    again from 0 L towards the next warning.
+    again from 0 L towards the next warning once the pulses have finished.
   - A press of the push button resets the count to 0 L. On the remote, hold any
     button for 2 s to reset the count; the valve clicks twice to confirm.
   - Hold the push button, or remote button D (FREE FLOW), for 20 s to calibrate
@@ -105,7 +105,7 @@ const unsigned long REMOTE_RELEASE_MS    = 150;    // OFF this long = released (
 const unsigned long SHORT_PRESS_MAX_MS   = 2000;   // push button presses between this and CAL_HOLD_MS do nothing
 const unsigned long REMOTE_RESET_HOLD_MS = 2000;   // hold any remote button this long to reset the count
 const unsigned long CAL_HOLD_MS          = 20000;  // hold the push button / remote button D this long to calibrate
-const uint8_t       ALERT_PULSES         = 6;      // valve shut/open cycles when the limit is reached
+const uint8_t       ALERT_PULSES         = 4;      // valve shut/open cycles when the limit is reached
 const unsigned long ALERT_PHASE_MS       = 500;    // 0.5 s shut, then 0.5 s open
 const uint8_t       CONFIRM_CLICKS       = 2;      // valve shut/open cycles to confirm a remote limit choice or reset
 const unsigned long CONFIRM_CLICK_MS     = 250;    // 0.25 s shut, then 0.25 s open
@@ -377,6 +377,12 @@ void updateValvePulses(unsigned long now) {
   pulsePhaseStart += pulsePhaseMs;
   pulsePhase++;
   if (pulsePhase >= pulsePhases) {
+    if (state == STATE_LIMIT_ALERT) {
+      // Water that ran during the warning doesn't count towards the next limit,
+      // otherwise a small limit can be used up before the warning even ends.
+      collectPulses();
+      countPulses = 0;
+    }
     endValvePulses();
   } else {
     setValveOpen(pulsePhase % 2 == 1);
@@ -415,7 +421,7 @@ void checkLimit(unsigned long now) {
   if (state != STATE_NORMAL || limitMode == MODE_FREE) return;
   uint32_t limitPulses = (uint32_t)(LIMIT_LITRES[limitMode] * pulsesPerLitre + 0.5);
   if (countPulses >= limitPulses) {
-    countPulses -= limitPulses;  // keep any overshoot so repeated limits stay accurate
+    countPulses = 0;
     startValvePulses(STATE_LIMIT_ALERT, ALERT_PULSES, ALERT_PHASE_MS, now);
     Serial.print(F(">> Limit of "));
     printLimit(Serial, limitMode);
