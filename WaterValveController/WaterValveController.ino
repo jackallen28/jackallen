@@ -63,6 +63,11 @@ const bool RELAY_ACTIVE_LOW = true;
 //           Arduino pin. The internal pull-up is used, so pressed = LOW.
 const bool REMOTE_ACTIVE_LOW = false;
 
+// The RX480E's outputs only reach about 3 V, which is right at the Nano's minimum
+// for a guaranteed digital HIGH. Logic-output receivers are therefore read with the
+// analog converter, and anything above this level counts as pressed.
+const int REMOTE_HIGH_THRESHOLD = 307;  // 0-1023 scale: 307 = 1.5 V on a 5 V supply
+
 // Set to true if choosing a limit on the remote should also reset the count.
 // When false, the count is kept and only a 2 s hold resets it.
 const bool REMOTE_SELECT_RESETS_COUNT = false;
@@ -461,7 +466,8 @@ bool debounce(DebouncedInput &input, bool raw, unsigned long now, unsigned long 
 }
 
 bool readRemote(uint8_t channel) {
-  return (digitalRead(PIN_REMOTE[channel]) == LOW) == REMOTE_ACTIVE_LOW;
+  if (REMOTE_ACTIVE_LOW) return digitalRead(PIN_REMOTE[channel]) == LOW;
+  return analogRead(PIN_REMOTE[channel]) > REMOTE_HIGH_THRESHOLD;
 }
 
 void handleButton(unsigned long now) {

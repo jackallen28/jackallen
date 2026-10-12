@@ -64,7 +64,10 @@ supply voltage, and 12 V on D2 would damage the Nano.
 
 **Remote receiver (RX480E-4):** a small 433 MHz module with a learn button and a 7-pin
 header (GND, +V, D0, D1, D2, D3, VT from the learn-button end; the labels are on the back). Power it from **5 V
-only**, never 12 V. Each D output goes HIGH (5 V) while its remote button is held.
+only**, never 12 V. Each D output goes HIGH while its remote button is held. HIGH is only
+about **3 V**, because the module's decoder runs at 3.3 V. That is right at the Nano's minimum
+for a reliable digital HIGH, so the sketch reads A0–A3 with the analog converter and treats
+anything above 1.5 V as pressed (`REMOTE_HIGH_THRESHOLD`).
 
 Pair the remote in **momentary mode**, because the 2 s and 20 s holds are timed from the
 output. On most RX480E modules:
@@ -83,6 +86,29 @@ watch the Serial Monitor: if a button selects the wrong limit, swap the pins in
 
 Keep the receiver's coiled antenna away from the relay, the valve wires and any metal, and
 don't mount it inside a metal box.
+
+### Checking the receiver on its own
+
+**With a multimeter:** power the module from 5 V and GND, put the meter between D0 and GND,
+and press remote button A.
+
+| What you see | Meaning |
+|---|---|
+| About 3 V while you hold the button, back to 0 V within a fraction of a second after you let go | **Momentary mode**: correct |
+| Stays at 3 V after you let go, and only goes off on the next press of the same button | **Toggle mode**: re-pair |
+| Stays at 3 V until you press a different button | **Latched mode**: re-pair |
+| Never changes | The remote isn't paired, or the button is mapped to another output: try D1–D3 |
+
+An LED with a 330 Ω resistor from D0 to GND works too: it lights (dimly) while the output is on.
+
+**With the test sketch:** [`RemoteTest`](../RemoteTest/RemoteTest.ino) runs on a bare Nano with
+only the receiver connected (GND → GND, +V → 5V, D0–D3 → A0–A3). Open the Serial Monitor at
+115200 baud and press each button. For each press it shows:
+
+- the output voltage
+- how long the output stayed on
+- signal drop-outs during a long hold, which would make a 2 s hold read as two short presses
+- a warning if an output stays on after you let go (toggle or latched mode)
 
 **ESP32-C3-Zero:** power it from 5 V into its **5V** pin (it has its own 3.3 V regulator) and
 connect GND. Its GPIO pins are **3.3 V only**, so drop the Nano's 5 V data signal with a divider
