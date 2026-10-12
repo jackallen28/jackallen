@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "WaterValve")(type "KiCad")(uri "${KIPRJMOD}/WaterValve.kicad_sym")(options "")(descr "RX480E receiver module"))
+)

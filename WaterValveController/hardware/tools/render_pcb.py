@@ -69,7 +69,7 @@ def areas(board, ox, oy, x0, y0, col):
     """Dashed outlines for the keep-out areas (logo, heatsink), so they show on the render."""
     out = []
     for z in board.Zones():
-        if not z.GetIsRuleArea():
+        if not z.GetIsRuleArea() or z.GetZoneName() == 'EDGE':   # edge strips: routing only
             continue
         bb = z.GetBoundingBox()
         x, y = pcbnew.ToMM(bb.GetX()) - x0 + ox, pcbnew.ToMM(bb.GetY()) - y0 + oy

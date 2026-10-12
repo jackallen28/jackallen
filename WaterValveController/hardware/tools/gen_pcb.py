@@ -317,6 +317,14 @@ def place_refs(board, w, h, avoid, labelled=(), fixed=None):
             cands += [(l - th - g, y, 90) for y in ys] + [(r + th + g, y, 90) for y in ys]
             cands += [(l - tw - g, y, 0) for y in ys0] + [(r + tw + g, y, 0) for y in ys0]
             cands += [(x, tp + th + g, 0) for x in xs] + [(x, bt - th - g, 0) for x in xs]
+            for g2 in (F(0.8), F(1.5)):         # a little further out, for crowded areas
+                cands += [(x, tp - th - g2, 0) for x in xs] + [(x, bt + th + g2, 0) for x in xs]
+                cands += [(l - tw - g2, y, 0) for y in ys0] + [(r + tw + g2, y, 0) for y in ys0]
+                cands += [(l - th - g2, y, 90) for y in ys] + [(r + th + g2, y, 90) for y in ys]
+            # last resort: the nearest free spot within 4 mm of the part
+            grid = [(cx + F(0.4) * i, cy + F(0.4) * j, ang) for i in range(-10, 11) for j in range(-10, 11)
+                    for ang in (0, 90)]
+            cands += sorted(grid, key=lambda c: (c[0] - cx) ** 2 + (c[1] - cy) ** 2)
             for x, y, ang in cands:
                 t.SetTextAngleDegrees(ang)
                 t.SetPosition(pcbnew.VECTOR2I(int(x), int(y)))
@@ -505,6 +513,8 @@ def drc(board, path):
 def autoroute(board, work, jar, passes):
     dsn = os.path.join(work, 'board.dsn')
     ses = os.path.join(work, 'board.ses')
+    if os.path.exists(ses):
+        os.remove(ses)                          # never import a session left by an earlier run
     if not pcbnew.ExportSpecctraDSN(board, dsn):
         raise SystemExit('DSN export failed')
     cmd = ['java', '-jar', os.path.abspath(jar), '-de', dsn, '-do', ses, '-mp', str(passes)]
@@ -512,7 +522,11 @@ def autoroute(board, work, jar, passes):
         cmd += ['-mt', '1', '--gui.enabled=false']
     elif not os.environ.get('DISPLAY') and shutil.which('xvfb-run'):
         cmd = ['xvfb-run', '-a'] + cmd          # Freerouting 1.x opens a window even in batch mode
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=3600, cwd=work)
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1200, cwd=work)
+    except subprocess.TimeoutExpired:
+        # Freerouting's optimiser occasionally never finishes; running it again normally works
+        raise SystemExit('Freerouting took over 20 minutes; run gen_pcb.py again')
     log = r.stdout + r.stderr
     with open(os.path.join(work, 'freerouting.log'), 'w') as f:
         f.write(log)

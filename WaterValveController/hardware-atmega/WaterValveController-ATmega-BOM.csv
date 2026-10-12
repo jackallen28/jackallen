@@ -1,0 +1,55 @@
+References,Qty,Value,Description,Footprint,JLCPCB / LCSC
+C1,1,100uF 25V,"Bulk capacitor, 12 V rail (damps ringing of the supply leads), SMD electrolytic 6.3 x 7.7 mm",CP_Elec_6.3x7.7,C22383804
+C2,1,10uF,"U1 input capacitor, 25 V X5R",C_0805_2012Metric,C15850
+"C3, C4, C7, C8, C9, C12, C13, C14, C15, C16, C18, C20",12,100nF,Ceramic 100 nF decoupling / filter,C_0603_1608Metric,C14663
+"C5, C6",2,22uF,"U1 output capacitor, X5R",C_0805_2012Metric,C45783
+"C10, C11",2,22pF,Crystal load capacitor,C_0603_1608Metric,C1653
+C17,1,10nF,Flow signal filter (10 us with R2),C_0603_1608Metric,C57112
+C19,1,22uF,Receiver supply filter,C_0805_2012Metric,C45783
+D2,1,SS34,Flyback diode across the valve output (3 A 40 V Schottky),D_SMA,C8678
+D3,1,B5819W,USB power to the 5 V rail (the board runs from USB alone for programming); blocks 5 V back into the computer,D_SOD-123,C8598
+D4,1,1N4148W,"Reset clamp, as on the Arduino Uno",D_SOD-123,C81598
+D5,1,green,"D13 ""L"" LED, as on an Arduino: blinks when the bootloader starts",LED_0603_1608Metric,C72043
+F1,1,3A PTC,"Resettable fuse, 3 A hold, 5 A trip, 30 V (2920). Resets itself once the fault is cleared",Fuse_2920_7451Metric,C22446884
+"H1, H2, H3, H4",4,M4,M4 mounting hole,MountingHole_4.3mm_M4,
+J1,1,12V DC IN,"12 V DC supply input: 1 = +12 V, 2 = GND. 2-way 5.08 mm screw terminal","TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",C474940
+J2,1,MAIN SWITCH,"Main (rocker) switch: 1 = fused 12 V to the switch, 2 = switched 12 V back, 3 = GND for the switch lamp","TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal",C474941
+J3,1,VALVE / FLOW,"Valve and flow sensor: 1 = valve +, 2 = GND (valve - and sensor black), 3 = +5 V (sensor red), 4 = flow signal (sensor yellow)","TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal",C2827883
+J4,1,ESP32,"ESP32 link: 1 = 5 V, 2 = GND, 3 = data to the ESP (3.3 V), 4 = data from the ESP. JST-XH 4-pin",JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,C144395
+J5,1,BUTTON,Panel push button (normally open): JST-XH 2-pin,JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,C158012
+J6,1,LED 25L,"25 L panel LED: JST-XH 2-pin, 1 = LED + (anode), 2 = LED - (cathode)",JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,C158012
+J7,1,LED 50L,"50 L panel LED: JST-XH 2-pin, 1 = LED + (anode), 2 = LED - (cathode)",JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,C158012
+J8,1,LED 100L,"100 L panel LED: JST-XH 2-pin, 1 = LED + (anode), 2 = LED - (cathode)",JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,C158012
+J9,1,USB-C,USB-C socket for uploading sketches and the serial monitor (USB 2.0),USB_C_Receptacle_HRO_TYPE-C-31-M-12,C165948
+J10,1,ICSP,"ICSP header for burning the bootloader once (MISO, +5V, SCK, MOSI, RESET, GND). Not fitted: plug a 2 x 3 header in only while programming",PinHeader_2x03_P2.54mm_Vertical,
+L1,1,10uH,"U1 inductor, 10 uH, 1.6 A, 4 x 4 x 2 mm shielded",L_Sunlord_SWPA4020S,C135263
+Q1,1,AO4407A,"High-side P-MOSFET valve switch (-30 V, -12 A, 14 mOhm, SOIC-8): 0.13 W at 3 A, no heatsink",SOIC-8_3.9x4.9mm_P1.27mm,C16072
+Q2,1,2N7002,Gate driver for Q1: D8 HIGH switches the valve on,SOT-23,C8545
+Q3,1,AO4407A,"Reverse-polarity protection: P-MOSFET in the supply, off if the supply is connected backwards (-30 V, 14 mOhm, SOIC-8)",SOIC-8_3.9x4.9mm_P1.27mm,C16072
+"R4, R5, R6",3,330,"LED current limit, about 9 mA",R_0603_1608Metric,C23138
+R11,1,1.8k,Divider to the ESP (top): 5 V data to 3.24 V,R_0603_1608Metric,C4177
+R12,1,3.3k,Divider to the ESP (bottom),R_0603_1608Metric,C22978
+R13,1,100k,Pull-down on A0: no floating input,R_0603_1608Metric,C25803
+R14,1,100k,Pull-down on A1: no floating input,R_0603_1608Metric,C25803
+R15,1,100k,Pull-down on A2: no floating input,R_0603_1608Metric,C25803
+R16,1,100k,Pull-down on A3: no floating input,R_0603_1608Metric,C25803
+R17,1,10,Receiver supply filter,R_0603_1608Metric,C22859
+R19,1,100,Q2 gate resistor,R_0603_1608Metric,C22775
+R30,1,100k,Q3 gate to GND: turns Q3 on with the supply the right way round,R_0603_1608Metric,C25803
+R31,1,100k,U1 enable divider (top): U1 starts above about 7 V,R_0603_1608Metric,C25803
+R32,1,20k,U1 enable divider (bottom),R_0603_1608Metric,C4184
+R33,1,15k,U1 feedback (top): 0.596 V x (1 + 15k / 2k) = 5.07 V,R_0603_1608Metric,C22809
+R34,1,2k,U1 feedback (bottom),R_0603_1608Metric,C22975
+R35,1,5.1k,USB-C CC1 pull-down: identifies the board as a USB device,R_0603_1608Metric,C23186
+R36,1,5.1k,USB-C CC2 pull-down,R_0603_1608Metric,C23186
+"R2, R7, R8, R9, R10, R21, R37, R38, R40",9,1k,Series resistor,R_0603_1608Metric,C21190
+"R1, R3, R18, R20, R39",5,10k,Pull-up / pull-down,R_0603_1608Metric,C25804
+U1,1,TPS54202H,"5 V buck regulator, 4.5-28 V in, 2 A, 500 kHz (TPS54202H, SOT-23-6)",SOT-23-6,C527684
+U2,1,RX480E-4,"RX480E-4 433 MHz receiver module (learning code), plugged into a 7-pin socket",PinSocket_1x07_P2.54mm_Vertical,C6684533
+U3,1,CH340N,"USB to serial converter (as on an Arduino Nano), internal clock",SOP-8_3.9x4.9mm_P1.27mm,C2977777
+U4,1,ATmega328P-AU,"ATmega328P microcontroller (as on an Arduino Uno / Nano), 16 MHz, TQFP-32",TQFP-32_7x7mm_P0.8mm,C14877
+Y1,1,16MHz,"16 MHz crystal, 3.2 x 2.5 mm, 20 pF load",Crystal_SMD_3225-4Pin_3.2x2.5mm,C13738
+(J10),1,2 x 3 pin header 2.54 mm,"ICSP, only while burning the bootloader",,
+(J4),1,JST-XH 4-pin housing + crimped lead,ESP32 link lead,,
+(J5-J8),4,JST-XH 2-pin housing + crimped lead,Panel button and LED leads,,
+(H1-H4),4,M4 bolt + nut or standoff,Mounting,,
