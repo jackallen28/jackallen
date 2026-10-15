@@ -1,0 +1,22 @@
+{
+  "name": "PROTO",
+  "title": "Prototyping",
+  "description": "Every bus pin broken out to a labelled pad + a 2.54 mm hole grid.",
+  "signals": {
+    "AN": "breakout pad",
+    "PWM": "breakout pad",
+    "IO1": "breakout pad",
+    "IO2": "breakout pad",
+    "SDA": "breakout pad",
+    "SCL": "breakout pad"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    }
+  ]
+}

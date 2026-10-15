@@ -1,0 +1,31 @@
+{
+  "name": "POT",
+  "title": "Potentiometer",
+  "description": "10k rotary potentiometer (Alps RK09K) - wiper on AN, 0..5 V.",
+  "signals": {
+    "AN": "wiper voltage 0-5 V (analogRead)"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "RV1",
+      "value": "10k lin",
+      "footprint": "Potentiometer_THT:Potentiometer_Alps_RK09K_Single_Vertical",
+      "side": "F",
+      "note": "Alps RK09K1110A0J or equiv, 9 mm, vertical shaft"
+    },
+    {
+      "ref": "C1",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

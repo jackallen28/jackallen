@@ -1,0 +1,73 @@
+{
+  "name": "RGB",
+  "title": "RGB LEDs",
+  "description": "3x WS2812B addressable RGB LEDs, data in on PWM (Adafruit NeoPixel / FastLED).",
+  "signals": {
+    "PWM": "NeoPixel data in"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "D1",
+      "value": "WS2812B",
+      "footprint": "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm",
+      "side": "F",
+      "note": "WS2812B-5050"
+    },
+    {
+      "ref": "C1",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "D2",
+      "value": "WS2812B",
+      "footprint": "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm",
+      "side": "F",
+      "note": "WS2812B-5050"
+    },
+    {
+      "ref": "C2",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "D3",
+      "value": "WS2812B",
+      "footprint": "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm",
+      "side": "F",
+      "note": "WS2812B-5050"
+    },
+    {
+      "ref": "C3",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R1",
+      "value": "330R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "C4",
+      "value": "10uF",
+      "footprint": "Capacitor_SMD:C_0805_2012Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

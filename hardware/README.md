@@ -1,0 +1,195 @@
+# VIBEDUINO — hex modules for Arduino Uno
+
+**Allentronics Education Services · [www.allentronics.com.au](https://www.allentronics.com.au)**
+
+VIBEDUINO is a snap-together electronics kit. One **shield** sits on an Arduino Uno R3 and has
+four **slots**. Every **module** is the same 1-inch hexagon with the same 10-pin keyed bus, so
+any module fits in any slot, and four of them tile together on the shield like a honeycomb.
+Students pick the modules for a project, plug them in, and program the Uno over USB.
+
+![Shield with four modules](previews/vibeduino-assembly.png)
+
+> **Status — rev A PCB layouts.** Every board is placed, fully routed, has copper pours and has
+> passed KiCad DRC. Next steps: BOM, schematics and fab outputs (Gerbers, pick-and-place).
+
+| Board | Previews |
+|---|---|
+| Shield | [top](previews/vibeduino-shield-top.png) · [bottom](previews/vibeduino-shield-bottom.png) · [routing](previews/vibeduino-shield-layout.png) |
+| All modules | [top views](previews/modules-top.png) · [bottom views](previews/modules-bottom.png) · [routing](previews/modules-layout.png) |
+| Fit check | [OLED + D-PAD + POT + SERVO](previews/vibeduino-assembly.png) · [LED + RGB + TEMP + BUZZER](previews/vibeduino-assembly-2.png) (bare PCBs; panel, knob and caps not drawn) |
+
+---
+
+## 1. System specification
+
+### Hex module
+
+| Parameter | Value |
+|---|---|
+| Shape | Regular hexagon, pointy end towards the Uno's digital header |
+| Size | **25.40 mm across flats (1.000")**, 29.33 mm corner to corner, 1.0 mm corner fillets |
+| PCB | 2-layer FR4, 1.6 mm, 1 oz, GND pour on both sides |
+| Gap between modules on the shield | 1.0 mm (centre pitch 26.4 mm, row pitch 22.86 mm) |
+| Mounting | Male headers on the module underside → female sockets on the shield. Module PCB ends up ~11 mm above the shield |
+| Branding | Top: VIBEDUINO wordmark, module name, Allentronics mark. Underside: Allentronics logo lock-up, website, bus pin labels |
+
+### The VIBEDUINO bus — identical on every module
+
+Two 1×5, 2.54 mm headers. J1 sits near the top vertex and J2 near the bottom vertex. Pin 1 is
+on the left, viewed from the top.
+
+| Pin | J1 (power + I²C, shared) | J2 (signals, per slot) |
+|---|---|---|
+| 1 | GND | GND |
+| 2 | +5 V | **AN** — analog input (also usable as digital) |
+| 3 | +3.3 V | **PWM** — PWM-capable digital pin |
+| 4 | SDA (3.3 V logic) | **IO1** — digital pin |
+| 5 | SCL (3.3 V logic) | **IO2** — digital pin |
+
+**Keyed: it cannot be plugged in backwards.** Both header rows are shifted 0.635 mm (¼ pitch)
+off the hex centre. If a module is turned 180°, every pin lands 1.27 mm (½ pitch) away from a
+socket contact, so it physically will not go in. Without this, a reversed module would put
+5 V onto signal pins. Pin 1 of both rows is GND.
+
+### Slot map (shield → Arduino pins)
+
+Slots are numbered left-to-right, top row first, with the USB jack on the left.
+
+| Slot | AN | PWM | IO1 | IO2 |
+|---|---|---|---|---|
+| 1 (top-left) | A0 | D3~ | D2 | D4 |
+| 2 (top-right) | A1 | D5~ | D6~ | D7 |
+| 3 (bottom-left) | A2 | D9~ | D10~ | D8 |
+| 4 (bottom-right) | A3 | D11~ | D12 | D13 |
+
+* **All four slots can be programmed and used at the same time.** No two slots share a signal
+  pin. Only the I²C bus and the power rails are shared.
+* **D0/D1 (USB serial) are never used**, so sketches upload over USB with all four modules
+  fitted. The shield has its own RESET button because it covers the Uno's.
+* I²C comes from the R3 SDA/SCL pins. It runs through a BSS138 level shifter, so the module bus
+  is **3.3 V I²C** (4.7 k pull-ups to 3V3, 10 k to 5 V on the Uno side). A Qwiic/STEMMA-QT port
+  shares the same bus.
+* Slot 4 carries the hardware SPI pins (D11 MOSI, D12 MISO, D13 SCK), with A3 free for chip
+  select, ready for future SPI modules. D13 also drives the Uno's "L" LED.
+* Arduino timer caveats to teach or design around:
+  * The `Servo` library disables PWM on D9/D10 (slot 3's PWM/IO1).
+  * `tone()` uses Timer2, which affects PWM on D3 and D11 (slots 1 and 4).
+
+### Fit check
+
+`generator/vibeduino/assembly.py` checks the geometry on every build:
+
+* adjacent modules: 1.00 mm board gap; header and socket bodies at least 0.72 mm apart
+* all four modules lie inside the Uno R3 outline
+* no through-hole lead sits above the Uno's USB-B jack, DC jack or ICSP header (the shield rests ~11 mm up, on the USB jack)
+
+## 2. Shield — `kicad/shield/vibeduino-shield.kicad_pcb`
+
+![Shield](previews/vibeduino-shield-top.png)
+
+* Arduino Uno R3 outline. Headers are placed from the official Uno dimensions.
+  KiCad's stock `Arduino_UNO_R3` footprint is a mirrored bottom view, so it is deliberately not
+  used.
+* 4 slots × 2 female 1×5 sockets.
+  * The silkscreen shows each slot's hex outline, number and Arduino pin map.
+  * Every socket pin is labelled with its Arduino pin name.
+* BSS138 I²C level shifter, Qwiic connector (top entry), RESET button, power LED, 100 µF bulk cap.
+* 3 of the Uno's 4 mounting holes. The one at (15.24, 50.8) mm sits under slot 1's socket.
+* Underside: full Allentronics logo, VIBEDUINO SHIELD title, slot map table, website.
+* Fab layer marks the Uno's USB/DC/ICSP keep-out zones. Trim socket leads to ≤ 1.5 mm.
+
+## 3. Modules — `kicad/modules/<name>/vibeduino-<name>.kicad_pcb`
+
+![Modules](previews/modules-top.png)
+
+| Module | What it does | Bus signals used | Key parts |
+|---|---|---|---|
+| **POT** | Rotary knob | AN = 0–5 V | Alps RK09K 10 k, vertical shaft |
+| **OLED** | 64×48 OLED display | SDA/SCL (I²C 0x3C, jumper → 0x3D), 3V3 | 0.66" SSD1306 COG panel, 28-pin FPC (mounted portrait) |
+| **D-PAD** | Up/Down/Left/Right + "A" | AN = resistor ladder (UP≈0, RIGHT≈93, DOWN≈254, LEFT≈512, none 1023), IO1 = A button (LOW when pressed) | 5× TS-1187A tactile |
+| **LED** | Traffic light | PWM = red, IO1 = yellow, IO2 = green (HIGH = on) | 3× 5 mm diffused LEDs, 470 Ω |
+| **SERVO** | Two hobby servos | PWM = servo A, IO1 = servo B | 2× 3-pin servo headers (S + −), 220 Ω series, 100 µF |
+| **TEMP** | Temperature + alert LED | AN = MCP9700A (°C = (mV − 500) / 10, same maths as TMP36), PWM = red LED | MCP9700A SOT-23 |
+| **BUZZER** | Sounds and melodies | PWM = `tone()` | 12 mm passive magnetic buzzer, MMBT3904 driver, flyback diode |
+| **LIGHT** | Light level | AN (brighter = higher) | 5 mm LDR + 10 k divider |
+| **RGB** | 3 addressable RGB LEDs | PWM = NeoPixel data | 3× WS2812B-5050 |
+| **PROTO** | Build your own | every bus pin on a labelled pad + 2.54 mm grid | — |
+
+Every module's parts list (refs, values, footprints, side) is in
+`kicad/modules/<name>/module.json`. This is the starting point for the BOM.
+
+### Quick code reference (slot 1 shown)
+
+```cpp
+const int AN = A0, PWM = 3, IO1 = 2, IO2 = 4;   // see slot map for slots 2-4
+analogRead(AN);                 // POT, LIGHT, TEMP, D-PAD ladder
+analogWrite(PWM, 128);          // LED red half brightness
+tone(PWM, 440);                 // BUZZER
+pinMode(IO1, INPUT_PULLUP);     // D-PAD "A" button (LOW = pressed)
+// OLED: U8g2 "U8G2_SSD1306_64X48_ER_F_HW_I2C" or SparkFun Qwiic OLED library, address 0x3C
+// RGB:  Adafruit_NeoPixel strip(3, PWM, NEO_GRB + NEO_KHZ800);
+```
+
+## 4. Verification (rev A)
+
+| Board | DRC errors | Unconnected | Notes |
+|---|---|---|---|
+| `vibeduino-shield` | 0 | 0 | 28 footprints, 438 track segments, 14 vias; 31 cosmetic warnings (silkscreen clipped by pads / overlapping artwork) |
+| `vibeduino-pot` | 0 | 0 | 4 footprints, 22 track segments, 0 vias |
+| `vibeduino-oled` | 0 | 0 | 14 footprints, 151 track segments, 23 vias; 3 cosmetic warnings (silk clipped by pads; 1 redundant fan-out via on a fully connected net) |
+| `vibeduino-dpad` | 0 | 0 | 13 footprints, 110 track segments, 4 vias |
+| `vibeduino-led` | 0 | 0 | 8 footprints, 31 track segments, 0 vias |
+| `vibeduino-servo` | 0 | 0 | 8 footprints, 49 track segments, 0 vias |
+| `vibeduino-temp` | 0 | 0 | 6 footprints, 36 track segments, 0 vias |
+| `vibeduino-buzzer` | 0 | 0 | 7 footprints, 36 track segments, 0 vias; 1 cosmetic warning (overlapping silkscreen) |
+| `vibeduino-light` | 0 | 0 | 5 footprints, 17 track segments, 0 vias |
+| `vibeduino-rgb` | 0 | 0 | 10 footprints, 84 track segments, 1 via; 2 cosmetic warnings (silkscreen clipped by pads) |
+| `vibeduino-proto` | 0 | 0 | 4 footprints, 13 track segments, 0 vias |
+
+Design rules are JLCPCB-friendly:
+* tracks ≥ 0.15 mm, 0.2 mm signal tracks, 0.15 mm clearance;
+* 0.6/0.3 mm vias, 0.3 mm copper-to-edge;
+* 5 V, 3V3 and GND are widened to 0.4 mm wherever clearance allows.
+
+The remaining DRC *warnings* are cosmetic: silkscreen clipped by pads or overlapping
+neighbouring artwork. The full report sits next to each board after a build
+(`*-drc.rpt`, git-ignored).
+
+## 5. Regenerating the boards
+
+All boards are produced by code: `generator/build.py` places the parts, autoroutes with
+Freerouting, pours copper, runs DRC and renders the previews. Changing a value in
+`generator/vibeduino/spec.py` (hex size, bus pinout, slot map) rebuilds every board consistently.
+
+```bash
+# KiCad 7+ with its Python module (pcbnew), Java 25 and Freerouting 2.x
+pip install opencv-python-headless shapely cairosvg
+export FREEROUTING_JAR=/path/to/freerouting-2.5.0-executable.jar
+export VIBEDUINO_JAVA=/path/to/java25/bin/java
+python3 generator/build.py            # everything
+python3 generator/build.py shield oled # selected boards
+```
+
+The KiCad files are saved in KiCad 7 format and open in KiCad 8/9. Boards are layout-first:
+nets are assigned directly in the generator, so there are no schematic sheets yet.
+
+## 6. Open items to confirm before ordering
+
+1. **OLED panel**
+   * The footprint is derived from SparkFun's open-source Qwiic Micro OLED (LCD-22495),
+     **CC BY-SA 4.0**. That licence needs attribution, and derived hardware files must be
+     shared under the same terms.
+   * If that isn't acceptable for the product, redraw the pads from the panel supplier's
+     datasheet.
+   * Confirm the exact 28-pin 0.66" panel that will be bought.
+   * The OLED module has parts on both sides. All other modules are single-sided SMD plus
+     through-hole.
+2. **Pot direction**: pin 1 = GND, pin 3 = 5 V. Check the chosen part so clockwise = higher reading.
+3. **LDR** is CdS, which is not EU-RoHS compliant. A 2-lead phototransistor is the alternative.
+4. **Power budget on USB** (500 mA polyfuse on the Uno):
+   * two servos under load can brown out the board, so use the DC jack;
+   * the RGB module draws up to 180 mA at full white.
+5. **Header overhang**: the module header bodies overhang the hex outline by ~0.9 mm at the
+   corners, on the underside only. The fit check confirms neighbours still clear.
+6. **Fab options**: tent vias (some silkscreen crosses vias). Black solder mask + ENIG is used
+   in the renders, but any colour works.

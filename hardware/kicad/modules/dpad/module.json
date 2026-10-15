@@ -1,0 +1,95 @@
+{
+  "name": "D-PAD",
+  "title": "Push Button D-Pad",
+  "description": "4-way D-pad on AN (resistor ladder) + centre 'A' button on IO1 (active low).",
+  "signals": {
+    "AN": "UP 0 / RIGHT ~93 / DOWN ~254 / LEFT ~512 / none 1023 (analogRead)",
+    "IO1": "A button, LOW when pressed"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "SW1",
+      "value": "UP",
+      "footprint": "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A",
+      "side": "F",
+      "note": "XKB TS-1187A-B-A-B 5.1x5.1 mm tactile"
+    },
+    {
+      "ref": "SW2",
+      "value": "RIGHT",
+      "footprint": "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A",
+      "side": "F",
+      "note": "XKB TS-1187A-B-A-B 5.1x5.1 mm tactile"
+    },
+    {
+      "ref": "SW3",
+      "value": "DOWN",
+      "footprint": "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A",
+      "side": "F",
+      "note": "XKB TS-1187A-B-A-B 5.1x5.1 mm tactile"
+    },
+    {
+      "ref": "SW4",
+      "value": "LEFT",
+      "footprint": "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A",
+      "side": "F",
+      "note": "XKB TS-1187A-B-A-B 5.1x5.1 mm tactile"
+    },
+    {
+      "ref": "SW5",
+      "value": "A",
+      "footprint": "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A",
+      "side": "F",
+      "note": "XKB TS-1187A-B-A-B 5.1x5.1 mm tactile"
+    },
+    {
+      "ref": "R1",
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R2",
+      "value": "1k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R3",
+      "value": "3.3k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R4",
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R5",
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "C1",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

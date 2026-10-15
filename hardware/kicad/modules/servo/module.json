@@ -1,0 +1,60 @@
+{
+  "name": "SERVO",
+  "title": "Servo Motor",
+  "description": "Two 3-pin servo headers: A on PWM, B on IO1 (220R series), 100uF bulk cap.",
+  "signals": {
+    "PWM": "servo A signal",
+    "IO1": "servo B signal"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "J3",
+      "value": "SERVO A",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+      "side": "F",
+      "note": "1x03 2.54mm male header"
+    },
+    {
+      "ref": "J4",
+      "value": "SERVO B",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+      "side": "F",
+      "note": "1x03 2.54mm male header"
+    },
+    {
+      "ref": "R1",
+      "value": "220R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R2",
+      "value": "220R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "C1",
+      "value": "100uF 10V",
+      "footprint": "Capacitor_SMD:CP_Elec_5x5.4",
+      "side": "F",
+      "note": "SMD electrolytic 5x5.4 mm"
+    },
+    {
+      "ref": "C2",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

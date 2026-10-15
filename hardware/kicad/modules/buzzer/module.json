@@ -1,0 +1,52 @@
+{
+  "name": "BUZZER",
+  "title": "Buzzer",
+  "description": "12 mm passive magnetic buzzer driven by an NPN from PWM - use tone().",
+  "signals": {
+    "PWM": "tone() output"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "BZ1",
+      "value": "12mm passive 5V",
+      "footprint": "Buzzer_Beeper:Buzzer_12x9.5RM7.6",
+      "side": "F",
+      "note": "passive magnetic transducer, 12x9.5 mm, 7.6 mm pitch"
+    },
+    {
+      "ref": "Q1",
+      "value": "MMBT3904",
+      "footprint": "Package_TO_SOT_SMD:SOT-23",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "D1",
+      "value": "1N4148WS",
+      "footprint": "Diode_SMD:D_SOD-323",
+      "side": "F",
+      "note": "flyback diode"
+    },
+    {
+      "ref": "R1",
+      "value": "1k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R2",
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

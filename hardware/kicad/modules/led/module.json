@@ -1,0 +1,61 @@
+{
+  "name": "LED",
+  "title": "LED (traffic light)",
+  "description": "Red / yellow / green 5 mm LEDs in a row on PWM / IO1 / IO2 (HIGH = on).",
+  "signals": {
+    "PWM": "red LED",
+    "IO1": "yellow LED",
+    "IO2": "green LED"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "D1",
+      "value": "5mm RED diffused",
+      "footprint": "LED_THT:LED_D5.0mm",
+      "side": "F",
+      "note": "5 mm diffused THT LED"
+    },
+    {
+      "ref": "R1",
+      "value": "470R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "D2",
+      "value": "5mm YELLOW diffused",
+      "footprint": "LED_THT:LED_D5.0mm",
+      "side": "F",
+      "note": "5 mm diffused THT LED"
+    },
+    {
+      "ref": "R2",
+      "value": "470R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "D3",
+      "value": "5mm GREEN diffused",
+      "footprint": "LED_THT:LED_D5.0mm",
+      "side": "F",
+      "note": "5 mm diffused THT LED"
+    },
+    {
+      "ref": "R3",
+      "value": "470R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

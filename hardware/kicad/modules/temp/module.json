@@ -1,0 +1,46 @@
+{
+  "name": "TEMP",
+  "title": "Temperature Sensor",
+  "description": "MCP9700A analog sensor on AN (500 mV @ 0 C, 10 mV/C, same maths as TMP36) + red alert LED on PWM.",
+  "signals": {
+    "AN": "temperature: C = (mV - 500) / 10",
+    "PWM": "alert LED"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "U1",
+      "value": "MCP9700A-E/TT",
+      "footprint": "Package_TO_SOT_SMD:SOT-23",
+      "side": "F",
+      "note": "Microchip MCP9700A, SOT-23"
+    },
+    {
+      "ref": "C1",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "D1",
+      "value": "RED",
+      "footprint": "LED_SMD:LED_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    },
+    {
+      "ref": "R1",
+      "value": "1k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "F",
+      "note": ""
+    }
+  ]
+}

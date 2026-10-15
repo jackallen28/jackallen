@@ -1,0 +1,102 @@
+{
+  "name": "OLED",
+  "title": "OLED Display",
+  "description": "0.66\" 64x48 SSD1306 OLED (I2C 0x3C, 3.3 V). Portrait mounting.",
+  "signals": {
+    "SDA": "I2C data",
+    "SCL": "I2C clock"
+  },
+  "parts": [
+    {
+      "ref": "J1,J2",
+      "value": "1x05 2.54mm male header",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+      "side": "B",
+      "note": "mount on underside, pins down"
+    },
+    {
+      "ref": "DS1",
+      "value": "0.66in 64x48 OLED, SSD1306, 28-pin FPC",
+      "footprint": "VIBEDUINO:OLED_0.66in_64x48_FPC28",
+      "side": "F",
+      "note": "same panel as SparkFun LCD-22495; glass folds over pads"
+    },
+    {
+      "ref": "R3",
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "JP1",
+      "value": "ADDR 0x3D",
+      "footprint": "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm",
+      "side": "B",
+      "note": "bridge for I2C 0x3D"
+    },
+    {
+      "ref": "R2",
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C7",
+      "value": "1uF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C4",
+      "value": "1uF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C6",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C2",
+      "value": "1uF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C3",
+      "value": "1uF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "R1",
+      "value": "390k",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C5",
+      "value": "4.7uF",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    },
+    {
+      "ref": "C1",
+      "value": "2.2uF 16V",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "side": "B",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.kicad_prl
+*.dsn
+*.ses
+*.rules
+*-drc.rpt
+fp-info-cache
+*-backups/
+freerouting.log
+hardware/generator/en/
