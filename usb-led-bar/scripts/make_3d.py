@@ -284,6 +284,8 @@ def build(vdir):
     makers = part_models()
     cache = {}
     for p in geo["parts"]:
+        if p["fp"].startswith("MountingHole"):
+            continue  # just a hole, already cut from the board
         if p["fp"] not in makers:
             print(f"  no 3D model for {p['ref']} ({p['fp']}), skipped")
             continue

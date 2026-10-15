@@ -24,7 +24,8 @@ It comes in two variants. They share the same LED layout and differ only in the 
 
 | Both variants | |
 |---|---|
-| Board | 100 × 15 mm, 1 mm corner radius, 2 layers, 1.6 mm FR-4, 1 oz copper, GND pour on the bottom |
+| Board | 100 × 15 mm, 1 mm corner radius, 2 layers, 1.6 mm FR-4, 1 oz copper, GND pour on the bottom, blank underside (no silkscreen) |
+| Mounting | One **M3** hole (3.2 mm) at the logo end, between the last LED and the logo |
 | LEDs | 8 × XINGLIGHT **XL-2835WWC-02**, warm white 2800–3000 K, SMD2835 (LCSC [C2843875](https://www.lcsc.com/product-detail/C2843875.html)) |
 | LED resistors | 8 × UNI-ROYAL **0805W8F1000T5E**, 100 Ω 1 % 0805 (LCSC [C17408](https://jlcpcb.com/partdetail/0805W8F1000T5E/C17408), JLCPCB *Basic* part) |
 | Current | about 21 mA per LED, **about 170 mA in total**, well within any USB port or phone charger |
@@ -42,12 +43,13 @@ Schematics: [jst/docs/usb-led-bar-jst-schematic.pdf](jst/docs/usb-led-bar-jst-sc
 ![USB-C variant, underside](usb-c/docs/renders/bottom.png)
 
 **STEP CAD model:** [`usb-c/3d/usb-led-bar-usbc-step.zip`](usb-c/3d/usb-led-bar-usbc-step.zip).
-Unzip it to get `usb-led-bar-usbc.step` (about 30 MB), which opens in Fusion 360, SolidWorks, Onshape,
+Unzip it to get `usb-led-bar-usbc.step` (about 21 MB), which opens in Fusion 360, SolidWorks, Onshape,
 FreeCAD, KiCad and similar. It is a coloured assembly with the board origin at the bottom-left corner,
 the board's underside at Z = 0 and its top at Z = 1.6 mm. It contains:
 
 * the FR-4 core, green solder mask, copper visible through the mask, tinned pads and plated holes;
-* the white silkscreen, including the logo, all labels and the back-side text;
+* the white silkscreen (logo and part labels) on the top; the underside has none;
+* the M3 mounting hole;
 * every part: D1–D8 (2835 LEDs), R1–R10 (0805 resistors) and J1 (USB-C socket).
 
 Overall size is 100 × 15 × 5.7 mm. The socket is the tallest part at 3.3 mm above the board, and its
@@ -78,8 +80,9 @@ Pick one variant and use the three files from its `jlcpcb/` folder.
 1. On jlcpcb.com, click **Order now** and upload `…_gerbers.zip`. It should detect **2 layers, 100 × 15 mm**.
 2. PCB options. The defaults are fine: 1.6 mm, HASL (lead-free if you prefer), 1 oz.
    *White solder mask reflects more light, but the logo is white silkscreen and needs a dark mask:
-   green, blue, black or purple.* For **Mark on PCB / Remove Order Number**, choose *Specify a location*.
-   The back of the board has a `JLCJLCJLCJLC` marker, so the order number goes there and not over the logo.
+   green, blue, black or purple.* The underside is deliberately blank, so under **Mark on PCB**
+   choose **Remove Mark** (a small extra fee). Otherwise JLCPCB prints its order number wherever it
+   finds room, possibly on the front.
 3. Turn on **PCB Assembly**: *Economic*, **Top side**, tooling holes *Added by JLCPCB*.
 4. Upload `…_bom.csv` and `…_cpl.csv`. Every line should match its LCSC part automatically.
 5. **Check the placement preview:**
@@ -155,8 +158,10 @@ uses URW Gothic, an Avant Garde-style face close to the original. "BANYULE NILLU
 JLCPCB's minimum, and every stroke is at least 0.18 mm so it prints cleanly.
 It is a *board-only* footprint, so updating the PCB from the schematic leaves it alone.
 
-**Mounting.** The logo and the two extra LEDs use the space the M3 holes used to take. Stick the bar
-down with double-sided foam tape or VHB, the way LED strips are mounted.
+**Mounting.** There is one M3 hole (3.2 mm, non-plated) at the logo end, between D8 and the logo,
+75.7 mm from the connector end of the board. Its 6.9 mm keep-out leaves room for an M3 pan or socket head (5.5–6 mm)
+or a 7 mm washer, with no copper under it on the top. To make room, the LEDs are now 7.65 mm apart.
+Hold the connector end down with a dab of double-sided foam tape or VHB, or let the cable support it.
 
 **Manufacturing rules.** Everything sits well inside JLCPCB's standard 2-layer capabilities, with no
 extra-cost options:
