@@ -17,6 +17,8 @@ Per-board files live in `fab/<board>/`:
 | `<board>-cpl-jlcpcb.csv` | JLCPCB pick-and-place (SMT parts only) |
 | `vibeduino-kit-bom.csv` | Whole-kit totals |
 
+Schematics (generated from, and netlist-checked against, each PCB) sit next to each board in `kicad/`; all of them are in one PDF, `schematics/vibeduino-schematics.pdf`.
+
 ## Kit BOM
 
 | Qty / kit | Part | Manufacturer | MPN | Package | Process | Used on |

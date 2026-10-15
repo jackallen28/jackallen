@@ -8,7 +8,6 @@ the module renders onto the shield render at the slot positions.
 import itertools
 import math
 
-import numpy as np
 import pcbnew
 from PIL import Image, ImageFilter
 from shapely.geometry import Polygon, box

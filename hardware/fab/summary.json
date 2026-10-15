@@ -22,7 +22,12 @@
         "Top"
       ],
       "tht": 12,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 25,
+        "paper": "A4",
+        "file": "kicad/shield/vibeduino-shield.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-pot",
@@ -33,7 +38,12 @@
         "Top"
       ],
       "tht": 3,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 4,
+        "paper": "A4",
+        "file": "kicad/modules/pot/vibeduino-pot.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-oled",
@@ -44,7 +54,12 @@
         "Bottom"
       ],
       "tht": 2,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 14,
+        "paper": "A4",
+        "file": "kicad/modules/oled/vibeduino-oled.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-dpad",
@@ -55,7 +70,12 @@
         "Top"
       ],
       "tht": 2,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 13,
+        "paper": "A4",
+        "file": "kicad/modules/dpad/vibeduino-dpad.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-led",
@@ -66,7 +86,12 @@
         "Top"
       ],
       "tht": 5,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 8,
+        "paper": "A4",
+        "file": "kicad/modules/led/vibeduino-led.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-servo",
@@ -77,7 +102,12 @@
         "Top"
       ],
       "tht": 4,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 8,
+        "paper": "A4",
+        "file": "kicad/modules/servo/vibeduino-servo.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-temp",
@@ -88,7 +118,12 @@
         "Top"
       ],
       "tht": 2,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 6,
+        "paper": "A4",
+        "file": "kicad/modules/temp/vibeduino-temp.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-buzzer",
@@ -99,7 +134,12 @@
         "Top"
       ],
       "tht": 3,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 7,
+        "paper": "A4",
+        "file": "kicad/modules/buzzer/vibeduino-buzzer.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-light",
@@ -110,7 +150,12 @@
         "Top"
       ],
       "tht": 3,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 5,
+        "paper": "A4",
+        "file": "kicad/modules/light/vibeduino-light.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-rgb",
@@ -121,7 +166,12 @@
         "Top"
       ],
       "tht": 2,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 10,
+        "paper": "A4",
+        "file": "kicad/modules/rgb/vibeduino-rgb.kicad_sch"
+      }
     },
     {
       "board": "vibeduino-proto",
@@ -130,7 +180,12 @@
       "placements": 0,
       "smt_sides": [],
       "tht": 2,
-      "gerber_files": 14
+      "gerber_files": 14,
+      "schematic": {
+        "symbols": 3,
+        "paper": "A4",
+        "file": "kicad/modules/proto/vibeduino-proto.kicad_sch"
+      }
     }
   ]
 }

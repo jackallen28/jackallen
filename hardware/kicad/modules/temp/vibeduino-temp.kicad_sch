@@ -1,0 +1,1744 @@
+(kicad_sch
+  (version 20230121)
+  (generator eeschema)
+  (uuid "72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d")
+  (paper "A4")
+  (title_block
+    (title "VIBEDUINO TEMP module - Temperature Sensor")
+    (date "2026-10-15")
+    (rev "A")
+    (company "Allentronics Education Services - www.allentronics.com.au")
+    (comment 1 "VIBEDUINO - hex modules for Arduino Uno")
+  )
+  (lib_symbols
+    (symbol "Connector_Generic:Conn_01x05"
+      (pin_names (offset 1.016) hide)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "J"
+        (at 0 7.62 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "Conn_01x05"
+        (at 0 -7.62 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "connector"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Generic connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "Connector*:*_1x??_*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "Conn_01x05_1_1"
+        (rectangle
+          (start -1.27 -4.953)
+          (end 0 -5.207)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 -2.413)
+          (end 0 -2.667)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 0.127)
+          (end 0 -0.127)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 2.667)
+          (end 0 2.413)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 5.207)
+          (end 0 4.953)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 6.35)
+          (end 1.27 -6.35)
+          (stroke (width 0.254) (type default))
+          (fill (type background))
+        )
+        (pin passive line
+          (at -5.08 5.08 0)
+          (length 3.81)
+          (name "Pin_1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 2.54 0)
+          (length 3.81)
+          (name "Pin_2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 0 0)
+          (length 3.81)
+          (name "Pin_3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 -2.54 0)
+          (length 3.81)
+          (name "Pin_4"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "4"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 -5.08 0)
+          (length 3.81)
+          (name "Pin_5"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "5"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "Sensor_Temperature:MCP9700Ax-ETT"
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "U"
+        (at -6.35 6.35 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "MCP9700Ax-ETT"
+        (at 1.27 6.35 0)
+        (effects
+          (font (size 1.27 1.27))
+          (justify left)
+        )
+      )
+      (property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+        (at 0 -10.16 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "http://ww1.microchip.com/downloads/en/devicedoc/20001942g.pdf"
+        (at -3.81 6.35 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "temperature sensor thermistor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Low power, analog thermistor temperature sensor, ±2C accuracy, -40C to +125C, in SOT-23-3"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "SOT?23*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "MCP9700Ax-ETT_0_1"
+        (rectangle
+          (start -7.62 5.08)
+          (end 7.62 -5.08)
+          (stroke (width 0.254) (type default))
+          (fill (type background))
+        )
+        (circle
+          (center -4.445 -2.54)
+          (radius 1.27)
+          (stroke (width 0.254) (type default))
+          (fill (type outline))
+        )
+        (rectangle
+          (start -3.81 -1.905)
+          (end -5.08 0)
+          (stroke (width 0.254) (type default))
+          (fill (type outline))
+        )
+        (arc
+          (start -3.81 3.175)
+          (mid -4.445 3.8073)
+          (end -5.08 3.175)
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -5.08 0.635) (xy -4.445 0.635))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -5.08 1.27) (xy -4.445 1.27))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -5.08 1.905) (xy -4.445 1.905))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -5.08 2.54) (xy -4.445 2.54))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -5.08 3.175) (xy -5.08 0))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -5.08 3.175) (xy -4.445 3.175))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -3.81 3.175) (xy -3.81 0))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "MCP9700Ax-ETT_1_1"
+        (pin power_in line
+          (at 0 7.62 270)
+          (length 2.54)
+          (name "V_{DD}"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin output line
+          (at 10.16 0 180)
+          (length 2.54)
+          (name "V_{OUT}"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin power_in line
+          (at 0 -7.62 90)
+          (length 2.54)
+          (name "GND"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "Device:LED"
+      (pin_numbers hide)
+      (pin_names (offset 1.016) hide)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "D"
+        (at 0 2.54 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "LED"
+        (at 0 -2.54 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "LED diode"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Light emitting diode"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "LED* LED_SMD:* LED_THT:*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "LED_0_1"
+        (polyline
+          (pts (xy -1.27 -1.27) (xy -1.27 1.27))
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -1.27 0) (xy 1.27 0))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 1.27 -1.27)
+            (xy 1.27 1.27)
+            (xy -1.27 0)
+            (xy 1.27 -1.27)
+          )
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -3.048 -0.762)
+            (xy -4.572 -2.286)
+            (xy -3.81 -2.286)
+            (xy -4.572 -2.286)
+            (xy -4.572 -1.524)
+          )
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -1.778 -0.762)
+            (xy -3.302 -2.286)
+            (xy -2.54 -2.286)
+            (xy -3.302 -2.286)
+            (xy -3.302 -1.524)
+          )
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "LED_1_1"
+        (pin passive line
+          (at -3.81 0 0)
+          (length 2.54)
+          (name "K"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at 3.81 0 180)
+          (length 2.54)
+          (name "A"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "Device:R"
+      (pin_numbers hide)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "R"
+        (at 2.032 0 90)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "R"
+        (at 0 0 90)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at -1.778 0 90)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "R res resistor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Resistor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "R_*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "R_0_1"
+        (rectangle
+          (start -1.016 -2.54)
+          (end 1.016 2.54)
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "R_1_1"
+        (pin passive line
+          (at 0 3.81 270)
+          (length 1.27)
+          (name "~"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at 0 -3.81 90)
+          (length 1.27)
+          (name "~"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "Device:C"
+      (pin_numbers hide)
+      (pin_names (offset 0.254))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "C"
+        (at 0.635 2.54 0)
+        (effects
+          (font (size 1.27 1.27))
+          (justify left)
+        )
+      )
+      (property "Value" "C"
+        (at 0.635 -2.54 0)
+        (effects
+          (font (size 1.27 1.27))
+          (justify left)
+        )
+      )
+      (property "Footprint" ""
+        (at 0.9652 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "cap capacitor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Unpolarized capacitor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "C_*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "C_0_1"
+        (polyline
+          (pts (xy -2.032 -0.762) (xy 2.032 -0.762))
+          (stroke (width 0.508) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -2.032 0.762) (xy 2.032 0.762))
+          (stroke (width 0.508) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "C_1_1"
+        (pin passive line
+          (at 0 3.81 270)
+          (length 2.794)
+          (name "~"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at 0 -3.81 90)
+          (length 2.794)
+          (name "~"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:+3V3"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "+3V3"
+        (at 0 3.556 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"+3V3\""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "+3V3_0_1"
+        (polyline
+          (pts (xy -0.762 1.27) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "+3V3_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          hide
+          (name "+3V3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:+5V"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "+5V"
+        (at 0 3.556 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"+5V\""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "+5V_0_1"
+        (polyline
+          (pts (xy -0.762 1.27) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "+5V_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          hide
+          (name "+5V"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:GND"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -6.35 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "GND"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"GND\" , ground"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "GND_0_1"
+        (polyline
+          (pts
+            (xy 0 0)
+            (xy 0 -1.27)
+            (xy 1.27 -1.27)
+            (xy 0 -2.54)
+            (xy -1.27 -1.27)
+            (xy 0 -1.27)
+          )
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "GND_1_1"
+        (pin power_in line
+          (at 0 0 270)
+          (length 0)
+          hide
+          (name "GND"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+  )
+  (text "VIBEDUINO TEMP module - Temperature Sensor"
+    (at 20 18 0)
+    (effects
+      (font (size 2 2) bold)
+      (justify left bottom)
+    )
+    (uuid "2208394f-c8ef-5503-a623-2b87a775d171")
+  )
+  (text "MCP9700A analog sensor on AN (500 mV @ 0 C, 10 mV/C, same maths as TMP36) + red alert LED on PWM."
+    (at 20 21.2 0)
+    (effects
+      (font (size 1.4 1.4))
+      (justify left bottom)
+    )
+    (uuid "3ba0e3d4-e926-501a-9bc4-915fedafba61")
+  )
+  (text "Auto-generated from the routed PCB netlist (net-label style): pins sharing a label are connected. Values/MPNs from bom.py."
+    (at 20 24.4 0)
+    (effects
+      (font (size 1.4 1.4))
+      (justify left bottom)
+    )
+    (uuid "3c5ec21b-e0e1-5be8-81cd-3a722f42a92f")
+  )
+  (symbol
+    (lib_id "Connector_Generic:Conn_01x05")
+    (at 33.02 49.53 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "9785a9b7-771d-5c6b-aba1-b170a0a6e5fe")
+    (property "Reference" "J1"
+      (at 35.79 48.33 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "BUS PWR/I2C"
+      (at 35.79 50.73 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Pin header 1×5, 2.54 mm, straight"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "269ee3b7-37a3-5db2-abf8-2a4c057050b3"))
+    (pin "2" (uuid "3bab19ce-58ef-5a52-935d-99f52b298470"))
+    (pin "3" (uuid "0c7e008f-e13a-5707-bc7c-eb10e8a8d19b"))
+    (pin "4" (uuid "80765b27-4570-566c-9cdd-53d7a73305b4"))
+    (pin "5" (uuid "c421743a-9762-5937-8189-2fe6029dce62"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "J1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 27.94 44.45) (xy 25.4 44.45))
+    (stroke (width 0) (type default))
+    (uuid "34053fec-b753-5536-b8cf-de86446a7923")
+  )
+  (label "GND"
+    (at 25.4 44.45 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "8dd720e5-23b7-5be7-9b2e-db1cf99d5062")
+  )
+  (wire
+    (pts (xy 27.94 46.99) (xy 25.4 46.99))
+    (stroke (width 0) (type default))
+    (uuid "e9f08ef4-d938-5386-90e7-3caa313f3b5f")
+  )
+  (label "+5V"
+    (at 25.4 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "d48cc513-e33f-5e00-a9be-b35c5d174724")
+  )
+  (wire
+    (pts (xy 27.94 49.53) (xy 25.4 49.53))
+    (stroke (width 0) (type default))
+    (uuid "e25a63a1-a82a-5b8d-abaa-5700da424d84")
+  )
+  (label "+3V3"
+    (at 25.4 49.53 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "5cdf37fa-0378-51e3-8cbb-efe4122eef11")
+  )
+  (wire
+    (pts (xy 27.94 52.07) (xy 25.4 52.07))
+    (stroke (width 0) (type default))
+    (uuid "9b17a304-9d51-582a-8072-40ec4d4164d7")
+  )
+  (label "SDA"
+    (at 25.4 52.07 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "5fc82506-ef9f-5beb-940f-536e022b5b1c")
+  )
+  (wire
+    (pts (xy 27.94 54.61) (xy 25.4 54.61))
+    (stroke (width 0) (type default))
+    (uuid "5f419f08-040c-56c3-bfe1-20f739d36fdf")
+  )
+  (label "SCL"
+    (at 25.4 54.61 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "b6c713b6-6ac3-5142-88ad-e97f5c43d4c9")
+  )
+  (symbol
+    (lib_id "Connector_Generic:Conn_01x05")
+    (at 66.04 49.53 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "6b7d12c2-b129-56d4-99ec-e7a5e55c78f6")
+    (property "Reference" "J2"
+      (at 68.81 48.33 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "BUS SIGNALS"
+      (at 68.81 50.73 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Pin header 1×5, 2.54 mm, straight"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "c2a0155e-d570-5653-9e5f-d3063a4e27d5"))
+    (pin "2" (uuid "cfb0965c-4b2b-5569-bc33-6c10e8b1ddc4"))
+    (pin "3" (uuid "84bbf85b-577a-553a-a0c1-0ef3defd28af"))
+    (pin "4" (uuid "5098639a-ece2-5b95-b4b5-234b38e827a5"))
+    (pin "5" (uuid "db63fa89-ed48-5786-b3cf-7a39f5395187"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "J2") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 60.96 44.45) (xy 58.42 44.45))
+    (stroke (width 0) (type default))
+    (uuid "19c6c0f7-7e8a-5b57-8b5b-c2c578fa2377")
+  )
+  (label "GND"
+    (at 58.42 44.45 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "a86d42b1-e2a0-5a8f-a6f9-2ab60193e074")
+  )
+  (wire
+    (pts (xy 60.96 46.99) (xy 58.42 46.99))
+    (stroke (width 0) (type default))
+    (uuid "1b609136-b35c-5dc0-861f-babbae994002")
+  )
+  (label "AN"
+    (at 58.42 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "75832603-4508-5c5a-8531-3b07bbad0361")
+  )
+  (wire
+    (pts (xy 60.96 49.53) (xy 58.42 49.53))
+    (stroke (width 0) (type default))
+    (uuid "c00695d3-d53c-5cf0-ac6d-950307e2e575")
+  )
+  (label "PWM"
+    (at 58.42 49.53 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "c3e2c742-3ba5-58c0-a808-10c36936dcec")
+  )
+  (wire
+    (pts (xy 60.96 52.07) (xy 58.42 52.07))
+    (stroke (width 0) (type default))
+    (uuid "0ce06a17-555b-59b4-b0c1-5b9e08c6d996")
+  )
+  (label "IO1"
+    (at 58.42 52.07 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "e915a67e-3c3e-5310-8045-a34a3745ac3b")
+  )
+  (wire
+    (pts (xy 60.96 54.61) (xy 58.42 54.61))
+    (stroke (width 0) (type default))
+    (uuid "fe7fbdbc-a643-59e2-b97b-92cb409c5766")
+  )
+  (label "IO2"
+    (at 58.42 54.61 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "85650af3-3848-5c88-9039-549a749151c4")
+  )
+  (symbol
+    (lib_id "Sensor_Temperature:MCP9700Ax-ETT")
+    (at 93.98 57.15 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "02e7bd27-db18-5304-8c55-e3b2c8b0ae21")
+    (property "Reference" "U1"
+      (at 111.18 55.95 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "MCP9700A-E/TT"
+      (at 111.18 58.35 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+      (at 93.98 57.15 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 93.98 57.15 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Analog temperature sensor, 10 mV/°C, 500 mV @ 0 °C"
+      (at 93.98 57.15 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "Microchip"
+      (at 93.98 57.15 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "MCP9700AT-E/TT"
+      (at 93.98 57.15 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "b336941a-f063-52f6-91e8-1e2ac0a8046c"))
+    (pin "2" (uuid "36dff99d-3cdd-5980-881b-6210b5afb7eb"))
+    (pin "3" (uuid "45e52de5-9939-5bbb-9ba4-df81e8911744"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "U1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 93.98 49.53) (xy 93.98 46.99))
+    (stroke (width 0) (type default))
+    (uuid "a9573d0a-4f3e-5e1a-a638-2aaaa9d186f6")
+  )
+  (label "+5V"
+    (at 93.98 46.99 90)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "d0ef73e8-fbbb-50bf-b109-de1cb3e54c97")
+  )
+  (wire
+    (pts (xy 104.14 57.15) (xy 106.68 57.15))
+    (stroke (width 0) (type default))
+    (uuid "a6bcd8c3-8e48-57f3-9fde-f6cbc445888f")
+  )
+  (label "AN"
+    (at 106.68 57.15 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "10c22aa8-eae0-5d24-aee5-d7f5f16633fe")
+  )
+  (wire
+    (pts (xy 93.98 64.77) (xy 93.98 67.31))
+    (stroke (width 0) (type default))
+    (uuid "73ca4318-68b3-5b39-939e-5875e78ba2bd")
+  )
+  (label "GND"
+    (at 93.98 67.31 270)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "4a043d95-92d9-5e32-95f6-29c2f732dd79")
+  )
+  (symbol
+    (lib_id "Device:LED")
+    (at 142.24 46.99 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "bd44b9dd-d7c1-58d2-9783-db028af49169")
+    (property "Reference" "D1"
+      (at 141.859 44.22 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Value" "RED"
+      (at 141.859 52.076 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" "LED_SMD:LED_0603_1608Metric"
+      (at 142.24 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 142.24 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "LED red 0603"
+      (at 142.24 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 142.24 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 142.24 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "cba55460-b520-5d5b-8ce8-8227f260c322"))
+    (pin "2" (uuid "f6d288d9-108d-5cfe-b819-3c0e375ce5b2"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "D1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 138.43 46.99) (xy 135.89 46.99))
+    (stroke (width 0) (type default))
+    (uuid "97f76ed9-b7fb-51f6-970b-5d54782c6a78")
+  )
+  (label "GND"
+    (at 135.89 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "e71b8ab1-525c-5b5d-b590-5428595439e3")
+  )
+  (wire
+    (pts (xy 146.05 46.99) (xy 148.59 46.99))
+    (stroke (width 0) (type default))
+    (uuid "aa928de3-6684-5782-94ea-b08654a8ebd7")
+  )
+  (label "LED_A"
+    (at 148.59 46.99 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "5a6a5f99-2560-5353-ba8d-d7399716647d")
+  )
+  (symbol
+    (lib_id "Device:R")
+    (at 161.29 53.34 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "fc795955-2c12-5567-9223-c79d16bdc87d")
+    (property "Reference" "R1"
+      (at 163.806 52.14 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "1k"
+      (at 163.806 54.54 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+      (at 161.29 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 161.29 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Resistor 1 kΩ 1 % 0603"
+      (at 161.29 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "UNI-ROYAL"
+      (at 161.29 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "0603WAF1001T5E"
+      (at 161.29 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "06d1c42c-6c2d-5f6e-a394-aaa91bcc554f"))
+    (pin "2" (uuid "bb94e0fa-ba18-543b-9b5f-43b6a36d1798"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "R1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 161.29 49.53) (xy 161.29 46.99))
+    (stroke (width 0) (type default))
+    (uuid "9a5216de-acbe-5dbf-b3b3-2c9bf21b6aa3")
+  )
+  (label "PWM"
+    (at 161.29 46.99 90)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "1f95b87b-69ec-5958-a3a0-b6015eabe93e")
+  )
+  (wire
+    (pts (xy 161.29 57.15) (xy 161.29 59.69))
+    (stroke (width 0) (type default))
+    (uuid "1f946d34-26bd-5097-a6bf-f7142cf2b824")
+  )
+  (label "LED_A"
+    (at 161.29 59.69 270)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "e69c115d-34a6-58e5-93d0-a483aa1e27e8")
+  )
+  (symbol
+    (lib_id "Device:C")
+    (at 173.99 53.34 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "d8e31a2c-9380-5f00-810d-bb4e82a7a623")
+    (property "Reference" "C1"
+      (at 177.522 52.14 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "100nF"
+      (at 177.522 54.54 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+      (at 173.99 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 173.99 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Capacitor 100 nF 50 V X7R 0603"
+      (at 173.99 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "Samsung"
+      (at 173.99 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "CL10B104KB8NNNC"
+      (at 173.99 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "2dcb9735-a141-5c75-8830-7357567b5b22"))
+    (pin "2" (uuid "0e91d87c-ddbc-5993-8aae-4c40183ef4e4"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "C1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 173.99 49.53) (xy 173.99 46.99))
+    (stroke (width 0) (type default))
+    (uuid "752bc37c-3b36-5e91-9c2a-6e580689025d")
+  )
+  (label "+5V"
+    (at 173.99 46.99 90)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "41cedc01-eb20-54fd-a230-5b9f98fc9ce1")
+  )
+  (wire
+    (pts (xy 173.99 57.15) (xy 173.99 59.69))
+    (stroke (width 0) (type default))
+    (uuid "f8820b14-f940-5fe6-b541-875a039edd77")
+  )
+  (label "GND"
+    (at 173.99 59.69 270)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "0ab07435-139d-57a3-a45d-3064c5411728")
+  )
+  (label "+3V3"
+    (at 227.33 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "dca060d2-0dc5-526d-a6b7-916282af1f79")
+  )
+  (wire
+    (pts (xy 227.33 25.4) (xy 227.33 21.59))
+    (stroke (width 0) (type default))
+    (uuid "1bd0d2df-6613-5895-9ca6-f0589aab46d9")
+  )
+  (symbol
+    (lib_id "power:+3V3")
+    (at 227.33 21.59 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "ee77df1c-98d4-5537-b3c7-01f2b25edbb7")
+    (property "Reference" "#PWR01"
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "+3V3"
+      (at 227.33 18.39 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "c1b31e9d-28af-5122-9cb2-9eea364ba850"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "#PWR01") (unit 1))
+      )
+    )
+  )
+  (label "+5V"
+    (at 245.11 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "24340f60-a839-5469-ab06-b2439400976c")
+  )
+  (wire
+    (pts (xy 245.11 25.4) (xy 245.11 21.59))
+    (stroke (width 0) (type default))
+    (uuid "6d240150-5b76-50a0-be85-fdf6e5175bca")
+  )
+  (symbol
+    (lib_id "power:+5V")
+    (at 245.11 21.59 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "09fed2e5-645b-58b9-88b5-d5c29568c408")
+    (property "Reference" "#PWR02"
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "+5V"
+      (at 245.11 18.39 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "872ae108-08ed-5743-8da0-192467f2e476"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "#PWR02") (unit 1))
+      )
+    )
+  )
+  (label "GND"
+    (at 262.89 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "c01e2951-760c-523e-8561-8d3f238cb854")
+  )
+  (wire
+    (pts (xy 262.89 25.4) (xy 262.89 29.21))
+    (stroke (width 0) (type default))
+    (uuid "e444a405-5cb3-51cf-80c4-492732134852")
+  )
+  (symbol
+    (lib_id "power:GND")
+    (at 262.89 29.21 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "0b099f10-9ca9-511e-b243-8b9bcc26210a")
+    (property "Reference" "#PWR03"
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "GND"
+      (at 262.89 33.61 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "fadb3d48-d2d9-56ba-8598-f42b17adbb18"))
+    (instances
+      (project "vibeduino-temp"
+        (path "/72d8f7bf-1447-5f8c-9b8a-ceed8c31f11d" (reference "#PWR03") (unit 1))
+      )
+    )
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)

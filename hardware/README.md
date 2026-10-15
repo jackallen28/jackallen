@@ -9,13 +9,16 @@ Students pick the modules for a project, plug them in, and program the Uno over 
 
 ![Shield with four modules](previews/vibeduino-assembly.png)
 
-> **Status — rev A PCB layouts.** Every board is placed, fully routed, has copper pours and has
-> passed KiCad DRC. Next steps: BOM, schematics and fab outputs (Gerbers, pick-and-place).
+> **Status — rev A, ready for a prototype order.** Every board is placed, fully routed, has
+> copper pours and has passed KiCad DRC. Each board also has a schematic (checked pin-for-pin
+> against its PCB), a BOM with manufacturer part numbers, and JLCPCB-ready Gerbers, drill files
+> and pick-and-place files. See [BOM.md](BOM.md) and section 5.
 
 | Board | Previews |
 |---|---|
-| Shield | [top](previews/vibeduino-shield-top.png) · [bottom](previews/vibeduino-shield-bottom.png) · [routing](previews/vibeduino-shield-layout.png) |
+| Shield | [top](previews/vibeduino-shield-top.png) · [bottom](previews/vibeduino-shield-bottom.png) · [routing](previews/vibeduino-shield-layout.png) · [schematic](previews/vibeduino-shield-schematic.png) |
 | All modules | [top views](previews/modules-top.png) · [bottom views](previews/modules-bottom.png) · [routing](previews/modules-layout.png) |
+| Module schematics | [POT](previews/vibeduino-pot-schematic.png) · [OLED](previews/vibeduino-oled-schematic.png) · [D-PAD](previews/vibeduino-dpad-schematic.png) · [LED](previews/vibeduino-led-schematic.png) · [SERVO](previews/vibeduino-servo-schematic.png) · [TEMP](previews/vibeduino-temp-schematic.png) · [BUZZER](previews/vibeduino-buzzer-schematic.png) · [LIGHT](previews/vibeduino-light-schematic.png) · [RGB](previews/vibeduino-rgb-schematic.png) · [PROTO](previews/vibeduino-proto-schematic.png) — all 11 in one PDF: [vibeduino-schematics.pdf](schematics/vibeduino-schematics.pdf) |
 | Fit check | [OLED + D-PAD + POT + SERVO](previews/vibeduino-assembly.png) · [LED + RGB + TEMP + BUZZER](previews/vibeduino-assembly-2.png) (bare PCBs; panel, knob and caps not drawn) |
 
 ---
@@ -155,7 +158,32 @@ The remaining DRC *warnings* are cosmetic: silkscreen clipped by pads or overlap
 neighbouring artwork. The full report sits next to each board after a build
 (`*-drc.rpt`, git-ignored).
 
-## 5. Regenerating the boards
+Every schematic is exported back to a netlist with `kicad-cli` and compared pin-for-pin with
+its PCB. All 11 match exactly. The release script also re-runs DRC after adding the BOM fields
+and stops if anything changed.
+
+## 5. Schematics, BOM and fab files
+
+| What | Where |
+|---|---|
+| KiCad projects (PCB + schematic, open the `.kicad_pro`) | `kicad/shield/`, `kicad/modules/<name>/` |
+| Custom symbols and footprints (OLED panel, PROTO breakout, NPTH holes) | `kicad/lib/` (each project's `sym-lib-table` / `fp-lib-table` point here) |
+| All schematics as one PDF | `schematics/vibeduino-schematics.pdf` |
+| Bill of materials (kit totals, per-board counts, ordering notes) | [`BOM.md`](BOM.md), `fab/vibeduino-kit-bom.csv` |
+| Per-board BOM, JLCPCB BOM + pick-and-place, Gerber/drill zip | `fab/vibeduino-<board>/` |
+
+* **Schematics are net-label style.** They are generated from each routed PCB. Every pin has a
+  short wire and a net label, and pins with the same label are connected. The power nets have
+  one power-symbol block in the top-right corner. Each footprint is linked to its symbol, so
+  *Update PCB from Schematic* works in KiCad. The parts are placed in rows, not drawn as a
+  hand-made circuit diagram. They are accurate and editable, but a hand-drawn tidy-up would
+  read better in teaching material.
+* **Part numbers** (manufacturer + MPN) are stored as fields on every footprint and symbol.
+  They come from one catalogue, `generator/vibeduino/bom.py`.
+* **LCSC part numbers are blank on purpose.** Pick current stock from the MPN when ordering.
+  The JLCPCB placement rotations follow KiCad's convention, so check the placement preview.
+
+## 6. Regenerating the boards
 
 All boards are produced by code: `generator/build.py` places the parts, autoroutes with
 Freerouting, pours copper, runs DRC and renders the previews. Changing a value in
@@ -163,17 +191,19 @@ Freerouting, pours copper, runs DRC and renders the previews. Changing a value i
 
 ```bash
 # KiCad 7+ with its Python module (pcbnew), Java 25 and Freerouting 2.x
-pip install opencv-python-headless shapely cairosvg
+pip install opencv-python-headless shapely cairosvg pypdf
 export FREEROUTING_JAR=/path/to/freerouting-2.5.0-executable.jar
 export VIBEDUINO_JAVA=/path/to/java25/bin/java
 python3 generator/build.py            # everything
 python3 generator/build.py shield oled # selected boards
+python3 generator/release.py          # schematics, BOMs, Gerbers, pick-and-place (no re-routing)
 ```
 
 The KiCad files are saved in KiCad 7 format and open in KiCad 8/9. Boards are layout-first:
-nets are assigned directly in the generator, so there are no schematic sheets yet.
+nets are assigned in the generator, and `release.py` derives the schematics from the boards.
+Run it after every `build.py`.
 
-## 6. Open items to confirm before ordering
+## 7. Open items to confirm before ordering
 
 1. **OLED panel**
    * The footprint is derived from SparkFun's open-source Qwiic Micro OLED (LCD-22495),

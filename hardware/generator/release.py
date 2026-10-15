@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Release outputs for every routed board: BOM, JLCPCB BOM/CPL, Gerber+drill zips,
-and a whole-kit BOM.  Runs on the boards already in hardware/kicad (no re-routing).
+"""Release outputs for every routed board: schematic (checked against the PCB netlist),
+BOM, JLCPCB BOM/CPL, Gerber+drill zips and a whole-kit BOM.  Runs on the boards already
+in hardware/kicad (no re-routing).
 
     python3 release.py
 """
@@ -9,16 +10,22 @@ import collections
 import csv
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-from vibeduino import bom, fab, modules, route  # noqa: E402
+from vibeduino import bom, fab, modules, route, sch  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
 KICAD = os.path.join(ROOT, "kicad")
 OUT = os.path.join(ROOT, "fab")
+SCHEMATICS = os.path.join(ROOT, "schematics")
+PREVIEWS = os.path.join(ROOT, "previews")
+LIB = os.path.join(KICAD, "lib")
 
 # A classroom kit: one shield plus one of every module.
 KIT = {"shield": 1, **{f.__name__: 1 for f in modules.ALL}}
@@ -30,13 +37,68 @@ def boards():
         yield f.__name__, os.path.join(KICAD, "modules", f.__name__, f"vibeduino-{f.__name__}.kicad_pcb")
 
 
+def describe(key, path):
+    if key == "shield":
+        return ("VIBEDUINO Shield (Arduino Uno R3)",
+                "Four hex module slots (J1 power/I2C, J2 AN/PWM/IO1/IO2), BSS138 5V-3V3 I2C level "
+                "shifter, Qwiic port, reset button, power LED.")
+    m = json.load(open(os.path.join(os.path.dirname(path), "module.json")))
+    return f"VIBEDUINO {m['name']} module - {m['title']}", m["description"]
+
+
+def schematic(key, path, name, pdf_dir):
+    """Generate the board's schematic next to its PCB, link the footprints to it, prove the two
+    netlists match, and export a PDF (into pdf_dir) and a PNG preview."""
+    sch_path = path[:-len(".kicad_pcb")] + ".kicad_sch"
+    title, desc = describe(key, path)
+    n, paper, uuids = sch.build(path, sch_path, name, title, desc)
+    sch.link_footprints(path, os.path.basename(sch_path), uuids)
+    sch.write_lib_tables(os.path.dirname(path), LIB)
+    diffs = sch.compare(path, sch_path)
+    assert not diffs, (name, diffs)
+    pdf = os.path.join(pdf_dir, f"{name}.pdf")
+    subprocess.run(["kicad-cli", "sch", "export", "pdf", "-o", pdf, sch_path], check=True,
+                   capture_output=True)
+    with tempfile.TemporaryDirectory() as td:
+        subprocess.run(["kicad-cli", "sch", "export", "svg", "-o", td, sch_path], check=True,
+                       capture_output=True)
+        import cairosvg
+        cairosvg.svg2png(url=os.path.join(td, f"{name}.svg"), output_width=2400,
+                         background_color="white",
+                         write_to=os.path.join(PREVIEWS, f"{name}-schematic.png"))
+    return pdf, dict(symbols=n, paper=paper, file=os.path.relpath(sch_path, ROOT))
+
+
+def merge_pdfs(paths, out_dir):
+    """One schematic PDF for the whole kit (per-board PDFs if pypdf is missing)."""
+    os.makedirs(out_dir, exist_ok=True)
+    try:
+        from pypdf import PdfWriter
+    except ImportError:
+        print("pypdf not installed - writing one PDF per board")
+        for p in paths:
+            shutil.copy(p, out_dir)
+        return
+    w = PdfWriter()
+    for p in paths:
+        w.append(p)
+    with open(os.path.join(out_dir, "vibeduino-schematics.pdf"), "wb") as f:
+        w.write(f)
+
+
 def main():
     kit = collections.OrderedDict()
     summary = []
+    libs = sch.write_libraries(LIB, [p for _, p in boards()])
+    print("kicad/lib:", ", ".join(libs), flush=True)
+    pdf_dir = tempfile.mkdtemp()
+    pdfs = []
     for key, path in boards():
         name = f"vibeduino-{key}"
         out = os.path.join(OUT, name)
         bom.annotate(path)
+        pdf, sheet = schematic(key, path, name, pdf_dir)
+        pdfs.append(pdf)
         lines = bom.write_board_bom(path, out, name)
         n_cpl = bom.write_cpl(path, out, name)
         zpath, files = fab.gerbers(path, out, name)
@@ -46,15 +108,19 @@ def main():
         summary.append(dict(board=name, parts=sum(len(g["refs"]) for g in lines),
                             lines=len(lines), placements=n_cpl, smt_sides=smt_sides,
                             tht=sum(len(g["refs"]) for g in lines if g["part"].process == "THT"),
-                            gerber_files=len(files)))
+                            gerber_files=len(files), schematic=sheet))
         for g in lines:
             p = g["part"]
             k = kit.setdefault(p.key, dict(part=p, qty=0, boards=collections.Counter()))
             k["qty"] += len(g["refs"]) * KIT[key]
             k["boards"][key] += len(g["refs"])
         print(f"{name:22s} {summary[-1]['parts']:3d} parts / {len(lines):2d} lines, "
-              f"{n_cpl:2d} SMT placements on {','.join(smt_sides) or '-'}, gerbers -> "
+              f"{n_cpl:2d} SMT placements on {','.join(smt_sides) or '-'}, schematic "
+              f"{sheet['symbols']} symbols (netlist == PCB), gerbers -> "
               f"{os.path.relpath(zpath, ROOT)}", flush=True)
+
+    merge_pdfs(pdfs, SCHEMATICS)
+    shutil.rmtree(pdf_dir)
 
     with open(os.path.join(OUT, "vibeduino-kit-bom.csv"), "w", newline="") as f:
         w = csv.writer(f)
@@ -89,6 +155,8 @@ def write_markdown(kit, summary):
          "| `<board>-bom-jlcpcb.csv` | JLCPCB assembly BOM (SMT parts only). Fill the *LCSC Part #* column from the MPN when ordering |",
          "| `<board>-cpl-jlcpcb.csv` | JLCPCB pick-and-place (SMT parts only) |",
          "| `vibeduino-kit-bom.csv` | Whole-kit totals |", "",
+         "Schematics (generated from, and netlist-checked against, each PCB) sit next to each board "
+         "in `kicad/`; all of them are in one PDF, `schematics/vibeduino-schematics.pdf`.", "",
          "## Kit BOM", "",
          "| Qty / kit | Part | Manufacturer | MPN | Package | Process | Used on |",
          "|---:|---|---|---|---|---|---|"]

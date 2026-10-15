@@ -1,0 +1,1256 @@
+(kicad_sch
+  (version 20230121)
+  (generator eeschema)
+  (uuid "aeba407a-a629-54cf-b673-032ac163628e")
+  (paper "A4")
+  (title_block
+    (title "VIBEDUINO PROTO module - Prototyping")
+    (date "2026-10-15")
+    (rev "A")
+    (company "Allentronics Education Services - www.allentronics.com.au")
+    (comment 1 "VIBEDUINO - hex modules for Arduino Uno")
+  )
+  (lib_symbols
+    (symbol "Connector_Generic:Conn_01x05"
+      (pin_names (offset 1.016) hide)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "J"
+        (at 0 7.62 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "Conn_01x05"
+        (at 0 -7.62 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "connector"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Generic connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "Connector*:*_1x??_*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "Conn_01x05_1_1"
+        (rectangle
+          (start -1.27 -4.953)
+          (end 0 -5.207)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 -2.413)
+          (end 0 -2.667)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 0.127)
+          (end 0 -0.127)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 2.667)
+          (end 0 2.413)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 5.207)
+          (end 0 4.953)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 6.35)
+          (end 1.27 -6.35)
+          (stroke (width 0.254) (type default))
+          (fill (type background))
+        )
+        (pin passive line
+          (at -5.08 5.08 0)
+          (length 3.81)
+          (name "Pin_1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 2.54 0)
+          (length 3.81)
+          (name "Pin_2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 0 0)
+          (length 3.81)
+          (name "Pin_3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 -2.54 0)
+          (length 3.81)
+          (name "Pin_4"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "4"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 -5.08 0)
+          (length 3.81)
+          (name "Pin_5"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "5"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "VIBEDUINO:BusBreakout"
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "TP"
+        (at 0 8.89 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "BusBreakout"
+        (at 0 -8.89 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" "VIBEDUINO:BusBreakout"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "BusBreakout_0_1"
+        (rectangle
+          (start -6.35 7.62)
+          (end 6.35 -7.62)
+          (stroke (width 0.254) (type default))
+          (fill (type background))
+        )
+      )
+      (symbol "BusBreakout_1_1"
+        (pin passive line
+          (at -8.89 5.08 0)
+          (length 2.54)
+          (name "GND"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J11"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at -8.89 2.54 0)
+          (length 2.54)
+          (name "5V"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J12"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at -8.89 0 0)
+          (length 2.54)
+          (name "3V3"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J13"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at -8.89 -2.54 0)
+          (length 2.54)
+          (name "SDA"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J14"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at -8.89 -5.08 0)
+          (length 2.54)
+          (name "SCL"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J15"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at 8.89 5.08 180)
+          (length 2.54)
+          (name "GND"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J21"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at 8.89 2.54 180)
+          (length 2.54)
+          (name "AN"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J22"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at 8.89 0 180)
+          (length 2.54)
+          (name "PWM"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J23"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at 8.89 -2.54 180)
+          (length 2.54)
+          (name "IO1"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J24"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+        (pin passive line
+          (at 8.89 -5.08 180)
+          (length 2.54)
+          (name "IO2"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+          (number "J25"
+            (effects
+              (font (size 1.016 1.016))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:+3V3"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "+3V3"
+        (at 0 3.556 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"+3V3\""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "+3V3_0_1"
+        (polyline
+          (pts (xy -0.762 1.27) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "+3V3_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          hide
+          (name "+3V3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:+5V"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "+5V"
+        (at 0 3.556 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"+5V\""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "+5V_0_1"
+        (polyline
+          (pts (xy -0.762 1.27) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "+5V_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          hide
+          (name "+5V"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:GND"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -6.35 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "GND"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"GND\" , ground"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "GND_0_1"
+        (polyline
+          (pts
+            (xy 0 0)
+            (xy 0 -1.27)
+            (xy 1.27 -1.27)
+            (xy 0 -2.54)
+            (xy -1.27 -1.27)
+            (xy 0 -1.27)
+          )
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "GND_1_1"
+        (pin power_in line
+          (at 0 0 270)
+          (length 0)
+          hide
+          (name "GND"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+  )
+  (text "VIBEDUINO PROTO module - Prototyping"
+    (at 20 18 0)
+    (effects
+      (font (size 2 2) bold)
+      (justify left bottom)
+    )
+    (uuid "e07760b5-18b6-5ccd-9bb5-2980352c118b")
+  )
+  (text "Every bus pin broken out to a labelled pad + a 2.54 mm hole grid."
+    (at 20 21.2 0)
+    (effects
+      (font (size 1.4 1.4))
+      (justify left bottom)
+    )
+    (uuid "8084fc45-cb04-5d9d-bbc5-d5ea9d51ac7a")
+  )
+  (text "Auto-generated from the routed PCB netlist (net-label style): pins sharing a label are connected. Values/MPNs from bom.py."
+    (at 20 24.4 0)
+    (effects
+      (font (size 1.4 1.4))
+      (justify left bottom)
+    )
+    (uuid "45cd368b-55cc-5ad6-8027-84309037fcd2")
+  )
+  (symbol
+    (lib_id "Connector_Generic:Conn_01x05")
+    (at 33.02 49.53 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "cee2f74d-4c34-5a17-bf72-8df07ef6bea5")
+    (property "Reference" "J1"
+      (at 35.79 48.33 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "BUS PWR/I2C"
+      (at 35.79 50.73 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Pin header 1×5, 2.54 mm, straight"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "14fb8533-8afc-5f8f-8a34-b4aeb6dae679"))
+    (pin "2" (uuid "ae64295c-ff54-59fa-8a6b-e8b599d3c6ce"))
+    (pin "3" (uuid "132f7804-144c-52b6-bb2e-32d0dd7ee80a"))
+    (pin "4" (uuid "61e4bd6c-6357-572b-a5be-ebbf1b7af7ed"))
+    (pin "5" (uuid "2be61e24-d35d-5884-8af2-5e127077203c"))
+    (instances
+      (project "vibeduino-proto"
+        (path "/aeba407a-a629-54cf-b673-032ac163628e" (reference "J1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 27.94 44.45) (xy 25.4 44.45))
+    (stroke (width 0) (type default))
+    (uuid "7790edf5-658f-502d-a864-78bc312d20f8")
+  )
+  (label "GND"
+    (at 25.4 44.45 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "c0d97223-c85f-5275-9170-a638df9fb515")
+  )
+  (wire
+    (pts (xy 27.94 46.99) (xy 25.4 46.99))
+    (stroke (width 0) (type default))
+    (uuid "5666fcde-19c2-5cac-adfd-3b1c392d4d75")
+  )
+  (label "+5V"
+    (at 25.4 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "9b950ce7-cc30-54e1-9993-8174218a6bf6")
+  )
+  (wire
+    (pts (xy 27.94 49.53) (xy 25.4 49.53))
+    (stroke (width 0) (type default))
+    (uuid "6bdfa655-9fdc-5db9-965f-977db4056f44")
+  )
+  (label "+3V3"
+    (at 25.4 49.53 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "4023242c-0e05-5539-a398-fbea33474910")
+  )
+  (wire
+    (pts (xy 27.94 52.07) (xy 25.4 52.07))
+    (stroke (width 0) (type default))
+    (uuid "ce67a5f5-78b3-5782-856f-4132ddfc2666")
+  )
+  (label "SDA"
+    (at 25.4 52.07 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "f60070f2-abb8-5567-af1c-5822fc95615d")
+  )
+  (wire
+    (pts (xy 27.94 54.61) (xy 25.4 54.61))
+    (stroke (width 0) (type default))
+    (uuid "89a5c787-a5a1-518c-8f89-bf929d71a820")
+  )
+  (label "SCL"
+    (at 25.4 54.61 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "2ed4d607-0d3d-5fcc-9fdd-2c12785bfeee")
+  )
+  (symbol
+    (lib_id "Connector_Generic:Conn_01x05")
+    (at 66.04 49.53 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "16e00398-670f-5b39-ba1d-eff229f33574")
+    (property "Reference" "J2"
+      (at 68.81 48.33 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "BUS SIGNALS"
+      (at 68.81 50.73 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Pin header 1×5, 2.54 mm, straight"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "c4a24313-6164-5f44-853e-884e2da65293"))
+    (pin "2" (uuid "17bc603b-091e-5c38-8c01-0918d59075f8"))
+    (pin "3" (uuid "8064de51-a139-530e-ba48-9c5f88c7dab2"))
+    (pin "4" (uuid "8600ec6f-7063-5c1c-b48b-d42e8c08c498"))
+    (pin "5" (uuid "0ee6b0b2-2d97-5f09-9920-cbb40ffd6015"))
+    (instances
+      (project "vibeduino-proto"
+        (path "/aeba407a-a629-54cf-b673-032ac163628e" (reference "J2") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 60.96 44.45) (xy 58.42 44.45))
+    (stroke (width 0) (type default))
+    (uuid "7dfd2822-76c8-5aa6-b685-428c252aa3b1")
+  )
+  (label "GND"
+    (at 58.42 44.45 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "1d9e70d0-e08f-5ed9-822e-f46fd6fb2182")
+  )
+  (wire
+    (pts (xy 60.96 46.99) (xy 58.42 46.99))
+    (stroke (width 0) (type default))
+    (uuid "7f966a19-b404-5847-be79-14d680e3172e")
+  )
+  (label "AN"
+    (at 58.42 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "fffbe1ca-4a6f-5783-95ca-2275fd6c5e60")
+  )
+  (wire
+    (pts (xy 60.96 49.53) (xy 58.42 49.53))
+    (stroke (width 0) (type default))
+    (uuid "1061c3bd-7b3e-5c5c-a3fe-e6f1e2340733")
+  )
+  (label "PWM"
+    (at 58.42 49.53 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "b86fc8f7-7918-553e-99e0-cddd8c1116ed")
+  )
+  (wire
+    (pts (xy 60.96 52.07) (xy 58.42 52.07))
+    (stroke (width 0) (type default))
+    (uuid "5c899874-6dcc-520c-aade-7d3d8ed2ce48")
+  )
+  (label "IO1"
+    (at 58.42 52.07 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "11a09c3b-6d54-53de-ac02-7c22dbbf3af4")
+  )
+  (wire
+    (pts (xy 60.96 54.61) (xy 58.42 54.61))
+    (stroke (width 0) (type default))
+    (uuid "2392d440-82e1-58ec-b3b3-0b6b48d04bce")
+  )
+  (label "IO2"
+    (at 58.42 54.61 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "74238930-7135-54db-abf2-30fc0ee56801")
+  )
+  (symbol
+    (lib_id "VIBEDUINO:BusBreakout")
+    (at 102.87 53.34 0)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "959f5025-3ff7-59f7-ab73-68037a6caa51")
+    (property "Reference" "TP1"
+      (at 102.87 44.22 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Value" "BUS BREAKOUT"
+      (at 102.87 63.76 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" "VIBEDUINO:BusBreakout"
+      (at 102.87 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 102.87 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "J11" (uuid "d2ae472d-deb4-5622-b316-8011dc0a44c6"))
+    (pin "J12" (uuid "5d6ef22a-f789-503c-9fa3-6a253d315029"))
+    (pin "J13" (uuid "1f6fb7e9-bf09-5577-a0b4-7813ce4fd81f"))
+    (pin "J14" (uuid "145e54d0-1db2-5761-bbe9-5e8dc5b15bed"))
+    (pin "J15" (uuid "a4e4ff83-8dcb-5579-a7fc-a5a005768e78"))
+    (pin "J21" (uuid "d5ffc276-3398-52e2-8ff0-0e88b35c22ae"))
+    (pin "J22" (uuid "df50c11f-713a-5889-804c-5eaa363bcb86"))
+    (pin "J23" (uuid "727304ea-5cc9-56c1-a5db-847c43ad1bb1"))
+    (pin "J24" (uuid "65a651ad-f52e-5f14-aeb7-7944bf47fc47"))
+    (pin "J25" (uuid "ad3a9da2-2e61-5ed0-9d36-3ddaaa50cbad"))
+    (instances
+      (project "vibeduino-proto"
+        (path "/aeba407a-a629-54cf-b673-032ac163628e" (reference "TP1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 93.98 48.26) (xy 91.44 48.26))
+    (stroke (width 0) (type default))
+    (uuid "cdb5b917-ab66-5449-a180-75abd24827a8")
+  )
+  (label "GND"
+    (at 91.44 48.26 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "7573fb16-cf29-5cf9-9687-ec9c4f37d60f")
+  )
+  (wire
+    (pts (xy 93.98 50.8) (xy 91.44 50.8))
+    (stroke (width 0) (type default))
+    (uuid "f60c3a76-7f91-586e-934e-e5df4f5e174e")
+  )
+  (label "+5V"
+    (at 91.44 50.8 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "8851d8a0-27a8-5f29-8f8f-66ebb58d4a9d")
+  )
+  (wire
+    (pts (xy 93.98 53.34) (xy 91.44 53.34))
+    (stroke (width 0) (type default))
+    (uuid "531d0f0b-11f2-542e-b009-61eb0d0fa6b1")
+  )
+  (label "+3V3"
+    (at 91.44 53.34 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "ecbf1da8-eae3-5592-9ed9-29784924e2e3")
+  )
+  (wire
+    (pts (xy 93.98 55.88) (xy 91.44 55.88))
+    (stroke (width 0) (type default))
+    (uuid "5b49d67f-9210-59b9-8e11-e12f235ae8f6")
+  )
+  (label "SDA"
+    (at 91.44 55.88 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "37287218-37ef-5e68-9951-7d0edba1290b")
+  )
+  (wire
+    (pts (xy 93.98 58.42) (xy 91.44 58.42))
+    (stroke (width 0) (type default))
+    (uuid "02fdc32c-d60d-5070-ad5e-4d828698edba")
+  )
+  (label "SCL"
+    (at 91.44 58.42 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "8d5dc71e-c6d3-547b-9e7f-5d9c36a93c24")
+  )
+  (wire
+    (pts (xy 111.76 48.26) (xy 114.3 48.26))
+    (stroke (width 0) (type default))
+    (uuid "3e837338-d003-528d-adbd-898984c3b380")
+  )
+  (label "GND"
+    (at 114.3 48.26 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "c994ba24-34c3-5fcc-8f01-8b185ffac9af")
+  )
+  (wire
+    (pts (xy 111.76 50.8) (xy 114.3 50.8))
+    (stroke (width 0) (type default))
+    (uuid "be172f3c-98b9-51e7-ba07-74c988eb6886")
+  )
+  (label "AN"
+    (at 114.3 50.8 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "1d73b495-6806-5794-a397-caf69c188f7c")
+  )
+  (wire
+    (pts (xy 111.76 53.34) (xy 114.3 53.34))
+    (stroke (width 0) (type default))
+    (uuid "6306a843-aa9d-5dcf-8a64-efd5a2ed369d")
+  )
+  (label "PWM"
+    (at 114.3 53.34 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "5fd8c981-4db9-5596-8227-eda45b9931d2")
+  )
+  (wire
+    (pts (xy 111.76 55.88) (xy 114.3 55.88))
+    (stroke (width 0) (type default))
+    (uuid "772e5c54-2b02-51bb-a842-e07aa9151567")
+  )
+  (label "IO1"
+    (at 114.3 55.88 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "16511673-0744-5930-9bb4-814d3869fd99")
+  )
+  (wire
+    (pts (xy 111.76 58.42) (xy 114.3 58.42))
+    (stroke (width 0) (type default))
+    (uuid "4fa9ed48-c5b2-5163-9b5d-844c693af076")
+  )
+  (label "IO2"
+    (at 114.3 58.42 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "c4da48b6-409b-54c1-847d-6f66ce948605")
+  )
+  (label "+3V3"
+    (at 227.33 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "0256bff0-c4e5-5541-971d-7633520b9964")
+  )
+  (wire
+    (pts (xy 227.33 25.4) (xy 227.33 21.59))
+    (stroke (width 0) (type default))
+    (uuid "ee663dd4-18b4-5905-8eed-7a0d163461c4")
+  )
+  (symbol
+    (lib_id "power:+3V3")
+    (at 227.33 21.59 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "49c3315d-5b6d-569b-b5d7-87be04fce86a")
+    (property "Reference" "#PWR01"
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "+3V3"
+      (at 227.33 18.39 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "e4885757-e4f7-5ef2-ab3e-f7065fb1a597"))
+    (instances
+      (project "vibeduino-proto"
+        (path "/aeba407a-a629-54cf-b673-032ac163628e" (reference "#PWR01") (unit 1))
+      )
+    )
+  )
+  (label "+5V"
+    (at 245.11 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "ca541ab1-a3a6-52c3-a69a-832771d560e1")
+  )
+  (wire
+    (pts (xy 245.11 25.4) (xy 245.11 21.59))
+    (stroke (width 0) (type default))
+    (uuid "de6518a3-91a0-5dab-a07b-3fdb4ea01785")
+  )
+  (symbol
+    (lib_id "power:+5V")
+    (at 245.11 21.59 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "da50047a-ce4d-5f3b-842c-20d11a3b1a0f")
+    (property "Reference" "#PWR02"
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "+5V"
+      (at 245.11 18.39 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "e2fb5137-6aff-5913-8ce0-f0ba13404183"))
+    (instances
+      (project "vibeduino-proto"
+        (path "/aeba407a-a629-54cf-b673-032ac163628e" (reference "#PWR02") (unit 1))
+      )
+    )
+  )
+  (label "GND"
+    (at 262.89 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "dcdea963-e659-5c4c-9b3a-7e511cc9a662")
+  )
+  (wire
+    (pts (xy 262.89 25.4) (xy 262.89 29.21))
+    (stroke (width 0) (type default))
+    (uuid "35a4c11b-8d03-5c36-8f6d-47742f9377a2")
+  )
+  (symbol
+    (lib_id "power:GND")
+    (at 262.89 29.21 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "f93ea27a-0eb4-5834-985d-047e14051426")
+    (property "Reference" "#PWR03"
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "GND"
+      (at 262.89 33.61 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "a090daa6-038d-51a8-b9bb-f65b65f96f59"))
+    (instances
+      (project "vibeduino-proto"
+        (path "/aeba407a-a629-54cf-b673-032ac163628e" (reference "#PWR03") (unit 1))
+      )
+    )
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)

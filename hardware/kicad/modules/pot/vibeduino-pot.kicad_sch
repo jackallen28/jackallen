@@ -1,0 +1,1336 @@
+(kicad_sch
+  (version 20230121)
+  (generator eeschema)
+  (uuid "ecd1029a-f94d-5642-bca4-598be8baa4b9")
+  (paper "A4")
+  (title_block
+    (title "VIBEDUINO POT module - Potentiometer")
+    (date "2026-10-15")
+    (rev "A")
+    (company "Allentronics Education Services - www.allentronics.com.au")
+    (comment 1 "VIBEDUINO - hex modules for Arduino Uno")
+  )
+  (lib_symbols
+    (symbol "Connector_Generic:Conn_01x05"
+      (pin_names (offset 1.016) hide)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "J"
+        (at 0 7.62 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "Conn_01x05"
+        (at 0 -7.62 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "connector"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Generic connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "Connector*:*_1x??_*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "Conn_01x05_1_1"
+        (rectangle
+          (start -1.27 -4.953)
+          (end 0 -5.207)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 -2.413)
+          (end 0 -2.667)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 0.127)
+          (end 0 -0.127)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 2.667)
+          (end 0 2.413)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 5.207)
+          (end 0 4.953)
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (rectangle
+          (start -1.27 6.35)
+          (end 1.27 -6.35)
+          (stroke (width 0.254) (type default))
+          (fill (type background))
+        )
+        (pin passive line
+          (at -5.08 5.08 0)
+          (length 3.81)
+          (name "Pin_1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 2.54 0)
+          (length 3.81)
+          (name "Pin_2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 0 0)
+          (length 3.81)
+          (name "Pin_3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 -2.54 0)
+          (length 3.81)
+          (name "Pin_4"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "4"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 -5.08 0)
+          (length 3.81)
+          (name "Pin_5"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "5"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "Device:R_Potentiometer_MountingPin"
+      (pin_names (offset 1.016) hide)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "RV"
+        (at -8.255 0 90)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Value" "R_Potentiometer_MountingPin"
+        (at -6.35 0 90)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "resistor variable"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Potentiometer with a mounting pin"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "Potentiometer*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "R_Potentiometer_MountingPin_0_1"
+        (polyline
+          (pts (xy 2.54 0) (xy 1.524 0))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 1.143 0) (xy 2.286 0.508) (xy 2.286 -0.508))
+          (stroke (width 0) (type default))
+          (fill (type outline))
+        )
+        (rectangle
+          (start 1.016 2.54)
+          (end -1.016 -2.54)
+          (stroke (width 0.254) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "R_Potentiometer_MountingPin_1_1"
+        (polyline
+          (pts (xy -2.032 1.016) (xy -2.032 -1.016))
+          (stroke (width 0.1524) (type default))
+          (fill (type none))
+        )
+        (text "Mounting"
+          (at -1.651 0 900)
+          (effects
+            (font (size 0.381 0.381))
+          )
+        )
+        (pin passive line
+          (at 0 3.81 270)
+          (length 1.27)
+          (name "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at 3.81 0 180)
+          (length 1.27)
+          (name "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at 0 -3.81 90)
+          (length 1.27)
+          (name "3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at -5.08 0 0)
+          (length 3.048)
+          (name "MountPin"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "MP"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "Device:C"
+      (pin_numbers hide)
+      (pin_names (offset 0.254))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "C"
+        (at 0.635 2.54 0)
+        (effects
+          (font (size 1.27 1.27))
+          (justify left)
+        )
+      )
+      (property "Value" "C"
+        (at 0.635 -2.54 0)
+        (effects
+          (font (size 1.27 1.27))
+          (justify left)
+        )
+      )
+      (property "Footprint" ""
+        (at 0.9652 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" "~"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "cap capacitor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Unpolarized capacitor"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_fp_filters" "C_*"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "C_0_1"
+        (polyline
+          (pts (xy -2.032 -0.762) (xy 2.032 -0.762))
+          (stroke (width 0.508) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy -2.032 0.762) (xy 2.032 0.762))
+          (stroke (width 0.508) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "C_1_1"
+        (pin passive line
+          (at 0 3.81 270)
+          (length 2.794)
+          (name "~"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+        (pin passive line
+          (at 0 -3.81 90)
+          (length 2.794)
+          (name "~"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "2"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:+3V3"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "+3V3"
+        (at 0 3.556 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"+3V3\""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "+3V3_0_1"
+        (polyline
+          (pts (xy -0.762 1.27) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "+3V3_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          hide
+          (name "+3V3"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:+5V"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "+5V"
+        (at 0 3.556 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"+5V\""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "+5V_0_1"
+        (polyline
+          (pts (xy -0.762 1.27) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 0) (xy 0 2.54))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+        (polyline
+          (pts (xy 0 2.54) (xy 0.762 1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "+5V_1_1"
+        (pin power_in line
+          (at 0 0 90)
+          (length 0)
+          hide
+          (name "+5V"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+    (symbol "power:GND"
+      (power)
+      (pin_names (offset 0))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -6.35 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Value" "GND"
+        (at 0 -3.81 0)
+        (effects
+          (font (size 1.27 1.27))
+        )
+      )
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_keywords" "global power"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (property "ki_description" "Power symbol creates a global label with name \"GND\" , ground"
+        (at 0 0 0)
+        (effects
+          (font (size 1.27 1.27))
+          hide
+        )
+      )
+      (symbol "GND_0_1"
+        (polyline
+          (pts
+            (xy 0 0)
+            (xy 0 -1.27)
+            (xy 1.27 -1.27)
+            (xy 0 -2.54)
+            (xy -1.27 -1.27)
+            (xy 0 -1.27)
+          )
+          (stroke (width 0) (type default))
+          (fill (type none))
+        )
+      )
+      (symbol "GND_1_1"
+        (pin power_in line
+          (at 0 0 270)
+          (length 0)
+          hide
+          (name "GND"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+          (number "1"
+            (effects
+              (font (size 1.27 1.27))
+            )
+          )
+        )
+      )
+    )
+  )
+  (text "VIBEDUINO POT module - Potentiometer"
+    (at 20 18 0)
+    (effects
+      (font (size 2 2) bold)
+      (justify left bottom)
+    )
+    (uuid "e2f2cd92-a7ef-5b70-90a3-b0fc68fea345")
+  )
+  (text "10k rotary potentiometer (Alps RK09K) - wiper on AN, 0..5 V."
+    (at 20 21.2 0)
+    (effects
+      (font (size 1.4 1.4))
+      (justify left bottom)
+    )
+    (uuid "f837eee5-91d9-5f1e-b277-9e00151410b2")
+  )
+  (text "Auto-generated from the routed PCB netlist (net-label style): pins sharing a label are connected. Values/MPNs from bom.py."
+    (at 20 24.4 0)
+    (effects
+      (font (size 1.4 1.4))
+      (justify left bottom)
+    )
+    (uuid "721d78bf-ad04-5c17-929c-41590c520b29")
+  )
+  (symbol
+    (lib_id "Connector_Generic:Conn_01x05")
+    (at 33.02 49.53 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "33366ac5-c8f5-53f1-8d71-c8f038d78481")
+    (property "Reference" "J1"
+      (at 35.79 48.33 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "BUS PWR/I2C"
+      (at 35.79 50.73 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Pin header 1×5, 2.54 mm, straight"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "7d844ac4-5660-5a4f-961c-5d9065442c9c"))
+    (pin "2" (uuid "21bff673-3571-5697-aa9d-0344164c109b"))
+    (pin "3" (uuid "ad3c4a4f-0090-54e9-90ad-c071d23419ab"))
+    (pin "4" (uuid "731cead3-f49c-5315-be9d-dc9645ec6138"))
+    (pin "5" (uuid "b1bd5b89-5501-5337-89b8-b0c0139dfe38"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "J1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 27.94 44.45) (xy 25.4 44.45))
+    (stroke (width 0) (type default))
+    (uuid "77d8e37c-c9d3-5255-a747-4fe864b5e382")
+  )
+  (label "GND"
+    (at 25.4 44.45 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "feef016b-d27b-5e7b-9f7f-fc6f155e4ed0")
+  )
+  (wire
+    (pts (xy 27.94 46.99) (xy 25.4 46.99))
+    (stroke (width 0) (type default))
+    (uuid "57685079-e9cf-55c5-921e-b38243c98078")
+  )
+  (label "+5V"
+    (at 25.4 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "525a45bb-788a-514d-9496-a54dd5f8af3b")
+  )
+  (wire
+    (pts (xy 27.94 49.53) (xy 25.4 49.53))
+    (stroke (width 0) (type default))
+    (uuid "54404e8b-1c0f-5a6a-ae6c-c682d78ea5e4")
+  )
+  (label "+3V3"
+    (at 25.4 49.53 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "5a13f886-965b-55d8-af35-a4fdbffa2957")
+  )
+  (wire
+    (pts (xy 27.94 52.07) (xy 25.4 52.07))
+    (stroke (width 0) (type default))
+    (uuid "23b16d65-2c39-523d-b31e-b1b4add12b58")
+  )
+  (label "SDA"
+    (at 25.4 52.07 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "efc295d6-f7d5-5ab4-a294-56e4e8ded1a7")
+  )
+  (wire
+    (pts (xy 27.94 54.61) (xy 25.4 54.61))
+    (stroke (width 0) (type default))
+    (uuid "84a4acfc-cc49-55f2-ade0-ac7195a3c344")
+  )
+  (label "SCL"
+    (at 25.4 54.61 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "e0f69b59-fb1f-547d-a975-9f78742ff070")
+  )
+  (symbol
+    (lib_id "Connector_Generic:Conn_01x05")
+    (at 66.04 49.53 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "672ee1b8-2da0-5966-932b-f1d12eabac3c")
+    (property "Reference" "J2"
+      (at 68.81 48.33 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "BUS SIGNALS"
+      (at 68.81 50.73 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Pin header 1×5, 2.54 mm, straight"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "any"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "—"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "6eb07256-b88b-5e76-9240-3a4363fa4a5e"))
+    (pin "2" (uuid "24434855-0999-55b5-b48c-b0b9fcbdcf2e"))
+    (pin "3" (uuid "3167a7e1-4a88-57dd-9d73-731e2df824fa"))
+    (pin "4" (uuid "340d374e-8c76-51dc-8c5f-72db49ca175d"))
+    (pin "5" (uuid "5e0eeb95-7500-5ac8-bc98-0bb49165587e"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "J2") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 60.96 44.45) (xy 58.42 44.45))
+    (stroke (width 0) (type default))
+    (uuid "9528613b-266d-57b9-92e5-48b83d3dbbc7")
+  )
+  (label "GND"
+    (at 58.42 44.45 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "6e4256e3-f7ae-5a18-abab-b8bbce9b1395")
+  )
+  (wire
+    (pts (xy 60.96 46.99) (xy 58.42 46.99))
+    (stroke (width 0) (type default))
+    (uuid "66a024c8-4e4e-5213-b115-65fd5b581e90")
+  )
+  (label "AN"
+    (at 58.42 46.99 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "fdbae1af-e06a-52f1-8ac7-59a8869216c9")
+  )
+  (wire
+    (pts (xy 60.96 49.53) (xy 58.42 49.53))
+    (stroke (width 0) (type default))
+    (uuid "7f39bd76-fc9f-5b0b-b749-f26fb4a4b9b5")
+  )
+  (label "PWM"
+    (at 58.42 49.53 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "7c665a43-d8bc-5246-a010-57585feee155")
+  )
+  (wire
+    (pts (xy 60.96 52.07) (xy 58.42 52.07))
+    (stroke (width 0) (type default))
+    (uuid "efb57b7e-a045-515a-9753-d89c9dc0139f")
+  )
+  (label "IO1"
+    (at 58.42 52.07 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "0b32347d-0432-56d9-97f9-7caf749fbab8")
+  )
+  (wire
+    (pts (xy 60.96 54.61) (xy 58.42 54.61))
+    (stroke (width 0) (type default))
+    (uuid "f9fcaaaf-4ed5-5ebf-83be-cf1e73f6c7df")
+  )
+  (label "IO2"
+    (at 58.42 54.61 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "c99ea715-904a-5266-ad5d-60658b35d3d8")
+  )
+  (symbol
+    (lib_id "Device:R_Potentiometer_MountingPin")
+    (at 97.79 55.88 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "f724de16-d2e8-5877-9262-8d6ce9286f2a")
+    (property "Reference" "RV1"
+      (at 97.155 43.53 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Value" "10k lin"
+      (at 97.155 69.53 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" "Potentiometer_THT:Potentiometer_Alps_RK09K_Single_Vertical"
+      (at 97.79 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 97.79 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Rotary potentiometer 9 mm, 10 kΩ linear (B), vertical, with mounting tabs"
+      (at 97.79 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "Alps Alpine"
+      (at 97.79 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "RK09K series (verify MPN/shaft)"
+      (at 97.79 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "4b9de152-2e27-50f4-839f-af278bb4c9e6"))
+    (pin "2" (uuid "9d241c25-e997-52d1-991d-f7d86531c2fa"))
+    (pin "3" (uuid "a75d625e-6708-58d0-8adb-095334995a3b"))
+    (pin "MP" (uuid "5cd9b62f-532f-553e-a3e0-20193f18658e"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "RV1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 97.79 52.07) (xy 97.79 49.53))
+    (stroke (width 0) (type default))
+    (uuid "8e33f2d7-8603-5ed8-a731-59d9c93ce597")
+  )
+  (label "GND"
+    (at 97.79 49.53 90)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "ae50ad37-72bb-5c23-b9c8-95982264de6a")
+  )
+  (wire
+    (pts (xy 101.6 55.88) (xy 104.14 55.88))
+    (stroke (width 0) (type default))
+    (uuid "7fe12347-af9e-5186-8d18-8cd6be50c1f2")
+  )
+  (label "AN"
+    (at 104.14 55.88 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "06118609-8c43-5294-b531-668cf8f6e3bf")
+  )
+  (wire
+    (pts (xy 97.79 59.69) (xy 97.79 62.23))
+    (stroke (width 0) (type default))
+    (uuid "1bab15d8-337a-5075-adb7-449d04c627bd")
+  )
+  (label "+5V"
+    (at 97.79 62.23 270)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "700e4c28-edd1-5541-9e34-9060b0493e91")
+  )
+  (wire
+    (pts (xy 92.71 55.88) (xy 90.17 55.88))
+    (stroke (width 0) (type default))
+    (uuid "8650fe99-fbd7-5e85-9c6d-6d445adf0b8e")
+  )
+  (label "GND"
+    (at 90.17 55.88 180)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "7d62d9d0-ced8-5a40-a4fd-2fd08f395bf9")
+  )
+  (symbol
+    (lib_id "Device:C")
+    (at 115.57 53.34 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "4ff96b77-66b2-5fc7-900e-e37d7431a6f2")
+    (property "Reference" "C1"
+      (at 119.102 52.14 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Value" "100nF"
+      (at 119.102 54.54 0)
+      (effects
+        (font (size 1.27 1.27))
+        (justify left)
+      )
+    )
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+      (at 115.57 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" "~"
+      (at 115.57 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Description" "Capacitor 100 nF 50 V X7R 0603"
+      (at 115.57 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Manufacturer" "Samsung"
+      (at 115.57 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "MPN" "CL10B104KB8NNNC"
+      (at 115.57 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "d9234ae2-ef89-57a2-bf38-8e2c32cdf5c7"))
+    (pin "2" (uuid "e93e45e4-5a09-5659-a781-eb8ef5f8ec0a"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "C1") (unit 1))
+      )
+    )
+  )
+  (wire
+    (pts (xy 115.57 49.53) (xy 115.57 46.99))
+    (stroke (width 0) (type default))
+    (uuid "fe8c562a-3f87-5f48-905e-cc1e6f0022ac")
+  )
+  (label "AN"
+    (at 115.57 46.99 90)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "d05b4cb6-7db3-5f8e-b920-4ff2ab8328d0")
+  )
+  (wire
+    (pts (xy 115.57 57.15) (xy 115.57 59.69))
+    (stroke (width 0) (type default))
+    (uuid "4f4a9c96-182d-5f87-ae4e-8f60e194e4c9")
+  )
+  (label "GND"
+    (at 115.57 59.69 270)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify right bottom)
+    )
+    (uuid "291dd713-c719-56cd-a85d-f57a23148639")
+  )
+  (label "+3V3"
+    (at 227.33 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "22dfd401-5751-50a6-bc6f-790adf9ba36b")
+  )
+  (wire
+    (pts (xy 227.33 25.4) (xy 227.33 21.59))
+    (stroke (width 0) (type default))
+    (uuid "81193b4c-743f-5cff-9b0b-1d24949590e0")
+  )
+  (symbol
+    (lib_id "power:+3V3")
+    (at 227.33 21.59 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "bdc46499-536d-5b11-8694-97816faf2ae5")
+    (property "Reference" "#PWR01"
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "+3V3"
+      (at 227.33 18.39 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 227.33 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "ef9c138d-ca77-5e20-a356-35f6d63e113e"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "#PWR01") (unit 1))
+      )
+    )
+  )
+  (label "+5V"
+    (at 245.11 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "43b94569-fd18-5349-b409-32d3f445cdf3")
+  )
+  (wire
+    (pts (xy 245.11 25.4) (xy 245.11 21.59))
+    (stroke (width 0) (type default))
+    (uuid "bca4423c-6562-58eb-8234-f088522461b6")
+  )
+  (symbol
+    (lib_id "power:+5V")
+    (at 245.11 21.59 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "7fe3560e-eb25-5473-b35b-1fc0abc2ce5a")
+    (property "Reference" "#PWR02"
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "+5V"
+      (at 245.11 18.39 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 245.11 21.59 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "c2d4a8f8-51b1-5dab-a047-477c0b1abef9"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "#PWR02") (unit 1))
+      )
+    )
+  )
+  (label "GND"
+    (at 262.89 25.4 0)
+    (fields_autoplaced)
+    (effects
+      (font (size 1.27 1.27))
+      (justify left bottom)
+    )
+    (uuid "7a8c43e5-7153-59d8-8433-502f48fadd4b")
+  )
+  (wire
+    (pts (xy 262.89 25.4) (xy 262.89 29.21))
+    (stroke (width 0) (type default))
+    (uuid "ab2eb88d-509f-53f8-a3b8-91bc5302391c")
+  )
+  (symbol
+    (lib_id "power:GND")
+    (at 262.89 29.21 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "0ca6ef23-87c5-5fb0-9619-b8e3079d9ad1")
+    (property "Reference" "#PWR03"
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Value" "GND"
+      (at 262.89 33.61 0)
+      (effects
+        (font (size 1.27 1.27))
+      )
+    )
+    (property "Footprint" ""
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "Datasheet" ""
+      (at 262.89 29.21 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (pin "1" (uuid "c60d733c-50ff-5c59-a0ee-a4daac0c588d"))
+    (instances
+      (project "vibeduino-pot"
+        (path "/ecd1029a-f94d-5642-bca4-598be8baa4b9" (reference "#PWR03") (unit 1))
+      )
+    )
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)

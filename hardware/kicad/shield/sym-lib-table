@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "VIBEDUINO")(type "KiCad")(uri "${KIPRJMOD}/../lib/vibeduino.kicad_sym")(options "")(descr "VIBEDUINO custom symbols"))
+)

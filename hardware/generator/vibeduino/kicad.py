@@ -6,7 +6,6 @@ the board origin given at construction time (KiCad orientation, y down).
 
 import datetime
 import json
-import math
 import os
 
 import pcbnew
