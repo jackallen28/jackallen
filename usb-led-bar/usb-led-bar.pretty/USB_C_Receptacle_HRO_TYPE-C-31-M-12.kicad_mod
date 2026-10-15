@@ -63,7 +63,7 @@
   (pad "S1" thru_hole oval (at -4.32 1.05) (size 1 1.6) (drill oval 0.6 1.2) (layers "*.Cu" "*.Mask") (tstamp de031987-f6ad-4228-ae8a-0d1ae6382f35))
   (pad "S1" thru_hole oval (at 4.32 -3.13) (size 1 2.1) (drill oval 0.6 1.7) (layers "*.Cu" "*.Mask") (tstamp c2d2acff-59a5-4161-a545-09162a0606a9))
   (pad "S1" thru_hole oval (at 4.32 1.05) (size 1 1.6) (drill oval 0.6 1.2) (layers "*.Cu" "*.Mask") (tstamp 11ee73ee-062f-4133-8959-be5260129dec))
-  (model "${KICAD6_3DMODEL_DIR}/Connector_USB.3dshapes/USB_C_Receptacle_HRO_TYPE-C-31-M-12.wrl"
+  (model "${KIPRJMOD}/../usb-led-bar.3dshapes/USB_C_Receptacle_HRO_TYPE-C-31-M-12.step"
     (offset (xyz 0 0 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))

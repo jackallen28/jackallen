@@ -290,7 +290,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp f4e3c9fe-bcd2-4e1b-a935-655c17f64d10))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 3 "Net-(D1-A)") (pinfunction "A") (pintype "passive") (tstamp c6038e9f-a07a-4367-8565-dc4d8d7c6aaa))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -1785,7 +1785,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp be6d421a-e6df-4f64-840b-e1ce86901663))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 8 "Net-(D6-A)") (pinfunction "A") (pintype "passive") (tstamp 601017f8-e856-46f7-b294-4bf19ae643ca))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -1844,7 +1844,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp 7f2698c1-21bd-4f6f-95f1-410f91d166fb))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 5 "Net-(D3-A)") (pinfunction "A") (pintype "passive") (tstamp afd86870-f101-4e60-a5ee-61abd6628b9e))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -1958,7 +1958,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp 289cd4bd-4a4b-4a8c-994d-4bcc3b7cfe9f))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 6 "Net-(D4-A)") (pinfunction "A") (pintype "passive") (tstamp 6d73c026-1ec1-48c9-8a1e-21ec4cd73064))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -2017,7 +2017,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp e094febb-bba4-4168-8d5d-757d269e1eaa))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 9 "Net-(D7-A)") (pinfunction "A") (pintype "passive") (tstamp d25d461a-a5ed-4ece-9bc8-b2f885ab55e7))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -2296,7 +2296,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp 43499d20-505b-4222-ae9f-9c2e5ea2bf28))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 10 "Net-(D8-A)") (pinfunction "A") (pintype "passive") (tstamp e8b88046-941f-4098-80b9-24149a53aa2e))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -2410,7 +2410,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp a8c2a484-8434-49d4-9f60-b262dc609cb4))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 4 "Net-(D2-A)") (pinfunction "A") (pintype "passive") (tstamp 8c336903-49d7-4675-9e99-e857851c36b9))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
@@ -2469,7 +2469,7 @@
       (net 2 "GND") (pinfunction "K") (pintype "passive") (tstamp 5c7741b2-ff55-4540-a5a6-fde992df56e0))
     (pad "2" smd roundrect (at 1.65 0 90) (size 1.2 2.4) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1)
       (net 7 "Net-(D5-A)") (pinfunction "A") (pintype "passive") (tstamp eb06ea5c-94eb-4944-9ef0-669ec3028637))
-    (model "${KICAD6_3DMODEL_DIR}/LED_SMD.3dshapes/LED_PLCC_2835.wrl"
+    (model "${KIPRJMOD}/../usb-led-bar.3dshapes/LED_2835_WarmWhite.step"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))

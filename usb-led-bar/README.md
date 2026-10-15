@@ -32,6 +32,32 @@ It comes in two variants. They share the same LED layout and differ only in the 
 Schematics: [jst/docs/usb-led-bar-jst-schematic.pdf](jst/docs/usb-led-bar-jst-schematic.pdf),
 [usb-c/docs/usb-led-bar-usbc-schematic.pdf](usb-c/docs/usb-led-bar-usbc-schematic.pdf)
 
+## 3D model and renders (USB-C variant)
+
+![USB-C variant, LEDs on](usb-c/docs/renders/leds-on.png)
+![USB-C variant, USB-C end](usb-c/docs/renders/hero-usb-c.png)
+![USB-C variant, logo end](usb-c/docs/renders/hero-logo.png)
+![USB-C variant, top](usb-c/docs/renders/top.png)
+![USB-C socket close-up](usb-c/docs/renders/usb-c-closeup.png)
+![USB-C variant, underside](usb-c/docs/renders/bottom.png)
+
+**STEP CAD model:** [`usb-c/3d/usb-led-bar-usbc-step.zip`](usb-c/3d/usb-led-bar-usbc-step.zip).
+Unzip it to get `usb-led-bar-usbc.step` (about 30 MB), which opens in Fusion 360, SolidWorks, Onshape,
+FreeCAD, KiCad and similar. It is a coloured assembly with the board origin at the bottom-left corner,
+the board's underside at Z = 0 and its top at Z = 1.6 mm. It contains:
+
+* the FR-4 core, green solder mask, copper visible through the mask, tinned pads and plated holes;
+* the white silkscreen, including the logo, all labels and the back-side text;
+* every part: D1–D8 (2835 LEDs), R1–R10 (0805 resistors) and J1 (USB-C socket).
+
+Overall size is 100 × 15 × 5.7 mm. The socket is the tallest part at 3.3 mm above the board, and its
+shell tabs poke 0.8 mm through the underside.
+
+The LED and USB-C models are my own simplified versions built from the datasheet outline dimensions
+(`usb-led-bar.3dshapes/`), because the Debian KiCad package I worked from doesn't include those two
+models. The outlines are accurate enough for enclosure design. The footprints point KiCad's 3D viewer
+at the same files.
+
 ## Files
 
 | Path | What it is |
@@ -40,6 +66,10 @@ Schematics: [jst/docs/usb-led-bar-jst-schematic.pdf](jst/docs/usb-led-bar-jst-sc
 | `jst/usb-led-bar-jst.kicad_*`, `usb-c/usb-led-bar-usbc.kicad_*` | KiCad project, schematic and board for each variant (made with KiCad 7, opens in KiCad 8/9) |
 | `usb-led-bar.pretty/` | Shared footprints: the 2835 LED, the logo, and stock 0805 / JST PH / USB-C footprints with silkscreen widened to JLCPCB's minimum |
 | `scripts/export_jlcpcb.py` | Rebuilds the `jlcpcb/` folders from the KiCad files: `python3 scripts/export_jlcpcb.py [jst] [usb-c]` (needs `kicad-cli` from KiCad 7+) |
+| `usb-c/3d/`, `usb-c/docs/renders/` | Coloured STEP model (zipped) and photo-style renders of the USB-C variant |
+| `usb-led-bar.3dshapes/` | 3D models of the 2835 LED and the HRO USB-C socket, used by the footprints and the STEP |
+| `scripts/make_3d.py` | Rebuilds the STEP (and a `.glb` for rendering) from the KiCad board: `python3 scripts/make_3d.py usb-c` (needs KiCad's `pcbnew` Python module and `pip install cadquery`) |
+| `scripts/render_blender.py` | Renders the `.glb` with Blender Cycles: `blender -b -P scripts/render_blender.py -- usb-c/3d/usb-led-bar-usbc.glb usb-c/docs/renders` |
 
 ## Ordering from JLCPCB
 

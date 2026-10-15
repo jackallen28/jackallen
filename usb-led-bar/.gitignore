@@ -5,3 +5,7 @@ _autosave-*
 fp-info-cache
 *.lck
 ~*.lck
+
+# 3D build outputs (scripts/make_3d.py); the zipped STEP is committed instead
+*/3d/*.step
+*/3d/*.glb
