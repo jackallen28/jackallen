@@ -1,0 +1,5 @@
+Comment,Designator,Footprint,LCSC Part #
+Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),C1,0603,
+LED red 0603,D1,0603,
+Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R1,0603,
+"Analog temperature sensor, 10 mV/degC, 500 mV @ 0 degC (MCP9700AT-E/TT)",U1,SOT-23,

@@ -1,0 +1,6 @@
+Comment,Designator,Footprint,LCSC Part #
+Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),C1,0603,
+Resistor 10 kohm 1 % 0603 (0603WAF1002T5E),"R1,R4,R5",0603,
+Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R2,0603,
+Resistor 3.3 kohm 1 % 0603 (0603WAF3301T5E),R3,0603,
+"Tactile switch SPST-NO, 5.1x5.1 mm SMD (TS-1187A-B-A-B)","SW1,SW2,SW3,SW4,SW5",SMD 5.1x5.1,

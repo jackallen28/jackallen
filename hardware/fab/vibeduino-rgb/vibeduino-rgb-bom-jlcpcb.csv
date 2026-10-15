@@ -1,0 +1,5 @@
+Comment,Designator,Footprint,LCSC Part #
+Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),"C1,C2,C3",0603,
+Capacitor 10 uF 25 V X5R 0805 (CL21A106KAYNNNE),C4,0805,
+"Addressable RGB LED, 5050 (WS2812B-B)","D1,D2,D3",PLCC4 5x5,
+Resistor 330 ohm 1 % 0603 (0603WAF3300T5E),R1,0603,

@@ -1,0 +1,136 @@
+{
+  "kit": {
+    "shield": 1,
+    "pot": 1,
+    "oled": 1,
+    "dpad": 1,
+    "led": 1,
+    "servo": 1,
+    "temp": 1,
+    "buzzer": 1,
+    "light": 1,
+    "rgb": 1,
+    "proto": 1
+  },
+  "boards": [
+    {
+      "board": "vibeduino-shield",
+      "parts": 25,
+      "lines": 13,
+      "placements": 13,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 12,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-pot",
+      "parts": 4,
+      "lines": 3,
+      "placements": 1,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 3,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-oled",
+      "parts": 13,
+      "lines": 8,
+      "placements": 10,
+      "smt_sides": [
+        "Bottom"
+      ],
+      "tht": 2,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-dpad",
+      "parts": 13,
+      "lines": 6,
+      "placements": 11,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 2,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-led",
+      "parts": 8,
+      "lines": 5,
+      "placements": 3,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 5,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-servo",
+      "parts": 8,
+      "lines": 5,
+      "placements": 4,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 4,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-temp",
+      "parts": 6,
+      "lines": 5,
+      "placements": 4,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 2,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-buzzer",
+      "parts": 7,
+      "lines": 6,
+      "placements": 4,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 3,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-light",
+      "parts": 5,
+      "lines": 4,
+      "placements": 2,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 3,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-rgb",
+      "parts": 10,
+      "lines": 5,
+      "placements": 8,
+      "smt_sides": [
+        "Top"
+      ],
+      "tht": 2,
+      "gerber_files": 14
+    },
+    {
+      "board": "vibeduino-proto",
+      "parts": 2,
+      "lines": 1,
+      "placements": 0,
+      "smt_sides": [],
+      "tht": 2,
+      "gerber_files": 14
+    }
+  ]
+}

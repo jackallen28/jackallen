@@ -1,0 +1,5 @@
+Comment,Designator,Footprint,LCSC Part #
+Switching diode 75 V 150 mA (1N4148WS-7-F),D1,SOD-323,
+NPN transistor 40 V 0.2 A (MMBT3904LT1G),Q1,SOT-23,
+Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R1,0603,
+Resistor 10 kohm 1 % 0603 (0603WAF1002T5E),R2,0603,
