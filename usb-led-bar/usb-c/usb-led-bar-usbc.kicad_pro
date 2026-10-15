@@ -179,7 +179,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "usb-led-bar.kicad_pro",
+    "filename": "usb-led-bar-usbc.kicad_pro",
     "version": 1
   },
   "net_settings": {

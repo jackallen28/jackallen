@@ -1,111 +1,147 @@
 # USB LED Bar
 
-A 100 × 15 mm light bar with **6 warm-white 2835 LEDs**, the same LED package used on LED strips.
-It runs from **5 V on a cut USB cable** soldered straight to the board. JLCPCB fabricates it and
-assembles the SMD parts. You only solder the two cable wires.
+A 100 × 15 mm light bar with **8 warm-white 2835 LEDs**, the same LED package used on LED strips.
+It runs from 5 V USB and has the **Banyule Nillumbik Tech School logo** on the front at the right-hand end.
+JLCPCB fabricates it and assembles every part. There is nothing to solder.
 
-![Top side](docs/board-top.png)
-![Bottom side](docs/board-bottom.png)
+It comes in two variants. They share the same LED layout and differ only in the power input:
 
-| | |
+| | **JST** ([`jst/`](jst/)) | **USB-C** ([`usb-c/`](usb-c/)) |
+|---|---|---|
+| Power input | Right-angle **JST PH 2.0 mm** 2-pin socket, so the cable unplugs | On-board **USB-C** socket |
+| Connector | JST S2B-PH-SM4-TB(LF)(SN), LCSC [C295747](https://jlcpcb.com/partdetail/Jst-S2B_PH_SM4_TB_LF_SN/C295747) | HRO TYPE-C-31-M-12, LCSC [C165948](https://jlcpcb.com/partdetail/Korean_HropartsElec-TYPE_C_31_M12/C165948) |
+| Extra parts | – | 2 × 5.1 kΩ CC pull-downs (R9, R10), LCSC [C27834](https://jlcpcb.com/partdetail/0805W8F5101T5E/C27834) |
+| Cable | USB-A → JST PH, ideally with a switch (see [Cables](#cables-for-the-jst-variant)) | Any USB-C cable or charger, including USB-A → C and C → C |
+
+**JST variant**
+
+![JST variant, top](jst/docs/board-top.png)
+
+**USB-C variant**
+
+![USB-C variant, top](usb-c/docs/board-top.png)
+![USB-C variant, bottom](usb-c/docs/board-bottom.png)
+
+| Both variants | |
 |---|---|
-| Size | 100 × 15 mm, 1 mm corner radius, 2 × M3 mounting holes (81 mm apart) |
-| PCB | 2 layers, 1.6 mm FR-4, 1 oz copper, GND pour on the bottom |
-| LEDs | 6 × XINGLIGHT **XL-2835WWC-02**, warm white 2800–3000 K, SMD2835 (LCSC [C2843875](https://www.lcsc.com/product-detail/C2843875.html)) |
-| Resistors | 6 × UNI-ROYAL **0805W8F1000T5E**, 100 Ω 1 % 0805 (LCSC [C17408](https://jlcpcb.com/partdetail/0805W8F1000T5E/C17408), JLCPCB *Basic* part) |
-| Supply | 5 V from USB, about **20 mA per LED, about 125 mA in total** (fine for any USB port or phone charger) |
+| Board | 100 × 15 mm, 1 mm corner radius, 2 layers, 1.6 mm FR-4, 1 oz copper, GND pour on the bottom |
+| LEDs | 8 × XINGLIGHT **XL-2835WWC-02**, warm white 2800–3000 K, SMD2835 (LCSC [C2843875](https://www.lcsc.com/product-detail/C2843875.html)) |
+| LED resistors | 8 × UNI-ROYAL **0805W8F1000T5E**, 100 Ω 1 % 0805 (LCSC [C17408](https://jlcpcb.com/partdetail/0805W8F1000T5E/C17408), JLCPCB *Basic* part) |
+| Current | about 21 mA per LED, **about 170 mA in total**, well within any USB port or phone charger |
 
-Schematic: [docs/usb-led-bar-schematic.pdf](docs/usb-led-bar-schematic.pdf)
+Schematics: [jst/docs/usb-led-bar-jst-schematic.pdf](jst/docs/usb-led-bar-jst-schematic.pdf),
+[usb-c/docs/usb-led-bar-usbc-schematic.pdf](usb-c/docs/usb-led-bar-usbc-schematic.pdf)
 
 ## Files
 
 | Path | What it is |
 |---|---|
-| `jlcpcb/usb-led-bar_gerbers.zip` | Gerbers + Excellon drill files. **Upload this on the PCB order page.** |
-| `jlcpcb/usb-led-bar_bom.csv` | Bill of materials in JLCPCB format (Comment, Designator, Footprint, LCSC Part #) |
-| `jlcpcb/usb-led-bar_cpl.csv` | Pick-and-place / centroid file in JLCPCB format (Designator, Mid X, Mid Y, Layer, Rotation) |
-| `usb-led-bar.kicad_pro/_sch/_pcb` | KiCad project, schematic and board (made with KiCad 7, opens in KiCad 8/9) |
-| `usb-led-bar.pretty/` | Project footprints: the 2835 LED, the USB wire pads, and an 0805 resistor (KiCad's stock one with silkscreen widened to 0.16 mm) |
-| `scripts/export_jlcpcb.py` | Rebuilds everything in `jlcpcb/` from the KiCad files (`python3 scripts/export_jlcpcb.py`, needs `kicad-cli` from KiCad 7+) |
+| `jst/jlcpcb/`, `usb-c/jlcpcb/` | **What you upload to JLCPCB**, one set per variant: `*_gerbers.zip` (Gerbers + drill files), `*_bom.csv` (BOM) and `*_cpl.csv` (pick-and-place) |
+| `jst/usb-led-bar-jst.kicad_*`, `usb-c/usb-led-bar-usbc.kicad_*` | KiCad project, schematic and board for each variant (made with KiCad 7, opens in KiCad 8/9) |
+| `usb-led-bar.pretty/` | Shared footprints: the 2835 LED, the logo, and stock 0805 / JST PH / USB-C footprints with silkscreen widened to JLCPCB's minimum |
+| `scripts/export_jlcpcb.py` | Rebuilds the `jlcpcb/` folders from the KiCad files: `python3 scripts/export_jlcpcb.py [jst] [usb-c]` (needs `kicad-cli` from KiCad 7+) |
 
 ## Ordering from JLCPCB
 
-1. On jlcpcb.com, click **Order now** and upload `jlcpcb/usb-led-bar_gerbers.zip`.
-   It should detect **2 layers, 100 × 15 mm**.
-2. PCB options. The defaults are fine: 1.6 mm, HASL (lead-free if you prefer), 1 oz, any colour.
-   *White solder mask reflects more light, which suits a light bar.*
-   For **Mark on PCB / Remove Order Number**, choose *Specify a location*. The board has a
-   `JLCJLCJLCJLC` marker on the back, so the order number goes there instead of on the front.
+Pick one variant and use the three files from its `jlcpcb/` folder.
+
+1. On jlcpcb.com, click **Order now** and upload `…_gerbers.zip`. It should detect **2 layers, 100 × 15 mm**.
+2. PCB options. The defaults are fine: 1.6 mm, HASL (lead-free if you prefer), 1 oz.
+   *White solder mask reflects more light, but the logo is white silkscreen and needs a dark mask:
+   green, blue, black or purple.* For **Mark on PCB / Remove Order Number**, choose *Specify a location*.
+   The back of the board has a `JLCJLCJLCJLC` marker, so the order number goes there and not over the logo.
 3. Turn on **PCB Assembly**: *Economic*, **Top side**, tooling holes *Added by JLCPCB*.
-4. Upload `jlcpcb/usb-led-bar_bom.csv` (BOM) and `jlcpcb/usb-led-bar_cpl.csv` (CPL).
-   Both lines should match automatically: D1–D6 → C2843875 and R1–R6 → C17408.
-   J1 (the cable pads) and the mounting holes have no parts, so they are not in the BOM.
-5. **Check the LED polarity in the placement preview.** On every LED, the **cathode (–) must face the
-   bottom edge**, toward the GND track. That end is marked by the **thick bar** on the silkscreen.
-   If JLCPCB's part model shows the cathode at the top, rotate D1–D6 by 180° in the preview tool.
-   The footprint is symmetric (see below), so the LED fits either way round. Only polarity matters.
-6. Check the parts are in stock when you order. The LED is an *Extended* part, so expect a one-off
-   extended-part fee (about US$3). The resistor is a *Basic* part with no fee.
+4. Upload `…_bom.csv` and `…_cpl.csv`. Every line should match its LCSC part automatically.
+5. **Check the placement preview:**
+   * **LEDs D1–D8:** the cathode (–) must face the **bottom edge**, toward the GND track.
+     That end is marked by the **thick bar** on the silkscreen. If JLCPCB's model shows them reversed,
+     rotate the LEDs 180°. The footprint fits either way round (see *Design notes*), so only polarity matters.
+   * **J1:** its pads should sit on the board pads and its opening should face the **left board edge**.
+     Connector models are sometimes drawn differently, so rotate or nudge J1 in the tool if needed.
+6. Check stock when you order. The LED and the connector are probably *Extended* parts, which adds a
+   one-off fee of about US$3 each. The resistors are *Basic* parts with no fee.
 
-## Attaching the USB cable
+## Cables for the JST variant
 
-Use any USB-A (or USB-C) cable you can sacrifice. Cut off the far end and strip the jacket back about 3 cm.
+The board's socket is a **JST PH 2.0 mm, 2-pin** header: pin 1 = **+5V**, pin 2 = **GND**, marked on the
+silkscreen. Any USB-A cable that ends in a **JST PH 2.0 mm 2-pin female plug** (housing PHR-2) fits it.
+Make sure it is **PH (2.0 mm)**, not XH (2.5 mm), which looks similar but won't fit. Two ways to add a switch:
 
-* **Red → +5V**, **Black → GND**. Cut the green and white data wires short. Some cheap cables use
-  other colours, so check with a multimeter: +5 V shows between the two power wires when it is plugged in.
-* Strain relief: push each wire **down through its large hole** at the board edge, then **back up
-  through its solder pad** from underneath, and solder on top. The loop takes the pull off the joint.
-* If the wires are swapped, the LEDs just stay dark. Unplug it and swap the wires.
+* **Plug-together, no tools:** a plain *USB-A → JST PH 2.0 2-pin* power cable, plus Adafruit's
+  [JST PH 2-pin extension cable with on/off switch](https://www.adafruit.com/product/3064) between it and the board.
+  Avoid "USB LiPo charger" leads that have a charging module or LED in the cable. Those put out about
+  4.2 V, not 5 V, so the LEDs come out dim.
+* **One quick splice:** a *USB-A cable with an inline on/off switch and bare wire ends*, for example
+  [this 5 V USB switch cable](https://www.amazon.com/clp/B0DDL3W7G5), joined to a
+  [JST PH 2-pin cable with a female connector](https://www.adafruit.com/product/3814).
+  Join red to red and black to black, then solder and heat-shrink.
+
+**Check polarity before you first plug it in.** Ready-made JST cables don't agree on which side is red.
+With the USB end plugged in, use a multimeter on the plug's pins: **+5 V must be on the pin that lands
+on "+5V"** on the board. If it is the wrong way round, the LEDs just stay dark. You can swap the two
+crimp contacts in the plug by lifting the little plastic latches with a pin.
+
+For the **USB-C variant**, any USB-C lead works. Inline-switch USB-A → USB-C cables are easy to find if
+you want a switch on that one too.
 
 ## Design notes
 
-**Circuit.** Each LED has its own 100 Ω resistor and the six branches run in parallel off the
-5 V rail. That keeps the brightness even even when individual LEDs have slightly different forward voltages.
+**Circuit.** Each LED has its own 100 Ω resistor, and the eight branches run in parallel off the 5 V rail.
+That keeps the brightness even even when individual LEDs have slightly different forward voltages.
 
 | | Value |
 |---|---|
 | LED forward voltage (≈20 mA) | ≈2.9 V (spec 2.9–3.3 V) |
 | LED current | (5.0 − 2.9) V / 100 Ω ≈ **21 mA** (≈23 mA at USB's 5.25 V maximum) |
 | Resistor dissipation | ≈44 mW each (0805 rating 125 mW) |
-| Total current | ≈125 mA |
+| Total current | ≈170 mA |
 
 About 20 mA is what 2835 LEDs typically get on 12 V LED strips. It is a comfortable fraction of the
-60 mA these 0.2 W parts are usually rated for, so the LEDs run cool and last a long time. *(LCSC's
-parameter table for C2843875 lists some ratings that don't agree with each other. Check the datasheet
-on the part page before you raise the current.)*
+60 mA these 0.2 W parts are usually rated for. *(LCSC's parameter table for C2843875 lists some ratings
+that don't agree with each other. Check the datasheet on the part page before you raise the current.)*
+
+**USB-C.** A USB-C charger or C-to-C cable only switches on 5 V once it sees a "sink" on the CC lines.
+R9 and R10 provide that: 5.1 kΩ from **CC1** and from **CC2** to GND, one resistor per pin, as the USB-C
+spec requires. Sharing one resistor between the pins doesn't work. D+, D− and SBU are unused.
+All four VBUS pins and all four GND pins are connected, and the shell is tied to GND.
 
 **Brightness / colour changes.** The resistor value sets the current, about (5 − Vf) / R:
 
 | R | Warm white (Vf ≈ 2.9 V) | Orange 2835 (Vf ≈ 2.0 V) |
 |---|---|---|
-| 68 Ω | ≈31 mA (brighter) | ≈44 mA, too much heat for an 0805 resistor |
+| 68 Ω | ≈31 mA (brighter, ≈250 mA total) | ≈44 mA, too much heat for an 0805 resistor |
 | 100 Ω (as built) | ≈21 mA | ≈30 mA |
 | 150 Ω | ≈14 mA (dimmer) | ≈20 mA |
 
-To change it, edit the resistor value and its `LCSC` field in the schematic, then update the PCB
-from the schematic and re-run the export script. You can also just edit the BOM line before uploading.
-To get orange instead, use any orange/amber SMD2835 LED with **150 Ω** resistors.
+**Polarity-tolerant 2835 footprint.** On 2835 LEDs, some manufacturers make the large pad the anode and
+others make it the cathode. `LED_2835_PolarityTolerant` uses two equal pads whose inner edges are 2.1 mm
+apart. Whichever end the LED's large pad is on, it lands on one board pad only, and the small pad lands on
+the other. Polarity is then set only by rotation (the silkscreen bar marks the cathode).
 
-**Polarity-tolerant 2835 footprint.** On 2835 LEDs, some manufacturers make the large pad the anode
-and others make it the cathode. `LED_2835_PolarityTolerant` uses two equal pads whose inner edges are
-2.1 mm apart. Whichever end the LED's large pad is on, it lands on one board pad only, and the small pad
-lands on the other. So any 2835 LED fits, and polarity is set only by rotation (the silkscreen bar marks
-the cathode). Pad 1 = cathode, pad 2 = anode. The trade-off is that only the outer part of the large
-thermal pad gets soldered. That is irrelevant at about 60 mW per LED.
+**Logo.** I redrew it from the supplied image as one-colour silkscreen
+(`Logo_Banyule_Nillumbik_Tech_School`, 19.3 × 12 mm). The pixel squares keep their layout, with the pale
+(light teal and lavender) squares drawn as outlines so they still read as different tones. The lettering
+uses URW Gothic, an Avant Garde-style face close to the original. "BANYULE NILLUMBIK" is 1.0 mm tall,
+JLCPCB's minimum, and every stroke is at least 0.18 mm so it prints cleanly.
+It is a *board-only* footprint, so updating the PCB from the schematic leaves it alone.
+
+**Mounting.** The logo and the two extra LEDs use the space the M3 holes used to take. Stick the bar
+down with double-sided foam tape or VHB, the way LED strips are mounted.
 
 **Manufacturing rules.** Everything sits well inside JLCPCB's standard 2-layer capabilities, with no
 extra-cost options:
 
 | Rule | This board | JLCPCB standard minimum |
 |---|---|---|
-| Track width | 0.4–0.5 mm | 0.127 mm |
+| Track width | 0.25 mm (USB-C CC lines), 0.4–0.5 mm (power) | 0.127 mm |
 | Clearance | ≥ 0.2 mm | 0.127 mm |
 | Via drill / pad | 0.3 / 0.6 mm | 0.3 mm drill |
-| Copper to board edge | ≥ 0.5 mm (GND pour), ≥ 1.3 mm (tracks) | 0.3 mm |
-| Silkscreen | text 1.0–1.5 mm high, all lines ≥ 0.16 mm | text 1.0 mm, lines 0.153 mm |
+| Plated slots (USB-C shell) | 0.6 mm wide | 0.5 mm |
+| Copper to board edge | ≥ 0.5 mm | 0.3 mm |
+| Silkscreen | text ≥ 1.0 mm high, all lines ≥ 0.16 mm | text 1.0 mm, lines 0.153 mm |
 
-KiCad DRC reports 0 violations and 0 unconnected pads. The rules above are saved in the project's
-board setup.
+For both variants, KiCad DRC reports 0 violations and 0 unconnected pads, and every pad's net matches
+the schematic. The rules above are saved in each project's board setup.
 
 Gerber settings follow JLCPCB's KiCad guide: Protel file extensions, *subtract soldermask from
 silkscreen*, no X2 / netlist attributes, drill / place origin at the board's bottom-left corner.
