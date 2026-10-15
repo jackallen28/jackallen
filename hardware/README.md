@@ -7,19 +7,22 @@ four **slots**. Every **module** is the same 1-inch hexagon with the same 10-pin
 any module fits in any slot, and four of them tile together on the shield like a honeycomb.
 Students pick the modules for a project, plug them in, and program the Uno over USB.
 
-![Shield with four modules](previews/vibeduino-assembly.png)
+![Arduino Uno, shield and four modules in 3D](previews/3d/vibeduino-assembly-3d.png)
 
 > **Status — rev A, ready for a prototype order.** Every board is placed, fully routed, has
 > copper pours and has passed KiCad DRC. Each board also has a schematic (checked pin-for-pin
-> against its PCB), a BOM with manufacturer part numbers, and JLCPCB-ready Gerbers, drill files
-> and pick-and-place files. See [BOM.md](BOM.md) and section 5.
+> against its PCB), a BOM with manufacturer and LCSC part numbers, JLCPCB-ready Gerbers, drill
+> and pick-and-place files, and a STEP model. The ten modules also come as one
+> **[production panel](panel/README.md)**. See [BOM.md](BOM.md) and sections 5–6.
 
 | Board | Previews |
 |---|---|
 | Shield | [top](previews/vibeduino-shield-top.png) · [bottom](previews/vibeduino-shield-bottom.png) · [routing](previews/vibeduino-shield-layout.png) · [schematic](previews/vibeduino-shield-schematic.png) |
 | All modules | [top views](previews/modules-top.png) · [bottom views](previews/modules-bottom.png) · [routing](previews/modules-layout.png) |
 | Module schematics | [POT](previews/vibeduino-pot-schematic.png) · [OLED](previews/vibeduino-oled-schematic.png) · [D-PAD](previews/vibeduino-dpad-schematic.png) · [LED](previews/vibeduino-led-schematic.png) · [SERVO](previews/vibeduino-servo-schematic.png) · [TEMP](previews/vibeduino-temp-schematic.png) · [BUZZER](previews/vibeduino-buzzer-schematic.png) · [LIGHT](previews/vibeduino-light-schematic.png) · [RGB](previews/vibeduino-rgb-schematic.png) · [PROTO](previews/vibeduino-proto-schematic.png) — all 11 in one PDF: [vibeduino-schematics.pdf](schematics/vibeduino-schematics.pdf) |
-| Fit check | [OLED + D-PAD + POT + SERVO](previews/vibeduino-assembly.png) · [LED + RGB + TEMP + BUZZER](previews/vibeduino-assembly-2.png) (bare PCBs; panel, knob and caps not drawn) |
+| 3D renders | [shield](previews/3d/vibeduino-shield-3d.png) · [all modules](previews/3d/modules-3d.png) · [modules, underside](previews/3d/modules-3d-bottom.png) · [stack: OLED, D-PAD, POT, SERVO](previews/3d/vibeduino-assembly-3d.png) · [stack: LED, RGB, TEMP, BUZZER](previews/3d/vibeduino-assembly-2-3d.png) |
+| Fit check (2D) | [OLED + D-PAD + POT + SERVO](previews/vibeduino-assembly.png) · [LED + RGB + TEMP + BUZZER](previews/vibeduino-assembly-2.png) (bare PCBs; panel, knob and caps not drawn) |
+| Production panel | [10 modules, top](panel/previews/vibeduino-modules-panel-top.png) · [bottom](panel/previews/vibeduino-modules-panel-bottom.png) · [ordering guide](panel/README.md) |
 
 ---
 
@@ -171,6 +174,8 @@ and stops if anything changed.
 | All schematics as one PDF | `schematics/vibeduino-schematics.pdf` |
 | Bill of materials (kit totals, per-board counts, ordering notes) | [`BOM.md`](BOM.md), `fab/vibeduino-kit-bom.csv` |
 | Per-board BOM, JLCPCB BOM + pick-and-place, Gerber/drill zip | `fab/vibeduino-<board>/` |
+| **Ten-module production panel** (KiCad, Gerbers, JLCPCB BOM + CPL, order settings) | [`panel/`](panel/README.md) |
+| STEP models (each board, the full stack, an Arduino Uno stand-in) | `3d/` |
 
 * **Schematics are net-label style.** They are generated from each routed PCB. Every pin has a
   short wire and a net label, and pins with the same label are connected. The power nets have
@@ -178,12 +183,38 @@ and stops if anything changed.
   *Update PCB from Schematic* works in KiCad. The parts are placed in rows, not drawn as a
   hand-made circuit diagram. They are accurate and editable, but a hand-drawn tidy-up would
   read better in teaching material.
-* **Part numbers** (manufacturer + MPN) are stored as fields on every footprint and symbol.
-  They come from one catalogue, `generator/vibeduino/bom.py`.
-* **LCSC part numbers are blank on purpose.** Pick current stock from the MPN when ordering.
-  The JLCPCB placement rotations follow KiCad's convention, so check the placement preview.
+* **Part numbers** (manufacturer, MPN and LCSC) are stored as fields on every footprint and
+  symbol. They come from one catalogue, `generator/vibeduino/bom.py`. 33 of the 37 kit lines
+  have an LCSC number checked against the LCSC/JLCPCB listings (October 2026). Most resistors,
+  capacitors, diodes, transistors and the tact switch are JLCPCB *Basic* parts. Lines without
+  an LCSC number are the 5 mm red/green LEDs, the passive buzzer (no verified listing; buy to
+  the description) and the OLED glass (hand assembly).
+* **JLCPCB files** (`*-bom-jlcpcb.csv`, `*-cpl-jlcpcb.csv`) cover SMT *and* through-hole parts.
+  The CPL applies JLCPCB's usual rotation offsets (SOT-23, electrolytic, WS2812B +180°).
+  Still check the placement preview when you order.
 
-## 6. Regenerating the boards
+## 6. Production panel and 3D models
+
+* **[`panel/`](panel/README.md)**: the ten modules on one 149.3 × 74.2 mm panel with a 5 mm
+  frame, mouse-bite tabs placed clear of copper, fiducials on both sides, JLCPCB tooling holes
+  and a `JLCJLCJLCJLC` order-number marker. Panel DRC: 0 errors, 0 unconnected. It includes
+  the JLCPCB BOM/CPL for all 75 placements and the exact order settings (*Panel by Customer*,
+  10 designs, two-sided assembly).
+* **`3d/vibeduino-<board>.step`**: every board with all its parts, for enclosure and
+  mechanical design. Module origin = hex centre. Shield origin = the Uno's lower-left corner,
+  so it lines up with Arduino's own Uno R3 CAD model.
+* **`3d/vibeduino-assembly.step`**: the full stack, made of a simplified Uno
+  (`3d/arduino-uno-r3-standin.step`, board, headers, jacks and ATmega only) + shield + OLED,
+  D-PAD, POT and SERVO. Stack heights: shield underside 12.64 mm above the Uno's underside,
+  module underside 25.28 mm (8.5 mm sockets + 2.54 mm header bodies at each level).
+* KiCad's 3D library has no model for the RK09K pot, the TS-1187A switch, the JST SH Qwiic
+  socket or the OLED glass. Simple dimensioned STEP models for these are in
+  `kicad/lib/VIBEDUINO.3dshapes`, and the footprints point at them, so KiCad's 3D viewer shows
+  complete boards.
+* 3D renders (`previews/3d/`) are made from the STEP models, with the board photo renders as
+  surface textures, in three.js (headless Chromium).
+
+## 7. Regenerating the boards
 
 All boards are produced by code: `generator/build.py` places the parts, autoroutes with
 Freerouting, pours copper, runs DRC and renders the previews. Changing a value in
@@ -197,13 +228,19 @@ export VIBEDUINO_JAVA=/path/to/java25/bin/java
 python3 generator/build.py            # everything
 python3 generator/build.py shield oled # selected boards
 python3 generator/release.py          # schematics, BOMs, Gerbers, pick-and-place (no re-routing)
+
+# 3D (KiCad 3D library + OpenCASCADE + Node/three.js) and the production panel (KiKit 1.6)
+pip install cadquery-ocp trimesh mapbox-earcut "kikit==1.6.0"
+(cd generator && npm install)         # three.js + playwright-core for the renders
+python3 generator/step3d.py           # STEP models + 3D renders
+python3 generator/panel.py            # panel/ (run last: it copies the module boards)
 ```
 
 The KiCad files are saved in KiCad 7 format and open in KiCad 8/9. Boards are layout-first:
 nets are assigned in the generator, and `release.py` derives the schematics from the boards.
-Run it after every `build.py`.
+Run `release.py`, `step3d.py` and `panel.py`, in that order, after every `build.py`.
 
-## 7. Open items to confirm before ordering
+## 8. Open items to confirm before ordering
 
 1. **OLED panel**
    * The footprint is derived from SparkFun's open-source Qwiic Micro OLED (LCD-22495),
@@ -223,3 +260,9 @@ Run it after every `build.py`.
    corners, on the underside only. The fit check confirms neighbours still clear.
 6. **Fab options**: tent vias (some silkscreen crosses vias). Black solder mask + ENIG is used
    in the renders, but any colour works.
+7. **Ordering**: re-check LCSC stock, choose parts for the three lines without an LCSC number,
+   and confirm polarity and rotation in JLCPCB's placement preview. After depanelling, sand
+   the mouse-bite nubs flush: modules sit 1 mm apart on the shield.
+8. **3D models**: the pot, switch, Qwiic socket, OLED and Uno models are simplified
+   stand-ins drawn from datasheet dimensions. Use the makers' CAD models for tight enclosure
+   work.

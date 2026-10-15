@@ -105,4 +105,9 @@
     (thermal_bridge_angle 45) (tstamp a9450a5c-9f7b-4d0a-a0d5-9a4aeb4ab19c))
   (pad "28" smd rect (at 0 -8.775) (size 2 0.35) (layers "F.Cu" "F.Paste" "F.Mask")
     (thermal_bridge_angle 45) (tstamp c16532bc-b61e-4eeb-8909-1ba0e76ea92a))
+  (model "${KIPRJMOD}/../../lib/VIBEDUINO.3dshapes/OLED_0.66in_64x48_FPC28.step"
+    (offset (xyz 0 0 0))
+    (scale (xyz 1 1 1))
+    (rotate (xyz 0 0 0))
+  )
 )

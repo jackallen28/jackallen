@@ -1,2 +1,6 @@
 Comment,Designator,Footprint,LCSC Part #
-Resistor 470 ohm 1 % 0603 (0603WAF4700T5E),"R1,R2,R3",0603,
+"LED 5 mm red, diffused",D1,THT 5 mm,
+"LED 5 mm yellow, diffused (XL-504UYD)",D2,THT 5 mm,C2895495
+"LED 5 mm green, diffused",D3,THT 5 mm,
+"Pin header 1x5, 2.54 mm, straight (PZ254V-11-05P)","J1,J2",THT,C492404
+Resistor 470 ohm 1 % 0603 (0603WAF4700T5E),"R1,R2,R3",0603,C23179

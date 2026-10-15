@@ -1,14 +1,14 @@
-Qty,Designators,Description,Manufacturer,MPN,Package,Side,Process,Notes,KiCad footprint
-1,C1,"Aluminium electrolytic 100 µF 10 V, SMD 6.3×5.4 mm",any,—,6.3×5.4,Top,SMT,,Capacitor_SMD:CP_Elec_6.3x5.4
-2,C2 C3,Capacitor 100 nF 50 V X7R 0603,Samsung,CL10B104KB8NNNC,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
-1,D1,LED green 0603,any,—,0603,Top,SMT,,LED_SMD:LED_0603_1608Metric
-2,J1 J4,"Pin header 1×8, 2.54 mm, straight",any,—,THT,Bottom,THT,Arduino header: fit on the UNDERSIDE,Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical
-1,J2,"Pin header 1×6, 2.54 mm, straight",any,—,THT,Bottom,THT,Arduino header: fit on the UNDERSIDE,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical
-1,J3,"Pin header 1×10, 2.54 mm, straight",any,—,THT,Bottom,THT,Arduino header: fit on the UNDERSIDE,Connector_PinHeader_2.54mm:PinHeader_1x10_P2.54mm_Vertical
-1,J5,JST SH 4-pin 1.0 mm vertical (Qwiic / STEMMA QT),JST,BM04B-SRSS-TB(LF)(SN),SMD,Top,SMT,,Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical
-8,J101 J102 J201 J202 J301 J302 J401 J402,"Female socket 1×5, 2.54 mm, 8.5 mm tall",any,—,THT,Top,THT,module slot; trim leads to <= 1.5 mm,Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical
-2,Q1 Q2,N-MOSFET 50 V 0.22 A (I2C level shifter),onsemi,BSS138,SOT-23,Top,SMT,,Package_TO_SOT_SMD:SOT-23
-2,R1 R2,Resistor 4.7 kΩ 1 % 0603,UNI-ROYAL,0603WAF4701T5E,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
-2,R3 R4,Resistor 10 kΩ 1 % 0603,UNI-ROYAL,0603WAF1002T5E,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
-1,R5,Resistor 1 kΩ 1 % 0603,UNI-ROYAL,0603WAF1001T5E,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
-1,SW1,"Tactile switch SPST-NO, 5.1×5.1 mm SMD",XKB Connectivity,TS-1187A-B-A-B,SMD 5.1×5.1,Top,SMT,pick the actuator height to suit the kit,Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A
+Qty,Designators,Description,Manufacturer,MPN,LCSC,Package,Side,Process,Notes,KiCad footprint
+1,C1,"Aluminium electrolytic 100 µF 16 V, SMD 6.3×5.4 mm",ROQANG,RVT1C101M0605,C72475,6.3×5.4,Top,SMT,,Capacitor_SMD:CP_Elec_6.3x5.4
+2,C2 C3,Capacitor 100 nF 50 V X7R 0603,YAGEO,CC0603KRX7R9BB104,C14663,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
+1,D1,LED green 0603,Hubei KENTO,KT-0603G,C12624,0603,Top,SMT,,LED_SMD:LED_0603_1608Metric
+2,J1 J4,"Pin header 1×8, 2.54 mm, straight",XFCN,PZ254V-11-08P,C492407,THT,Bottom,THT,Arduino header: fit on the UNDERSIDE,Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical
+1,J2,"Pin header 1×6, 2.54 mm, straight",XFCN,PZ254V-11-06P,C492405,THT,Bottom,THT,Arduino header: fit on the UNDERSIDE,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical
+1,J3,"Pin header 1×10, 2.54 mm, straight",XFCN,PZ254V-11-10P,C492409,THT,Bottom,THT,Arduino header: fit on the UNDERSIDE,Connector_PinHeader_2.54mm:PinHeader_1x10_P2.54mm_Vertical
+1,J5,JST SH 4-pin 1.0 mm vertical (Qwiic / STEMMA QT),JST,BM04B-SRSS-TB(LF)(SN),C160390,SMD,Top,SMT,,Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical
+8,J101 J102 J201 J202 J301 J302 J401 J402,"Female socket 1×5, 2.54 mm, 8.5 mm tall",BOOMELE,2.54-1*5PFemale,C50950,THT,Top,THT,module slot; trim leads to <= 1.5 mm,Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical
+2,Q1 Q2,N-MOSFET 50 V 0.22 A (I2C level shifter),JSCJ,BSS138,C78284,SOT-23,Top,SMT,,Package_TO_SOT_SMD:SOT-23
+2,R1 R2,Resistor 4.7 kΩ 1 % 0603,UNI-ROYAL,0603WAF4701T5E,C23162,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
+2,R3 R4,Resistor 10 kΩ 1 % 0603,UNI-ROYAL,0603WAF1002T5E,C25804,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
+1,R5,Resistor 1 kΩ 1 % 0603,UNI-ROYAL,0603WAF1001T5E,C21190,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
+1,SW1,"Tactile switch SPST-NO, 5.1×5.1 mm SMD",XKB Connection,TS-1187A-B-A-B,C318884,SMD 5.1×5.1,Top,SMT,,Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A

@@ -1,4 +1,6 @@
 Comment,Designator,Footprint,LCSC Part #
-"Aluminium electrolytic 100 uF 10 V, SMD 5x5.4 mm",C1,5x5.4,
-Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),C2,0603,
-Resistor 220 ohm 1 % 0603 (0603WAF2200T5E),"R1,R2",0603,
+"Aluminium electrolytic 100 uF 10 V, SMD 5x5.4 mm (CS1A101M-CRD54)",C1,5x5.4,C96182
+Capacitor 100 nF 50 V X7R 0603 (CC0603KRX7R9BB104),C2,0603,C14663
+"Pin header 1x5, 2.54 mm, straight (PZ254V-11-05P)","J1,J2",THT,C492404
+"Pin header 1x3, 2.54 mm, straight (PZ254V-11-03P)","J3,J4",THT,C2937625
+Resistor 220 ohm 1 % 0603 (0603WAF2200T5E),"R1,R2",0603,C22962

@@ -2023,14 +2023,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 34.29 52.07 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-08P"
+      (at 34.29 52.07 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492407"
       (at 34.29 52.07 0)
       (effects
         (font (size 1.27 1.27))
@@ -2193,14 +2200,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 67.31 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-06P"
+      (at 67.31 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492405"
       (at 67.31 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -2346,14 +2360,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 106.68 54.61 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-10P"
+      (at 106.68 54.61 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492409"
       (at 106.68 54.61 0)
       (effects
         (font (size 1.27 1.27))
@@ -2559,14 +2580,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 144.78 52.07 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-08P"
+      (at 144.78 52.07 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492407"
       (at 144.78 52.07 0)
       (effects
         (font (size 1.27 1.27))
@@ -2756,6 +2784,13 @@
         hide
       )
     )
+    (property "LCSC" "C160390"
+      (at 185.42 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "fdbdefcb-0cad-5a34-85dc-0293567ca767"))
     (pin "2" (uuid "2d9e4eb3-a913-5f79-bca1-3e080d36bf73"))
     (pin "3" (uuid "91fbdf49-4c61-55f5-af39-736134bdf2c2"))
@@ -2880,14 +2915,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 213.36 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 213.36 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 213.36 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -3018,14 +3060,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 247.65 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 247.65 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 247.65 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -3156,14 +3205,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 33.02 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 33.02 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 33.02 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -3294,14 +3350,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 67.31 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 67.31 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 67.31 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -3432,14 +3495,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 102.87 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 102.87 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 102.87 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -3570,14 +3640,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 137.16 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 137.16 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 137.16 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -3708,14 +3785,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 172.72 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 172.72 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 172.72 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -3846,14 +3930,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "BOOMELE"
       (at 208.28 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "2.54-1*5PFemale"
+      (at 208.28 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C50950"
       (at 208.28 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -3984,7 +4075,7 @@
         hide
       )
     )
-    (property "Manufacturer" "onsemi"
+    (property "Manufacturer" "JSCJ"
       (at 243.84 91.44 0)
       (effects
         (font (size 1.27 1.27))
@@ -3992,6 +4083,13 @@
       )
     )
     (property "MPN" "BSS138"
+      (at 243.84 91.44 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C78284"
       (at 243.84 91.44 0)
       (effects
         (font (size 1.27 1.27))
@@ -4092,7 +4190,7 @@
         hide
       )
     )
-    (property "Manufacturer" "onsemi"
+    (property "Manufacturer" "JSCJ"
       (at 33.02 127 0)
       (effects
         (font (size 1.27 1.27))
@@ -4100,6 +4198,13 @@
       )
     )
     (property "MPN" "BSS138"
+      (at 33.02 127 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C78284"
       (at 33.02 127 0)
       (effects
         (font (size 1.27 1.27))
@@ -4198,7 +4303,7 @@
         hide
       )
     )
-    (property "Manufacturer" "XKB Connectivity"
+    (property "Manufacturer" "XKB Connection"
       (at 64.77 116.84 0)
       (effects
         (font (size 1.27 1.27))
@@ -4206,6 +4311,13 @@
       )
     )
     (property "MPN" "TS-1187A-B-A-B"
+      (at 64.77 116.84 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C318884"
       (at 64.77 116.84 0)
       (effects
         (font (size 1.27 1.27))
@@ -4289,14 +4401,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "Hubei KENTO"
       (at 93.98 115.57 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "KT-0603G"
+      (at 93.98 115.57 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C12624"
       (at 93.98 115.57 0)
       (effects
         (font (size 1.27 1.27))
@@ -4396,6 +4515,13 @@
         hide
       )
     )
+    (property "LCSC" "C23162"
+      (at 116.84 123.19 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "ddb6eb89-163e-58f2-a1d3-6dd1b7280370"))
     (pin "2" (uuid "62ab9c85-8cb6-53ad-953f-1be177d7009d"))
     (instances
@@ -4483,6 +4609,13 @@
       )
     )
     (property "MPN" "0603WAF4701T5E"
+      (at 130.81 123.19 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C23162"
       (at 130.81 123.19 0)
       (effects
         (font (size 1.27 1.27))
@@ -4582,6 +4715,13 @@
         hide
       )
     )
+    (property "LCSC" "C25804"
+      (at 143.51 121.92 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "53975c01-63d6-5685-a563-67c0c9083fb3"))
     (pin "2" (uuid "9b3abae5-3064-55d4-b605-ea068ca81691"))
     (instances
@@ -4669,6 +4809,13 @@
       )
     )
     (property "MPN" "0603WAF1002T5E"
+      (at 156.21 121.92 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C25804"
       (at 156.21 121.92 0)
       (effects
         (font (size 1.27 1.27))
@@ -4768,6 +4915,13 @@
         hide
       )
     )
+    (property "LCSC" "C21190"
+      (at 168.91 121.92 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "67979246-8567-53c3-ba26-b8bc9d0fb079"))
     (pin "2" (uuid "8aea3f71-b93b-5657-9fb8-821a16683ffa"))
     (instances
@@ -4840,21 +4994,28 @@
         hide
       )
     )
-    (property "Description" "Aluminium electrolytic 100 µF 10 V, SMD 6.3×5.4 mm"
+    (property "Description" "Aluminium electrolytic 100 µF 16 V, SMD 6.3×5.4 mm"
       (at 181.61 121.92 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "ROQANG"
       (at 181.61 121.92 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "RVT1C101M0605"
+      (at 181.61 121.92 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C72475"
       (at 181.61 121.92 0)
       (effects
         (font (size 1.27 1.27))
@@ -4940,14 +5101,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 203.2 123.19 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 203.2 123.19 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 203.2 123.19 0)
       (effects
         (font (size 1.27 1.27))
@@ -5033,14 +5201,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 219.71 121.92 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 219.71 121.92 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 219.71 121.92 0)
       (effects
         (font (size 1.27 1.27))

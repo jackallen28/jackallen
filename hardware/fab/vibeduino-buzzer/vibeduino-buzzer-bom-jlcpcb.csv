@@ -1,5 +1,7 @@
 Comment,Designator,Footprint,LCSC Part #
-Switching diode 75 V 150 mA (1N4148WS-7-F),D1,SOD-323,
-NPN transistor 40 V 0.2 A (MMBT3904LT1G),Q1,SOT-23,
-Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R1,0603,
-Resistor 10 kohm 1 % 0603 (0603WAF1002T5E),R2,0603,
+"Passive magnetic buzzer (transducer) 12x9.5 mm, 5 V, >= 40 ohm, 7.6 mm pitch",BZ1,THT 12 mm,
+Switching diode 75 V 150 mA (1N4148WS),D1,SOD-323,C2128
+"Pin header 1x5, 2.54 mm, straight (PZ254V-11-05P)","J1,J2",THT,C492404
+NPN transistor 40 V 0.2 A (MMBT3904),Q1,SOT-23,C20526
+Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R1,0603,C21190
+Resistor 10 kohm 1 % 0603 (0603WAF1002T5E),R2,0603,C25804

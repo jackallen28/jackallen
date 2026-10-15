@@ -697,14 +697,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -835,14 +842,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1062,14 +1076,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XINGLIGHT"
       (at 128.27 46.99 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "XL-504UYD"
+      (at 128.27 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C2895495"
       (at 128.27 46.99 0)
       (effects
         (font (size 1.27 1.27))
@@ -1260,6 +1281,13 @@
         hide
       )
     )
+    (property "LCSC" "C23179"
+      (at 177.8 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "88c6fc0d-a8ec-5f6f-bbb5-73b2759fa147"))
     (pin "2" (uuid "44d0687e-ace3-54eb-9636-cbdd3f8ce25e"))
     (instances
@@ -1353,6 +1381,13 @@
         hide
       )
     )
+    (property "LCSC" "C23179"
+      (at 191.77 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "315f0261-422c-5c76-b96e-f93481ff69c9"))
     (pin "2" (uuid "f82c5613-379c-564d-a91b-2f64442f3bc6"))
     (instances
@@ -1440,6 +1475,13 @@
       )
     )
     (property "MPN" "0603WAF4700T5E"
+      (at 205.74 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C23179"
       (at 205.74 53.34 0)
       (effects
         (font (size 1.27 1.27))

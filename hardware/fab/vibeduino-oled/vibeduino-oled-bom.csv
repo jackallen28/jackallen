@@ -1,9 +1,9 @@
-Qty,Designators,Description,Manufacturer,MPN,Package,Side,Process,Notes,KiCad footprint
-1,C1,Capacitor 2.2 µF 16 V X5R 0603,Samsung,CL10A225KO8NNNC,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
-4,C2 C3 C4 C7,Capacitor 1 µF 50 V X5R 0603,Samsung,CL10A105KB8NNNC,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
-1,C5,Capacitor 4.7 µF 16 V X5R 0603,Samsung,CL10A475KO8NNNC,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
-1,C6,Capacitor 100 nF 50 V X7R 0603,Samsung,CL10B104KB8NNNC,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
-1,DS1,"OLED 0.66"" 64×48, SSD1306, 28-pin solder FPC (glass folds over pads)",—,panel used on SparkFun LCD-22495 (verify supplier drawing),FPC,Top,HAND,solder FPC by hand / hot-bar; tape glass down,VIBEDUINO:OLED_0.66in_64x48_FPC28
-2,J1 J2,"Pin header 1×5, 2.54 mm, straight",any,—,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
-1,R1,Resistor 390 kΩ 1 % 0603,UNI-ROYAL,0603WAF3903T5E,0603,Bottom,SMT,,Resistor_SMD:R_0603_1608Metric
-2,R2 R3,Resistor 10 kΩ 1 % 0603,UNI-ROYAL,0603WAF1002T5E,0603,Bottom,SMT,,Resistor_SMD:R_0603_1608Metric
+Qty,Designators,Description,Manufacturer,MPN,LCSC,Package,Side,Process,Notes,KiCad footprint
+1,C1,Capacitor 2.2 µF 16 V X5R 0603,Samsung,CL10A225KO8NNNC,C23630,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
+4,C2 C3 C4 C7,Capacitor 1 µF 50 V X5R 0603,Samsung,CL10A105KB8NNNC,C15849,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
+1,C5,Capacitor 4.7 µF 16 V X5R 0603,Samsung,CL10A475KO8NNNC,C19666,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
+1,C6,Capacitor 100 nF 50 V X7R 0603,YAGEO,CC0603KRX7R9BB104,C14663,0603,Bottom,SMT,,Capacitor_SMD:C_0603_1608Metric
+1,DS1,"OLED 0.66"" 64×48, SSD1306, 28-pin solder FPC (glass folds over pads)",—,panel used on SparkFun LCD-22495 (verify supplier drawing),,FPC,Top,HAND,solder FPC by hand / hot-bar; tape glass down,VIBEDUINO:OLED_0.66in_64x48_FPC28
+2,J1 J2,"Pin header 1×5, 2.54 mm, straight",XFCN,PZ254V-11-05P,C492404,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
+1,R1,Resistor 390 kΩ 1 % 0603,UNI-ROYAL,0603WAF3903T5E,C23150,0603,Bottom,SMT,,Resistor_SMD:R_0603_1608Metric
+2,R2 R3,Resistor 10 kΩ 1 % 0603,UNI-ROYAL,0603WAF1002T5E,C25804,0603,Bottom,SMT,,Resistor_SMD:R_0603_1608Metric

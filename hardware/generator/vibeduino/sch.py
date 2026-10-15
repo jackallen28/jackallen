@@ -315,6 +315,8 @@ def build(pcb_path, sch_path, project, title, description):
             props += [_prop("Description", c["part"].desc, ox, oy, hide=True),
                       _prop("Manufacturer", c["part"].mfr, ox, oy, hide=True),
                       _prop("MPN", c["part"].mpn, ox, oy, hide=True)]
+            if c["part"].lcsc:
+                props.append(_prop("LCSC", c["part"].lcsc, ox, oy, hide=True))
         node = ["symbol", ["lib_id", Q(c["lib_id"])], ["at", ox, oy, 0], ["unit", 1],
                 ["in_bom", "no" if c["dnp"] else "yes"], ["on_board", "yes"], ["dnp", "no"],
                 ["uuid", Q(sym_uuids[c["ref"]])]] + props

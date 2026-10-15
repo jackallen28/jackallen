@@ -1,2 +1,2 @@
-Qty,Designators,Description,Manufacturer,MPN,Package,Side,Process,Notes,KiCad footprint
-2,J1 J2,"Pin header 1×5, 2.54 mm, straight",any,—,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
+Qty,Designators,Description,Manufacturer,MPN,LCSC,Package,Side,Process,Notes,KiCad footprint
+2,J1 J2,"Pin header 1×5, 2.54 mm, straight",XFCN,PZ254V-11-05P,C492404,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical

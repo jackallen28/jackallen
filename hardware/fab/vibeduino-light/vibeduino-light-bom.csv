@@ -1,5 +1,5 @@
-Qty,Designators,Description,Manufacturer,MPN,Package,Side,Process,Notes,KiCad footprint
-1,C1,Capacitor 100 nF 50 V X7R 0603,Samsung,CL10B104KB8NNNC,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
-2,J1 J2,"Pin header 1×5, 2.54 mm, straight",any,—,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
-1,R1,"Photoresistor (LDR) 5 mm, 10–20 kΩ @ 10 lux",any,GL5528,THT,Top,THT,CdS - not EU-RoHS; phototransistor alternative,OptoDevice:R_LDR_5.1x4.3mm_P3.4mm_Vertical
-1,R2,Resistor 10 kΩ 1 % 0603,UNI-ROYAL,0603WAF1002T5E,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
+Qty,Designators,Description,Manufacturer,MPN,LCSC,Package,Side,Process,Notes,KiCad footprint
+1,C1,Capacitor 100 nF 50 V X7R 0603,YAGEO,CC0603KRX7R9BB104,C14663,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
+2,J1 J2,"Pin header 1×5, 2.54 mm, straight",XFCN,PZ254V-11-05P,C492404,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
+1,R1,"Photoresistor (LDR) 5 mm, 8–20 kΩ @ 10 lux",Senba,GL5528,C125627,THT,Top,THT,CdS - not EU-RoHS; phototransistor alternative,OptoDevice:R_LDR_5.1x4.3mm_P3.4mm_Vertical
+1,R2,Resistor 10 kΩ 1 % 0603,UNI-ROYAL,0603WAF1002T5E,C25804,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric

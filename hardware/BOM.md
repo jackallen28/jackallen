@@ -7,59 +7,59 @@ One **classroom kit** = 1 shield + 1 of each of the 10 modules (Arduino Uno R3 n
 * **60** SMT placements, **40** through-hole parts, **1** hand-assembled part (OLED panel) per kit
 * 37 unique line items
 
-Per-board files live in `fab/<board>/`:
+Per-board files live in `fab/<board>/`. For production, order the modules as the ten-module panel in [`panel/`](panel/README.md).
 
 | File | Use |
 |---|---|
 | `<board>-gerbers.zip` | Gerbers (Cu, mask, silk, paste, outline) + Excellon drill (PTH/NPTH) — upload to the PCB fab |
 | `<board>-bom.csv` | Full BOM with MPNs, side and assembly process |
-| `<board>-bom-jlcpcb.csv` | JLCPCB assembly BOM (SMT parts only). Fill the *LCSC Part #* column from the MPN when ordering |
-| `<board>-cpl-jlcpcb.csv` | JLCPCB pick-and-place (SMT parts only) |
+| `<board>-bom-jlcpcb.csv` | JLCPCB assembly BOM with LCSC part numbers (SMT and through-hole) |
+| `<board>-cpl-jlcpcb.csv` | JLCPCB pick-and-place (SMT and through-hole), JLCPCB rotation offsets applied |
 | `vibeduino-kit-bom.csv` | Whole-kit totals |
 
 Schematics (generated from, and netlist-checked against, each PCB) sit next to each board in `kicad/`; all of them are in one PDF, `schematics/vibeduino-schematics.pdf`.
 
 ## Kit BOM
 
-| Qty / kit | Part | Manufacturer | MPN | Package | Process | Used on |
-|---:|---|---|---|---|---|---|
-| 1 | OLED 0.66" 64×48, SSD1306, 28-pin solder FPC (glass folds over pads) | — | panel used on SparkFun LCD-22495 (verify supplier drawing) | FPC | Hand assembly | oled |
-| 1 | Switching diode 75 V 150 mA | Diodes Inc. | 1N4148WS-7-F | SOD-323 | SMT (machine) | buzzer |
-| 2 | N-MOSFET 50 V 0.22 A (I2C level shifter) | onsemi | BSS138 | SOT-23 | SMT (machine) | shield×2 |
-| 11 | Capacitor 100 nF 50 V X7R 0603 | Samsung | CL10B104KB8NNNC | 0603 | SMT (machine) | shield×2, pot, oled, dpad, servo, temp, light, rgb×3 |
-| 4 | Capacitor 1 µF 50 V X5R 0603 | Samsung | CL10A105KB8NNNC | 0603 | SMT (machine) | oled×4 |
-| 1 | Capacitor 2.2 µF 16 V X5R 0603 | Samsung | CL10A225KO8NNNC | 0603 | SMT (machine) | oled |
-| 1 | Capacitor 4.7 µF 16 V X5R 0603 | Samsung | CL10A475KO8NNNC | 0603 | SMT (machine) | oled |
-| 1 | Capacitor 10 µF 25 V X5R 0805 | Samsung | CL21A106KAYNNNE | 0805 | SMT (machine) | rgb |
-| 1 | Aluminium electrolytic 100 µF 10 V, SMD 5×5.4 mm | any | — | 5×5.4 | SMT (machine) | servo |
-| 1 | Aluminium electrolytic 100 µF 10 V, SMD 6.3×5.4 mm | any | — | 6.3×5.4 | SMT (machine) | shield |
-| 1 | LED green 0603 | any | — | 0603 | SMT (machine) | shield |
-| 1 | LED red 0603 | any | — | 0603 | SMT (machine) | temp |
-| 1 | Analog temperature sensor, 10 mV/°C, 500 mV @ 0 °C | Microchip | MCP9700AT-E/TT | SOT-23 | SMT (machine) | temp |
-| 1 | NPN transistor 40 V 0.2 A | onsemi | MMBT3904LT1G | SOT-23 | SMT (machine) | buzzer |
-| 1 | JST SH 4-pin 1.0 mm vertical (Qwiic / STEMMA QT) | JST | BM04B-SRSS-TB(LF)(SN) | SMD | SMT (machine) | shield |
-| 9 | Resistor 10 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF1002T5E | 0603 | SMT (machine) | shield×2, oled×2, dpad×3, buzzer, light |
-| 4 | Resistor 1 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF1001T5E | 0603 | SMT (machine) | shield, dpad, temp, buzzer |
-| 2 | Resistor 220 Ω 1 % 0603 | UNI-ROYAL | 0603WAF2200T5E | 0603 | SMT (machine) | servo×2 |
-| 1 | Resistor 3.3 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF3301T5E | 0603 | SMT (machine) | dpad |
-| 1 | Resistor 330 Ω 1 % 0603 | UNI-ROYAL | 0603WAF3300T5E | 0603 | SMT (machine) | rgb |
-| 1 | Resistor 390 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF3903T5E | 0603 | SMT (machine) | oled |
-| 2 | Resistor 4.7 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF4701T5E | 0603 | SMT (machine) | shield×2 |
-| 3 | Resistor 470 Ω 1 % 0603 | UNI-ROYAL | 0603WAF4700T5E | 0603 | SMT (machine) | led×3 |
-| 6 | Tactile switch SPST-NO, 5.1×5.1 mm SMD | XKB Connectivity | TS-1187A-B-A-B | SMD 5.1×5.1 | SMT (machine) | shield, dpad×5 |
-| 3 | Addressable RGB LED, 5050 | Worldsemi | WS2812B-B | PLCC4 5×5 | SMT (machine) | rgb×3 |
-| 1 | Passive magnetic buzzer (transducer) 12×9.5 mm, 5 V, 7.6 mm pitch | any | — (passive, no oscillator) | THT 12 mm | Through-hole | buzzer |
-| 8 | Female socket 1×5, 2.54 mm, 8.5 mm tall | any | — | THT | Through-hole | shield×8 |
-| 2 | Pin header 1×3, 2.54 mm, straight | any | — | THT | Through-hole | servo×2 |
-| 20 | Pin header 1×5, 2.54 mm, straight | any | — | THT | Through-hole | pot×2, oled×2, dpad×2, led×2, servo×2, temp×2, buzzer×2, light×2, rgb×2, proto×2 |
-| 1 | Pin header 1×6, 2.54 mm, straight | any | — | THT | Through-hole | shield |
-| 2 | Pin header 1×8, 2.54 mm, straight | any | — | THT | Through-hole | shield×2 |
-| 1 | Pin header 1×10, 2.54 mm, straight | any | — | THT | Through-hole | shield |
-| 1 | Photoresistor (LDR) 5 mm, 10–20 kΩ @ 10 lux | any | GL5528 | THT | Through-hole | light |
-| 1 | LED 5 mm green, diffused | any | — | THT 5 mm | Through-hole | led |
-| 1 | LED 5 mm red, diffused | any | — | THT 5 mm | Through-hole | led |
-| 1 | LED 5 mm yellow, diffused | any | — | THT 5 mm | Through-hole | led |
-| 1 | Rotary potentiometer 9 mm, 10 kΩ linear (B), vertical, with mounting tabs | Alps Alpine | RK09K series (verify MPN/shaft) | THT | Through-hole | pot |
+| Qty / kit | Part | Manufacturer | MPN | LCSC | Package | Process | Used on |
+|---:|---|---|---|---|---|---|---|
+| 1 | OLED 0.66" 64×48, SSD1306, 28-pin solder FPC (glass folds over pads) | — | panel used on SparkFun LCD-22495 (verify supplier drawing) | — | FPC | Hand assembly | oled |
+| 1 | Switching diode 75 V 150 mA | JSCJ | 1N4148WS | C2128 | SOD-323 | SMT (machine) | buzzer |
+| 2 | N-MOSFET 50 V 0.22 A (I2C level shifter) | JSCJ | BSS138 | C78284 | SOT-23 | SMT (machine) | shield×2 |
+| 11 | Capacitor 100 nF 50 V X7R 0603 | YAGEO | CC0603KRX7R9BB104 | C14663 | 0603 | SMT (machine) | shield×2, pot, oled, dpad, servo, temp, light, rgb×3 |
+| 4 | Capacitor 1 µF 50 V X5R 0603 | Samsung | CL10A105KB8NNNC | C15849 | 0603 | SMT (machine) | oled×4 |
+| 1 | Capacitor 2.2 µF 16 V X5R 0603 | Samsung | CL10A225KO8NNNC | C23630 | 0603 | SMT (machine) | oled |
+| 1 | Capacitor 4.7 µF 16 V X5R 0603 | Samsung | CL10A475KO8NNNC | C19666 | 0603 | SMT (machine) | oled |
+| 1 | Capacitor 10 µF 25 V X5R 0805 | Samsung | CL21A106KAYNNNE | C15850 | 0805 | SMT (machine) | rgb |
+| 1 | Aluminium electrolytic 100 µF 10 V, SMD 5×5.4 mm | ST(Semtech) | CS1A101M-CRD54 | C96182 | 5×5.4 | SMT (machine) | servo |
+| 1 | Aluminium electrolytic 100 µF 16 V, SMD 6.3×5.4 mm | ROQANG | RVT1C101M0605 | C72475 | 6.3×5.4 | SMT (machine) | shield |
+| 1 | LED green 0603 | Hubei KENTO | KT-0603G | C12624 | 0603 | SMT (machine) | shield |
+| 1 | LED red 0603 | Hubei KENTO | KT-0603R | C2286 | 0603 | SMT (machine) | temp |
+| 1 | Analog temperature sensor, 10 mV/°C, 500 mV @ 0 °C | Microchip | MCP9700AT-E/TT | C127949 | SOT-23 | SMT (machine) | temp |
+| 1 | NPN transistor 40 V 0.2 A | JSCJ | MMBT3904 | C20526 | SOT-23 | SMT (machine) | buzzer |
+| 1 | JST SH 4-pin 1.0 mm vertical (Qwiic / STEMMA QT) | JST | BM04B-SRSS-TB(LF)(SN) | C160390 | SMD | SMT (machine) | shield |
+| 9 | Resistor 10 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF1002T5E | C25804 | 0603 | SMT (machine) | shield×2, oled×2, dpad×3, buzzer, light |
+| 4 | Resistor 1 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF1001T5E | C21190 | 0603 | SMT (machine) | shield, dpad, temp, buzzer |
+| 2 | Resistor 220 Ω 1 % 0603 | UNI-ROYAL | 0603WAF2200T5E | C22962 | 0603 | SMT (machine) | servo×2 |
+| 1 | Resistor 3.3 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF3301T5E | C22978 | 0603 | SMT (machine) | dpad |
+| 1 | Resistor 330 Ω 1 % 0603 | UNI-ROYAL | 0603WAF3300T5E | C23138 | 0603 | SMT (machine) | rgb |
+| 1 | Resistor 390 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF3903T5E | C23150 | 0603 | SMT (machine) | oled |
+| 2 | Resistor 4.7 kΩ 1 % 0603 | UNI-ROYAL | 0603WAF4701T5E | C23162 | 0603 | SMT (machine) | shield×2 |
+| 3 | Resistor 470 Ω 1 % 0603 | UNI-ROYAL | 0603WAF4700T5E | C23179 | 0603 | SMT (machine) | led×3 |
+| 6 | Tactile switch SPST-NO, 5.1×5.1 mm SMD | XKB Connection | TS-1187A-B-A-B | C318884 | SMD 5.1×5.1 | SMT (machine) | shield, dpad×5 |
+| 3 | Addressable RGB LED, 5050 | Worldsemi | WS2812B-B/W | C114586 | PLCC4 5×5 | SMT (machine) | rgb×3 |
+| 1 | Passive magnetic buzzer (transducer) 12×9.5 mm, 5 V, ≥ 40 Ω, 7.6 mm pitch | any | — (passive, no oscillator) | — | THT 12 mm | Through-hole | buzzer |
+| 8 | Female socket 1×5, 2.54 mm, 8.5 mm tall | BOOMELE | 2.54-1*5PFemale | C50950 | THT | Through-hole | shield×8 |
+| 2 | Pin header 1×3, 2.54 mm, straight | XFCN | PZ254V-11-03P | C2937625 | THT | Through-hole | servo×2 |
+| 20 | Pin header 1×5, 2.54 mm, straight | XFCN | PZ254V-11-05P | C492404 | THT | Through-hole | pot×2, oled×2, dpad×2, led×2, servo×2, temp×2, buzzer×2, light×2, rgb×2, proto×2 |
+| 1 | Pin header 1×6, 2.54 mm, straight | XFCN | PZ254V-11-06P | C492405 | THT | Through-hole | shield |
+| 2 | Pin header 1×8, 2.54 mm, straight | XFCN | PZ254V-11-08P | C492407 | THT | Through-hole | shield×2 |
+| 1 | Pin header 1×10, 2.54 mm, straight | XFCN | PZ254V-11-10P | C492409 | THT | Through-hole | shield |
+| 1 | Photoresistor (LDR) 5 mm, 8–20 kΩ @ 10 lux | Senba | GL5528 | C125627 | THT | Through-hole | light |
+| 1 | LED 5 mm green, diffused | any | — | — | THT 5 mm | Through-hole | led |
+| 1 | LED 5 mm red, diffused | any | — | — | THT 5 mm | Through-hole | led |
+| 1 | LED 5 mm yellow, diffused | XINGLIGHT | XL-504UYD | C2895495 | THT 5 mm | Through-hole | led |
+| 1 | Rotary potentiometer 9 mm, 10 kΩ linear (B), vertical, with mounting tabs | Alps Alpine | RK09K1130A5R | C209779 | THT | Through-hole | pot |
 
 ## Per board
 
@@ -80,10 +80,10 @@ Schematics (generated from, and netlist-checked against, each PCB) sit next to e
 ## Ordering & assembly notes
 
 * **PCB**: 2 layers, FR4 1.6 mm, 1 oz copper, min track/space 0.15 mm, min drill 0.3 mm, **tented vias**. Any mask colour (renders use black + white silk, ENIG).
-* The ten modules are small (25.4 × 29.3 mm). Ordering them as **one panel** instead of ten separate designs is much cheaper. Panelisation is a good next step.
-* **SMT**: every board is single-sided SMT. The shield and modules use the top side; the **OLED module's SMT parts are on the bottom** (its top is the display).
-* **LCSC numbers** are deliberately blank: pick current stock from the MPN column. Resistors and capacitors are generic; any 1 % 0603 / X5R-X7R equivalent is fine.
-* **Placement rotations** follow KiCad's convention. JLCPCB's library differs for some packages (SOT-23, WS2812B, tactile switches), so check the placement preview before confirming.
+* The ten modules are small (25.4 × 29.3 mm). Order them as the ready-made **ten-module panel** in `panel/` instead of ten separate designs.
+* **SMT**: every board is single-sided SMT. The shield and modules use the top side; the **OLED module's SMT parts are on the bottom** (its top is the display), so the module panel needs two-sided assembly.
+* **LCSC numbers** were checked against the LCSC/JLCPCB listings in October 2026. Stock changes daily, so re-check at order time. Resistors and capacitors are generic; any 1 % 0603 / X5R-X7R equivalent is fine. Lines without an LCSC number (5 mm red and green LEDs, passive buzzer) are commodity parts with no verified listing: choose one to the description, or hand-fit them.
+* **Placement rotations** in the CPL files include JLCPCB's usual offsets (SOT-23, electrolytic, WS2812B +180°). JLCPCB's library still differs for some parts, so check the placement preview before confirming.
 * **Through-hole**: module bus headers and the shield's Arduino headers go on the **underside**. Trim the shield socket leads to ≤ 1.5 mm, because the shield rests on the Uno's USB jack.
 * **OLED**: the 28-pin FPC is soldered to the pads under the glass (hand or hot-bar). Then the glass folds over and is fixed with thin double-sided tape.
 * **Optional kit accessories** (not in the BOM): pot knob, tactile switch caps, 2 × micro servo (SG90 class), Qwiic cable.

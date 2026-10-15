@@ -1,6 +1,6 @@
-Qty,Designators,Description,Manufacturer,MPN,Package,Side,Process,Notes,KiCad footprint
-1,C1,Capacitor 100 nF 50 V X7R 0603,Samsung,CL10B104KB8NNNC,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
-1,D1,LED red 0603,any,—,0603,Top,SMT,,LED_SMD:LED_0603_1608Metric
-2,J1 J2,"Pin header 1×5, 2.54 mm, straight",any,—,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
-1,R1,Resistor 1 kΩ 1 % 0603,UNI-ROYAL,0603WAF1001T5E,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
-1,U1,"Analog temperature sensor, 10 mV/°C, 500 mV @ 0 °C",Microchip,MCP9700AT-E/TT,SOT-23,Top,SMT,,Package_TO_SOT_SMD:SOT-23
+Qty,Designators,Description,Manufacturer,MPN,LCSC,Package,Side,Process,Notes,KiCad footprint
+1,C1,Capacitor 100 nF 50 V X7R 0603,YAGEO,CC0603KRX7R9BB104,C14663,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
+1,D1,LED red 0603,Hubei KENTO,KT-0603R,C2286,0603,Top,SMT,,LED_SMD:LED_0603_1608Metric
+2,J1 J2,"Pin header 1×5, 2.54 mm, straight",XFCN,PZ254V-11-05P,C492404,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
+1,R1,Resistor 1 kΩ 1 % 0603,UNI-ROYAL,0603WAF1001T5E,C21190,0603,Top,SMT,,Resistor_SMD:R_0603_1608Metric
+1,U1,"Analog temperature sensor, 10 mV/°C, 500 mV @ 0 °C",Microchip,MCP9700AT-E/TT,C127949,SOT-23,Top,SMT,,Package_TO_SOT_SMD:SOT-23

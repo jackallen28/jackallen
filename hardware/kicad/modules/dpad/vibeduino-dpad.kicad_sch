@@ -766,14 +766,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -904,14 +911,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1040,7 +1054,7 @@
         hide
       )
     )
-    (property "Manufacturer" "XKB Connectivity"
+    (property "Manufacturer" "XKB Connection"
       (at 96.52 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1048,6 +1062,13 @@
       )
     )
     (property "MPN" "TS-1187A-B-A-B"
+      (at 96.52 48.26 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C318884"
       (at 96.52 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1131,7 +1152,7 @@
         hide
       )
     )
-    (property "Manufacturer" "XKB Connectivity"
+    (property "Manufacturer" "XKB Connection"
       (at 128.27 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1139,6 +1160,13 @@
       )
     )
     (property "MPN" "TS-1187A-B-A-B"
+      (at 128.27 48.26 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C318884"
       (at 128.27 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1222,7 +1250,7 @@
         hide
       )
     )
-    (property "Manufacturer" "XKB Connectivity"
+    (property "Manufacturer" "XKB Connection"
       (at 160.02 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1230,6 +1258,13 @@
       )
     )
     (property "MPN" "TS-1187A-B-A-B"
+      (at 160.02 48.26 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C318884"
       (at 160.02 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1313,7 +1348,7 @@
         hide
       )
     )
-    (property "Manufacturer" "XKB Connectivity"
+    (property "Manufacturer" "XKB Connection"
       (at 190.5 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1321,6 +1356,13 @@
       )
     )
     (property "MPN" "TS-1187A-B-A-B"
+      (at 190.5 48.26 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C318884"
       (at 190.5 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1404,7 +1446,7 @@
         hide
       )
     )
-    (property "Manufacturer" "XKB Connectivity"
+    (property "Manufacturer" "XKB Connection"
       (at 220.98 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1412,6 +1454,13 @@
       )
     )
     (property "MPN" "TS-1187A-B-A-B"
+      (at 220.98 48.26 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C318884"
       (at 220.98 48.26 0)
       (effects
         (font (size 1.27 1.27))
@@ -1511,6 +1560,13 @@
         hide
       )
     )
+    (property "LCSC" "C25804"
+      (at 240.03 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "39aaf02a-d1b3-5a3a-924b-3dc7dbee5a18"))
     (pin "2" (uuid "a418b0a4-968a-5a75-88ed-7027dec056ec"))
     (instances
@@ -1598,6 +1654,13 @@
       )
     )
     (property "MPN" "0603WAF1001T5E"
+      (at 252.73 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C21190"
       (at 252.73 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1697,6 +1760,13 @@
         hide
       )
     )
+    (property "LCSC" "C22978"
+      (at 264.16 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "e238f15b-5f7c-59af-ab8a-a34c229c7649"))
     (pin "2" (uuid "cbb90e8d-67d2-51e1-93e3-eb23f8d7f68a"))
     (instances
@@ -1784,6 +1854,13 @@
       )
     )
     (property "MPN" "0603WAF1002T5E"
+      (at 21.59 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C25804"
       (at 21.59 82.55 0)
       (effects
         (font (size 1.27 1.27))
@@ -1883,6 +1960,13 @@
         hide
       )
     )
+    (property "LCSC" "C25804"
+      (at 34.29 83.82 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "a8b86f4f-0930-5771-85a3-9d95d8248ab3"))
     (pin "2" (uuid "a63ffa2b-cb10-50b4-acba-f69c5dbcfc11"))
     (instances
@@ -1962,14 +2046,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 46.99 82.55 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 46.99 82.55 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 46.99 82.55 0)
       (effects
         (font (size 1.27 1.27))

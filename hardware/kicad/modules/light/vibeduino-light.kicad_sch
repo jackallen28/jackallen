@@ -791,14 +791,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -929,14 +936,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1060,14 +1074,14 @@
         hide
       )
     )
-    (property "Description" "Photoresistor (LDR) 5 mm, 10–20 kΩ @ 10 lux"
+    (property "Description" "Photoresistor (LDR) 5 mm, 8–20 kΩ @ 10 lux"
       (at 90.17 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "Senba"
       (at 90.17 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1075,6 +1089,13 @@
       )
     )
     (property "MPN" "GL5528"
+      (at 90.17 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C125627"
       (at 90.17 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1174,6 +1195,13 @@
         hide
       )
     )
+    (property "LCSC" "C25804"
+      (at 110.49 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "8dfb0f13-9a01-5b9f-825b-631f7bb4a9e4"))
     (pin "2" (uuid "95587cb6-d5c4-518e-b201-be35ddac1a12"))
     (instances
@@ -1253,14 +1281,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 123.19 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 123.19 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 123.19 53.34 0)
       (effects
         (font (size 1.27 1.27))

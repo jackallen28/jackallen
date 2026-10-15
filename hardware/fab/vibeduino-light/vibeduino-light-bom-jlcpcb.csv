@@ -1,3 +1,5 @@
 Comment,Designator,Footprint,LCSC Part #
-Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),C1,0603,
-Resistor 10 kohm 1 % 0603 (0603WAF1002T5E),R2,0603,
+Capacitor 100 nF 50 V X7R 0603 (CC0603KRX7R9BB104),C1,0603,C14663
+"Pin header 1x5, 2.54 mm, straight (PZ254V-11-05P)","J1,J2",THT,C492404
+"Photoresistor (LDR) 5 mm, 8-20 kohm @ 10 lux (GL5528)",R1,THT,C125627
+Resistor 10 kohm 1 % 0603 (0603WAF1002T5E),R2,0603,C25804

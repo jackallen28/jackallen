@@ -896,14 +896,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1034,14 +1041,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1172,14 +1186,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 100.33 46.99 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-03P"
+      (at 100.33 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C2937625"
       (at 100.33 46.99 0)
       (effects
         (font (size 1.27 1.27))
@@ -1280,14 +1301,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 130.81 46.99 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-03P"
+      (at 130.81 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C2937625"
       (at 130.81 46.99 0)
       (effects
         (font (size 1.27 1.27))
@@ -1402,6 +1430,13 @@
         hide
       )
     )
+    (property "LCSC" "C22962"
+      (at 147.32 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "f2ddc367-373b-511f-af0b-4d90d13cef73"))
     (pin "2" (uuid "1d53e336-f28e-5cb9-8263-4900f9c3030f"))
     (instances
@@ -1495,6 +1530,13 @@
         hide
       )
     )
+    (property "LCSC" "C22962"
+      (at 161.29 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "9dd1bd8a-822c-5e43-bd7b-ea404aaec4ea"))
     (pin "2" (uuid "fff927c7-83dc-5a82-810f-8d08ced4ead3"))
     (instances
@@ -1574,14 +1616,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "ST(Semtech)"
       (at 176.53 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "CS1A101M-CRD54"
+      (at 176.53 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C96182"
       (at 176.53 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1667,14 +1716,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 196.85 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 196.85 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 196.85 53.34 0)
       (effects
         (font (size 1.27 1.27))

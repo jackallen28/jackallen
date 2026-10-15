@@ -1,0 +1,9 @@
+{
+  "name": "vibeduino-generator",
+  "private": true,
+  "description": "Node tools for the VIBEDUINO generator (3D renders only)",
+  "dependencies": {
+    "playwright-core": "1.55.0",
+    "three": "0.169.0"
+  }
+}

@@ -1,4 +1,4 @@
-Qty,Designators,Description,Manufacturer,MPN,Package,Side,Process,Notes,KiCad footprint
-1,C1,Capacitor 100 nF 50 V X7R 0603,Samsung,CL10B104KB8NNNC,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
-2,J1 J2,"Pin header 1×5, 2.54 mm, straight",any,—,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
-1,RV1,"Rotary potentiometer 9 mm, 10 kΩ linear (B), vertical, with mounting tabs",Alps Alpine,RK09K series (verify MPN/shaft),THT,Top,THT,fit a knob,Potentiometer_THT:Potentiometer_Alps_RK09K_Single_Vertical
+Qty,Designators,Description,Manufacturer,MPN,LCSC,Package,Side,Process,Notes,KiCad footprint
+1,C1,Capacitor 100 nF 50 V X7R 0603,YAGEO,CC0603KRX7R9BB104,C14663,0603,Top,SMT,,Capacitor_SMD:C_0603_1608Metric
+2,J1 J2,"Pin header 1×5, 2.54 mm, straight",XFCN,PZ254V-11-05P,C492404,THT,Bottom,THT,"module bus: fit on the UNDERSIDE, pins down",Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
+1,RV1,"Rotary potentiometer 9 mm, 10 kΩ linear (B), vertical, with mounting tabs",Alps Alpine,RK09K1130A5R,C209779,THT,Top,THT,check shaft length; fit a knob,Potentiometer_THT:Potentiometer_Alps_RK09K_Single_Vertical

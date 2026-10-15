@@ -1,2 +1,4 @@
 Comment,Designator,Footprint,LCSC Part #
-Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),C1,0603,
+Capacitor 100 nF 50 V X7R 0603 (CC0603KRX7R9BB104),C1,0603,C14663
+"Pin header 1x5, 2.54 mm, straight (PZ254V-11-05P)","J1,J2",THT,C492404
+"Rotary potentiometer 9 mm, 10 kohm linear (B), vertical, with mounting tabs (RK09K1130A5R)",RV1,THT,C209779

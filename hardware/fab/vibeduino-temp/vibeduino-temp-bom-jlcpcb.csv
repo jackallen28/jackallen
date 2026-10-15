@@ -1,5 +1,6 @@
 Comment,Designator,Footprint,LCSC Part #
-Capacitor 100 nF 50 V X7R 0603 (CL10B104KB8NNNC),C1,0603,
-LED red 0603,D1,0603,
-Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R1,0603,
-"Analog temperature sensor, 10 mV/degC, 500 mV @ 0 degC (MCP9700AT-E/TT)",U1,SOT-23,
+Capacitor 100 nF 50 V X7R 0603 (CC0603KRX7R9BB104),C1,0603,C14663
+LED red 0603 (KT-0603R),D1,0603,C2286
+"Pin header 1x5, 2.54 mm, straight (PZ254V-11-05P)","J1,J2",THT,C492404
+Resistor 1 kohm 1 % 0603 (0603WAF1001T5E),R1,0603,C21190
+"Analog temperature sensor, 10 mV/degC, 500 mV @ 0 degC (MCP9700AT-E/TT)",U1,SOT-23,C127949

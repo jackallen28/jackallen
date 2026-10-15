@@ -9,3 +9,4 @@ fp-info-cache
 *-backups/
 freerouting.log
 hardware/generator/en/
+hardware/generator/node_modules/

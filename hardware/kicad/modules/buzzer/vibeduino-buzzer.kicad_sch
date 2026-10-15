@@ -931,14 +931,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1069,14 +1076,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1207,14 +1221,21 @@
         hide
       )
     )
-    (property "Manufacturer" "onsemi"
+    (property "Manufacturer" "JSCJ"
       (at 99.06 55.88 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "MMBT3904LT1G"
+    (property "MPN" "MMBT3904"
+      (at 99.06 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C20526"
       (at 99.06 55.88 0)
       (effects
         (font (size 1.27 1.27))
@@ -1308,7 +1329,7 @@
         hide
       )
     )
-    (property "Description" "Passive magnetic buzzer (transducer) 12×9.5 mm, 5 V, 7.6 mm pitch"
+    (property "Description" "Passive magnetic buzzer (transducer) 12×9.5 mm, 5 V, ≥ 40 Ω, 7.6 mm pitch"
       (at 128.27 45.72 0)
       (effects
         (font (size 1.27 1.27))
@@ -1406,14 +1427,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Diodes Inc."
+    (property "Manufacturer" "JSCJ"
       (at 165.1 46.99 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "1N4148WS-7-F"
+    (property "MPN" "1N4148WS"
+      (at 165.1 46.99 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C2128"
       (at 165.1 46.99 0)
       (effects
         (font (size 1.27 1.27))
@@ -1513,6 +1541,13 @@
         hide
       )
     )
+    (property "LCSC" "C21190"
+      (at 184.15 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "47af2a75-14f9-5110-bead-969dac4fe71e"))
     (pin "2" (uuid "4bd6898d-2a15-5b1c-8393-a85f3597429a"))
     (instances
@@ -1600,6 +1635,13 @@
       )
     )
     (property "MPN" "0603WAF1002T5E"
+      (at 195.58 54.61 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C25804"
       (at 195.58 54.61 0)
       (effects
         (font (size 1.27 1.27))

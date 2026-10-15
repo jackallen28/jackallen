@@ -837,14 +837,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -975,14 +982,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1118,7 +1132,14 @@
         hide
       )
     )
-    (property "MPN" "WS2812B-B"
+    (property "MPN" "WS2812B-B/W"
+      (at 104.14 59.69 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C114586"
       (at 104.14 59.69 0)
       (effects
         (font (size 1.27 1.27))
@@ -1239,7 +1260,14 @@
         hide
       )
     )
-    (property "MPN" "WS2812B-B"
+    (property "MPN" "WS2812B-B/W"
+      (at 146.05 59.69 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C114586"
       (at 146.05 59.69 0)
       (effects
         (font (size 1.27 1.27))
@@ -1360,7 +1388,14 @@
         hide
       )
     )
-    (property "MPN" "WS2812B-B"
+    (property "MPN" "WS2812B-B/W"
+      (at 186.69 59.69 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C114586"
       (at 186.69 59.69 0)
       (effects
         (font (size 1.27 1.27))
@@ -1477,6 +1512,13 @@
         hide
       )
     )
+    (property "LCSC" "C23138"
+      (at 204.47 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "45c3dbcc-5a33-5c49-b559-3e09ad4d4ce2"))
     (pin "2" (uuid "c23c2aa9-4700-5190-85eb-4d1bec9d5293"))
     (instances
@@ -1556,14 +1598,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 219.71 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 219.71 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 219.71 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1649,14 +1698,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 236.22 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 236.22 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 236.22 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1742,14 +1798,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 252.73 53.34 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 252.73 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 252.73 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -1843,6 +1906,13 @@
       )
     )
     (property "MPN" "CL21A106KAYNNNE"
+      (at 269.24 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C15850"
       (at 269.24 53.34 0)
       (effects
         (font (size 1.27 1.27))

@@ -148,22 +148,23 @@ def write_markdown(kit, summary):
          "", f"* **{tot['SMT']}** SMT placements, **{tot['THT']}** through-hole parts, "
          f"**{tot['HAND']}** hand-assembled part (OLED panel) per kit",
          f"* {len(kit)} unique line items", "",
-         "Per-board files live in `fab/<board>/`:", "",
+         "Per-board files live in `fab/<board>/`. For production, order the modules as the "
+         "ten-module panel in [`panel/`](panel/README.md).", "",
          "| File | Use |", "|---|---|",
          "| `<board>-gerbers.zip` | Gerbers (Cu, mask, silk, paste, outline) + Excellon drill (PTH/NPTH) — upload to the PCB fab |",
          "| `<board>-bom.csv` | Full BOM with MPNs, side and assembly process |",
-         "| `<board>-bom-jlcpcb.csv` | JLCPCB assembly BOM (SMT parts only). Fill the *LCSC Part #* column from the MPN when ordering |",
-         "| `<board>-cpl-jlcpcb.csv` | JLCPCB pick-and-place (SMT parts only) |",
+         "| `<board>-bom-jlcpcb.csv` | JLCPCB assembly BOM with LCSC part numbers (SMT and through-hole) |",
+         "| `<board>-cpl-jlcpcb.csv` | JLCPCB pick-and-place (SMT and through-hole), JLCPCB rotation offsets applied |",
          "| `vibeduino-kit-bom.csv` | Whole-kit totals |", "",
          "Schematics (generated from, and netlist-checked against, each PCB) sit next to each board "
          "in `kicad/`; all of them are in one PDF, `schematics/vibeduino-schematics.pdf`.", "",
          "## Kit BOM", "",
-         "| Qty / kit | Part | Manufacturer | MPN | Package | Process | Used on |",
-         "|---:|---|---|---|---|---|---|"]
+         "| Qty / kit | Part | Manufacturer | MPN | LCSC | Package | Process | Used on |",
+         "|---:|---|---|---|---|---|---|---|"]
     for k in sorted(kit.values(), key=lambda k: (k["part"].process, k["part"].key)):
         p = k["part"]
         used = ", ".join(f"{b}×{n}" if n > 1 else b for b, n in k["boards"].items())
-        L.append(f"| {k['qty']} | {p.desc} | {p.mfr} | {p.mpn} | {p.package} | "
+        L.append(f"| {k['qty']} | {p.desc} | {p.mfr} | {p.mpn} | {p.lcsc or '—'} | {p.package} | "
                  f"{proc_name.get(p.process, p.process)} | {used} |")
     L += ["", "## Per board", "",
           "| Board | Parts | SMT placements | SMT side | Through-hole |", "|---|---:|---:|---|---:|"]
@@ -173,14 +174,19 @@ def write_markdown(kit, summary):
     L += ["", "## Ordering & assembly notes", "",
           "* **PCB**: 2 layers, FR4 1.6 mm, 1 oz copper, min track/space 0.15 mm, min drill 0.3 mm, "
           "**tented vias**. Any mask colour (renders use black + white silk, ENIG).",
-          "* The ten modules are small (25.4 × 29.3 mm). Ordering them as **one panel** instead of ten "
-          "separate designs is much cheaper. Panelisation is a good next step.",
+          "* The ten modules are small (25.4 × 29.3 mm). Order them as the ready-made **ten-module "
+          "panel** in `panel/` instead of ten separate designs.",
           "* **SMT**: every board is single-sided SMT. The shield and modules use the top side; the "
-          "**OLED module's SMT parts are on the bottom** (its top is the display).",
-          "* **LCSC numbers** are deliberately blank: pick current stock from the MPN column. Resistors and "
-          "capacitors are generic; any 1 % 0603 / X5R-X7R equivalent is fine.",
-          "* **Placement rotations** follow KiCad's convention. JLCPCB's library differs for some packages "
-          "(SOT-23, WS2812B, tactile switches), so check the placement preview before confirming.",
+          "**OLED module's SMT parts are on the bottom** (its top is the display), so the module "
+          "panel needs two-sided assembly.",
+          "* **LCSC numbers** were checked against the LCSC/JLCPCB listings in October 2026. Stock "
+          "changes daily, so re-check at order time. Resistors and capacitors are generic; any 1 % "
+          "0603 / X5R-X7R equivalent is fine. Lines without an LCSC number (5 mm red and green LEDs, "
+          "passive buzzer) are commodity parts with no verified listing: choose one to the "
+          "description, or hand-fit them.",
+          "* **Placement rotations** in the CPL files include JLCPCB's usual offsets (SOT-23, "
+          "electrolytic, WS2812B +180°). JLCPCB's library still differs for some parts, so check the "
+          "placement preview before confirming.",
           "* **Through-hole**: module bus headers and the shield's Arduino headers go on the **underside**. "
           "Trim the shield socket leads to ≤ 1.5 mm, because the shield rests on the Uno's USB jack.",
           "* **OLED**: the 28-pin FPC is soldered to the pads under the glass (hand or hot-bar). Then "

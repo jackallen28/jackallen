@@ -1221,14 +1221,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 33.02 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 33.02 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1359,14 +1366,21 @@
         hide
       )
     )
-    (property "Manufacturer" "any"
+    (property "Manufacturer" "XFCN"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "—"
+    (property "MPN" "PZ254V-11-05P"
+      (at 66.04 49.53 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C492404"
       (at 66.04 49.53 0)
       (effects
         (font (size 1.27 1.27))
@@ -1888,6 +1902,13 @@
         hide
       )
     )
+    (property "LCSC" "C23150"
+      (at 134.62 54.61 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "36ddf159-149a-506c-aec6-adb931695ea0"))
     (pin "2" (uuid "992c75e6-33cf-58d5-98d8-baee29a3b961"))
     (instances
@@ -1975,6 +1996,13 @@
       )
     )
     (property "MPN" "0603WAF1002T5E"
+      (at 148.59 54.61 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C25804"
       (at 148.59 54.61 0)
       (effects
         (font (size 1.27 1.27))
@@ -2074,6 +2102,13 @@
         hide
       )
     )
+    (property "LCSC" "C25804"
+      (at 161.29 58.42 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "c42d7dc9-1450-5f79-be1e-b0fb4536e5e6"))
     (pin "2" (uuid "9915bb7f-4b24-5533-b6b3-84e8410d090c"))
     (instances
@@ -2161,6 +2196,13 @@
       )
     )
     (property "MPN" "CL10A225KO8NNNC"
+      (at 173.99 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C23630"
       (at 173.99 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -2260,6 +2302,13 @@
         hide
       )
     )
+    (property "LCSC" "C15849"
+      (at 195.58 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "bad63f36-d989-50e8-912c-1934ad0f6d26"))
     (pin "2" (uuid "432c9856-94f0-5c34-994f-6ac7968ef27f"))
     (instances
@@ -2347,6 +2396,13 @@
       )
     )
     (property "MPN" "CL10A105KB8NNNC"
+      (at 209.55 53.34 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C15849"
       (at 209.55 53.34 0)
       (effects
         (font (size 1.27 1.27))
@@ -2446,6 +2502,13 @@
         hide
       )
     )
+    (property "LCSC" "C15849"
+      (at 224.79 54.61 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "b1a27fd4-ffcd-5813-b72f-e174f239d947"))
     (pin "2" (uuid "10e622c0-db6b-536d-902b-a415529337d6"))
     (instances
@@ -2539,6 +2602,13 @@
         hide
       )
     )
+    (property "LCSC" "C19666"
+      (at 240.03 55.88 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
     (pin "1" (uuid "754d7581-d2b7-5e11-8389-49bed6bb71f5"))
     (pin "2" (uuid "208eeab5-c1d1-5631-bd29-e34c1475e37f"))
     (instances
@@ -2618,14 +2688,21 @@
         hide
       )
     )
-    (property "Manufacturer" "Samsung"
+    (property "Manufacturer" "YAGEO"
       (at 256.54 54.61 0)
       (effects
         (font (size 1.27 1.27))
         hide
       )
     )
-    (property "MPN" "CL10B104KB8NNNC"
+    (property "MPN" "CC0603KRX7R9BB104"
+      (at 256.54 54.61 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C14663"
       (at 256.54 54.61 0)
       (effects
         (font (size 1.27 1.27))
@@ -2719,6 +2796,13 @@
       )
     )
     (property "MPN" "CL10A105KB8NNNC"
+      (at 273.05 58.42 0)
+      (effects
+        (font (size 1.27 1.27))
+        hide
+      )
+    )
+    (property "LCSC" "C15849"
       (at 273.05 58.42 0)
       (effects
         (font (size 1.27 1.27))

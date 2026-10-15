@@ -1,0 +1,45 @@
+{
+  "panel": "vibeduino-modules-panel",
+  "size_mm": [
+    149.3,
+    74.19
+  ],
+  "boards": [
+    "pot",
+    "oled",
+    "dpad",
+    "led",
+    "servo",
+    "temp",
+    "buzzer",
+    "light",
+    "rgb",
+    "proto"
+  ],
+  "drc_errors": 0,
+  "drc_warnings": 6,
+  "unconnected": 0,
+  "smt_placements": 47,
+  "smt_sides": [
+    "Bottom",
+    "Top"
+  ],
+  "tht_parts": 28,
+  "lines": 30,
+  "gerber_files": [
+    "vibeduino-modules-panel-B_Cu.gbl",
+    "vibeduino-modules-panel-B_Mask.gbs",
+    "vibeduino-modules-panel-B_Paste.gbp",
+    "vibeduino-modules-panel-B_Silkscreen.gbo",
+    "vibeduino-modules-panel-Edge_Cuts.gm1",
+    "vibeduino-modules-panel-F_Cu.gtl",
+    "vibeduino-modules-panel-F_Mask.gts",
+    "vibeduino-modules-panel-F_Paste.gtp",
+    "vibeduino-modules-panel-F_Silkscreen.gto",
+    "vibeduino-modules-panel-NPTH-drl_map.gbr",
+    "vibeduino-modules-panel-NPTH.drl",
+    "vibeduino-modules-panel-PTH-drl_map.gbr",
+    "vibeduino-modules-panel-PTH.drl",
+    "vibeduino-modules-panel-job.gbrjob"
+  ]
+}
