@@ -57,7 +57,7 @@ class Console(tk.Frame):
 
     def _fit_prompt(self, e) -> None:
         """Keep the answer box visible: a shorter label when the Output is narrow."""
-        text = PROMPT if e.width >= 560 else SHORT_PROMPT
+        text = PROMPT if e.width >= 520 else SHORT_PROMPT
         if self.in_label.cget("text") != text:
             self.in_label.configure(text=text)
 

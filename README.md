@@ -30,20 +30,29 @@ with Python 3.11+ and Tkinter, in Simulator mode (`pip install gpiozero` for GPI
 ## How students use it
 
 1. **Log in:** type first name and school (or pick their name if they've been before).
-2. **Pick an activity.** Everything is open. The coloured tiers are a guide: *Simple*,
-   *Moderate*, *Advanced*, *Electronics Lab*, *Camera & AI*. Cards show "Good to try first" tips.
-3. **Work through the steps.** Each step has instructions, a checklist and the Coach. The first
-   time, PiPath offers a 30-second tour (**? Tour** shows it again).
-4. **GPIO and camera activities** have:
+2. **Choose how much help they want** (on the activity picker, or **Help:** in any activity):
+   - **Beginner:** full explanations, and hints whenever they want them
+   - **Moderate:** help fades as they go (each activity's own plan: have a try, then hints unlock)
+   - **Advanced** (Year 9-10, "tutorial off"): just the goal (the full explanation is one click
+     away), fewer hints, no tour, and they can **skip** steps they already know
+3. **Pick an activity.** Everything is open, and students do as many or as few as they like, in
+   any order. The coloured tiers are a guide: *Simple*, *Moderate*, *Advanced*, *Electronics
+   Lab*, *Camera & AI*. Cards show "Good to try first" tips.
+4. **Work through the steps.** Each activity starts with one part (an LED, say), tests each new
+   part on its own (the button), then joins them up, step by step, to the finished project.
+   Every step has instructions, a checklist and the Coach. The first time, PiPath offers a
+   30-second tour (**? Tour** shows it again).
+5. **GPIO and camera activities** have:
    - **Run on: Simulator | Real Pi** next to the Run button (Real Pi only appears on a Pi)
    - the **board**, beside the Output. In the Simulator it *is* the hardware: click and hold
      buttons, click the motion sensor to "wave". In Real Pi mode it shows what the code is doing.
-   - **Watch the goal ▶**: plays the finished step on the board
+   - **Watch the goal ▶**: plays the finished step on the board (screen-only activities have it
+     too, next to the Run button: it types the answers in, so students see a whole run)
    - a **Wiring + Safety** card with a pin map and **Check my wiring**
    - "I saw it happen" boxes in the checklist, ticked by the student after a run
    - for camera activities, a **camera panel**: click its title to switch
      **Simulated / USB / Ribbon** (remembered on that Pi)
-5. **Free Build** is always open for their own projects. The board appears as soon as their
+6. **Free Build** is always open for their own projects. The board appears as soon as their
    code makes an LED or a Button.
 
 ## Activities
@@ -52,12 +61,12 @@ with Python 3.11+ and Tkinter, in Simulator mode (`pip install gpiozero` for GPI
 |---|---|---|---|
 | Simple | Hello, Pi! · Meet PiBot · Guess My Number | print, variables, input, if, loops | none |
 | Moderate | Quiz Master · Turtle Art Studio · Tuckshop Till | *coming soon* | none |
-| Advanced | **Traffic Lights** | Australian light sequence, `def cycle()`, pedestrian button, walk beeper | 3 LEDs, button, buzzer |
-| Advanced | **Reaction Timer** | random waits, ms stopwatch, false starts, 2-player race, high-score file | LED, 2 buttons |
-| Advanced | **Motion Alarm & Logger** | PIR events, alarm, arm/disarm state, CSV log, cooldown + report | PIR, LED, buzzer, button |
+| Advanced | **Traffic Lights** | one LED, the Australian sequence, `def cycle()` + loop, test the button, pedestrian crossing, beeper, countdown | 3 LEDs, button, buzzer |
+| Advanced | **Reaction Timer** | the LED, random waits, test the button with a stopwatch, reaction game, false starts, 2-player race, high-score file | LED, 2 buttons |
+| Advanced | **Motion Alarm & Logger** | test the light + buzzer, test the PIR, the alarm, arm/disarm state, CSV log, cooldown + report | PIR, LED, buzzer, button |
 | Electronics Lab | Light Switch · RGB Mood Lamp · Simon Says · Bar Graph & Dice | events, PWM, colours, lists, games | see each Wiring card |
-| Camera & AI | **Photo Booth** | button + LED 3-2-1 countdown, timestamped photos, photo strip | camera, 3 LEDs, button, buzzer |
-| Camera & AI | **Teachable Machine** | images as numbers, training data, a nearest-neighbour classifier, accuracy, bias | camera, 2 LEDs, button |
+| Camera & AI | **Photo Booth** | photo, button photo, LED 3-2-1 countdown, all together, timestamped photos, photo strip | camera, 3 LEDs, button, buzzer |
+| Camera & AI | **Teachable Machine** | images as numbers, training data, distance, a nearest-neighbour guess, lights for the answer, accuracy, bias | camera, 2 LEDs, button |
 
 ### Kit per Pi (covers every activity)
 
@@ -103,16 +112,22 @@ straight from GPIO pins. The Wiring card in each activity repeats this.
 
 - **Teacher panel:** press **Ctrl+Shift+T** and enter the PIN (default `2468`, **change it** in
   `data/config.toml`). Teacher mode lets you skip steps for the session, and you can export
-  everyone's progress to CSV.
+  everyone's progress (including each student's help level) to CSV.
+- **Help levels** are the student's choice and can change any time. Independence stars still
+  count the hints they open, at every level.
 - **Student work** is saved in `~/PiPath/students/<name>/` (code, photos, logs). Updating PiPath
   never touches it.
 - **Edit content** without coding:
   - `data/lessons/*.toml`: steps, starter code, checklists, hints, wiring, and `demo` (the model
-    answer that **Watch the goal** plays, with `demo_events` for simulated button presses)
+    answer that **Watch the goal** plays, with `demo_events` for simulated button presses and
+    `demo_input` for typed answers). Start each step's goal with `**Your task:**` or `**Goal:**`:
+    Advanced students see just that part.
   - `data/errors.toml`: the Coach's explanations for common errors
   - `data/catalog.toml`: which activities appear, their tier, and "Good to try first" tips
   - `data/config.toml`: PIN, runaway-loop limits, star thresholds
 - **Class set:** set up one Pi, then clone its SD card with *SD Card Copier*.
+- **Speed on a Pi 3B:** `docs/perf.md` explains what keeps PiPath quick, and how to measure it
+  on your Pis (`python3 tests/perf_probe.py`).
 - **Testing on real hardware:** follow `docs/pi-test-checklist.md`.
 
 ## Developers
@@ -123,6 +138,6 @@ See `CLAUDE.md` for the architecture, data formats and what's next. Run the test
 python3 -m unittest discover -s tests
 ```
 
-Every GPIO and camera step's model answer is run in the Simulator with its button presses,
-and must pass that step's own checklist. Screenshots of every main screen:
+Every step's model answer (its `demo`) is run, in the Simulator for GPIO and camera steps,
+with its button presses and typed answers, and must pass that step's own checklist. Screenshots of every main screen:
 `xvfb-run -s "-screen 0 1366x768x24" python3 tests/gui_smoke.py shots/`

@@ -14,19 +14,26 @@ tutor sitting beside them:
 1. **Login:** welcome → pick your name, or create a profile with **first name + school only**
    → straight to the **activity picker**. The workspace tour is *offered* (not forced) the
    first time a student reaches a step.
-2. **Free choice:** every activity is open from day one. Tiers (Simple, Moderate,
-   Advanced, Electronics Lab, Camera & AI) are a **guide**: a colour badge, a filter chip,
-   and optional "Good to try first" tips. Nothing is locked, and **Free Build** is always open.
-3. **Guided steps inside each activity:** instructions, starter code, a **checklist** that
-   is checked automatically when the student presses Run (plus "I saw it happen" tick
-   boxes for hardware), and a **Coach** that explains errors in plain English with tiered hints.
-4. **Gradual release of responsibility:** early steps are *guided* (fill in the blanks,
+2. **Free choice:** every activity is open from day one, and students do as many or as few
+   as they like, in any order. Tiers (Simple, Moderate, Advanced, Electronics Lab, Camera & AI)
+   are a **guide**: a colour badge, a filter chip, and optional "Good to try first" tips.
+   Nothing is locked, and **Free Build** is always open.
+3. **Help level, chosen by the student:** **Beginner** (full explanations, hints any time),
+   **Moderate** (each activity's own gradual release) or **Advanced** (Year 9-10, "tutorial
+   off": goal-first instructions, fewer hints, no tour, steps can be skipped). See §6.
+4. **Step by step, one part at a time:** each activity starts with one part (an LED), tests
+   each new part on its own (the button), then joins them up, step by step, to the finished
+   project. Every step has instructions, starter code, a **checklist** that is checked
+   automatically when the student presses Run (plus "I saw it happen" tick boxes for
+   hardware), and a **Coach** that explains errors in plain English with tiered hints.
+5. **Gradual release of responsibility:** early steps are *guided* (fill in the blanks,
    hints straight away). Later steps are *scaffolded*, then *brief* (just a goal, hints only
    after trying).
-5. **Simulator or Real Pi (MakeCode-style):** GPIO and camera activities run on an on-screen
+6. **Simulator or Real Pi (MakeCode-style):** GPIO and camera activities run on an on-screen
    board (the **Simulator**) or on the real pins and breadboard (**Real Pi**). **Watch the
    goal** plays the step's model answer on the board, so students see what *should* happen
-   before they try it on real hardware.
+   before they try it on real hardware. (Screen-only activities have it too: it types the
+   demo's answers into the Output.)
 
 **There is NO AI service in PiPath.** All help comes from a hand-written database of common
 errors (`data/errors.toml`) and per-step hints written by the teacher. (The *Teachable
@@ -53,9 +60,14 @@ Technologies (general-purpose programming, algorithms, data, digital systems).
 | Network | Assume **none**. Everything works offline. |
 
 Performance budget on a Pi 3B: app start < 4 s; screen switch < 400 ms; Run
-button to first output < 1 s; idle CPU ~0%. Never re-highlight or re-render the
-whole UI on every keystroke (the editor already debounces highlighting by 150 ms).
-The board repaints only changed items; the shim reports pin states only when they change.
+button to first output < 1 s; idle CPU ~0%. **Read `docs/perf.md` before touching the UI.**
+In short: Tk widgets are the cost on a Pi, so screens are kept and re-used (the activity
+picker, one activity workspace for every activity, Free Build), the step panel and checklist
+rows are re-used from step to step, all `RichText` heights are measured in one shared layout
+pass, and GPIO programs start in a spare runner process that already has gpiozero loaded.
+Never re-highlight or re-render the whole UI on every keystroke (the editor debounces
+highlighting by 150 ms). The board repaints only changed items; the shim reports pin states
+only when they change. `tests/perf_probe.py` times the main interactions.
 
 ---
 
@@ -78,16 +90,23 @@ The board repaints only changed items; the shim reports pin states only when the
 7. **Student code always runs in a separate process** (`pipath/runner.py`, through
    `pipath/gpio_shim.py` for GPIO/camera activities and Free Build), never `exec()` inside
    the app. The app must survive any student program.
-8. **Every lesson step must have a model answer in tests**: Simple steps in
-   `tests/test_hints.py`, GPIO/camera steps as the step's `demo` (run by
-   `tests/test_activities.py` in the Simulator with its `demo_events`).
-9. Keep `python3 -m unittest discover -s tests` green after every change.
-10. Don't break the save format in `~/PiPath/`. If it must change, migrate old files.
-    (Old profiles with a `class_code` still load and show it.)
+8. **Every lesson step must have a model answer: its `demo`**, run by
+   `tests/test_activities.py` (GPIO/camera steps in the Simulator with `demo_events`; all
+   steps with `demo_input` typed in). It must pass the step's own checks. Every step also needs
+   a goal for Advanced students: a `**Your task:**` / `**Goal:**` line, or a `goal` key.
+9. **Build each activity one part at a time:** test a new part (LED, button, sensor,
+   camera) on its own in a short step before a step joins it to the rest.
+10. Keep `python3 -m unittest discover -s tests` green after every change.
+11. Don't break the save format in `~/PiPath/`. If it must change, migrate old files.
+    (Old profiles with a `class_code` still load and show it; profiles without `help_level`
+    are Beginner.)
+12. **Keep it quick on a Pi 3B** (`docs/perf.md`): don't make widgets on every step or Run
+    (re-use them or draw on a Canvas), never call `update_idletasks()` per widget, and put
+    slow imports in the spare runner's preload list (`Workspace.preload`).
 
 ---
 
-## 4. What exists (v0.2)
+## 4. What exists (v0.3)
 
 Run it: `python3 main.py` (add `--scale 1.25` for big screens). Test: `python3 -m unittest discover -s tests`.
 
@@ -98,6 +117,7 @@ repo root
 ├── README.md                teacher setup guide
 ├── install.sh               installs menu + desktop shortcut on a Pi
 ├── docs/pi-test-checklist.md  hardware test plan for a real Pi + breadboard + camera
+├── docs/perf.md             what keeps PiPath quick on a Pi 3B, before/after timings, how to measure
 ├── data/
 │   ├── config.toml          app name, teacher PIN, runaway limits, star thresholds
 │   ├── catalog.toml         tiers + all activities (status ready | planned, try_first, gpio, camera)
@@ -112,8 +132,10 @@ repo root
 │   ├── app.py               main window, routing, activity states, teacher panel
 │   ├── content.py           loads config / catalogue / lessons / errors
 │   ├── storage.py           profiles, progress, code files, app state, CSV export (atomic writes)
+│   ├── levels.py            help levels (Beginner / Moderate / Advanced): hint rules, goal text, skip
 │   ├── hints.py             Coach engine: precheck, gpio_lint, traceback parsing, matching, checks
-│   ├── runner.py            runs student code: live output, stdin, runaway detection, shim pipes
+│   ├── runner.py            runs student code: live output, stdin, runaway detection, shim pipes,
+│   │                        warm start (a spare shim process with gpiozero already imported)
 │   ├── gpio.py              app-side GPIO: Pi detection, Simulator env, wiring parts, header map,
 │   │                        demo event expansion, wiring-check program, camera guess
 │   ├── gpio_shim.py         runs INSIDE the student process: mock/real pins, state + commands
@@ -126,18 +148,20 @@ repo root
 │       ├── console.py       Output box + "type your answer" input row
 │       ├── tour.py          coach-mark tour (place()-based overlay)
 │       ├── onboarding.py    Welcome / profile picker, Create profile (name + school)
-│       ├── home.py          activity picker (filter chips, cards, tips, stars, Free Build)
+│       ├── home.py          activity picker: help level, filter chips, cards drawn on one Canvas
 │       ├── board.py         VirtualBoard: LEDs, RGB LEDs, buttons, buzzers, PIR, camera panel
 │       ├── wiring.py        Wiring + Safety card with 40-pin header map and "Check my wiring"
-│       └── workspace.py     LessonWorkspace and FreeBuildWorkspace
+│       └── workspace.py     LessonWorkspace (one, re-used for every activity) and FreeBuildWorkspace
 └── tests/
-    ├── test_hints.py        real broken programs → Coach entry; Simple model answers
-    ├── test_storage.py      profiles: name + school, duplicates, old profiles
-    ├── test_gpio.py         shim, simulated presses, GPIO errors, lint, confirm checks, wiring check
+    ├── test_hints.py        real broken programs → Coach entry; blanks precheck
+    ├── test_storage.py      profiles: name + school, duplicates, old profiles, help level; levels
+    ├── test_gpio.py         shim, warm start, simulated presses, GPIO errors, lint, confirm checks,
+    │                        wiring check
     ├── test_camera.py       V4L2 layouts + ioctl numbers, MJPEG fix-up, PNG, Simulator camera
-    ├── test_activities.py   every GPIO/camera step's demo passes its checks; lesson lint
+    ├── test_activities.py   every step's demo passes its checks (all activities); lesson lint
     ├── shimrun.py           helper: run code through the shim with timed presses
-    └── gui_smoke.py         drives the real app under Xvfb and saves screenshots (not unittest)
+    ├── gui_smoke.py         drives the real app under Xvfb and saves screenshots (not unittest)
+    └── perf_probe.py        times the main interactions (not unittest; see docs/perf.md)
 ```
 
 ### How a Run works (data flow)
@@ -147,7 +171,10 @@ Run pressed
   → precheck(code, step.starter)   blanks (___) from the starter still there? → Coach, stop
   → gpio_lint(code)                GPIO activities: warnings in the Output ("⚠ Coach tip"), never blocks
   → save file, Runner.start()      python3 -u <file>, or python3 -u pipath/gpio_shim.py <file>
-                                   for GPIO/camera activities and Free Build; own process group
+                                   for GPIO/camera activities and Free Build; own process group.
+                                   Warm start: if a spare shim (--wait) is waiting, it gets one
+                                   JSON line {"run","cwd","env"} instead; a new spare starts
+                                   ~0.4 s after each run ends
                                    Simulator: GPIOZERO_PIN_FACTORY=mock, MOCK_PIN_CLASS=mockpwmpin
                                    Camera: PIPATH_CAMERA=sim|usb|ribbon, PIPATH_CAMERA_OBJECT
   → poll every 40 ms               stdout → Output; student types → stdin
@@ -163,6 +190,11 @@ Run pressed
 
 ### The shim (`pipath/gpio_shim.py`)
 - Runs the student's file with `runpy` (`sys.path[0]` = the student's folder; `student_lib/` appended).
+- `--wait` (warm start): imports the modules in `PIPATH_PRELOAD` (gpiozero, its mock pins, lgpio
+  on a Pi, `pipath_camera`, `picamera2` for a ribbon camera) with output silenced, then waits
+  for the order on the command fd. EOF (the app closed it) → exits quietly.
+- Simulator: the shim makes gpiozero's `MockFactory` itself. (Naming the factory in the
+  environment makes gpiozero scan every installed package, which takes seconds on Pi OS.)
 - Patches gpiozero **only when the student imports it** (import hook), recording every
   `GPIODevice` and `RGBLED`. A 50 ms thread sends `devices` / `pins` messages (JSON lines,
   fd in `PIPATH_STATE_FD`) only when something changed. Values: outputs = brightness 0–1,
@@ -179,10 +211,11 @@ Run pressed
 
 ```
 ~/PiPath/app.json                        last_student, gpio_mode (sim|real), camera (sim|usb|ribbon)
-~/PiPath/students/<slug>/profile.json    first_name, school, created, last_seen, tour_done
+~/PiPath/students/<slug>/profile.json    first_name, school, created, last_seen, tour_done,
+                                          help_level (beginner|moderate|advanced; missing = beginner)
                                           (older profiles may also have class_code)
 ~/PiPath/students/<slug>/progress.json   lessons.<id>: status, step, steps_done, steps_started,
-                                          hints_used, runs, errors, started, completed
+                                          steps_skipped, hints_used, runs, errors, started, completed
 ~/PiPath/students/<slug>/lessons/*.py    lesson code (one file per activity, built up step by step)
 ~/PiPath/students/<slug>/lessons/*.jpg|csv|json   photos, logs, examples.json written by programs
 ~/PiPath/students/<slug>/lessons/backups/  code saved before a "replace" step overwrote it
@@ -235,15 +268,20 @@ support = "guided" | "scaffolded" | "brief"
 starter_mode = "replace" | "append" | "keep"   # applied the FIRST time a step is entered
 starter = '''code'''                # may contain ___ blanks
 run_mode = "until_stopped"          # program runs until Stop; checks evaluated when Stop is pressed
-text = """markdown instructions"""
+text = """markdown instructions"""  # put the goal in a **Your task:** / **Goal:** line: Advanced
+                                    # students see the text from there on (or the whole text if
+                                    # it starts with it), with "Show the full explanation"
+goal = """markdown"""               # optional: a hand-written short version for Advanced instead
 hints = ["nudge", "more specific", "almost the answer"]   # max 3
 error_hints = { TypeError = "step-specific hint shown first for this error type" }
 success = "message when every check passes"
-demo = '''model answer'''           # played by "Watch the goal" (Simulator), tested in tests/
+demo = '''model answer'''           # REQUIRED. Played by "Watch the goal", tested in tests/, and put in
+                                    # the editor when an Advanced student skips the step (if the next
+                                    # step builds on it, i.e. isn't "replace")
 demo_events = ["2 tap 23", "1.5 press 4", "3 release 4", "0.5 show ball",
                "1 tap 23 every 0.8 until 30"]   # timed presses / camera objects during the demo
 demo_seconds = 10                   # stop the demo after this long (until_stopped programs)
-demo_input = "5\n"                  # typed into input() during the demo
+demo_input = "5\n"                  # answers typed into the Output, one at a time, at each prompt
 demo_files = ["c2/examples.json"]   # copied from data/demo_files/ into the demo's folder
 
 [[steps.checks]]
@@ -323,11 +361,33 @@ for GPIO errors with mock pins) with a real broken program.
 - Within an activity, support should fade: at least one `brief` step per activity from S3 on.
 - Because students choose freely, the first step of each activity can drop back a level.
 
+### Help levels (the student's choice, `pipath/levels.py`)
+
+Students pick a level on the activity picker or with **Help:** in the workspace top bar. It's
+saved in `profile.json` (`help_level`) and goes on top of each step's `support`:
+
+| level | hints unlock | hint tiers | instructions | tour | skip a step |
+|---|---|---|---|---|---|
+| Beginner (default) | immediately | all 3 | full text | offered | no |
+| Moderate | the step's `support` rule (table above) | the step's rule | full text | offered | no |
+| Advanced | after 2 tries | 2 (never the near-answer; step hints too) | goal first, "▸ Show the full explanation" | not offered | yes |
+
+- **Skip** (Advanced only) records the step in `steps_skipped` (a faint dot), saves the
+  student's code in `backups/` and, if the next step builds on this one, puts the skipped
+  step's `demo` in the editor so the next step has what it needs.
+- Stars still count hints at every level. Teacher mode still enables Next step for everyone.
+
 ---
 
 ## 7. Curriculum: all activities
 
 Legend: ✅ written, playable and tested in the Simulator · 🔲 outline only (write the TOML)
+
+**Shape of every hardware activity:** one part first (an LED), a short step that tests each
+new part on its own (the button, the sensor, the camera, the countdown lights), then a step
+that joins it to the rest, and so on to the finished project. A test-the-part step that
+"replace"s the code says the student's code is safe in `backups/`; the joining step's starter
+brings the earlier work back (as the model answer) with blanks for the new connections.
 
 Standard pin plan for **all** GPIO activities (Pi 3B, BCM numbers), so one breadboard build
 carries between activities:
@@ -353,15 +413,15 @@ Avoid GPIO 2/3 (I²C, fixed pull-ups) and 14/15 (serial console).
 | Moderate | M1 Quiz Master | 🔲 | see outline below |
 | Moderate | M2 Turtle Art Studio | 🔲 | see outline below |
 | Moderate | M3 Tuckshop Till | 🔲 | see outline below |
-| Advanced | A1 Traffic Lights | ✅ | flash one LED (G) · green→amber→red (S) · `def cycle()` + `while True` (S) · pedestrian `wait_for_press` (S) · beeper + flashing red (B) |
-| Advanced | A2 Reaction Timer | ✅ | random wait (S) · `monotonic()` stopwatch (S) · false start with `wait_for_press(timeout=)` (S) · 2-player `when_pressed` race (B) · best of 5 + `highscore.txt` with try/except (B) |
-| Advanced | A3 Motion Alarm & Logger | ✅ | `when_motion` / `when_no_motion` (S) · LED + `buzzer.beep` (S) · armed state + button (B) · CSV log with `datetime` (B) · 10 s cooldown + report by hour (B) |
+| Advanced | A1 Traffic Lights | ✅ | flash one LED (G) · green→amber→red (S) · `def cycle()` + `while True` (S) · test the button: 3 × `wait_for_press` (G) · lights + button = pedestrian crossing (S) · add the beeper (S) · countdown + flashing red (B) |
+| Advanced | A2 Reaction Timer | ✅ | light the LED (G) · random wait (S) · test the button: hold timer with `monotonic()` (G) · reaction stopwatch (S) · false start with `wait_for_press(timeout=)` (S) · 2-player `when_pressed` race (B) · best of 5 + `highscore.txt` with try/except (B) |
+| Advanced | A3 Motion Alarm & Logger | ✅ | test the LED + buzzer (G) · `when_motion` / `when_no_motion` (S) · sensor + alarm (S) · armed state + button (S) · CSV log with `datetime` (B) · 10 s cooldown + report by hour (B) |
 | Lab | E1 Light Switch Lab | ✅ | LED · `wait_for_press` (G) · hold-to-light · toggle (S) · PWM dimmer (B) |
 | Lab | E2 RGB Mood Lamp | ✅ | tuples · rainbow nested loop · `%` wrap, planted IndexError (S) · party mode `when_held` · own lamp (B) |
 | Lab | E3 Simon Says | ✅ | lists of LEDs · `zip()` · random pattern · `get_press()` returns (S) · full game (B) |
 | Lab | E4 Bar Graph & Digital Dice | ✅ | LEDBoard · scanner · counter with limits (S) · dice roll · shake to roll (B) |
-| Camera & AI | C1 Photo Booth | ✅ | `take_photo` (G) · button to snap (G) · LED 3-2-1 + beep (S) · `datetime` names + loop (S) · 4-photo strip + `glob` count (B) |
-| Camera & AI | C2 Teachable Machine | ✅ | `capture_grid` as `#`/`.` art (S) · collect labelled examples → `examples.json` (S) · `distance()` with `abs()` (S) · nearest-neighbour `classify()` lights the matching LED (S) · accuracy test (B) |
+| Camera & AI | C1 Photo Booth | ✅ | `take_photo` (G) · button to snap (G) · countdown lights + beep, no camera (S) · button → `countdown()` → photo (S) · `datetime` names + loop (S) · 4-photo strip + `glob` count (B) |
+| Camera & AI | C2 Teachable Machine | ✅ | `capture_grid` as `#`/`.` art (S) · collect labelled examples → `examples.json` (S) · `distance()` with `abs()` (S) · nearest-neighbour `classify()` guesses one photo (S) · button + matching LED in a loop (S) · accuracy test (B) |
 
 Camera activities use the students' helper `from pipath_camera import Camera`
 (`take_photo(name)`, `capture_grid(rows, cols)`). The Simulator's pretend camera shows a
@@ -401,7 +461,13 @@ board (and camera panel) appears as soon as a program makes an LED, Button or ph
   device the program makes. Click and hold buttons; click the PIR to "wave" (3 s). The
   board switches everything off when a program ends, like real hardware.
 - **Watch the goal**: runs the step's `demo` in a temp folder on the Simulator with its
-  `demo_events`; the student's code isn't touched and the run isn't counted.
+  `demo_events`; the student's code isn't touched and the run isn't counted. `demo_input`
+  answers are typed in one at a time, each time the program shows a prompt (and echoed in the
+  Output, as if a student typed them).
+- **Warm start** (`Workspace.preload`, `Runner.warm_up`): GPIO/camera workspaces and Free Build
+  keep one spare shim process waiting with the slow modules imported. It's dropped when the
+  workspace is hidden and re-made after each run and when the camera kind changes. The spare
+  never touches the pins: the pin factory is only made once it's given a program.
 - **Wiring + Safety card** (`ui/wiring.py`): safety list, parts, connect rows, 40-pin header
   map with the activity's pins highlighted, and **Check my wiring** (a generated program
   that blinks each LED, beeps the buzzer and waits for each button / the PIR; ✓/✗ ticks).
@@ -419,7 +485,7 @@ board (and camera panel) appears as soon as a program makes an LED, Button or ph
 ## 9. Teacher features
 
 Present now: Ctrl+Shift+T → PIN (config.toml `teacher_pin`) → teacher mode (Next step
-always enabled for this session) and **Export progress CSV**.
+always enabled for this session) and **Export progress CSV** (includes each student's help level).
 
 To build:
 - Change the PIN from the panel (store a hash in `~/PiPath/app.json`, not in plain text).
@@ -433,7 +499,8 @@ To build:
 
 ## 10. Deployment
 
-- `install.sh`: adds a menu entry (Programming → PiPath) and a desktop icon; optional `--autostart`.
+- `install.sh`: adds a menu entry (Programming → PiPath) and a desktop icon; optional `--autostart`;
+  pre-compiles the Python files (`compileall`) so the first start is quicker.
 - Classroom roll-out: set up one Pi fully, then clone the SD card (Raspberry Pi
   **SD Card Copier** or Imager) for the class set.
 - Updates: `git pull`, or copy a new `data/` folder from USB. Student work in `~/PiPath`
@@ -446,11 +513,13 @@ To build:
 
 ## 11. What's next
 
-Built and passing in the Simulator: the GPIO foundation, A1–A3, the Electronics Lab and the
-Camera & AI tier. Still to do, roughly in this order:
+Built and passing in the Simulator: the GPIO foundation, A1–A3, the Electronics Lab, the
+Camera & AI tier, student-chosen help levels, the step-by-step (one part at a time) activity
+structure, and the Pi 3B speed work (`docs/perf.md`). Still to do, roughly in this order:
 
 1. **Real hardware check** (docs/pi-test-checklist.md): Pi 3B on Trixie with a breadboard
-   kit, a USB webcam and a ribbon camera. Record timings in `docs/perf.md`.
+   kit, a USB webcam and a ribbon camera. Run `tests/perf_probe.py` and record the timings
+   in `docs/perf.md`.
 2. **Moderate tier**: write M1–M3 from §7 with model answers; M2 needs `confirm` +
    `until_stopped` (both built).
 3. **Phase 1 polish**: undo/redo buttons, "Reset step code", underline the exact word from
@@ -464,15 +533,19 @@ Camera & AI tier. Still to do, roughly in this order:
 ## 12. Testing
 
 - `tests/test_hints.py` runs **real broken programs** with the current interpreter and
-  asserts the Coach entry id; holds Simple model answers.
-- `tests/test_activities.py` runs **every GPIO/camera step's `demo`** through the shim on
-  mock pins with its `demo_events` (in parallel) and checks it passes the step's checks;
-  starters must start cleanly; every lesson file is linted.
-- `tests/test_gpio.py`, `tests/test_camera.py`, `tests/test_storage.py` cover the engine.
-  GPIO tests skip if gpiozero isn't installed.
+  asserts the Coach entry id.
+- `tests/test_activities.py` runs **every step's `demo`, in every activity**, through the shim
+  (mock pins for GPIO/camera) with its `demo_events` and `demo_input` (in parallel) and checks
+  it passes the step's checks; hardware starters must start cleanly; every lesson file is
+  linted (support, ≤3 hints, regexes compile, a checklist, a goal for Advanced, no blanks in
+  demos).
+- `tests/test_gpio.py` (incl. the warm start), `tests/test_camera.py`, `tests/test_storage.py`
+  (incl. help levels) cover the engine. GPIO tests skip if gpiozero isn't installed.
 - GUI smoke test: `xvfb-run -s "-screen 0 1366x768x24" python3 tests/gui_smoke.py shots/`
-  drives login → activities → lessons → Simulator → Watch the goal → camera and saves
-  screenshots (needs Tk, Xvfb, ImageMagick `import`).
+  drives login → activities → lessons → Simulator → Watch the goal → camera → help levels →
+  Skip, and saves screenshots (needs Tk, Xvfb, ImageMagick `import`). Run it at 1024×640 too
+  (`PIPATH_SMOKE_SIZE=1024x640`).
+- Speed: `python3 tests/perf_probe.py` (under `xvfb-run` on a PC) prints ms per interaction.
 - Manual Pi checklist: `docs/pi-test-checklist.md`.
 
 ---
@@ -491,3 +564,8 @@ Camera & AI tier. Still to do, roughly in this order:
 - **Blanks are `___`** (3+ underscores), detected only on lines copied from the step's
   starter, so students' own ASCII art with underscores still runs.
 - **Stars measure independence (hints), not speed.**
+- **The help level is the student's choice** (Beginner / Moderate / Advanced), changeable any
+  time; it never locks content and stars still count hints.
+- **One part at a time:** test each new part on its own, then join it up (§7).
+- **Speed on a Pi 3B comes from not making widgets**: kept screens, re-used panels, one
+  Canvas for the activity picker, a warm spare runner (`docs/perf.md`).

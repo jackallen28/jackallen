@@ -27,7 +27,14 @@ python3 -m unittest discover -s tests
 - [ ] Creating the same name + school again shows the "already a ... from this school" message.
 - [ ] Filter chips (Simple, Advanced, Camera & AI...) show the right cards. Nothing is locked.
 - [ ] Open **Hello, Pi!**, start step 1: the "First time here?" box appears. Try **Show me around**.
+- [ ] Press **Watch the goal ▶** (next to Run) on Meet PiBot step 2: the answers are typed into
+      the Output, one at a time.
 - [ ] Text is readable on your projector (try `python3 main.py --scale 1.25` if not).
+- [ ] Choose **Advanced** under "How much help do you want?". In an activity, a step shows just
+      its goal with **▸ Show the full explanation**, and a **Skip** button is next to Next step.
+      **Help:** in the top bar switches level, and the activity picker remembers it.
+- [ ] Going back and forth between the activity picker and an activity feels quick (well under
+      half a second, apart from the very first activity you open).
 
 ## 3. Simulator (5 min)
 
@@ -45,11 +52,15 @@ Wire the standard pin plan. Choose **Real Pi**.
       ticks the button when you press it.
 - [ ] Traffic Lights step 1 (fill in `2`): the real red LED flashes short then long. The board
       shows the same thing at the same time.
-- [ ] Step 4: lights wait on green until you press the real button, then change and print `Walk!`.
+- [ ] Step 4 (test the button): each press of the real button prints `Pressed!`.
+- [ ] Step 5: lights wait on green until you press the real button, then change and print `Walk!`.
+- [ ] Press **Run** a second time on a GPIO step: output appears in well under a second
+      (PiPath keeps a spare runner ready with gpiozero loaded).
 - [ ] Press **Stop** while an LED is on: **the real LED turns off**.
-- [ ] Reaction Timer step 2: the printed reaction time looks believable (about 200-400 ms).
-- [ ] Motion Alarm step 1: after the PIR warms up (30-60 s), waving prints `Motion!` and later
-      `All quiet`. Step 4 writes `motion_log.csv` in `~/PiPath/students/<name>/lessons/`.
+- [ ] Reaction Timer step 4: the printed reaction time looks believable (about 200-400 ms).
+- [ ] Motion Alarm step 1: the LED lights, then the buzzer beeps 3 times.
+- [ ] Motion Alarm step 2: after the PIR warms up (30-60 s), waving prints `Motion!` and later
+      `All quiet`. Step 5 writes `motion_log.csv` in `~/PiPath/students/<name>/lessons/`.
 - [ ] Light Switch Lab step 5 (dimmer): the real LED gets brighter with each press.
 - [ ] In Free Build, a loop with no `sleep` is stopped after about 8 seconds and the Coach
       suggests `sleep(0.01)`. Try `while True:` then `if button.is_pressed: print("hi")`, and
@@ -65,11 +76,11 @@ Plug in the webcam.
       prints an 8 × 8 grid of numbers. **If this fails, copy the whole message.**
 - [ ] Open **Photo Booth**. Click the camera panel's title until it says **USB CAMERA**.
 - [ ] Step 1: the photo appears on the board within a few seconds.
-- [ ] Step 3 on Real Pi: the 3-2-1 LEDs, beep, then the photo.
+- [ ] Step 3 on Real Pi: the 3-2-1 LEDs and the beep. Step 4: press, countdown, then the photo.
 - [ ] **Teachable Machine** step 1: the board shows a blocky grey version of what the camera sees,
       and the `#`/`.` picture roughly matches an object held in front of a plain background.
-- [ ] Step 2 → 4: collect 5 photos each of two things, then the right LED lights for each
-      most of the time.
+- [ ] Steps 2 to 5: collect 5 photos each of two things, check the guess (step 4), then the right
+      LED lights for each most of the time (step 5).
 
 ## 6. Ribbon camera (if you have one, 10 min)
 
@@ -79,12 +90,18 @@ Plug in the webcam.
 
 ## 7. Timings to record (for docs/perf.md)
 
+First run `python3 tests/perf_probe.py` in a terminal on the Pi desktop and copy its table
+into the **Pi 3B** column of `docs/perf.md`. Then time these by hand:
+
 | What | Time |
 |---|---|
 | Menu click → welcome screen | |
-| Activity card → workspace | |
+| Activity card → workspace (first activity) | |
+| Activity card → workspace (another activity) | |
+| Back to activities | |
+| Next step | |
 | Run → first output (Hello, Pi!) | |
-| Run → first output (Traffic Lights, Real Pi) | |
+| Run → first output (Traffic Lights, Real Pi, second run) | |
 | USB `take_photo` → photo on board | |
 | `capture_grid(16, 16)` (USB) | |
 
