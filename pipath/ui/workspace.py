@@ -364,7 +364,7 @@ class Workspace(Screen):
     # ---------------------------------------------------------------- Simulator / Real Pi
     def _mode_switch(self, tb):
         box = tk.Frame(tb, bg="#2A2F38")
-        box.pack(side="left", padx=(6, 0))
+        box.pack(side="left", padx=(6, 0), after=self.stop_btn)   # before the file name, so it never gets squeezed out
         label(box, "Run on:", font="small", fg="#7D8696", bg="#2A2F38").pack(side="left", padx=(0, 6))
         self.sim_btn = PButton(box, "Simulator", lambda: self.set_mode("sim"), kind="dark", font="small_bold", padx=10, pady=3)
         self.sim_btn.pack(side="left")
@@ -413,6 +413,8 @@ class Workspace(Screen):
             self.board.set_values(msg["pins"])
         elif t == "photo":
             self.show_board()
+            if self.board.camera is None:
+                self.board.enable_camera(self.camera, self.sim_object)
             if msg.get("grid"):
                 caption = "What the computer sees"
             else:
@@ -709,6 +711,8 @@ class LessonWorkspace(Workspace):
         self._clear_guide()
         self.view = "outro"
         self.editor.clear_marks()
+        if self.board:
+            self.board.show_goal_button(False)
         st = stars_for(self.app, self.lp.get("hints_used", 0))
         box = tk.Frame(self.g, bg=C["ink"], padx=20, pady=20)
         box.pack(fill="x")
@@ -1041,19 +1045,25 @@ class LessonWorkspace(Workspace):
         return [
             {"widget": None, "side": "center", "title": "This is your workspace",
              "text": "Everything you need is on one screen. Let's take a 30-second look around."},
-            {"widget": self.instructions, "side": "right", "title": "1. Read the step",
-             "text": "Each project is split into small **steps**. The instructions for the current step are here, on the left."},
-            {"widget": self.checklist_frame, "side": "right", "title": "2. Your checklist",
+            {"widget": self.instructions, "side": "right", "title": "Read the step",
+             "text": "Each activity is split into small **steps**. The instructions for the current step are here, on the left."},
+            {"widget": self.checklist_frame, "side": "right", "title": "Your checklist",
              "text": "This is what the step wants your program to do. Every time you press Run, the boxes get ticked ✓ or crossed ✗."},
-            {"widget": self.editor, "side": "inside", "title": "3. The editor",
+            {"widget": self.editor, "side": "inside", "title": "The editor",
              "text": "This is where you type your Python code. Colours help you spot different parts, and **Tab** indents a line."},
-            {"widget": self.run_btn, "side": "bottom", "title": "4. Run it",
+            {"widget": self.run_btn, "side": "bottom", "title": "Run it",
              "text": "Press **Run** (or **F5**) to try your code. Run often. It's the fastest way to find out what's happening."},
-            {"widget": self.console, "side": "top", "title": "5. Output",
+            {"widget": self.console, "side": "top", "title": "Output",
              "text": "Whatever your program prints shows up here. When your program asks a question, type your answer in the box at the bottom and press **Enter**."},
-            {"widget": self.coach, "side": "right", "title": "6. The Coach",
+        ] + ([
+            {"widget": self.sim_btn.master, "side": "bottom", "title": "Simulator or Real Pi?",
+             "text": "**Simulator** runs your code on the pretend board. **Real Pi** uses the real GPIO pins and your breadboard. Try the Simulator first, then the real thing!"},
+            {"widget": self.board, "side": "top", "title": "The board",
+             "text": "Your LEDs, buttons and sensors live here. Click and hold a button to press it. **Watch the goal** shows what the finished step should do."},
+        ] if self.gpio else []) + [
+            {"widget": self.coach, "side": "right", "title": "The Coach",
              "text": "If your code breaks, the Coach explains why in plain English and shows which line. Hints start small. Try one at a time."},
-            {"widget": self.home_btn, "side": "bottom", "title": "7. Saving",
+            {"widget": self.home_btn, "side": "bottom", "title": "Saving",
              "text": "Your code **saves automatically**. Use **Activities** to pick something else anytime. Press **? Tour** to see this again."},
         ]
 

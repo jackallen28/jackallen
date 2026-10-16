@@ -1,6 +1,7 @@
 """Drive the real app under a virtual screen and save screenshots of each main screen.
 
     xvfb-run -s "-screen 0 1366x768x24" python3 tests/gui_smoke.py /tmp/shots
+    PIPATH_SMOKE_SIZE=1024x640 xvfb-run -s "-screen 0 1024x640x24" python3 tests/gui_smoke.py /tmp/small
 
 Not part of the unittest suite (needs Tk, Xvfb and ImageMagick's `import`).
 Each scene is (name, action): the action runs, the app settles, then a screenshot is taken.
@@ -156,7 +157,7 @@ def scenes(app):
 
 def main():
     app = PiPathApp()
-    app.geometry("1366x768+0+0")
+    app.geometry(os.environ.get("PIPATH_SMOKE_SIZE", "1366x768") + "+0+0")
     todo = list(scenes(app))
     failures = []
 

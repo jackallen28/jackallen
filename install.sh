@@ -11,12 +11,13 @@ import sys, tkinter
 assert sys.version_info >= (3, 11)
 EOF
 
-python3 -c "import gpiozero" 2>/dev/null || echo "Note: gpiozero not found. GPIO projects need: sudo apt install python3-gpiozero python3-lgpio"
+python3 -c "import gpiozero" 2>/dev/null || echo "Note: gpiozero not found. GPIO activities need: sudo apt install python3-gpiozero python3-lgpio"
+python3 -c "import picamera2" 2>/dev/null || echo "Note: picamera2 not found. Only needed for a ribbon camera: sudo apt install python3-picamera2"
 
 ENTRY="[Desktop Entry]
 Type=Application
 Name=PiPath
-Comment=Learn Python step by step
+Comment=Learn Python, electronics and cameras step by step
 Exec=python3 \"$HERE/main.py\"
 Path=$HERE
 Icon=applications-development
