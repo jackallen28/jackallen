@@ -19,7 +19,7 @@ class WiringCard(tk.Frame):
                  on_check=None):
         super().__init__(master, bg=C["panel"], highlightthickness=1, highlightbackground=C["info"])
         self.parts = parts
-        self.marks: dict[int, tk.Label] = {}
+        self.marks: dict[int, int] = {}       # GPIO pin -> wiring row
         head = tk.Frame(self, bg=C["info_soft"], padx=14, pady=8, cursor="hand2")
         head.pack(fill="x")
         self.arrow = label(head, "", font="ui_bold", fg=C["info"], bg=C["info_soft"])
@@ -31,14 +31,23 @@ class WiringCard(tk.Frame):
             w.bind("<Button-1>", lambda e: self.toggle())
 
         self.body = tk.Frame(self, bg=C["panel"], padx=14, pady=10)
-        self._build(lesson, project, on_check)
-        self.is_open = not open_
-        self.toggle()
+        self._source = (lesson, project, on_check)
+        self._built = False           # the body (pin map etc.) is only built when first opened
+        self.is_open = False
+        self.set_open(open_)
 
     def toggle(self) -> None:
-        self.is_open = not self.is_open
-        self.arrow.configure(text="▾" if self.is_open else "▸")
-        if self.is_open:
+        self.set_open(not self.is_open)
+
+    def set_open(self, on: bool) -> None:
+        if on and not self._built:
+            self._built = True
+            self._build(*self._source)
+        if on == self.is_open and self.arrow.cget("text"):
+            return
+        self.is_open = on
+        self.arrow.configure(text="▾" if on else "▸")
+        if on:
             self.body.pack(fill="x")
         else:
             self.body.pack_forget()
@@ -47,38 +56,40 @@ class WiringCard(tk.Frame):
         b = self.body
         safe = tk.Frame(b, bg=C["warn_soft"], padx=10, pady=8)
         safe.pack(fill="x")
-        label(safe, "⚠  Safety first", font="small_bold", fg=C["warn"], bg=C["warn_soft"]).pack(anchor="w")
         rt = RichText(safe, bg=C["warn_soft"], font="small")
         rt.tag_configure("b", font="small_bold")
         rt.pack(fill="x")
-        rt.render("\n".join(f"- {s}" for s in SAFETY))
+        rt.render("**⚠  Safety first**\n" + "\n".join(f"- {s}" for s in SAFETY))
 
-        if project.get("parts"):
-            label(b, "YOU NEED", font="small_bold", fg=C["muted"], bg=C["panel"]).pack(anchor="w", pady=(10, 2))
-            label(b, "  •  ".join(project["parts"]), font="small", bg=C["panel"], wraplength=330).pack(anchor="w")
-
-        label(b, "CONNECT", font="small_bold", fg=C["muted"], bg=C["panel"]).pack(anchor="w", pady=(10, 2))
-        for row in lesson.get("wiring", []):
-            r = tk.Frame(b, bg=C["panel"])
-            r.pack(fill="x", pady=2)
-            mark = tk.Label(r, text="•", font="ui_bold", width=2, fg=C["faint"], bg=C["panel"])
-            mark.pack(side="left", anchor="n")
-            txt = RichText(r, bg=C["panel"], font="small")
-            txt.tag_configure("b", font="small_bold")
-            txt.pack(side="left", fill="x", expand=True)
-            txt.render(f"**{row.get('part', '')}:** {row.get('connect', '')}")
+        # parts and connections in one text widget (one widget per row was slow on a Pi)
+        self.rows = lesson.get("wiring", [])
+        self.need = project.get("parts", [])
+        self.status: dict[int, str] = {}
+        for i, row in enumerate(self.rows):
             for p in [row.get("pin")] + list(row.get("pins", [])):
                 if p is not None:
-                    self.marks[int(p)] = mark
+                    self.marks[int(p)] = i
+        self.connect = RichText(b, bg=C["panel"], font="small")
+        self.connect.tag_configure("b", font="small_bold")
+        self.connect.pack(fill="x", pady=(10, 0))
+        self._render_connect()
 
         self._header_map(b)
         label(b, "Pin 1 is the corner pin nearest the SD card slot (it has a square pad underneath).",
               font="small", fg=C["muted"], bg=C["panel"], wraplength=330).pack(anchor="w", pady=(2, 0))
         if on_check:
-            row = tk.Frame(b, bg=C["panel"])
-            row.pack(fill="x", pady=(10, 0))
-            PButton(row, "Check my wiring", on_check, kind="secondary", font="small_bold", pady=5).pack(side="left")
-            label(row, "  Tests each part, one at a time.", font="small", fg=C["muted"], bg=C["panel"]).pack(side="left")
+            PButton(b, "Check my wiring  (tests each part, one at a time)", on_check, kind="secondary",
+                    font="small_bold", pady=5).pack(anchor="w", pady=(10, 0))
+
+    def _render_connect(self) -> None:
+        lines = []
+        if self.need:
+            lines += ["**YOU NEED:** " + "  •  ".join(self.need), ""]
+        lines.append("**CONNECT**")
+        for i, row in enumerate(self.rows):
+            mark = self.status.get(i)
+            lines.append(f"- {mark + ' ' if mark else ''}**{row.get('part', '')}:** {row.get('connect', '')}")
+        self.connect.render("\n".join(lines))
 
     def _header_map(self, master) -> None:
         """The 40-pin header as two columns, with the pins this activity uses highlighted."""
@@ -113,11 +124,13 @@ class WiringCard(tk.Frame):
 
     def mark_from_output(self, text: str) -> int:
         """Tick or cross rows from 'Check my wiring' output lines like '✓ Button (GPIO23) works!'."""
+        self.set_open(True)
         n = 0
         for m in re.finditer(r"^([✓✗]).*?GPIO(\d+)", text, re.M):
-            mark = self.marks.get(int(m.group(2)))
-            if mark is not None:
-                ok = m.group(1) == "✓"
-                mark.configure(text="✓" if ok else "✗", fg=C["ok"] if ok else C["err"])
+            row = self.marks.get(int(m.group(2)))
+            if row is not None:
+                self.status[row] = m.group(1)
                 n += 1
+        if n:
+            self._render_connect()
         return n

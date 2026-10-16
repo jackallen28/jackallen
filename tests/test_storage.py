@@ -45,6 +45,47 @@ class TestProfiles(unittest.TestCase):
         s = st.list_students()[0]
         self.assertEqual(s.label, "8B · Bayside SC")
         self.assertEqual(s.lesson_status("s1_hello"), "new")
+        self.assertEqual(s.help_level, "beginner")      # profiles from before help levels
+
+    def test_help_level_is_saved(self):
+        st = self.storage
+        s = st.create_student("Sam", "Bayside SC")
+        self.assertEqual(s.help_level, "beginner")
+        s.set_help_level("advanced")
+        self.assertEqual(st.list_students()[0].help_level, "advanced")
+        s.set_help_level("expert")                       # unknown levels fall back to the default
+        self.assertEqual(st.list_students()[0].help_level, "beginner")
+
+    def test_progress_is_read_when_needed(self):
+        st = self.storage
+        s = st.create_student("Sam", "Bayside SC")
+        s.mark_started("s1_hello")
+        again = st.list_students()[0]
+        self.assertIsNone(again._progress)
+        self.assertEqual(again.lesson_status("s1_hello"), "in_progress")
+
+
+class TestLevels(unittest.TestCase):
+    def test_hint_rules(self):
+        from pipath.levels import hint_rules
+        self.assertEqual(hint_rules("beginner", "brief"), (0, 3))       # hints any time
+        self.assertEqual(hint_rules("moderate", "guided"), (0, 3))      # the activity's own plan
+        self.assertEqual(hint_rules("moderate", "scaffolded"), (1, 3))
+        self.assertEqual(hint_rules("moderate", "brief"), (2, 2))
+        self.assertEqual(hint_rules("advanced", "guided"), (2, 2))      # never the near-answer
+
+    def test_goal_text(self):
+        from pipath.levels import goal_text
+        step = {"text": "Some background.\n\n**Your task:** make the LED blink."}
+        self.assertEqual(goal_text(step), "**Your task:** make the LED blink.")
+        self.assertIsNone(goal_text({"text": "**Goal:** already short."}))
+        self.assertIsNone(goal_text({"text": "No marker here."}))
+        self.assertEqual(goal_text({"text": "Long text", "goal": "Short goal"}), "Short goal")
+
+    def test_only_advanced_skips_and_skips_the_tour(self):
+        from pipath.levels import LEVELS, can_skip, offer_tour
+        self.assertEqual([lv for lv in LEVELS if can_skip(lv)], ["advanced"])
+        self.assertEqual([lv for lv in LEVELS if not offer_tour(lv)], ["advanced"])
 
 
 if __name__ == "__main__":

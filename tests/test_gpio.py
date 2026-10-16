@@ -127,6 +127,119 @@ class TestRunnerWithShim(unittest.TestCase):
             self.assertTrue(any(e[0] == "gpio" for e in events))
 
 
+def _collect(r: Runner, timeout: float = 10, on_event=None) -> tuple[int | None, list]:
+    """Poll a Runner until its program exits (and both output pipes have closed)."""
+    events, rc, closed, t0 = [], None, 0, time.monotonic()
+    while time.monotonic() - t0 < timeout and (rc is None or closed < 2):
+        for ev in r.poll():
+            events.append(ev)
+            if on_event:
+                on_event(ev)
+            if ev[0] == "exit":
+                rc = ev[1]
+            elif ev[0] == "closed":
+                closed += 1
+        time.sleep(0.02)
+    return rc, events
+
+
+@needs_gpiozero
+class TestWarmStart(unittest.TestCase):
+    """The spare runner: started early with gpiozero loaded, then handed the student's program."""
+
+    def test_runs_program_with_its_own_folder_env_and_input(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "a.py"
+            p.write_text("import os, sys, time\nfrom gpiozero import LED\nled = LED(17)\nled.on()\n"
+                         "time.sleep(0.3)\nname = input('Name? ')\n"
+                         "print('hi', name, sys.path[0] == os.getcwd() == os.path.dirname(__file__),"
+                         " os.environ.get('PIPATH_X'))\n")
+            r = Runner()
+            r.warm_up(SHIM, ["gpiozero", "gpiozero.pins.mock"])
+            self.assertTrue(r.warm)
+            r.start(p, Path(d), dict(SIM_ENV, PIPATH_X="yes"), shim=SHIM)
+            self.assertFalse(r.warm, "the spare process was used")
+            r.send_input("Sam")
+            rc, events = _collect(r)
+            r.close()
+            self.assertEqual(rc, 0, r.stderr)
+            self.assertIn("hi Sam True yes", r.stdout)
+            self.assertTrue(any(e[0] == "gpio" and e[1].get("t") == "pins" and e[1]["pins"].get("17") == 1.0
+                                for e in events), "the board saw the LED come on")
+
+    def test_crash_report_starts_in_the_students_file(self):
+        code = "x = 1\nprint(x + 'a')\n"
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "a.py"
+            p.write_text(code)
+            r = Runner()
+            r.warm_up(SHIM, ["gpiozero"])
+            r.start(p, Path(d), dict(SIM_ENV), shim=SHIM)
+            rc, _ = _collect(r)
+            r.close()
+            self.assertEqual(rc, 1)
+            self.assertNotIn("gpio_shim", r.stderr)
+            self.assertNotIn("runpy", r.stderr)
+            err = parse_traceback(r.stderr, str(p), code)
+            self.assertEqual((err.type, err.line), ("TypeError", 2))
+
+    def test_stop_and_presses_work(self):
+        code = ("from gpiozero import Button, LED\nfrom signal import pause\n"
+                "led = LED(17)\nb = Button(23)\nb.when_pressed = led.on\nprint('ready')\npause()\n")
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "a.py"
+            p.write_text(code)
+            r = Runner()
+            r.warm_up(SHIM, ["gpiozero", "gpiozero.pins.mock"])
+            r.start(p, Path(d), dict(SIM_ENV), shim=SHIM)
+            lit = []
+
+            def watch(ev):
+                if ev[0] == "out" and "ready" in ev[1]:
+                    r.send_command("press 23")
+                if ev[0] == "gpio" and ev[1].get("t") == "pins" and ev[1]["pins"].get("17") == 1.0:
+                    lit.append(True)
+                    r.stop()
+            rc, _ = _collect(r, on_event=watch)
+            r.close()
+            self.assertTrue(lit, r.stderr)
+            self.assertEqual(rc, 0, r.stderr)
+
+    def test_spare_process_ends_when_closed(self):
+        r = Runner()
+        r.warm_up(SHIM, ["gpiozero"])
+        proc = r._warm[0]
+        r.close()
+        self.assertIsNotNone(proc.wait(timeout=5))
+        self.assertFalse(r.warm)
+
+    def test_loading_noise_is_not_part_of_the_run(self):
+        with tempfile.TemporaryDirectory() as d:
+            lib = Path(d) / "lib"
+            lib.mkdir()
+            (lib / "noisy.py").write_text("import sys\nprint('loading')\nprint('warning', file=sys.stderr)\n")
+            p = Path(d) / "a.py"
+            p.write_text("print('student')\n")
+            r = Runner()
+            import os
+            old = os.environ.get("PYTHONPATH")
+            os.environ["PYTHONPATH"] = str(lib)
+            try:
+                r.warm_up(SHIM, ["noisy"])
+            finally:
+                if old is None:
+                    os.environ.pop("PYTHONPATH")
+                else:
+                    os.environ["PYTHONPATH"] = old
+            time.sleep(0.5)
+            r.start(p, Path(d), {}, shim=SHIM)
+            rc, _ = _collect(r)
+            r.close()
+            self.assertEqual(rc, 0, r.stderr)
+            self.assertEqual(r.stdout.strip(), "student")
+            self.assertEqual(r.stderr.strip(), "")
+
+
 @needs_gpiozero
 class TestGpioErrors(unittest.TestCase):
     CASES = [

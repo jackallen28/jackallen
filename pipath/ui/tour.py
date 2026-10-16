@@ -37,8 +37,11 @@ class Tour:
         self.next.pack(side="right")
         self.back = PButton(row, "◂ Back", self.backward, kind="dark", font="small_bold", pady=5)
         self.back.pack(side="right", padx=6)
-        root.bind("<Configure>", self._relayout, add="+")
+        # A <Configure> binding on the main window fires for every widget in it, so it is
+        # removed again in finish(), and re-layouts are merged into one per idle moment.
+        self._cfg = root.bind("<Configure>", self._relayout, add="+")
         self.bubble.bind("<Configure>", self._relayout)
+        self._place_job = None
 
     def start(self):
         self.i = 0
@@ -57,6 +60,13 @@ class Tour:
             self._show()
 
     def finish(self):
+        try:
+            self.root.unbind("<Configure>", self._cfg)
+        except tk.TclError:
+            pass
+        if self._place_job is not None:
+            self.root.after_cancel(self._place_job)
+            self._place_job = None
         for f in self.frames:
             f.destroy()
         self.bubble.destroy()
@@ -65,8 +75,12 @@ class Tour:
             self.on_done()
 
     def _relayout(self, _e=None):
-        if self.steps and self.bubble.winfo_exists():
-            self.root.after_idle(self._place)
+        if self.steps and self._place_job is None and self.bubble.winfo_exists():
+            self._place_job = self.root.after_idle(self._place_now)
+
+    def _place_now(self):
+        self._place_job = None
+        self._place()
 
     def _show(self):
         s = self.steps[self.i]

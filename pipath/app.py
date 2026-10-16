@@ -18,10 +18,14 @@ class PiPathApp(tk.Tk):
         super().__init__(className="PiPath")
         self.settings = load_config()
         self.catalog = Catalog()
-        self.engine = HintEngine()
+        self._engine: HintEngine | None = None
         self.student: storage.Student | None = None
         self.teacher_mode = False
         self.screen: tk.Frame | None = None
+        # Kept between visits, because building them is the slowest thing on a Pi 3B:
+        self._home: HomeScreen | None = None
+        self._lesson_ws: LessonWorkspace | None = None     # re-used for every activity
+        self._free_ws: FreeBuildWorkspace | None = None
 
         self.title(self.settings["app_name"])
         self.configure(bg=C["bg"])
@@ -41,37 +45,79 @@ class PiPathApp(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.quit_app)
         self.show("welcome")
 
+    @property
+    def engine(self) -> HintEngine:
+        """The Coach's error database, loaded the first time a program needs explaining."""
+        if self._engine is None:
+            self._engine = HintEngine()
+        return self._engine
+
     # ------------------------------------------------------------------ routing
+    def _kept(self) -> list:
+        return [s for s in (self._home, self._lesson_ws, self._free_ws) if s is not None]
+
     def _swap(self, screen: tk.Frame) -> None:
-        if self.screen is not None:
-            self.screen.destroy()
+        old = self.screen
+        if old is not None and old is not screen:
+            if old in self._kept():
+                old.hide()            # kept for next time
+            else:
+                old.destroy()
         self.screen = screen
         screen.pack(fill="both", expand=True)
+        if hasattr(screen, "on_show"):
+            screen.on_show()
+
+    def forget_screens(self) -> None:
+        """Another student (or teacher mode) means the kept screens are made again next time."""
+        kept = self._kept()
+        self._home = self._lesson_ws = self._free_ws = None
+        for s in kept:
+            if s is not self.screen:
+                s.destroy()           # the one on show goes at the next _swap
 
     def show(self, name: str) -> None:
-        screens = {"welcome": WelcomeScreen, "profile": ProfileScreen, "home": HomeScreen}
+        if name == "home":
+            if self._home is None:
+                self._home = HomeScreen(self)
+            else:
+                self._home.refresh()
+            self._swap(self._home)
+            return
+        screens = {"welcome": WelcomeScreen, "profile": ProfileScreen}
         self._swap(screens[name](self))
 
     def login(self, s: storage.Student) -> None:
+        self.forget_screens()
         self.student = s
         storage.touch_student(s)
         self.show("home")
 
     def logout(self) -> None:
+        self.forget_screens()
         self.student = None
         self.teacher_mode = False
         self.show("welcome")
 
     def open_lesson(self, lesson_id: str, tour: bool = False) -> None:
-        self._swap(LessonWorkspace(self, lesson_id, tour=tour))
+        if self._lesson_ws is None:
+            self._lesson_ws = LessonWorkspace(self, lesson_id, tour=tour)
+        else:
+            self._lesson_ws.load(lesson_id, tour=tour)
+        self._swap(self._lesson_ws)
 
     def open_free_build(self) -> None:
-        self._swap(FreeBuildWorkspace(self))
+        if self._free_ws is None:
+            self._free_ws = FreeBuildWorkspace(self)
+        else:
+            self._free_ws.reopen()
+        self._swap(self._free_ws)
 
     def quit_app(self) -> None:
-        if self.screen is not None:
-            self.screen.destroy()
-            self.screen = None
+        screens = self._kept() + ([self.screen] if self.screen is not None else [])
+        self._home = self._lesson_ws = self._free_ws = self.screen = None
+        for s in dict.fromkeys(screens):      # each once
+            s.destroy()
         self.destroy()
 
     # ------------------------------------------------------------------ activity state
@@ -117,6 +163,7 @@ class PiPathApp(tk.Tk):
             self.teacher_mode = not self.teacher_mode
             close()
             if self.student:
+                self.forget_screens()
                 self.show("home")
 
         label(body, "Enter the teacher PIN (set in data/config.toml)", fg=C["muted"], bg=C["panel"]).pack(anchor="w")

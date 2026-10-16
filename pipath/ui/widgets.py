@@ -81,9 +81,10 @@ class RichText(tk.Text):
 
     def __init__(self, master, bg=None, fg=None, font="ui", **kw):
         bg = bg or master.cget("bg")
+        # width=1: always packed with fill="x", so the panel it sits in decides the width
         super().__init__(master, bg=bg, fg=fg or C["ink"], font=font, wrap="word", relief="flat",
                          bd=0, highlightthickness=0, padx=0, pady=0, cursor="arrow",
-                         spacing1=2, spacing3=4, height=kw.pop("height", 4), **kw)
+                         spacing1=2, spacing3=4, height=kw.pop("height", 4), width=kw.pop("width", 1), **kw)
         self.tag_configure("h", font="h3", spacing1=4, spacing3=6)
         self.tag_configure("b", font="ui_bold")
         self.tag_configure("i", font="ui_italic")
@@ -146,17 +147,34 @@ class RichText(tk.Text):
             else:
                 self.insert("end", part, base)
 
+    # Every RichText that needs measuring waits here, so one layout pass measures them all.
+    # (A layout pass per widget made each step change several times slower on a Pi 3B.)
+    _waiting: set = set()
+    _job = None
+
     def fit_height(self) -> None:
         """Grow to show all lines (after layout, so wrapped lines count)."""
-        def _fit():
+        RichText._waiting.add(self)
+        if RichText._job is None:
+            RichText._job = self._root().after_idle(RichText._fit_waiting)
+
+    @staticmethod
+    def _fit_waiting() -> None:
+        RichText._job = None
+        widgets = [w for w in RichText._waiting if w.winfo_exists()]
+        RichText._waiting.clear()
+        if not widgets:
+            return
+        widgets[0].update_idletasks()          # one layout pass, so every width is known
+        for w in widgets:
             try:
-                self.update_idletasks()
-                n = self.count("1.0", "end", "displaylines")
+                n = w.count("1.0", "end", "displaylines")
                 n = n[0] if isinstance(n, tuple) else n
-                self.configure(height=max(1, int(n or 1)))
+                h = max(1, int(n or 1))
+                if int(w.cget("height")) != h:
+                    w.configure(height=h)
             except tk.TclError:
                 pass
-        self.after_idle(_fit)
 
 
 class ScrollFrame(tk.Frame):

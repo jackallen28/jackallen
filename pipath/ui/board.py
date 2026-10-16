@@ -40,6 +40,7 @@ class VirtualBoard(tk.Frame):
         self.on_camera = on_camera        # click the camera panel's title to switch camera
         self.camera: dict | None = None    # {"kind", "object", "caption"} once there's a camera
         self._photo = None                 # the PhotoImage on show (Tk needs us to keep it)
+        self._cam_ids: dict = {}           # canvas items of the camera panel, for quick updates
         self.mode = "sim"
         self.parts: list[dict] = []        # from the lesson's [[wiring]] rows
         self.live: list[dict] = []         # devices the running program actually made
@@ -62,6 +63,13 @@ class VirtualBoard(tk.Frame):
         self.canvas.bind("<Configure>", lambda e: self._schedule_redraw())
         self.canvas.bind("<ButtonRelease-1>", self._release_all)
         self.set_mode("sim")
+
+    def destroy(self):
+        if self._redraw_job is not None:
+            self.after_cancel(self._redraw_job)
+        for job in self._pir_jobs.values():
+            self.after_cancel(job)
+        super().destroy()
 
     # ---------------------------------------------------------------- public
     def set_mode(self, mode: str) -> None:
@@ -97,8 +105,10 @@ class VirtualBoard(tk.Frame):
             self._schedule_redraw()
 
     def set_values(self, values: dict) -> None:
-        self.values = {int(k): float(v) for k, v in values.items()}
-        self._paint()
+        new = {int(k): float(v) for k, v in values.items()}
+        if new != self.values:
+            self.values = new
+            self._paint()
 
     def reset(self) -> None:
         """Program finished or a new run is starting: everything off, keep the lesson's layout."""
@@ -116,7 +126,16 @@ class VirtualBoard(tk.Frame):
     # ---------------------------------------------------------------- camera
     def enable_camera(self, kind: str, obj: str = "face") -> None:
         self.camera = {"kind": kind, "object": obj, "caption": "No photo yet"}
+        self._photo = None
+        self._cam_ids = {}
         self._schedule_redraw()
+
+    def disable_camera(self) -> None:
+        if self.camera is not None:
+            self.camera = None
+            self._photo = None
+            self._cam_ids = {}
+            self._schedule_redraw()
 
     def set_camera_kind(self, kind: str) -> None:
         if self.camera is not None:
@@ -142,11 +161,17 @@ class VirtualBoard(tk.Frame):
                 os.remove(preview)       # previews are temporary files
             except OSError:
                 pass
+        had_photo = self._photo is not None
         if img is not None:
             factor = max(1, -(-img.width() // 190), -(-img.height() // 140))
             self._photo = img.subsample(factor) if factor > 1 else img
         self.camera["caption"] = caption
-        self._schedule_redraw()
+        if had_photo and "img" in self._cam_ids and self._redraw_job is None:
+            # just swap the picture and caption (a full redraw is slow on a Pi)
+            self.canvas.itemconfigure(self._cam_ids["img"], image=self._photo)
+            self.canvas.itemconfigure(self._cam_ids["caption"], text=caption)
+        else:
+            self._schedule_redraw()
 
     # ---------------------------------------------------------------- layout
     def _layout(self) -> list[dict]:
@@ -173,9 +198,10 @@ class VirtualBoard(tk.Frame):
         cv = self.canvas
         cv.delete("all")
         self.items = []
+        self._cam_ids = {}
         w, h = max(cv.winfo_width(), 100), max(cv.winfo_height(), 80)
-        for x in range(10, w, 18):
-            for y in range(10, h, 18):
+        for x in range(12, w, 30):          # a few breadboard holes (sparse: every item costs on a Pi)
+            for y in range(12, h, 30):
                 cv.create_rectangle(x, y, x + 2, y + 2, fill=HOLE, outline="")
         self._status_id = cv.create_text(10, 6, anchor="nw", text=self._status_text, fill=MUTED, font="small")
         top = 22
@@ -225,11 +251,11 @@ class VirtualBoard(tk.Frame):
         picker = cam["kind"] == "sim"
         img_h = h - 28 - (44 if picker else 22)
         if self._photo is not None:
-            cv.create_image(cx, img_top + img_h // 2, image=self._photo)
+            self._cam_ids["img"] = cv.create_image(cx, img_top + img_h // 2, image=self._photo)
         else:
             cv.create_rectangle(cx - 70, img_top + img_h // 2 - 45, cx + 70, img_top + img_h // 2 + 45,
                                 outline="#2C4436", dash=(3, 3))
-        cv.create_text(cx, img_top + img_h + 8, text=cam["caption"], fill=INK, font="small")
+        self._cam_ids["caption"] = cv.create_text(cx, img_top + img_h + 8, text=cam["caption"], fill=INK, font="small")
         if picker:      # what the pretend camera can see
             n = len(SIM_OBJECTS)
             cw = (w - 24) / n
@@ -296,9 +322,14 @@ class VirtualBoard(tk.Frame):
         return ids
 
     def _paint(self) -> None:
+        """Recolour parts whose value changed (each canvas call costs time on a Pi)."""
         cv = self.canvas
         for p, ids in self.items:
             k, pins = p["kind"], p["pins"]
+            state = (tuple(self.values.get(x, 0.0) for x in pins), pins[0] in self.held)
+            if ids.get("state") == state:
+                continue
+            ids["state"] = state
             if k == "led":
                 v = self.values.get(pins[0], 0.0)
                 on = LED_COLOURS.get(p.get("colour", "red"), LED_COLOURS["red"])

@@ -81,7 +81,8 @@ class TestImages(unittest.TestCase):
             idat = raw[raw.index(b"IDAT") + 4:raw.index(b"IEND") - 8]
             self.assertEqual(zlib.decompress(idat), b"\x00" + bytes(range(9)) + b"\x00" + bytes(range(9, 18)))
             if Image is not None:
-                self.assertEqual(Image.open(path).size, (3, 2))
+                with Image.open(path) as im:
+                    self.assertEqual(im.size, (3, 2))
         finally:
             path.unlink(missing_ok=True)
 

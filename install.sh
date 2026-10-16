@@ -14,6 +14,9 @@ EOF
 python3 -c "import gpiozero" 2>/dev/null || echo "Note: gpiozero not found. GPIO activities need: sudo apt install python3-gpiozero python3-lgpio"
 python3 -c "import picamera2" 2>/dev/null || echo "Note: picamera2 not found. Only needed for a ribbon camera: sudo apt install python3-picamera2"
 
+# Compile the app's Python files now, so the first start (and every student run) is quicker on a Pi 3B
+python3 -m compileall -q "$HERE/main.py" "$HERE/pipath" >/dev/null || true
+
 ENTRY="[Desktop Entry]
 Type=Application
 Name=PiPath

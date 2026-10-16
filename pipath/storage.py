@@ -5,7 +5,7 @@ Everything lives in plain files under ~/PiPath (or $PIPATH_HOME):
     ~/PiPath/
         app.json                      last student used, etc.
         students/<slug>/
-            profile.json              first name, school, tour_done (older profiles may have class_code)
+            profile.json              first name, school, help_level, tour_done (older profiles may have class_code)
             progress.json             per-lesson status, step, hints used
             lessons/<file>.py         code for each lesson
             lessons/backups/          code saved before a step replaces it
@@ -21,6 +21,8 @@ import re
 import tempfile
 from datetime import datetime
 from pathlib import Path
+
+from .levels import DEFAULT as DEFAULT_LEVEL, normalise as normalise_level
 
 APP_HOME = Path(os.environ.get("PIPATH_HOME", Path.home() / "PiPath"))
 STUDENTS = APP_HOME / "students"
@@ -119,7 +121,25 @@ class Student:
     def __init__(self, folder: Path):
         self.folder = folder
         self.profile = read_json(folder / "profile.json", {})
-        self.progress = read_json(folder / "progress.json", {"lessons": {}})
+        self._progress = None        # read when first needed (the welcome screen lists everyone)
+
+    @property
+    def progress(self) -> dict:
+        if self._progress is None:
+            self._progress = read_json(self.folder / "progress.json", {"lessons": {}})
+        return self._progress
+
+    @progress.setter
+    def progress(self, value: dict) -> None:
+        self._progress = value
+
+    @property
+    def help_level(self) -> str:
+        return normalise_level(self.profile.get("help_level"))
+
+    def set_help_level(self, level: str) -> None:
+        self.profile["help_level"] = normalise_level(level)
+        self.save_profile()
 
     # -- identity
     @property
@@ -237,6 +257,7 @@ def create_student(first_name: str, school: str, class_code: str = "") -> Studen
         "created": _now(),
         "last_seen": _now(),
         "tour_done": False,
+        "help_level": DEFAULT_LEVEL,
     }
     s.save_profile()
     s.save_progress()
@@ -256,13 +277,13 @@ def export_progress_csv(catalog_projects: list[dict]) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        header = ["first_name", "class", "school", "last_seen"]
+        header = ["first_name", "class", "school", "help_level", "last_seen"]
         for p in catalog_projects:
             header += [f"{p['id']}_status", f"{p['id']}_hints", f"{p['id']}_runs"]
         w.writerow(header)
         for s in list_students():
             row = [s.first_name, s.profile.get("class_code", ""), s.profile.get("school", ""),
-                   s.profile.get("last_seen", "")]
+                   s.help_level, s.profile.get("last_seen", "")]
             for p in catalog_projects:
                 lp = s.progress.get("lessons", {}).get(p["id"], {})
                 row += [lp.get("status", "new"), lp.get("hints_used", 0), lp.get("runs", 0)]

@@ -52,8 +52,7 @@ TIER_COLOURS = {"simple": "#1E8A52", "moderate": "#1D5FA7", "advanced": "#C51A4A
                 "camera": "#0E7C86"}
 
 
-def _pick(root, wanted, fallback):
-    have = set(tkfont.families(root))
+def _pick(have, wanted, fallback):
     for f in wanted:
         if f in have:
             return f
@@ -64,8 +63,9 @@ _FONTS = []  # keep references: a tkinter Font is deleted when garbage-collected
 
 
 def setup_fonts(root, scale: float = 1.0) -> None:
-    ui = _pick(root, ["Nunito Sans", "Nunito", "DejaVu Sans", "Liberation Sans"], "Helvetica")
-    mono = _pick(root, ["DejaVu Sans Mono", "Liberation Mono", "Noto Mono"], "Courier")
+    have = set(tkfont.families(root))     # listing fonts is slow on a Pi, so do it once
+    ui = _pick(have, ["Nunito Sans", "Nunito", "DejaVu Sans", "Liberation Sans"], "Helvetica")
+    mono = _pick(have, ["DejaVu Sans Mono", "Liberation Mono", "Noto Mono"], "Courier")
 
     def mk(name, family, size, weight="normal", slant="roman"):
         try:

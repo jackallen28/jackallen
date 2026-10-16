@@ -29,6 +29,7 @@ class CodeEditor(tk.Frame):
         super().__init__(master, bg=C["ed_bg"])
         self.on_change = on_change
         self._hl_job = None
+        self._gutter_job = None
         self._suspend = False
 
         self.gutter = tk.Canvas(self, width=46, bg=C["ed_gutter"], highlightthickness=0, bd=0)
@@ -72,6 +73,12 @@ class CodeEditor(tk.Frame):
         t.bind("<KeyRelease>", lambda e: self._draw_gutter())
         # Pasting curly quotes from documents is a classic beginner trap: straighten them
         t.bind("<<Paste>>", self._paste)
+
+    def destroy(self):
+        for job in (self._hl_job, self._gutter_job):
+            if job:
+                self.after_cancel(job)
+        super().destroy()
 
     # ---------------------------------------------------------------- public
     def get_code(self) -> str:
@@ -154,6 +161,12 @@ class CodeEditor(tk.Frame):
         self._draw_gutter()
 
     def _draw_gutter(self):
+        """Redraw line numbers once the current burst of keys / scrolling is over."""
+        if self._gutter_job is None:
+            self._gutter_job = self.after_idle(self._draw_gutter_now)
+
+    def _draw_gutter_now(self):
+        self._gutter_job = None
         g = self.gutter
         g.delete("all")
         err = getattr(self, "_error_line", None)

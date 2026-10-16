@@ -1,8 +1,13 @@
 """Runs a student's program so PiPath can show (and poke) its GPIO pins.
 
     python3 -u pipath/gpio_shim.py <student_file>
+    python3 -u pipath/gpio_shim.py --wait        (warm start: see below)
 
 This file runs INSIDE the student's process, never inside the app.
+
+Warm start: on a Pi 3B, starting Python and importing gpiozero takes a second or more. So the
+app starts a spare process early with --wait: it imports the modules in PIPATH_PRELOAD, then
+waits for one JSON line on the command fd: {"run": file, "cwd": folder, "env": {...}}.
 
 - Simulator mode (GPIOZERO_PIN_FACTORY=mock): pins are pretend. The app can press
   buttons and trigger the motion sensor by sending commands.
@@ -22,6 +27,7 @@ exits cleanly, so gpiozero switches real LEDs and buzzers off.
 """
 from __future__ import annotations
 
+import importlib
 import importlib.abc
 import importlib.machinery
 import json
@@ -46,6 +52,7 @@ _devices: list = []          # weakrefs to gpiozero devices, in the order they w
 _groups: list = []           # weakrefs to RGBLEDs (three pins shown as one light)
 camera_view = {"object": os.environ.get("PIPATH_CAMERA_OBJECT", "face")}   # what the simulated camera sees
 _gz = None                    # the gpiozero module, once the student imports it
+MOCK_PIN_CLASSES = {"mockpin": "MockPin", "mockpwmpin": "MockPWMPin"}
 
 
 def send(msg: dict) -> None:
@@ -86,6 +93,23 @@ def _patch_gpiozero(gz) -> None:
         _groups.append(weakref.ref(self))
 
     gz.RGBLED.__init__ = rgb_init
+    if _student:              # imported by the student's program (a warm start does this in _run)
+        _apply_factory(gz)
+
+
+def _apply_factory(gz) -> None:
+    """Simulator: make the mock pin factory ourselves. Asking gpiozero for it by name makes it
+    scan every installed package (twice), which takes seconds on a Pi 3B."""
+    if os.environ.get("GPIOZERO_PIN_FACTORY") != "mock" or gz.Device.pin_factory is not None:
+        return
+    name = MOCK_PIN_CLASSES.get(os.environ.get("GPIOZERO_MOCK_PIN_CLASS", "mockpin").lower())
+    if name is None:
+        return                  # something unusual: let gpiozero look it up
+    try:
+        from gpiozero.pins import mock
+        gz.Device.pin_factory = mock.MockFactory(pin_class=getattr(mock, name))
+    except Exception:
+        pass
 
 
 class _GpiozeroHook(importlib.abc.MetaPathFinder):
@@ -161,8 +185,10 @@ def _find_device(pin_no: int):
     return None
 
 
-def _listener(fd: int) -> None:
-    buf = b""
+def _listener(fd: int, buf: bytes = b"") -> None:
+    while b"\n" in buf:
+        line, buf = buf.split(b"\n", 1)
+        _command(line.decode("utf-8", "replace").split())
     while True:
         try:
             chunk = os.read(fd, 1024)
@@ -223,24 +249,27 @@ def _print_student_traceback(exc: BaseException, student: str) -> None:
     sys.stderr.flush()
 
 
-def main() -> int:
-    if len(sys.argv) < 2:
-        print("usage: gpio_shim.py <student_file>", file=sys.stderr)
-        return 2
-    global _student
-    student = _student = os.path.abspath(sys.argv[1])
-    sys.argv = [student] + sys.argv[2:]
-    sys.path[0] = os.path.dirname(student)
+def _setup() -> None:
+    """Hooks every run needs. Done before a warm process waits, too."""
     sys.path.append(str(HERE / "student_lib"))
     sys.meta_path.insert(0, _GpiozeroHook())
     signal.signal(signal.SIGTERM, _stop)
     threading.excepthook = _thread_crashed
     sys.modules["pipath_shim"] = sys.modules[__name__]
 
+
+def _run(student: str, cmd_buf: bytes = b"") -> int:
+    global _student
+    student = _student = os.path.abspath(student)
+    sys.argv = [student]
+    sys.path[0] = os.path.dirname(student)
+    camera_view["object"] = os.environ.get("PIPATH_CAMERA_OBJECT", "face")
+    if _gz is not None:                 # gpiozero was preloaded: pick the pin factory now
+        _apply_factory(_gz)
     if _state_fd is not None:
         threading.Thread(target=_reporter, daemon=True).start()
     if os.environ.get("PIPATH_CMD_FD"):
-        threading.Thread(target=_listener, args=(int(os.environ["PIPATH_CMD_FD"]),), daemon=True).start()
+        threading.Thread(target=_listener, args=(int(os.environ["PIPATH_CMD_FD"]), cmd_buf), daemon=True).start()
     send({"t": "hello", "mode": "sim" if os.environ.get("GPIOZERO_PIN_FACTORY") == "mock" else "real"})
 
     try:
@@ -255,6 +284,50 @@ def main() -> int:
         _print_student_traceback(e, student)
         return 1
     return 0
+
+
+def _wait() -> int:
+    """Warm start: load the slow modules now, then wait to be told which file to run."""
+    sys.path[0] = str(HERE / "student_lib")       # never import the app's own modules by mistake
+    quiet = os.open(os.devnull, os.O_WRONLY)
+    saved = os.dup(1), os.dup(2)
+    os.dup2(quiet, 1)                              # anything printed while loading isn't the student's
+    os.dup2(quiet, 2)
+    try:
+        for name in filter(None, os.environ.get("PIPATH_PRELOAD", "").split(",")):
+            try:
+                importlib.import_module(name)
+            except Exception:
+                pass
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.dup2(saved[0], 1)
+        os.dup2(saved[1], 2)
+        for fd in (quiet, *saved):
+            os.close(fd)
+    fd = int(os.environ["PIPATH_CMD_FD"])
+    buf = b""
+    while b"\n" not in buf:
+        chunk = os.read(fd, 4096)
+        if not chunk:
+            return 0                                 # the app closed before we were needed
+        buf += chunk
+    line, rest = buf.split(b"\n", 1)
+    order = json.loads(line)
+    os.environ.update({k: str(v) for k, v in order.get("env", {}).items()})
+    os.chdir(order.get("cwd") or os.path.dirname(order["run"]))
+    return _run(order["run"], rest)
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print("usage: gpio_shim.py <student_file> | --wait", file=sys.stderr)
+        return 2
+    _setup()
+    if sys.argv[1] == "--wait":
+        return _wait()
+    return _run(sys.argv[1])
 
 
 if __name__ == "__main__":
