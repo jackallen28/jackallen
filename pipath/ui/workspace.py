@@ -8,7 +8,9 @@ import tkinter as tk
 from pathlib import Path
 
 from .. import storage
-from ..gpio import SHIM, SIM_ENV, expand_events, mode_env, on_real_pi, wiring_check_program, wiring_parts
+from ..content import DATA_DIR
+from ..gpio import (CAMERA_KINDS, SHIM, SIM_ENV, expand_events, guess_camera, mode_env, on_real_pi,
+                    wiring_check_program, wiring_parts)
 from ..hints import (CheckResult, Diagnosis, ErrorInfo, HintEngine, code_features, evaluate_checks, gpio_lint,
                      parse_traceback, precheck)
 from ..runner import Runner
@@ -21,6 +23,8 @@ from .theme import C, TIER_COLOURS
 from .tour import Tour
 from .widgets import PButton, RichText, ScrollFrame, card, chip, label
 from .wiring import WiringCard
+
+DEMO_FILES = DATA_DIR / "demo_files"
 
 # Reading these in a loop (instead of using events) is the classic "busy loop" on a Pi
 POLLING_FEATURES = ("attr:is_pressed", "attr:is_held", "attr:motion_detected", "attr:is_active")
@@ -177,6 +181,9 @@ class Workspace(Screen):
         self.real_pi = on_real_pi()
         saved = storage.app_state().get("gpio_mode", "real")
         self.mode = saved if self.real_pi and saved in ("sim", "real") else "sim"
+        cam = storage.app_state().get("camera")
+        self.camera = cam if cam in CAMERA_KINDS else guess_camera()
+        self.sim_object = "face"
 
         # ---- top bar
         bar = tk.Frame(self, bg=C["panel"], highlightthickness=1, highlightbackground=C["line"], padx=12, pady=8)
@@ -229,8 +236,11 @@ class Workspace(Screen):
             self.console = Console(self.bottom, on_send=self.runner.send_input)
             self.bottom.add(self.console, minsize=220, stretch="always")
             self.board = VirtualBoard(self.bottom, on_press=self._board_press, on_release=self._board_release,
-                                      on_goal=self.watch_goal)
+                                      on_goal=self.watch_goal, on_object=self._pick_object,
+                                      on_camera=self.next_camera)
             self.board.set_mode(self.mode)
+            if self.uses_camera():
+                self.board.enable_camera(self.camera, self.sim_object)
             if not self.real_pi:
                 self.board.set_status("Simulator only (not a Pi)")
             vpane.add(self.bottom, minsize=150, height=270, stretch="never")
@@ -310,7 +320,36 @@ class Workspace(Screen):
         self._poll()
 
     def extra_env(self) -> dict:
-        return mode_env(self.mode) if self.gpio else {}
+        if not self.gpio:
+            return {}
+        return dict(mode_env(self.mode), **self.camera_env())
+
+    def camera_env(self, sim: bool = False) -> dict:
+        return {"PIPATH_CAMERA": "sim" if sim else self.camera, "PIPATH_CAMERA_OBJECT": self.sim_object}
+
+    def uses_camera(self) -> bool:
+        return False
+
+    # ---------------------------------------------------------------- camera
+    def next_camera(self):
+        """Cycle Simulated -> USB -> Ribbon. Saved for this Pi (it's the Pi's hardware, not the student's)."""
+        kinds = list(CAMERA_KINDS)
+        self.stop()
+        self.camera = kinds[(kinds.index(self.camera) + 1) % len(kinds)]
+        storage.set_app_state(camera=self.camera)
+        if self.board:
+            self.board.set_camera_kind(self.camera)
+        self.console.write(f"Camera: {CAMERA_KINDS[self.camera]}. " + {
+            "sim": "Pretend pictures. Pick what the camera sees on the board.\n",
+            "usb": "Plug a USB webcam into the Pi.\n",
+            "ribbon": "A Raspberry Pi camera on the ribbon cable.\n"}[self.camera], "info")
+
+    def _pick_object(self, key: str):
+        self.sim_object = key
+        if self.board:
+            self.board.set_camera_object(key)
+        if self.runner.running:
+            self.runner.send_command(f"show {key}")
 
     def current_starter(self) -> str:
         return ""
@@ -352,7 +391,7 @@ class Workspace(Screen):
 
     def show_board(self):
         if self.board and not self.board_shown:
-            self.bottom.add(self.board, minsize=260, width=400, stretch="never")
+            self.bottom.add(self.board, minsize=260, width=480 if self.uses_camera() else 400, stretch="never")
             self.board_shown = True
 
     def _board_press(self, pin: int):
@@ -373,14 +412,16 @@ class Workspace(Screen):
         elif t == "pins":
             self.board.set_values(msg["pins"])
         elif t == "photo":
-            self.on_photo(msg.get("path", ""))
-
-    def on_photo(self, path: str):
-        pass
+            self.show_board()
+            if msg.get("grid"):
+                caption = "What the computer sees"
+            else:
+                caption = Path(msg.get("path", "")).name or "Photo"
+            self.board.show_photo(msg.get("preview", ""), caption)
 
     # ---------------------------------------------------------------- demo and wiring-check runs
     def run_special(self, kind: str, code: str, env: dict, intro: str, seconds: float | None = None,
-                    events: list | None = None, stdin: str = ""):
+                    events: list | None = None, stdin: str = "", files: list | None = None):
         """Run code that isn't the student's (the goal demo, or a wiring check) in a temp folder."""
         if self.runner.running:
             return
@@ -390,6 +431,10 @@ class Workspace(Screen):
         self._special_dir = tempfile.mkdtemp(prefix="pipath_")
         path = Path(self._special_dir) / ("goal.py" if kind == "demo" else "wiring_check.py")
         path.write_text(code, encoding="utf-8")
+        for rel in files or []:       # sample data the demo needs, from data/demo_files/
+            src = DEMO_FILES / rel
+            if src.exists():
+                shutil.copy(src, Path(self._special_dir) / src.name)
         self.editor.clear_marks()
         self.console.clear()
         self.console.write(intro + "\n", "info")
@@ -399,9 +444,14 @@ class Workspace(Screen):
         for line in stdin.splitlines():
             self.runner.send_input(line)
         for when, command in expand_events(events):
-            self._special_jobs.append(self.after(int(when * 1000), lambda c=command: self.runner.send_command(c)))
+            self._special_jobs.append(self.after(int(when * 1000), lambda c=command: self._demo_command(c)))
         if seconds:
             self._special_jobs.append(self.after(int(seconds * 1000), lambda: self.runner.stop("special")))
+
+    def _demo_command(self, command: str):
+        self.runner.send_command(command)
+        if command.startswith("show ") and self.board:
+            self.board.set_camera_object(command.split()[1])   # the picker follows the demo
 
     def _cancel_special_jobs(self):
         for job in self._special_jobs:
@@ -559,6 +609,9 @@ class LessonWorkspace(Workspace):
 
     def uses_gpio(self) -> bool:
         return bool(self.lesson.get("requires_gpio") or self.lesson.get("requires_camera"))
+
+    def uses_camera(self) -> bool:
+        return bool(self.lesson.get("requires_camera"))
 
     def stop_is_finish(self) -> bool:
         return self.view == "step" and self.steps[self.step_i].get("run_mode") == "until_stopped"
@@ -953,7 +1006,7 @@ class LessonWorkspace(Workspace):
         self.run_special("demo", step["demo"], dict(SIM_ENV, **self.camera_env(sim=True)),
                          "▶ Watch the goal: this is what your program should do. (Your code isn't changed.)",
                          seconds=step.get("demo_seconds"), events=step.get("demo_events"),
-                         stdin=step.get("demo_input", ""))
+                         stdin=step.get("demo_input", ""), files=step.get("demo_files"))
 
     def check_wiring(self):
         if not self.parts or self.runner.running:
@@ -961,9 +1014,6 @@ class LessonWorkspace(Workspace):
         where = "on the Simulator board" if self.mode == "sim" else "on your breadboard"
         self.run_special("wiring", wiring_check_program(self.parts), self.extra_env(),
                          f"▶ Checking your wiring {where}. Follow the instructions below.")
-
-    def camera_env(self, sim: bool = False) -> dict:
-        return {}
 
     def special_finished(self, kind: str, stdout: str, stderr: str):
         if kind == "demo":

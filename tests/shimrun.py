@@ -53,10 +53,13 @@ class ShimResult:
 
 def run_shim(code: str, events: list | None = None, seconds: float | None = None, stdin: str = "",
              env: dict | None = None, timeout: float = 40, file_name: str = "student.py",
-             keep_folder: bool = False) -> ShimResult:
+             keep_folder: bool = False, files: list | None = None) -> ShimResult:
+    """files: paths copied into the program's folder first (like a lesson's demo_files)."""
     d = tempfile.mkdtemp(prefix="pipath_test_")
     path = Path(d) / file_name
     path.write_text(code, encoding="utf-8")
+    for f in files or []:
+        shutil.copy(f, Path(d) / Path(f).name)
     started = time.time()
     sr, sw = os.pipe()
     cr, cw = os.pipe()

@@ -650,6 +650,29 @@ hints = [
   "Valid GPIO numbers on a Pi 3B are 2 to 27.",
 ]
 
+# ------------------------------------------------------------------ Camera (pipath_camera)
+
+[[error]]
+id = "camera_not_found"
+type = "CameraNotFound"
+title = "PiPath can't find the camera"
+explain = "Your code is fine. The camera isn't answering. PiPath said: *{message}*"
+hints = [
+  "Look at the camera panel on the board. Does it say your kind of camera, **USB** or **Ribbon**? Click its title to change.",
+  "USB: unplug the camera and plug it back in. Ribbon: turn the Pi **off** first, then check the cable is pushed in firmly.",
+  "No camera today? Switch the camera panel to **Simulated** and use the pretend camera.",
+]
+
+[[error]]
+id = "camera_busy"
+type = "CameraBusy"
+title = "The camera is busy"
+explain = "Another program is already using the camera. Only one program can use it at a time."
+hints = [
+  "Press **Stop** on any other PiPath program, and close other camera apps.",
+  "Still stuck? Restart the Pi, then try again.",
+]
+
 # ------------------------------------------------------------------ Everything else
 
 [[error]]

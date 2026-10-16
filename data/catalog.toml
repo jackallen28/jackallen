@@ -37,6 +37,12 @@ title = "Electronics Lab"
 tagline = "Extra hardware projects"
 description = "More lights and inputs. Do them in any order."
 
+[[tier]]
+id = "camera"
+title = "Camera & AI"
+tagline = "See and learn"
+description = "Take photos with a camera, then teach the Pi to recognise things."
+
 # ---------------------------------------------------------------- SIMPLE
 [[project]]
 id = "s1_hello"
@@ -197,3 +203,34 @@ status = "ready"
 gpio = true
 try_first = ["a1_traffic"]
 parts = ["6 LEDs + 6 x 330Ω resistors", "2 push buttons", "tilt switch (optional)", "breadboard + jumper wires"]
+
+# ---------------------------------------------------------------- CAMERA & AI (any order; Photo Booth first is easiest)
+# camera = true -> the card says "needs camera"; students pick Simulated / USB / Ribbon in the workspace
+
+[[project]]
+id = "c1_photobooth"
+tier = "camera"
+title = "Photo Booth"
+subtitle = "Press the button, watch the 3-2-1 countdown, smile!"
+concepts = ["camera", "Button", "LED countdown", "datetime file names", "loops"]
+minutes = 40
+support = "guided → brief"
+status = "ready"
+gpio = true
+camera = true
+try_first = ["a1_traffic"]
+parts = ["USB webcam or Raspberry Pi camera", "red, amber, green LEDs + 3 x 330Ω", "1 push button", "active buzzer", "breadboard + jumper wires"]
+
+[[project]]
+id = "c2_teachable"
+tier = "camera"
+title = "Teachable Machine"
+subtitle = "Teach the Pi to tell two things apart: real machine learning"
+concepts = ["images are numbers", "training data", "nearest neighbour", "functions that return", "accuracy + bias"]
+minutes = 60
+support = "scaffolded → brief"
+status = "ready"
+gpio = true
+camera = true
+try_first = ["c1_photobooth"]
+parts = ["USB webcam or Raspberry Pi camera", "green + red LEDs + 2 x 330Ω", "1 push button", "breadboard + jumper wires", "two things to show the camera"]

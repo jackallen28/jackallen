@@ -1,0 +1,561 @@
+# CAMERA & AI 2: Teachable Machine. A nearest-neighbour image classifier the students write themselves.
+# No AI library and no internet: tiny greyscale grids from pipath_camera + a distance function.
+# demo_files: sample training data (data/demo_files/c2/examples.json, made with the Simulator's
+# Ball and Box), copied next to the demo so "Watch the goal" works before students collect their own.
+# Pin plan: green LED 22 (first thing), red LED 17 (second thing), button 23.
+
+id = "c2_teachable"
+title = "Teachable Machine"
+file_name = "teachable_machine.py"
+requires_gpio = true
+requires_camera = true
+
+intro = """
+## Teach your Pi to see
+
+How does a phone recognise a face, or a self-driving car spot a stop sign? They **learn from examples**. That's called **machine learning**.
+
+In this activity you'll build a tiny version yourself, with no AI library and no internet:
+- see how a computer stores a picture: **as numbers**
+- collect **training examples** of two things
+- write a **distance** function that measures how different two pictures are
+- make the Pi **guess** what it's looking at, and light the matching LED
+- **test** how accurate it is, and find out why it gets things wrong
+
+**Pick two things** the camera can tell apart: a ball and a box, a red cup and a book, thumbs up and thumbs down. In the **Simulator**, use **Ball** and **Box** on the board.
+"""
+
+outro = """
+## You built a machine that learns!
+
+Your Pi learned from examples and made predictions. That idea is called a **nearest neighbour** classifier. Some real systems still use it, and bigger AI systems are built on the same idea: **turn pictures into numbers, then compare them**.
+
+**Think about it:**
+- Your machine only knows what you showed it. If every training photo was taken in a bright room, it may get confused in the dark.
+- Real AI can be unfair in the same way. When the training examples leave some people out, the AI works badly for them. This is called **bias**, and checking training data for it is a real job.
+
+**Extension ideas:**
+- Add a **third** thing and a third LED
+- Use **k nearest neighbours**: let the 3 closest examples vote
+- Save a "confidence" score: how much closer was the best match than the next best?
+"""
+
+[[wiring]]
+part = "Camera"
+connect = "**USB webcam:** plug it into any USB port. **Ribbon camera:** turn the Pi OFF, lift the clip on the CAMERA connector, slide the ribbon in with the blue side facing the USB ports, then push the clip down."
+
+[[wiring]]
+part = "Green LED (thing 1)"
+kind = "led"
+pin = 22
+colour = "green"
+connect = "GPIO22 (pin 15) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Red LED (thing 2)"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω resistor → long leg. Short leg → GND rail."
+
+[[wiring]]
+part = "Snap button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail."
+
+[[wiring]]
+part = "Tip"
+connect = "Use a plain background (a sheet of paper or a wall) and keep the camera still. It makes learning much easier, for computers and for people!"
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "How a computer sees"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from pipath_camera import Camera
+
+cam = Camera()
+grid = cam.capture_grid(8, 8)     # 8 rows of 8 numbers: 0 = black, 255 = white
+
+for row in grid:
+    print(row)
+'''
+text = """
+To a computer, a picture is just **numbers**. `capture_grid(8, 8)` shrinks the camera's view to 8 × 8 squares and gives the **brightness** of each one: `0` is black, `255` is white. The board shows the grid too.
+
+**Your task:**
+1. Run it. Can you spot where the object is in the numbers? (Simulator: try **Ball**, then **Box**.)
+2. Change it to a **16 × 16** grid
+3. Instead of numbers, print a little picture: `#` for dark squares (less than 128) and `.` for light ones:
+
+```
+for row in grid:
+    line = ""
+    for value in row:
+        if value < 128:
+            line = line + "#"
+        else:
+            line = line + "."
+    print(line)
+```
+"""
+hints = [
+  "Change the numbers in `capture_grid(8, 8)` to `capture_grid(16, 16)`.",
+  "Replace the old `for row in grid:` loop with the one in the instructions.",
+]
+error_hints = { CameraNotFound = "Check the camera panel on the board shows your kind of camera (click its title to change), or choose **Simulated** for now." }
+success = "That's how computers see: every picture is a grid of numbers."
+demo = '''
+from pipath_camera import Camera
+
+cam = Camera()
+grid = cam.capture_grid(16, 16)
+
+for row in grid:
+    line = ""
+    for value in row:
+        if value < 128:
+            line = line + "#"
+        else:
+            line = line + "."
+    print(line)
+'''
+demo_events = ["0.1 show ball"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''capture_grid\(\s*16\s*,\s*16\s*\)'''
+label = "You use a 16 × 16 grid"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''^[#.]{16}$'''
+label = "You print a picture made of # and ."
+fail = "Each line should be 16 characters of `#` and `.`. Check your loop from the instructions."
+
+[[steps.checks]]
+type = "confirm"
+label = "I can see the object's shape in the printout"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Collect examples"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+button = Button(23)
+
+things = ["ball", "box"]      # change these to your two things
+examples = []
+
+for thing in things:
+    print(f"Show the camera a {thing}, then press the button 5 times.")
+    for i in range(5):
+        button.wait_for_press()
+        grid = cam.capture_grid(16, 16)
+        pixels = []
+        for row in grid:
+            pixels = pixels + row          # join the rows into one long list of 256 numbers
+        examples.append({"label": thing, "pixels": pixels})
+        print(f"  got {thing} number {i + 1}")
+        button.wait_for_release()
+
+with open("examples.json", "w") as f:
+    json.dump(___, f)
+print("Saved", len(examples), "examples")
+'''
+text = """
+A machine learns from **examples** that have a **label**: "this is a ball", "this is a box". This is called **training data**.
+
+The program takes 5 photos of each thing. Each one becomes a list of 256 numbers (16 × 16) with its label. Then it saves them all in a file called `examples.json`, so the next steps can use them.
+
+**Your task:**
+1. Change `things` to your two things (Simulator: keep `"ball"` and `"box"`)
+2. Fill in the blank: what should be saved in the file?
+3. Run it. For each thing, hold it in front of the camera and press the button 5 times. **Move it a little** between photos. (Simulator: choose Ball or Box on the board, then click the button.)
+"""
+hints = [
+  "We want to save the whole list of examples.",
+  "The line is `json.dump(examples, f)`",
+]
+success = "You've made a training set. Good data is the secret to good machine learning!"
+demo = '''
+from gpiozero import Button
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+button = Button(23)
+
+things = ["ball", "box"]
+examples = []
+
+for thing in things:
+    print(f"Show the camera a {thing}, then press the button 5 times.")
+    for i in range(5):
+        button.wait_for_press()
+        grid = cam.capture_grid(16, 16)
+        pixels = []
+        for row in grid:
+            pixels = pixels + row
+        examples.append({"label": thing, "pixels": pixels})
+        print(f"  got {thing} number {i + 1}")
+        button.wait_for_release()
+
+with open("examples.json", "w") as f:
+    json.dump(examples, f)
+print("Saved", len(examples), "examples")
+'''
+demo_events = ["0.3 show ball", "1 tap 23 every 0.7 until 4", "4.6 show box", "5 tap 23 every 0.7 until 8"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:dump"
+label = "You save the examples with json.dump"
+
+[[steps.checks]]
+type = "file_exists"
+value = "examples.json"
+label = "examples.json was saved"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Saved \d+ examples'''
+label = "You collected all your examples"
+fail = "Press the button 5 times for each thing, until it says `Saved 10 examples`."
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "How different are two pictures?"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+import json
+
+with open("examples.json") as f:
+    examples = json.load(f)
+
+def distance(a, b):
+    """How different two pictures are: add up the gaps between matching pixels."""
+    total = 0
+    for x, y in zip(a, b):
+        total = total + ___
+    return total
+
+first = examples[0]
+print("Comparing everything with the first", first["label"])
+for ex in examples:
+    print(ex["label"], distance(first["pixels"], ex["pixels"]))
+'''
+text = """
+To recognise something, the computer needs a way to say how **alike** two pictures are. Here's a simple way:
+
+- look at each pair of matching pixels
+- find the **gap** between their numbers (always positive: that's what `abs()` does)
+- add up all the gaps. A small total means the pictures look alike. A big total means they're different.
+
+`zip(a, b)` pairs up the two lists: the first pixel of each, then the second, and so on.
+
+**Your task:** fill in the blank so it adds the gap between `x` and `y`. Run it. Are the distances to the **same** thing smaller than the distances to the **other** thing?
+"""
+hints = [
+  "The gap between two numbers is one take away the other, made positive.",
+  "`abs(x - y)` gives the gap, even if `y` is bigger than `x`.",
+  "The line is `total = total + abs(x - y)`",
+]
+error_hints = { FileNotFoundError = "There's no `examples.json` yet. Go back to step 2 and collect your examples first." }
+success = "You just wrote the most important part of a nearest-neighbour classifier."
+demo = '''
+import json
+
+with open("examples.json") as f:
+    examples = json.load(f)
+
+def distance(a, b):
+    """How different two pictures are: add up the gaps between matching pixels."""
+    total = 0
+    for x, y in zip(a, b):
+        total = total + abs(x - y)
+    return total
+
+first = examples[0]
+print("Comparing everything with the first", first["label"])
+for ex in examples:
+    print(ex["label"], distance(first["pixels"], ex["pixels"]))
+'''
+demo_files = ["c2/examples.json"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:abs"
+label = "You use abs() to get the gap"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "distance() returns the total"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''^\w[\w ]*\s+\d+$'''
+label = "You print a distance for each example"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Make a guess"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import Button, LED
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+button = Button(23)
+green = LED(22)     # lights up for the first thing
+red = LED(17)       # lights up for the second thing
+
+with open("examples.json") as f:
+    examples = json.load(f)
+things = []
+for ex in examples:
+    if ex["label"] not in things:
+        things.append(ex["label"])
+
+def distance(a, b):
+    total = 0
+    for x, y in zip(a, b):
+        total = total + abs(x - y)
+    return total
+
+def classify(pixels):
+    """Find the example that looks most like these pixels, and return its label."""
+    best_label = None
+    best_distance = None
+    for ex in examples:
+        d = distance(pixels, ex["pixels"])
+        if best_distance is None or d < ___:
+            best_distance = d
+            best_label = ex["label"]
+    return best_label
+
+def snap():
+    grid = cam.capture_grid(16, 16)
+    pixels = []
+    for row in grid:
+        pixels = pixels + row
+    return pixels
+
+print("Show me something and press the button!")
+while True:
+    button.wait_for_press()
+    guess = classify(snap())
+    print("I think it's a", guess)
+    green.value = guess == things[0]
+    red.value = guess == things[1]
+    button.wait_for_release()
+'''
+text = """
+Now the clever bit. To guess what's in a new photo, `classify()` compares it with **every** training example and finds the **closest** one (the smallest distance). Its label is the guess. That's a **nearest neighbour** classifier.
+
+It works like you looking at a new dog photo and thinking "that looks most like the Labrador I saw before".
+
+**Your task:** fill in the blank so a new example wins if its distance `d` is **smaller** than the best so far. Run it, show the camera each thing, and press the button. Does the right LED light up? Press **Stop** when you've tested both.
+"""
+hints = [
+  "We keep the example with the smallest distance so far in `best_distance`.",
+  "Compare `d` with `best_distance`.",
+  "The line is `if best_distance is None or d < best_distance:`",
+]
+error_hints = { FileNotFoundError = "There's no `examples.json` yet. Go back to step 2 and collect your examples first." }
+success = "Your Pi is recognising things it has never seen before. That's machine learning!"
+demo = '''
+from gpiozero import Button, LED
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+button = Button(23)
+green = LED(22)
+red = LED(17)
+
+with open("examples.json") as f:
+    examples = json.load(f)
+things = []
+for ex in examples:
+    if ex["label"] not in things:
+        things.append(ex["label"])
+
+def distance(a, b):
+    total = 0
+    for x, y in zip(a, b):
+        total = total + abs(x - y)
+    return total
+
+def classify(pixels):
+    best_label = None
+    best_distance = None
+    for ex in examples:
+        d = distance(pixels, ex["pixels"])
+        if best_distance is None or d < best_distance:
+            best_distance = d
+            best_label = ex["label"]
+    return best_label
+
+def snap():
+    grid = cam.capture_grid(16, 16)
+    pixels = []
+    for row in grid:
+        pixels = pixels + row
+    return pixels
+
+print("Show me something and press the button!")
+while True:
+    button.wait_for_press()
+    guess = classify(snap())
+    print("I think it's a", guess)
+    green.value = guess == things[0]
+    red.value = guess == things[1]
+    button.wait_for_release()
+'''
+demo_files = ["c2/examples.json"]
+demo_events = ["0.5 show ball", "1.5 tap 23", "3 show box", "4 tap 23", "5.5 show ball", "6.5 tap 23"]
+demo_seconds = 8.5
+
+[[steps.checks]]
+type = "code_regex"
+value = '''d\s*<\s*best_distance|best_distance\s*>\s*d'''
+label = "The closest example wins"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "classify() returns its guess"
+
+[[steps.checks]]
+type = "output_contains"
+value = "I think"
+label = "Your machine made a guess"
+fail = "Run it, show the camera something, and press the button before you press Stop."
+
+[[steps.checks]]
+type = "confirm"
+label = "It guessed right most of the time, and the matching LED lit up"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: how accurate is it?"
+support = "brief"
+starter_mode = "keep"
+text = """
+Scientists never just say "it works". They **test** it and measure how often it's right. That's called **accuracy**.
+
+**Goal:** change the bottom of your program into a **test**:
+
+1. For each thing, ask the user to show it and press the button **5 times** (new photos, not the training ones)
+2. Count how many guesses were correct, and how many guesses there were in total
+3. At the end, print the accuracy as a percentage, like `Accuracy: 80%`
+
+Then **experiment**. What happens if you test in different light, from further away, or with a different background? Write down what you find.
+
+**Tip:** the percentage is `round(correct / total * 100)`.
+"""
+hints = [
+  "Replace the `while True:` loop with `for thing in things:` and, inside it, `for i in range(5):`.",
+  "After each guess: `if guess == thing:` then `correct = correct + 1`. Start with `correct = 0` and `total = 0` before the loops.",
+]
+success = "You measured your machine's accuracy, just like real AI researchers do."
+demo = '''
+from gpiozero import Button, LED
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+button = Button(23)
+green = LED(22)
+red = LED(17)
+
+with open("examples.json") as f:
+    examples = json.load(f)
+things = []
+for ex in examples:
+    if ex["label"] not in things:
+        things.append(ex["label"])
+
+def distance(a, b):
+    total = 0
+    for x, y in zip(a, b):
+        total = total + abs(x - y)
+    return total
+
+def classify(pixels):
+    best_label = None
+    best_distance = None
+    for ex in examples:
+        d = distance(pixels, ex["pixels"])
+        if best_distance is None or d < best_distance:
+            best_distance = d
+            best_label = ex["label"]
+    return best_label
+
+def snap():
+    grid = cam.capture_grid(16, 16)
+    pixels = []
+    for row in grid:
+        pixels = pixels + row
+    return pixels
+
+correct = 0
+total = 0
+for thing in things:
+    print(f"Test: show me a {thing} and press the button 5 times")
+    for i in range(5):
+        button.wait_for_press()
+        guess = classify(snap())
+        print("  I think it's a", guess)
+        green.value = guess == things[0]
+        red.value = guess == things[1]
+        if guess == thing:
+            correct = correct + 1
+        total = total + 1
+        button.wait_for_release()
+
+print(f"Accuracy: {round(correct / total * 100)}%")
+'''
+demo_files = ["c2/examples.json"]
+demo_events = ["0.3 show ball", "1 tap 23 every 0.7 until 4", "4.6 show box", "5 tap 23 every 0.7 until 8"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''correct\s*(=\s*correct\s*\+|\+=)\s*1'''
+label = "You count the correct guesses"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+\s*%'''
+label = "You print the accuracy as a percentage"
+fail = "Finish the whole test: 5 presses for each thing. Then print something like `Accuracy: 80%`."

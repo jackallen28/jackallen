@@ -1,0 +1,472 @@
+# CAMERA & AI 1: Photo Booth. See e1_lightswitch.toml for the GPIO lesson keys.
+#   requires_camera = true  -> Camera button (Simulated / USB / Ribbon) + camera panel on the board
+# Students use PiPath's camera helper (pipath/student_lib/pipath_camera.py), so the same code
+# works with a USB webcam, a ribbon camera, or the Simulator.
+# Pin plan: LEDs 17 (red) 27 (amber) 22 (green), button 23, buzzer 18.
+
+id = "c1_photobooth"
+title = "Photo Booth"
+file_name = "photo_booth.py"
+requires_gpio = true
+requires_camera = true
+
+intro = """
+## Build a photo booth
+
+Press a button, watch the lights count down **3, 2, 1**, hear a beep, and *snap!* Your Pi takes a photo.
+
+In this activity you will:
+- take photos with code
+- start the camera with a **button**
+- make a **countdown** with a list of LEDs and a loop
+- give every photo its own name with the **date and time**
+- shoot a 4-photo **photo strip**
+
+**Choose your camera** by clicking the title of the **camera panel** on the board (bottom right):
+- **USB**: a USB webcam plugged into the Pi
+- **Ribbon**: a Raspberry Pi camera on the ribbon cable
+- **Simulated**: no camera? The board makes pretend photos
+
+Your photos are saved in your PiPath folder, next to your code.
+"""
+
+outro = """
+## Say cheese!
+
+You used a camera, a button, a list of LEDs, a loop, a function and `datetime` to build a working photo booth.
+
+**How does the camera code work?** `pipath_camera` is a small helper PiPath gives you. On a ribbon camera it uses the **Picamera2** library. Outside PiPath you can write:
+
+```
+from picamera2 import Picamera2
+cam = Picamera2()
+cam.start()
+cam.capture_file("me.jpg")
+```
+
+**Extension ideas:**
+- Add a "selfie timer" setting: hold the button for a 10-second countdown instead of 3
+- Combine with the **Motion Alarm**: take a photo whenever the sensor sees movement
+- Try **Teachable Machine** next, and teach the Pi to recognise what's in the photo!
+"""
+
+[[wiring]]
+part = "Camera"
+connect = "**USB webcam:** plug it into any USB port. **Ribbon camera:** turn the Pi OFF, gently lift the clip on the CAMERA connector, slide the ribbon in with the blue side facing the USB ports, then push the clip down."
+
+[[wiring]]
+part = "Red LED (3)"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Amber LED (2)"
+kind = "led"
+pin = 27
+colour = "amber"
+connect = "GPIO27 (pin 13) → 330Ω resistor → long leg. Short leg → GND rail."
+
+[[wiring]]
+part = "Green LED (1)"
+kind = "led"
+pin = 22
+colour = "green"
+connect = "GPIO22 (pin 15) → 330Ω resistor → long leg. Short leg → GND rail."
+
+[[wiring]]
+part = "Snap button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail."
+
+[[wiring]]
+part = "Buzzer"
+kind = "buzzer"
+pin = 18
+connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → GND rail."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Say cheese!"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from pipath_camera import Camera
+
+cam = Camera()                  # the camera you chose on the board
+
+print("Smile!")
+cam.take_photo("___.jpg")       # give your photo a name, like "me.jpg"
+print("Saved!")
+'''
+text = """
+`Camera()` starts the camera you picked on the board's camera panel. `cam.take_photo("me.jpg")` takes a photo and saves it with that name.
+
+**Your task:** replace `___` with a name for your photo (no spaces), like `me` or `first_photo`. Run it and look at the **camera** panel on the board.
+
+*Real camera:* point it at yourself and smile! It takes about a second to get ready.
+"""
+hints = [
+  "Keep the quotes and the `.jpg`. Only replace the three underscores.",
+  "For example: `cam.take_photo(\"me.jpg\")`",
+]
+error_hints = { CameraNotFound = "Check the camera panel on the board shows your kind of camera (click its title to change), or choose **Simulated** for now." }
+success = "Your first photo taken with code!"
+demo = '''
+from pipath_camera import Camera
+
+cam = Camera()
+
+print("Smile!")
+cam.take_photo("me.jpg")
+print("Saved!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:take_photo"
+label = "You take a photo"
+
+[[steps.checks]]
+type = "file_exists"
+value = "*.[jp][pn]g"
+label = "A photo was saved"
+
+[[steps.checks]]
+type = "confirm"
+label = "I can see my photo on the board"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Press to snap"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+from pipath_camera import Camera
+
+cam = Camera()
+button = Button(23)
+
+print("Press the button to take a photo")
+button.___()
+cam.take_photo("button_photo.jpg")
+print("Saved button_photo.jpg")
+'''
+text = """
+A photo booth shouldn't snap until you're ready. Let's use a **button**.
+
+`button.wait_for_press()` makes the program stop and wait until the button is pressed.
+
+**Your task:** fill in the blank with the name of that method, then run it and press the button. *Simulator:* click the button on the board.
+"""
+hints = [
+  "The method's name is in the instructions: it *waits for* a *press*.",
+  "The line is `button.wait_for_press()`",
+]
+success = "You're in control: the photo waits for you."
+demo = '''
+from gpiozero import Button
+from pipath_camera import Camera
+
+cam = Camera()
+button = Button(23)
+
+print("Press the button to take a photo")
+button.wait_for_press()
+cam.take_photo("button_photo.jpg")
+print("Saved button_photo.jpg")
+'''
+demo_events = ["1.5 tap 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:wait_for_press"
+label = "The camera waits for the button"
+
+[[steps.checks]]
+type = "file_exists"
+value = "button_photo.*"
+label = "You pressed the button and a photo was saved"
+fail = "Run it again and press the button (Simulator: click it on the board)."
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "3, 2, 1, snap!"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Button, Buzzer
+from pipath_camera import Camera
+from time import sleep
+
+cam = Camera()
+button = Button(23)
+buzzer = Buzzer(18)
+lights = [LED(17), LED(27), LED(22)]    # red = 3, amber = 2, green = 1
+
+print("Press the button for a photo")
+button.wait_for_press()
+
+count = 3
+for light in lights:
+    print(count)
+    # turn this light on for 1 second, then off
+
+    count = count - 1
+
+# beep twice, then take the photo
+'''
+text = """
+Real photo booths give you a countdown so you can get ready. The three LEDs are in a **list**, so a `for` loop can light them one after another: red (3), amber (2), green (1).
+
+**Your task:**
+1. Inside the loop, turn `light` on, `sleep(1)`, then turn it off
+2. After the loop, beep twice: `buzzer.beep(0.1, 0.1, n=2, background=False)`
+3. Then take a photo called `countdown.jpg` and print that it's saved
+"""
+hints = [
+  "Inside the loop (indented): `light.on()`, `sleep(1)`, `light.off()`.",
+  "After the loop (not indented): `buzzer.beep(0.1, 0.1, n=2, background=False)`.",
+  "Then: `cam.take_photo(\"countdown.jpg\")` and `print(\"Saved countdown.jpg\")`.",
+]
+success = "3, 2, 1, snap! That's a real photo booth countdown."
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from pipath_camera import Camera
+from time import sleep
+
+cam = Camera()
+button = Button(23)
+buzzer = Buzzer(18)
+lights = [LED(17), LED(27), LED(22)]    # red = 3, amber = 2, green = 1
+
+print("Press the button for a photo")
+button.wait_for_press()
+
+count = 3
+for light in lights:
+    print(count)
+    light.on()
+    sleep(1)
+    light.off()
+    count = count - 1
+
+buzzer.beep(0.1, 0.1, n=2, background=False)
+cam.take_photo("countdown.jpg")
+print("Saved countdown.jpg")
+'''
+demo_events = ["1.5 tap 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''^\s+\w+\.on\(\)'''
+label = "Each light turns on inside the loop"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:beep"
+label = "The buzzer beeps before the photo"
+
+[[steps.checks]]
+type = "file_exists"
+value = "countdown.*"
+label = "countdown.jpg was saved"
+fail = "Run it, press the button and wait for the countdown to finish."
+
+[[steps.checks]]
+type = "confirm"
+label = "The lights counted down 3, 2, 1, then it took my photo"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "A new name every time"
+support = "scaffolded"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Right now every photo is called `countdown.jpg`, so each new one **replaces** the last. Let's give every photo its own name using the **date and time**, and keep the booth running.
+
+```
+from datetime import datetime
+
+name = datetime.now().strftime("photo_%Y-%m-%d_%H-%M-%S.jpg")
+```
+
+That makes names like `photo_2026-10-16_09-41-07.jpg`. (`%Y` is the year, `%H` the hour, `%M` minutes, `%S` seconds.)
+
+**Your task:**
+1. Put the countdown, beep and photo in a function: `def countdown_photo():`
+2. Use the date-and-time name instead of `countdown.jpg`, and print it
+3. At the bottom, loop forever:
+
+```
+while True:
+    print("Press the button for a photo")
+    button.wait_for_press()
+    countdown_photo()
+```
+
+Take two photos, check they both appear, then press **Stop**.
+"""
+hints = [
+  "Add `from datetime import datetime` at the top.",
+  "Inside your function, make the name just before the photo: `name = datetime.now().strftime(\"photo_%Y-%m-%d_%H-%M-%S.jpg\")`, then `cam.take_photo(name)`.",
+  "Example:\n```\ndef countdown_photo():\n    count = 3\n    for light in lights:\n        print(count)\n        light.on()\n        sleep(1)\n        light.off()\n        count = count - 1\n    buzzer.beep(0.1, 0.1, n=2, background=False)\n    name = datetime.now().strftime(\"photo_%Y-%m-%d_%H-%M-%S.jpg\")\n    cam.take_photo(name)\n    print(\"Saved\", name)\n```",
+]
+error_hints = { NameError = "Did you add `from datetime import datetime` at the top?" }
+success = "Every photo gets its own name. Nothing gets overwritten!"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from pipath_camera import Camera
+from time import sleep
+from datetime import datetime
+
+cam = Camera()
+button = Button(23)
+buzzer = Buzzer(18)
+lights = [LED(17), LED(27), LED(22)]
+
+def countdown_photo():
+    count = 3
+    for light in lights:
+        print(count)
+        light.on()
+        sleep(1)
+        light.off()
+        count = count - 1
+    buzzer.beep(0.1, 0.1, n=2, background=False)
+    name = datetime.now().strftime("photo_%Y-%m-%d_%H-%M-%S.jpg")
+    cam.take_photo(name)
+    print("Saved", name)
+
+while True:
+    print("Press the button for a photo")
+    button.wait_for_press()
+    countdown_photo()
+'''
+demo_events = ["1 tap 23", "6 tap 23"]
+demo_seconds = 11
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:datetime"
+label = "You use datetime"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:strftime"
+label = "Photo names include the date and time"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:FunctionDef"
+label = "The countdown and photo are in a function"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "The booth keeps running"
+
+[[steps.checks]]
+type = "file_exists"
+value = "photo_*"
+label = "A photo with a date-and-time name was saved"
+fail = "Run it, press the button, and wait for the photo before you press Stop."
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: the photo strip"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Photo booths at parties print a **strip** of photos taken quickly one after another.
+
+**Goal:** after the countdown, take **4 photos** in a row, half a second apart, then tell the user how many photos are in the folder.
+
+1. Name them so they stay together, ending in `_1` to `_4`, like `strip_09-41-07_1.jpg`
+2. Use a `for` loop with `range(1, 5)` (that's 1, 2, 3, 4)
+3. Count the photos with the `glob` module: `len(glob.glob("*.jpg"))`, and print `You have 12 photos`
+
+**Bonus:** flash all three LEDs on each snap, like a camera flash.
+"""
+hints = [
+  "Make the start of the name once: `stamp = datetime.now().strftime(\"strip_%H-%M-%S\")`, then in the loop `cam.take_photo(f\"{stamp}_{i}.jpg\")`.",
+  "`import glob` at the top, then after the strip: `print(\"You have\", len(glob.glob(\"*.jpg\")), \"photos\")`.",
+]
+success = "A whole photo strip from one button press. Brilliant!"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from pipath_camera import Camera
+from time import sleep
+from datetime import datetime
+import glob
+
+cam = Camera()
+button = Button(23)
+buzzer = Buzzer(18)
+lights = [LED(17), LED(27), LED(22)]
+
+def countdown():
+    count = 3
+    for light in lights:
+        print(count)
+        light.on()
+        sleep(1)
+        light.off()
+        count = count - 1
+    buzzer.beep(0.1, 0.1, n=2, background=False)
+
+def photo_strip():
+    countdown()
+    stamp = datetime.now().strftime("strip_%H-%M-%S")
+    for i in range(1, 5):
+        for light in lights:
+            light.on()
+        cam.take_photo(f"{stamp}_{i}.jpg")
+        for light in lights:
+            light.off()
+        print("Snap", i)
+        sleep(0.5)
+    print("You have", len(glob.glob("*.jpg")), "photos")
+
+while True:
+    print("Press the button for a photo strip")
+    button.wait_for_press()
+    photo_strip()
+'''
+demo_events = ["1 tap 23"]
+demo_seconds = 9
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "A loop takes the photos"
+
+[[steps.checks]]
+type = "file_exists"
+value = "*_[1-4].*"
+min = 4
+label = "4 photos ending in _1 to _4 were saved"
+fail = "Check your photo names end in `_1`, `_2`, `_3` and `_4`, then press the button again."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+\s+photos'''
+ignore_case = true
+label = "You print how many photos there are"

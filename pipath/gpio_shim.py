@@ -44,7 +44,7 @@ _student = ""                # full path of the student's file
 _callback_crashed: list = []  # set when an event handler (e.g. when_pressed) crashes
 _devices: list = []          # weakrefs to gpiozero devices, in the order they were made
 _groups: list = []           # weakrefs to RGBLEDs (three pins shown as one light)
-camera_view = {"object": "circle"}   # read by pipath_camera's simulated camera
+camera_view = {"object": os.environ.get("PIPATH_CAMERA_OBJECT", "face")}   # what the simulated camera sees
 _gz = None                    # the gpiozero module, once the student imports it
 
 

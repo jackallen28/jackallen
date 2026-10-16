@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from ..gpio import BOARD_KIND, INPUT_KINDS
+import os
+
+from ..gpio import BOARD_KIND, CAMERA_KINDS, INPUT_KINDS, SIM_OBJECTS
 from .theme import C
 from .widgets import PButton
 
@@ -32,9 +34,12 @@ def _mix(c1: str, c2: str, t: float) -> str:
 
 
 class VirtualBoard(tk.Frame):
-    def __init__(self, master, on_press=None, on_release=None, on_goal=None):
+    def __init__(self, master, on_press=None, on_release=None, on_goal=None, on_object=None, on_camera=None):
         super().__init__(master, bg=BG)
-        self.on_press, self.on_release, self.on_goal = on_press, on_release, on_goal
+        self.on_press, self.on_release, self.on_goal, self.on_object = on_press, on_release, on_goal, on_object
+        self.on_camera = on_camera        # click the camera panel's title to switch camera
+        self.camera: dict | None = None    # {"kind", "object", "caption"} once there's a camera
+        self._photo = None                 # the PhotoImage on show (Tk needs us to keep it)
         self.mode = "sim"
         self.parts: list[dict] = []        # from the lesson's [[wiring]] rows
         self.live: list[dict] = []         # devices the running program actually made
@@ -106,7 +111,42 @@ class VirtualBoard(tk.Frame):
         self._schedule_redraw()
 
     def has_devices(self) -> bool:
-        return bool(self.parts or self.live)
+        return bool(self.parts or self.live or self.camera)
+
+    # ---------------------------------------------------------------- camera
+    def enable_camera(self, kind: str, obj: str = "face") -> None:
+        self.camera = {"kind": kind, "object": obj, "caption": "No photo yet"}
+        self._schedule_redraw()
+
+    def set_camera_kind(self, kind: str) -> None:
+        if self.camera is not None:
+            self.camera["kind"] = kind
+            self._schedule_redraw()
+
+    def set_camera_object(self, key: str) -> None:
+        if self.camera is not None and self.camera["object"] != key:
+            self.camera["object"] = key
+            self._schedule_redraw()
+
+    def show_photo(self, preview: str, caption: str) -> None:
+        """Show a photo (or the grid the computer sees) in the camera panel."""
+        if self.camera is None:
+            self.enable_camera("sim")
+        img = None
+        if preview and os.path.exists(preview):
+            try:
+                img = tk.PhotoImage(file=preview)
+            except tk.TclError:
+                img = None
+            try:
+                os.remove(preview)       # previews are temporary files
+            except OSError:
+                pass
+        if img is not None:
+            factor = max(1, -(-img.width() // 190), -(-img.height() // 140))
+            self._photo = img.subsample(factor) if factor > 1 else img
+        self.camera["caption"] = caption
+        self._schedule_redraw()
 
     # ---------------------------------------------------------------- layout
     def _layout(self) -> list[dict]:
@@ -140,10 +180,15 @@ class VirtualBoard(tk.Frame):
         self._status_id = cv.create_text(10, 6, anchor="nw", text=self._status_text, fill=MUTED, font="small")
         top = 22
         h -= top
+        if self.camera is not None:
+            cam_w = max(220, int(w * .55))
+            self._draw_camera(w - cam_w, top, cam_w, h)
+            w -= cam_w
         parts = self._layout()
         if not parts:
-            cv.create_text(w // 2, h // 2, text="Make an LED or a Button in your code\nand it will appear here.",
-                           fill=MUTED, font="small", justify="center")
+            if self.camera is None:
+                cv.create_text(w // 2, h // 2, text="Make an LED or a Button in your code\nand it will appear here.",
+                               fill=MUTED, font="small", justify="center")
             return
         n = len(parts)
         best = (0, 1)
@@ -163,6 +208,48 @@ class VirtualBoard(tk.Frame):
             cy = y0 + r * size * 1.25 + size * .45
             self.items.append((p, self._draw(p, cx, cy, size)))
         self._paint()
+
+    def _draw_camera(self, x0: int, y0: int, w: int, h: int) -> None:
+        cv, cam = self.canvas, self.camera
+        cv.create_rectangle(x0 + 4, y0, x0 + w - 8, y0 + h - 4, fill="#0F1A14", outline="#2C4436")
+        title = cv.create_text(x0 + 14, y0 + 8, anchor="nw", fill=INK, font="small_bold", tags="camtitle",
+                               text=f"{CAMERA_KINDS.get(cam['kind'], cam['kind']).upper()} CAMERA  ▸")
+        x1, y1, x2, y2 = cv.bbox(title)
+        cv.create_rectangle(x1 - 4, y1 - 2, x2 + 4, y2 + 2, fill="#22382C", outline="", tags="camtitle")
+        cv.tag_raise(title)
+        cv.tag_bind("camtitle", "<Button-1>", lambda e: self.on_camera and self.on_camera())
+        cv.tag_bind("camtitle", "<Enter>", lambda e: self.canvas.configure(cursor="hand2"))
+        cv.tag_bind("camtitle", "<Leave>", lambda e: self.canvas.configure(cursor=""))
+        cx = x0 + w // 2 - 2
+        img_top = y0 + 28
+        picker = cam["kind"] == "sim"
+        img_h = h - 28 - (44 if picker else 22)
+        if self._photo is not None:
+            cv.create_image(cx, img_top + img_h // 2, image=self._photo)
+        else:
+            cv.create_rectangle(cx - 70, img_top + img_h // 2 - 45, cx + 70, img_top + img_h // 2 + 45,
+                                outline="#2C4436", dash=(3, 3))
+        cv.create_text(cx, img_top + img_h + 8, text=cam["caption"], fill=INK, font="small")
+        if picker:      # what the pretend camera can see
+            n = len(SIM_OBJECTS)
+            cw = (w - 24) / n
+            for i, (key, name) in enumerate(SIM_OBJECTS):
+                bx = x0 + 10 + i * cw
+                by = y0 + h - 30
+                on = key == cam["object"]
+                tag = f"obj_{key}"
+                cv.create_rectangle(bx + 2, by, bx + cw - 2, by + 20, fill=C["go"] if on else "#22382C",
+                                    outline="", tags=tag)
+                cv.create_text(bx + cw / 2, by + 10, text=name, fill="#FFFFFF" if on else INK, font="small", tags=tag)
+                cv.tag_bind(tag, "<Button-1>", lambda e, k=key: self._pick_object(k))
+                cv.tag_bind(tag, "<Enter>", lambda e: self.canvas.configure(cursor="hand2"))
+                cv.tag_bind(tag, "<Leave>", lambda e: self.canvas.configure(cursor=""))
+
+    def _pick_object(self, key: str) -> None:
+        self.camera["object"] = key
+        self._schedule_redraw()
+        if self.on_object:
+            self.on_object(key)
 
     # ---------------------------------------------------------------- drawing
     def _draw(self, p: dict, cx: float, cy: float, s: float) -> dict:
@@ -195,7 +282,7 @@ class VirtualBoard(tk.Frame):
             ids["dome"] = cv.create_oval(cx - r, cy - r * 1.1, cx + r, cy + r * .7, fill="#F2F2EE",
                                          outline="#B8B8B0", width=2, tags=tag)
         name = p.get("label", k).split(" (")[0]
-        fit = max(4, int(s / 7.5))
+        fit = max(4, int(s / 8.5))
         if len(name) > fit:
             name = name[:fit - 1].rstrip() + "…"
         pins = "/".join(str(x) for x in p["pins"])

@@ -37,8 +37,9 @@ def hardware_lessons() -> list[str]:
 
 def run_demo(step: dict):
     seconds = step.get("demo_seconds")
+    files = [DATA_DIR / "demo_files" / rel for rel in step.get("demo_files", [])]
     r = run_shim(step["demo"], events=step.get("demo_events"), seconds=seconds,
-                 stdin=step.get("demo_input", ""), timeout=(seconds or 25) + 20, keep_folder=True)
+                 stdin=step.get("demo_input", ""), timeout=(seconds or 25) + 20, keep_folder=True, files=files)
     crashed = (r.rc != 0 and not r.stopped) or "Traceback" in r.stderr
     res = evaluate_checks(step["checks"], step["demo"], r.stdout, crashed, runs_this_step=3,
                           folder=r.folder, since=r.started)
@@ -65,6 +66,8 @@ class TestLessonFiles(unittest.TestCase):
                             re.compile(c["value"])
                     if "demo" in step:
                         self.assertNotIn("___", step["demo"], f"step {i + 1} demo has blanks")
+                    for rel in step.get("demo_files", []):
+                        self.assertTrue((DATA_DIR / "demo_files" / rel).exists(), rel)
                 for row in lesson.get("wiring", []):
                     if row.get("kind"):
                         self.assertTrue(row.get("pin") or row.get("pins"), row)

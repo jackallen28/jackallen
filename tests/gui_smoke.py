@@ -146,6 +146,11 @@ def scenes(app):
             app.screen.steps[0]["starter"].replace("___", "no_motion")), press_run()), 1200),
         ("28_a3_motion", press(4), 1200),
         ("29_a3_checked", lambda: (stop()), 2500),
+        ("30_camera_activities", lambda: (app.show("home"), app.screen.set_filter("camera"))),
+        ("31_c1_photo", lambda: (open_lesson("c1_photobooth")(), start_lesson(), app.screen.editor.set_code(
+            app.screen.steps[0]["starter"].replace("___", "me")), press_run()), 2500),
+        ("32_c2_grid_goal", lambda: (open_lesson("c2_teachable")(), start_lesson(), to_step(1)(),
+                                     app.screen._pick_object("box"), goal()), 6500),
     ]
 
 

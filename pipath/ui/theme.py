@@ -48,7 +48,8 @@ C = {
     "syn_def": "#FFD866",
 }
 
-TIER_COLOURS = {"simple": "#1E8A52", "moderate": "#1D5FA7", "advanced": "#C51A4A", "lab": "#7A3EB1"}
+TIER_COLOURS = {"simple": "#1E8A52", "moderate": "#1D5FA7", "advanced": "#C51A4A", "lab": "#7A3EB1",
+                "camera": "#0E7C86"}
 
 
 def _pick(root, wanted, fallback):

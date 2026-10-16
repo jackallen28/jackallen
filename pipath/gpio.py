@@ -48,6 +48,18 @@ def mode_env(mode: str) -> dict:
     return dict(SIM_ENV) if mode == "sim" else {}
 
 
+CAMERA_KINDS = {"sim": "Simulated", "usb": "USB", "ribbon": "Ribbon"}
+SIM_OBJECTS = [("face", "Face"), ("ball", "Ball"), ("box", "Box"), ("nothing", "Empty")]
+
+
+def guess_camera() -> str:
+    """A sensible first choice: a plugged-in USB webcam, else the ribbon camera on a Pi, else the Simulator."""
+    for node in Path("/sys/class/video4linux").glob("video*"):
+        if os.path.basename(os.path.realpath(node / "device" / "driver")) == "uvcvideo":
+            return "usb"
+    return "ribbon" if on_real_pi() else "sim"
+
+
 def expand_events(events: list | None) -> list[tuple[float, str]]:
     """Turn a step's demo_events into timed shim commands.
 
