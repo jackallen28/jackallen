@@ -43,6 +43,18 @@ hints = [
 ]
 
 [[error]]
+id = "runaway_busy_gpio"
+type = "PiPathRunaway"
+message = "busy_gpio"
+title = "Your loop kept checking the button flat out"
+explain = "PiPath stopped your program because a `while True` loop was checking a button or sensor thousands of times a second. That makes the Pi hot and slow, and it never gets a rest."
+hints = [
+  "Find the `while True` loop that checks `is_pressed` (or another sensor).",
+  "Add `sleep(0.01)` inside the loop, so the Pi rests for a moment each time around.",
+  "Even better, let gpiozero wait for you: `button.when_pressed = my_function` or `button.wait_for_press()`.",
+]
+
+[[error]]
 id = "runaway_busy"
 type = "PiPathRunaway"
 message = "busy"
@@ -598,12 +610,23 @@ hints = [
 ]
 
 [[error]]
+id = "bad_event_handler"
+type = "BadEventHandler"
+title = "That isn't something gpiozero can run later"
+explain = "Events like `when_pressed` need the **name of a function** (or `None`). On line {line} it was given something else, often because of brackets: `light.on()` runs straight away and hands over its result instead of the function."
+hints = [
+  "Look at the right-hand side of the `=` on line {line}.",
+  "Remove the brackets: write `light.on`, not `light.on()`.",
+  "If you made your own function, use its name without brackets: `button.when_pressed = next_colour`.",
+]
+
+[[error]]
 id = "gpio_no_factory"
 type = "BadPinFactory"
 title = "Can't talk to the GPIO pins"
 explain = "gpiozero couldn't connect to the GPIO pins. This happens when the code isn't running on a Raspberry Pi, or the pin library is missing."
 hints = [
-  "Are you on a Raspberry Pi? If not, turn on **Practice mode** (simulated pins).",
+  "Are you on a Raspberry Pi? If not, choose **Simulator** next to the Run button.",
   "Ask your teacher to check that `python3-lgpio` is installed.",
 ]
 
@@ -611,9 +634,9 @@ hints = [
 id = "gpio_pwm_unsupported"
 type = "PinPWMUnsupported"
 title = "This pin can't dim"
-explain = "`PWMLED` and `RGBLED` need a pin that supports dimming (PWM). On a real Pi every GPIO pin can do this. In Practice mode the simulator must have PWM switched on."
+explain = "`PWMLED` and `RGBLED` need a pin that supports dimming (PWM). On a real Pi every GPIO pin can do this, and so can the PiPath Simulator."
 hints = [
-  "Ask your teacher to check Practice mode is up to date.",
+  "Are you running your file outside PiPath? Try it in PiPath with **Simulator** or **Real Pi** chosen.",
   "If you only need on/off, use `LED` instead of `PWMLED`.",
 ]
 

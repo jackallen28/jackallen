@@ -33,6 +33,7 @@ class Console(tk.Frame):
         self.text.tag_configure("err", foreground=C["con_err"])
         self.text.tag_configure("in", foreground=C["con_in"], font="code")
         self.text.tag_configure("info", foreground=C["con_info"], font="code_ui")
+        self.text.tag_configure("warn", foreground="#FFD27A", font="code_ui")
         self.text.configure(state="disabled")
 
         # input row

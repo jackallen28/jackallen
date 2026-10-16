@@ -1,4 +1,4 @@
-# ELECTRONICS LAB 2 - status "planned" until GPIO support is built. See e1_lightswitch.toml for the new keys.
+# ELECTRONICS LAB 2. See e1_lightswitch.toml for the GPIO lesson keys.
 
 id = "e2_moodlamp"
 title = "RGB Mood Lamp"
@@ -30,10 +30,14 @@ You used `RGBLED`, colour tuples, lists, `%` to wrap around, and `when_held` for
 
 [[wiring]]
 part = "RGB LED (common cathode)"
+kind = "rgbled"
+pins = [17, 27, 22]
 connect = "Longest leg → GND (pin 6). Red leg → 330Ω → GPIO17 (pin 11). Green leg → 330Ω → GPIO27 (pin 13). Blue leg → 330Ω → GPIO22 (pin 15)."
 
 [[wiring]]
 part = "Button"
+kind = "button"
+pin = 23
 connect = "One leg → GPIO23 (pin 16). Opposite leg → GND (pin 14)."
 
 [[wiring]]

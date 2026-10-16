@@ -72,6 +72,46 @@ def scenes(app):
     def free_build():
         app.open_free_build()
 
+    def skip_tour():
+        offer = getattr(app.screen, "_tour_offer", None)
+        if offer is not None and offer.winfo_exists():
+            offer.destroy()
+        app.screen.tour_done()
+
+    def set_code(code):
+        def go():
+            app.screen.editor.set_code(code)
+        return go
+
+    def press(pin):
+        def go():
+            app.screen._board_press(pin)
+        return go
+
+    def release(pin):
+        def go():
+            app.screen._board_release(pin)
+        return go
+
+    def tick_confirms():
+        for i, c in enumerate(app.screen.steps[app.screen.step_i]["checks"]):
+            if c["type"] == "confirm":
+                app.screen._toggle_confirm(i)
+
+    def stop():
+        app.screen.stop()
+
+    def goal():
+        app.screen.watch_goal()
+
+    def to_step(i):
+        def go():
+            app.screen.enter_step(i)
+        return go
+
+    def check_wiring():
+        app.screen.check_wiring()
+
     return [
         ("01_welcome_first_run", lambda: None),
         ("02_profile", profile),
@@ -84,6 +124,20 @@ def scenes(app):
         ("09_s1_tour_offer", start_lesson),
         ("10_s1_run", press_run),
         ("11_free_build", free_build),
+        ("12_free_build_gpio", lambda: (set_code("from gpiozero import LED, Button\nfrom signal import pause\n"
+                                                 "light = LED(17)\nbutton = Button(23)\n"
+                                                 "button.when_pressed = light.toggle\npause()\n")(), press_run())),
+        ("13_free_build_pressed", press(23)),
+        ("14_e1_intro", lambda: (release(23)(), stop(), open_lesson("e1_lightswitch")())),
+        ("15_e1_step1", lambda: (start_lesson(), skip_tour())),
+        ("16_e1_step1_ran", press_run),
+        ("17_e1_step3_running", lambda: (to_step(2)(), app.screen.editor.set_code(
+            app.screen.steps[2]["starter"].replace("___", "light.off")), press_run())),
+        ("18_e1_step3_pressed", press(23)),
+        ("19_e1_step3_stopped", lambda: (release(23)(), stop())),
+        ("20_e1_step3_ticked", tick_confirms),
+        ("21_e3_wiring", lambda: open_lesson("e3_simon")()),
+        ("22_e4_board", lambda: (open_lesson("e4_dice")(), start_lesson())),
     ]
 
 

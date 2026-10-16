@@ -1,4 +1,4 @@
-# ELECTRONICS LAB 3 - status "planned" until GPIO support is built. See e1_lightswitch.toml for the new keys.
+# ELECTRONICS LAB 3. See e1_lightswitch.toml for the GPIO lesson keys.
 
 id = "e3_simon"
 title = "Simon Says"
@@ -31,16 +31,43 @@ That's a real game with lists, functions, return values, a game loop and hardwar
 """
 
 [[wiring]]
-part = "Red LED + button"
-connect = "LED: GPIO17 (pin 11) → 330Ω → long leg, short leg → GND. Button: GPIO23 (pin 16) and GND."
+part = "Red LED"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω → long leg, short leg → GND."
 
 [[wiring]]
-part = "Green LED + button"
-connect = "LED: GPIO27 (pin 13) → 330Ω → long leg, short leg → GND. Button: GPIO24 (pin 18) and GND."
+part = "Green LED"
+kind = "led"
+pin = 27
+colour = "green"
+connect = "GPIO27 (pin 13) → 330Ω → long leg, short leg → GND."
 
 [[wiring]]
-part = "Blue LED + button"
-connect = "LED: GPIO22 (pin 15) → 330Ω → long leg, short leg → GND. Button: GPIO25 (pin 22) and GND."
+part = "Blue LED"
+kind = "led"
+pin = 22
+colour = "blue"
+connect = "GPIO22 (pin 15) → 330Ω → long leg, short leg → GND."
+
+[[wiring]]
+part = "Red button"
+kind = "button"
+pin = 23
+connect = "GPIO23 (pin 16) and GND."
+
+[[wiring]]
+part = "Green button"
+kind = "button"
+pin = 24
+connect = "GPIO24 (pin 18) and GND."
+
+[[wiring]]
+part = "Blue button"
+kind = "button"
+pin = 25
+connect = "GPIO25 (pin 22) and GND."
 
 [[wiring]]
 part = "Tip"

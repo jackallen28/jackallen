@@ -1,12 +1,17 @@
 """The coding workspace: guide panel + editor + output, for lessons and Free Build."""
 from __future__ import annotations
 
+import shutil
+import tempfile
 import tkinter as tk
 from pathlib import Path
 
 from .. import storage
-from ..hints import CheckResult, Diagnosis, ErrorInfo, HintEngine, evaluate_checks, parse_traceback, precheck
+from ..gpio import SHIM, SIM_ENV, mode_env, on_real_pi, wiring_check_program, wiring_parts
+from ..hints import (CheckResult, Diagnosis, ErrorInfo, HintEngine, code_features, evaluate_checks, gpio_lint,
+                     parse_traceback, precheck)
 from ..runner import Runner
+from .board import VirtualBoard
 from .console import Console
 from .editor import CodeEditor
 from .home import stars_for
@@ -14,6 +19,10 @@ from .onboarding import Screen
 from .theme import C, TIER_COLOURS
 from .tour import Tour
 from .widgets import PButton, RichText, ScrollFrame, card, chip, label
+from .wiring import WiringCard
+
+# Reading these in a loop (instead of using events) is the classic "busy loop" on a Pi
+POLLING_FEATURES = ("attr:is_pressed", "attr:is_held", "attr:motion_detected", "attr:is_active")
 
 SUPPORT = {
     #             badge text        colour      step hints after N tries   max error-hint tier
@@ -160,6 +169,13 @@ class Workspace(Screen):
         self._save_job = None
         self._closed_streams = 0
         self._exit_code = None
+        self._special: str | None = None      # None (a normal run), "demo" or "wiring"
+        self._special_jobs: list = []
+        self._special_dir: str | None = None
+        self.gpio = self.uses_gpio()
+        self.real_pi = on_real_pi()
+        saved = storage.app_state().get("gpio_mode", "real")
+        self.mode = saved if self.real_pi and saved in ("sim", "real") else "sim"
 
         # ---- top bar
         bar = tk.Frame(self, bg=C["panel"], highlightthickness=1, highlightbackground=C["line"], padx=12, pady=8)
@@ -198,13 +214,28 @@ class Workspace(Screen):
         PButton(tb, "A−", lambda: self.editor.zoom(-1), kind="dark", font="small_bold", padx=8, pady=3).pack(side="right", padx=4)
         self.save_lbl = label(tb, "", font="small", fg="#7D8696", bg="#2A2F38")
         self.save_lbl.pack(side="right", padx=12)
+        if self.gpio:
+            self._mode_switch(tb)
 
         vpane = tk.PanedWindow(right, orient="vertical", sashwidth=6, bg="#2A2F38", bd=0, sashrelief="flat")
         vpane.pack(fill="both", expand=True)
         self.editor = CodeEditor(vpane, on_change=self._changed)
-        self.console = Console(vpane, on_send=self.runner.send_input)
         vpane.add(self.editor, minsize=160, stretch="always")
-        vpane.add(self.console, minsize=150, height=230, stretch="never")
+        self.board: VirtualBoard | None = None
+        self.board_shown = False
+        if self.gpio:
+            self.bottom = tk.PanedWindow(vpane, orient="horizontal", sashwidth=6, bg="#2A2F38", bd=0, sashrelief="flat")
+            self.console = Console(self.bottom, on_send=self.runner.send_input)
+            self.bottom.add(self.console, minsize=220, stretch="always")
+            self.board = VirtualBoard(self.bottom, on_press=self._board_press, on_release=self._board_release,
+                                      on_goal=self.watch_goal)
+            self.board.set_mode(self.mode)
+            if not self.real_pi:
+                self.board.set_status("Not a Raspberry Pi, so the Simulator is on")
+            vpane.add(self.bottom, minsize=150, height=270, stretch="never")
+        else:
+            self.console = Console(vpane, on_send=self.runner.send_input)
+            vpane.add(self.console, minsize=150, height=230, stretch="never")
 
         for seq, fn in (("<F5>", self.run), ("<Shift-F5>", self.stop), ("<Control-s>", self.save_now)):
             self.bind_all(seq, lambda e, f=fn: (f(), "break")[1])
@@ -212,7 +243,9 @@ class Workspace(Screen):
     def destroy(self):
         for seq in ("<F5>", "<Shift-F5>", "<Control-s>"):
             self.unbind_all(seq)
+        self._cancel_special_jobs()
         self.runner.stop()
+        self._clean_special_dir()
         if self._save_job:
             self.after_cancel(self._save_job)
             self.save_now()
@@ -251,22 +284,143 @@ class Workspace(Screen):
             self.after_run(code, problem, crashed=True, stdout="")
             return
         self.console.clear()
-        self.console.write(f"▶ Running {self.code_path().name}\n", "info")
-        self.console.set_status("running…", C["con_in"])
+        self.console.write(f"▶ Running {self.code_path().name}" +
+                           (" on the real pins" if self.gpio and self.mode == "real" else
+                            " in the Simulator" if self.gpio else "") + "\n", "info")
+        if self.gpio:
+            for w in gpio_lint(code):
+                self.console.write(f"⚠ Coach tip: {w}\n", "warn")
+        if self.stop_is_finish():
+            self.console.write("This program keeps running. Test it, then press ■ Stop to check your work.\n", "info")
+        self._launch(code, self.code_path(), self.extra_env())
+
+    def _launch(self, code: str, path: Path, env: dict, status: str = "running…"):
+        self.console.set_status(status, C["con_in"])
         self.run_btn.set_enabled(False)
         self.stop_btn.set_enabled(True)
         self.console.set_input_enabled(True)
         self._closed_streams = 0
         self._exit_code = None
         self._run_code = code
-        self.runner.start(self.code_path(), self.code_path().parent, self.extra_env())
+        if self.board:
+            self.board.reset()
+        self.runner.start(path, path.parent, env, shim=SHIM if self.gpio else None)
         self._poll()
 
     def extra_env(self) -> dict:
-        return {}
+        return mode_env(self.mode) if self.gpio else {}
 
     def current_starter(self) -> str:
         return ""
+
+    def uses_gpio(self) -> bool:
+        return False
+
+    def stop_is_finish(self) -> bool:
+        """True when pressing Stop is the normal way to end (programs that run until stopped)."""
+        return False
+
+    # ---------------------------------------------------------------- Simulator / Real Pi
+    def _mode_switch(self, tb):
+        box = tk.Frame(tb, bg="#2A2F38")
+        box.pack(side="left", padx=(6, 0))
+        label(box, "Run on:", font="small", fg="#7D8696", bg="#2A2F38").pack(side="left", padx=(0, 6))
+        self.sim_btn = PButton(box, "Simulator", lambda: self.set_mode("sim"), kind="dark", font="small_bold", padx=10, pady=3)
+        self.sim_btn.pack(side="left")
+        self.real_btn = PButton(box, "Real Pi", lambda: self.set_mode("real"), kind="dark", font="small_bold", padx=10, pady=3)
+        self.real_btn.pack(side="left", padx=(2, 0))
+        self._paint_mode()
+
+    def _paint_mode(self):
+        self.sim_btn.set_kind("secondary" if self.mode == "sim" else "dark")
+        self.real_btn.set_kind("secondary" if self.mode == "real" else "dark")
+        self.real_btn.set_enabled(self.real_pi)
+
+    def set_mode(self, mode: str):
+        if mode == self.mode or (mode == "real" and not self.real_pi):
+            return
+        self.stop()
+        self.mode = mode
+        storage.set_app_state(gpio_mode=mode)
+        self._paint_mode()
+        if self.board:
+            self.board.set_mode(mode)
+        self.console.write("Switched to " + ("the Simulator: the board on screen is your hardware.\n" if mode == "sim"
+                                             else "the Real Pi: your program will use the real GPIO pins.\n"), "info")
+
+    def show_board(self):
+        if self.board and not self.board_shown:
+            self.bottom.add(self.board, minsize=260, width=400, stretch="never")
+            self.board_shown = True
+
+    def _board_press(self, pin: int):
+        if self.runner.running:
+            self.runner.send_command(f"press {pin}")
+        else:
+            self.board.set_status("Press Run first, then press the button")
+
+    def _board_release(self, pin: int):
+        self.runner.send_command(f"release {pin}")
+
+    def _on_gpio(self, msg: dict):
+        t = msg.get("t")
+        if t == "devices":
+            if msg["devices"]:
+                self.show_board()
+            self.board.set_devices(msg["devices"])
+        elif t == "pins":
+            self.board.set_values(msg["pins"])
+        elif t == "photo":
+            self.on_photo(msg.get("path", ""))
+
+    def on_photo(self, path: str):
+        pass
+
+    # ---------------------------------------------------------------- demo and wiring-check runs
+    def run_special(self, kind: str, code: str, env: dict, intro: str, seconds: float | None = None,
+                    events: list | None = None, stdin: str = ""):
+        """Run code that isn't the student's (the goal demo, or a wiring check) in a temp folder."""
+        if self.runner.running:
+            return
+        self.save_now()
+        self._clean_special_dir()
+        self._special = kind
+        self._special_dir = tempfile.mkdtemp(prefix="pipath_")
+        path = Path(self._special_dir) / ("goal.py" if kind == "demo" else "wiring_check.py")
+        path.write_text(code, encoding="utf-8")
+        self.editor.clear_marks()
+        self.console.clear()
+        self.console.write(intro + "\n", "info")
+        if kind == "demo" and self.board:
+            self.board.set_mode("sim")
+        self._launch(code, path, env, status="playing the goal…" if kind == "demo" else "checking wiring…")
+        for line in stdin.splitlines():
+            self.runner.send_input(line)
+        for ev in events or []:
+            when, action, pin = str(ev).split()
+            self._special_jobs.append(self.after(int(float(when) * 1000),
+                                                 lambda a=action, p=pin: self.runner.send_command(f"{a} {p}")))
+        if seconds:
+            self._special_jobs.append(self.after(int(seconds * 1000), lambda: self.runner.stop("special")))
+
+    def _cancel_special_jobs(self):
+        for job in self._special_jobs:
+            try:
+                self.after_cancel(job)
+            except tk.TclError:
+                pass
+        self._special_jobs = []
+
+    def _clean_special_dir(self):
+        if self._special_dir:
+            shutil.rmtree(self._special_dir, ignore_errors=True)
+            self._special_dir = None
+
+    def watch_goal(self):
+        pass
+
+    def special_finished(self, kind: str, stdout: str, stderr: str):
+        pass
 
     def stop(self):
         if self.runner.running:
@@ -277,6 +431,9 @@ class Workspace(Screen):
             kind = ev[0]
             if kind == "out":
                 self.console.write(ev[1])
+            elif kind == "gpio":
+                if self.board:
+                    self._on_gpio(ev[1])
             elif kind == "closed":
                 self._closed_streams += 1
             elif kind == "exit":
@@ -292,14 +449,35 @@ class Workspace(Screen):
         self.console.set_input_enabled(False)
         code, reason, rc = self._run_code, self.runner.stop_reason, self._exit_code
         stderr = self.runner.stderr
+        if self.board:
+            self.board.set_values({})       # like real hardware: when a program ends, its pins switch off
+        if self._special:
+            kind, self._special = self._special, None
+            self._cancel_special_jobs()
+            if self.board:
+                self.board.set_mode(self.mode)
+            if stderr.strip() and rc not in (0, None) and reason is None:
+                self.console.write("\n" + stderr, "err")
+            self.console.set_status("")
+            self.special_finished(kind, self.runner.stdout, stderr)
+            self._clean_special_dir()
+            return
         folder = str(self.code_path().parent) + "/"
         if reason == "user":
+            if self.stop_is_finish() and not (rc not in (0, None, -15) and stderr.strip()):
+                self.console.write("\n■ Stopped. Checking your work…\n", "info")
+                self.console.set_status("stopped")
+                self.after_run(code, None, False, self.runner.stdout)
+                return
             self.console.write("\n■ Stopped.\n", "info")
             self.console.set_status("stopped")
             return
         err: ErrorInfo | None = None
         if reason in ("runaway_output", "runaway_busy"):
-            err = ErrorInfo("PiPathRunaway", "output" if reason == "runaway_output" else "busy")
+            msg = "output" if reason == "runaway_output" else "busy"
+            if msg == "busy" and self.gpio and any(code_features(code).get(f) for f in POLLING_FEATURES):
+                msg = "busy_gpio"
+            err = ErrorInfo("PiPathRunaway", msg)
             self.console.write("\n■ PiPath stopped your program: it looked like a never-ending loop.\n", "err")
         elif rc != 0:
             if stderr.strip():
@@ -348,8 +526,15 @@ class LessonWorkspace(Workspace):
         self.step_runs = 0
         self.hint_ctx = None
         self.revealed: dict = {}
+        self.confirmed: set[int] = set()      # "I saw it happen" boxes ticked this step
+        self._last_eval = None                # (code, stdout, crashed) of the last run, for re-checking
+        self.wiring_card: WiringCard | None = None
+        self.parts = wiring_parts(self.lesson) if self.lesson.get("requires_gpio") else []
 
         self._build_left()
+        if self.gpio:
+            self.board.set_parts(self.parts)
+            self.show_board()
 
         code = app.student.read_lesson_code(self.lesson["file_name"])
         if code is not None:
@@ -371,6 +556,20 @@ class LessonWorkspace(Workspace):
 
     def current_starter(self) -> str:
         return self.steps[self.step_i].get("starter", "") if self.view == "step" else ""
+
+    def uses_gpio(self) -> bool:
+        return bool(self.lesson.get("requires_gpio") or self.lesson.get("requires_camera"))
+
+    def stop_is_finish(self) -> bool:
+        return self.view == "step" and self.steps[self.step_i].get("run_mode") == "until_stopped"
+
+    def _wiring(self, open_: bool):
+        if self.lesson.get("requires_gpio"):
+            self.wiring_card = WiringCard(self.g, self.lesson, self.project, self.parts, open_=open_,
+                                          on_check=self.check_wiring)
+            self.wiring_card.pack(fill="x", pady=(0, 14))
+        else:
+            self.wiring_card = None
 
     # ---------------------------------------------------------------- left panel
     def _build_left(self):
@@ -426,13 +625,16 @@ class LessonWorkspace(Workspace):
         rt.pack(fill="x")
         rt.render(self.lesson["intro"])
         meta = card(self.g, padx=12, pady=10)
-        meta.pack(fill="x", pady=(16, 0))
+        meta.pack(fill="x", pady=(16, 14))
         label(meta, f"{len(self.steps)} steps  ·  about {self.project['minutes']} minutes",
               font="small_bold", bg=C["panel"]).pack(anchor="w")
         label(meta, "You'll learn: " + ", ".join(self.project["concepts"]), font="small", fg=C["muted"],
               bg=C["panel"], wraplength=340).pack(anchor="w", pady=(2, 0))
+        self._wiring(open_=True)
+        if self.board:
+            self.board.show_goal_button(False)
         self.coach = CoachCard(self.g, on_hint=self._hint_used)
-        self.coach.pack(fill="x", pady=(16, 0))
+        self.coach.pack(fill="x", pady=(2, 0))
         self.coach.idle()
         self.checklist_frame = None
         self.back_btn.set_enabled(False)
@@ -507,7 +709,11 @@ class LessonWorkspace(Workspace):
         student.save_progress()
         self.attempts = 0
         self.step_runs = 0
+        self.confirmed = set()
+        self._last_eval = None
         self.hint_ctx = ("step", i)
+        if self.board:
+            self.board.show_goal_button(bool(step.get("demo")))
         self._render_step()
         self.console.clear()
         self.console.set_status("")
@@ -522,9 +728,9 @@ class LessonWorkspace(Workspace):
         self.after(300, self._offer_tour)
 
     def _offer_tour(self):
-        if getattr(self, "_touring", False):
+        if getattr(self, "_touring", False) or self.app.student.profile.get("tour_done"):
             return
-        ov = card(self, padx=22, pady=18, border=C["accent"])
+        ov = self._tour_offer = card(self, padx=22, pady=18, border=C["accent"])
         ov.place(relx=.5, rely=.42, anchor="center")
         label(ov, "First time here?", font="h2", bg=C["panel"]).pack(anchor="w")
         label(ov, "Want a quick look around the workspace? It takes about 30 seconds.",
@@ -547,6 +753,7 @@ class LessonWorkspace(Workspace):
         self._clear_guide()
         step = self.steps[self.step_i]
         self._progress_dots(self.g)
+        self._wiring(open_=self.step_i == 0 and self.step_i not in self.lp["steps_done"])
         badge, colour, _, _ = SUPPORT.get(step["support"], SUPPORT["scaffolded"])
         top = tk.Frame(self.g, bg=C["bg"])
         top.pack(fill="x")
@@ -562,14 +769,28 @@ class LessonWorkspace(Workspace):
         label(self.checklist_frame, "YOUR CHECKLIST", font="small_bold", fg=C["muted"], bg=C["panel"]).pack(anchor="w", pady=(0, 4))
         self.check_rows = []
         done = self.step_i in self.lp["steps_done"]
-        for c in step["checks"]:
+        for idx, c in enumerate(step["checks"]):
             row = tk.Frame(self.checklist_frame, bg=C["panel"])
             row.pack(fill="x", pady=2)
-            icon = tk.Label(row, text="✓" if done else "○", font="ui_bold", width=2,
-                            fg=C["ok"] if done else C["faint"], bg=C["panel"])
-            icon.pack(side="left")
-            txt = label(row, c.get("label", c["type"]), bg=C["panel"], wraplength=320)
-            txt.pack(side="left", fill="x")
+            if c["type"] == "confirm" and not done:
+                # a box the student ticks when they have seen it happen (on screen or on the breadboard)
+                icon = tk.Label(row, text="", font="small_bold", width=2, fg=C["ok"], bg=C["panel_alt"],
+                                highlightthickness=2, highlightbackground=C["faint"], cursor="hand2")
+                icon.pack(side="left", padx=(3, 7), pady=2)
+                txt_box = tk.Frame(row, bg=C["panel"], cursor="hand2")
+                txt_box.pack(side="left", fill="x")
+                txt = label(txt_box, c.get("label", c["type"]), bg=C["panel"], wraplength=300)
+                txt.pack(anchor="w")
+                label(txt_box, "Tick this when you've seen it happen", font="small", fg=C["muted"],
+                      bg=C["panel"]).pack(anchor="w")
+                for w in (icon, txt_box, *txt_box.winfo_children()):
+                    w.bind("<Button-1>", lambda e, k=idx: self._toggle_confirm(k))
+            else:
+                icon = tk.Label(row, text="✓" if done else "○", font="ui_bold", width=2,
+                                fg=C["ok"] if done else C["faint"], bg=C["panel"])
+                icon.pack(side="left")
+                txt = label(row, c.get("label", c["type"]), bg=C["panel"], wraplength=320)
+                txt.pack(side="left", fill="x")
             self.check_rows.append((icon, txt))
 
         # coach
@@ -650,25 +871,30 @@ class LessonWorkspace(Workspace):
                 self.lp["errors"] = self.lp.get("errors", 0) + 1
             self.editor.mark_error_line(diag.line)
 
-        results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs)
+        self._last_eval = (code, stdout, crashed)
+        results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed)
         self._show_results(results)
         passed = all(r.passed for r in results)
+        waiting = [r for r in results if not r.passed]
 
         if passed:
-            if self.step_i not in self.lp["steps_done"]:
-                self.lp["steps_done"].append(self.step_i)
-            self.coach.message("ok", "Step complete!", step.get("success", "Well done!") +
-                               ("\n\nPress **Finish activity** to see your stars." if self.step_i == len(self.steps) - 1
-                                else "\n\nPress **Next step** when you're ready."))
+            self._complete_step()
+        elif not diag and all(r.type == "confirm" for r in waiting):
+            # the code did everything the checks can see; now the student confirms what happened
+            self.coach.message("info", "Did you see it happen?",
+                               "Your code passed the checks. Now watch the board" +
+                               (" or your breadboard" if self.mode == "real" else "") +
+                               " and tick the box when you see it:\n\n" +
+                               "\n".join(f"- **{r.label}**" for r in waiting) +
+                               "\n\nNot quite right? Change your code and press **Run** again.")
             self.coach.set_hints([], None)
-            self.console.set_status("✓ step complete", C["con_in"])
         else:
             self.attempts += 1
             if diag:
                 self.coach.diagnosis(diag)
                 self._refresh_hints(diag)
             else:
-                first = next(r for r in results if not r.passed)
+                first = next(r for r in results if not r.passed and r.type != "confirm")
                 self.coach.message("warn", "Your program ran, but…",
                                    f"**Not ticked yet:** {first.label}\n\n" + (first.fail or "Read the step instructions again and compare them with your code."))
                 self._refresh_hints()
@@ -676,9 +902,82 @@ class LessonWorkspace(Workspace):
         self._update_footer()
         self.guide.scroll_to(self.coach)
 
+    def _complete_step(self):
+        step = self.steps[self.step_i]
+        if self.step_i not in self.lp["steps_done"]:
+            self.lp["steps_done"].append(self.step_i)
+        self.coach.message("ok", "Step complete!", step.get("success", "Well done!") +
+                           ("\n\nPress **Finish activity** to see your stars." if self.step_i == len(self.steps) - 1
+                            else "\n\nPress **Next step** when you're ready."))
+        self.coach.set_hints([], None)
+        self.console.set_status("✓ step complete", C["con_in"])
+
     def _show_results(self, results: list[CheckResult]):
         for (icon, _txt), r in zip(self.check_rows, results):
-            icon.configure(text="✓" if r.passed else "✗", fg=C["ok"] if r.passed else C["err"])
+            if r.type == "confirm" and str(icon.cget("highlightthickness")) != "0":
+                icon.configure(text="✓" if r.passed else "", highlightbackground=C["ok"] if r.passed else C["warn"])
+            else:
+                icon.configure(text="✓" if r.passed else "✗", fg=C["ok"] if r.passed else C["err"])
+
+    def _toggle_confirm(self, idx: int):
+        if self.view != "step" or self.step_i in self.lp["steps_done"]:
+            return
+        if self.step_runs == 0:
+            self.coach.message("info", "Run it first",
+                               "Press **Run** and watch what happens. Then tick the box if you saw it.")
+            return
+        self.confirmed ^= {idx}
+        icon = self.check_rows[idx][0]
+        ticked = idx in self.confirmed
+        icon.configure(text="✓" if ticked else "", highlightbackground=C["ok"] if ticked else C["faint"])
+        if self._last_eval and ticked:
+            code, stdout, crashed = self._last_eval
+            step = self.steps[self.step_i]
+            results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed)
+            if all(r.passed for r in results):
+                self._show_results(results)
+                self._complete_step()
+                self.app.student.save_progress()
+                self._update_footer()
+                self.guide.scroll_to(self.coach)
+
+    # ---------------------------------------------------------------- goal demo + wiring check
+    def watch_goal(self):
+        if self.view != "step":
+            return
+        step = self.steps[self.step_i]
+        if not step.get("demo"):
+            return
+        self.run_special("demo", step["demo"], dict(SIM_ENV, **self.camera_env(sim=True)),
+                         "▶ Watch the goal: this is what your program should do. (Your code isn't changed.)",
+                         seconds=step.get("demo_seconds"), events=step.get("demo_events"),
+                         stdin=step.get("demo_input", ""))
+
+    def check_wiring(self):
+        if not self.parts or self.runner.running:
+            return
+        where = "on the Simulator board" if self.mode == "sim" else "on your breadboard"
+        self.run_special("wiring", wiring_check_program(self.parts), self.extra_env(),
+                         f"▶ Checking your wiring {where}. Follow the instructions below.")
+
+    def camera_env(self, sim: bool = False) -> dict:
+        return {}
+
+    def special_finished(self, kind: str, stdout: str, stderr: str):
+        if kind == "demo":
+            self.console.write("\n■ That's the goal! Now make your code do the same, then press Run.\n", "info")
+        elif kind == "wiring":
+            if self.wiring_card:
+                self.wiring_card.mark_from_output(stdout)
+            bad = [l for l in stdout.splitlines() if l.startswith("✗")]
+            if bad:
+                self.coach.message("warn", "Check those wires",
+                                   "Some parts didn't respond:\n\n" + "\n".join(f"- {l[2:]}" for l in bad) +
+                                   "\n\nTurn the Pi off, fix the wiring, and try **Check my wiring** again.")
+            elif stdout.strip():
+                self.coach.message("info", "Wiring check finished",
+                                   "Every button and sensor answered. Did each LED blink and the buzzer beep? "
+                                   "If one didn't, check its long leg (+) goes to the GPIO pin and the resistor is in.")
 
     # ---------------------------------------------------------------- tour
     def tour_steps(self):
@@ -794,6 +1093,9 @@ class FreeBuildWorkspace(Workspace):
 
     def code_path(self) -> Path:
         return self.current
+
+    def uses_gpio(self) -> bool:
+        return True     # the board appears as soon as a program makes an LED, Button...
 
     def _refresh_list(self):
         for w in self.list_frame.winfo_children():

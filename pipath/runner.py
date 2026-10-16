@@ -4,10 +4,13 @@
 - The student can type answers, which go to the program's stdin.
 - Runaway programs are stopped: too much output, or a CPU-busy loop that
   produces nothing (detected from /proc on Linux / Raspberry Pi OS).
+- GPIO programs can run through pipath/gpio_shim.py, which reports pin states
+  (("gpio", message) events) and takes commands like "press 23" (send_command).
 """
 from __future__ import annotations
 
 import codecs
+import json
 import os
 import queue
 import subprocess
@@ -32,14 +35,17 @@ class Runner:
         self._last_output = 0.0
         self._busy_since: float | None = None
         self._last_cpu: tuple[float, float] | None = None
+        self._cmd_fd: int | None = None
 
     # ---------------------------------------------------------------- control
     @property
     def running(self) -> bool:
         return self.proc is not None and self.proc.poll() is None
 
-    def start(self, script: Path, cwd: Path, extra_env: dict | None = None) -> None:
+    def start(self, script: Path, cwd: Path, extra_env: dict | None = None, shim: Path | None = None) -> None:
+        """Run script in cwd. With shim, run it through the GPIO shim and listen for pin states."""
         self.stop()
+        self._close_cmd()
         self.events = queue.Queue()
         self.stdout_text, self.stderr_text = [], []
         self._lines = 0
@@ -51,15 +57,44 @@ class Runner:
                    PYTHONDONTWRITEBYTECODE="1")
         if extra_env:
             env.update(extra_env)
-        self.proc = subprocess.Popen(
-            [sys.executable, "-u", script.name],
-            cwd=str(cwd), env=env,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            start_new_session=True,
-        )
+        args, pass_fds, state_r = [sys.executable, "-u", script.name], (), None
+        if shim is not None:
+            state_r, state_w = os.pipe()
+            cmd_r, cmd_w = os.pipe()
+            env.update(PIPATH_STATE_FD=str(state_w), PIPATH_CMD_FD=str(cmd_r))
+            args, pass_fds = [sys.executable, "-u", str(shim), script.name], (state_w, cmd_r)
+        try:
+            self.proc = subprocess.Popen(
+                args, cwd=str(cwd), env=env, pass_fds=pass_fds,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                start_new_session=True,
+            )
+        finally:
+            for fd in pass_fds:      # the child has its own copies now
+                os.close(fd)
+        if shim is not None:
+            self._cmd_fd = cmd_w
+            threading.Thread(target=self._pump_state, args=(state_r, self.events), daemon=True).start()
+        # Each run's threads get that run's queue, so a late event can never leak into the next run.
         for stream, kind in ((self.proc.stdout, "out"), (self.proc.stderr, "err")):
-            threading.Thread(target=self._pump, args=(stream, kind), daemon=True).start()
-        threading.Thread(target=self._wait, args=(self.proc,), daemon=True).start()
+            threading.Thread(target=self._pump, args=(stream, kind, self.events), daemon=True).start()
+        threading.Thread(target=self._wait, args=(self.proc, self.events), daemon=True).start()
+
+    def send_command(self, text: str) -> None:
+        """Send a command to the GPIO shim, e.g. "press 23". Ignored if there's no shim."""
+        if self._cmd_fd is not None and self.running:
+            try:
+                os.write(self._cmd_fd, (text + "\n").encode("utf-8"))
+            except OSError:
+                pass
+
+    def _close_cmd(self) -> None:
+        if self._cmd_fd is not None:
+            try:
+                os.close(self._cmd_fd)
+            except OSError:
+                pass
+            self._cmd_fd = None
 
     def send_input(self, text: str) -> None:
         if self.running and self.proc.stdin:
@@ -83,7 +118,7 @@ class Runner:
                 pass
 
     # ---------------------------------------------------------------- threads
-    def _pump(self, stream, kind: str) -> None:
+    def _pump(self, stream, kind: str, q: queue.Queue) -> None:
         decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
         fd = stream.fileno()
         while True:
@@ -95,15 +130,33 @@ class Runner:
                 break
             text = decoder.decode(chunk)
             if text:
-                self.events.put((kind, text))
+                q.put((kind, text))
         tail = decoder.decode(b"", final=True)
         if tail:
-            self.events.put((kind, tail))
-        self.events.put(("closed", kind))
+            q.put((kind, tail))
+        q.put(("closed", kind))
 
-    def _wait(self, proc: subprocess.Popen) -> None:
+    def _pump_state(self, fd: int, q: queue.Queue) -> None:
+        buf = b""
+        while True:
+            try:
+                chunk = os.read(fd, 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+            *lines, buf = buf.split(b"\n")
+            for line in lines:
+                try:
+                    q.put(("gpio", json.loads(line)))
+                except ValueError:
+                    pass
+        os.close(fd)
+
+    def _wait(self, proc: subprocess.Popen, q: queue.Queue) -> None:
         rc = proc.wait()
-        self.events.put(("exit", rc))
+        q.put(("exit", rc))
 
     # ---------------------------------------------------------------- polling (call from the GUI thread)
     def poll(self) -> list[tuple]:
@@ -121,6 +174,8 @@ class Runner:
                 self._last_output = time.monotonic()
             elif kind == "err":
                 self.stderr_text.append(ev[1])
+            elif kind == "exit":
+                self._close_cmd()
             out.append(ev)
         if self.running:
             if self._lines > self.max_lines:

@@ -1,4 +1,4 @@
-# ELECTRONICS LAB 4 - status "planned" until GPIO support is built. See e1_lightswitch.toml for the new keys.
+# ELECTRONICS LAB 4. See e1_lightswitch.toml for the GPIO lesson keys.
 
 id = "e4_dice"
 title = "Bar Graph & Digital Dice"
@@ -35,15 +35,63 @@ part = "6 LEDs (left to right)"
 connect = "GPIO17, GPIO27, GPIO22, GPIO5, GPIO6, GPIO13 → each through its own 330Ω resistor → LED long leg. All short legs → GND rail."
 
 [[wiring]]
+part = "LED 1"
+kind = "led"
+pin = 17
+colour = "green"
+connect = "GPIO17 (pin 11)"
+
+[[wiring]]
+part = "LED 2"
+kind = "led"
+pin = 27
+colour = "green"
+connect = "GPIO27 (pin 13)"
+
+[[wiring]]
+part = "LED 3"
+kind = "led"
+pin = 22
+colour = "amber"
+connect = "GPIO22 (pin 15)"
+
+[[wiring]]
+part = "LED 4"
+kind = "led"
+pin = 5
+colour = "amber"
+connect = "GPIO5 (pin 29)"
+
+[[wiring]]
+part = "LED 5"
+kind = "led"
+pin = 6
+colour = "red"
+connect = "GPIO6 (pin 31)"
+
+[[wiring]]
+part = "LED 6"
+kind = "led"
+pin = 13
+colour = "red"
+connect = "GPIO13 (pin 33)"
+
+[[wiring]]
 part = "Up button"
+kind = "button"
+pin = 23
 connect = "GPIO23 (pin 16) and GND."
 
 [[wiring]]
 part = "Down / Roll button"
+kind = "button"
+pin = 24
 connect = "GPIO24 (pin 18) and GND."
 
 [[wiring]]
 part = "Tilt switch (step 5, optional)"
+kind = "switch"
+pin = 25
 connect = "One leg → GPIO25 (pin 22), other leg → GND. It works exactly like a button."
 
 # ------------------------------------------------------------------ STEP 1

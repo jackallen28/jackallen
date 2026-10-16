@@ -193,6 +193,8 @@ class ScrollFrame(tk.Frame):
     def scroll_to(self, widget, margin: int = 12):
         """Scroll so `widget` (inside .body) is visible, showing as much of it as fits."""
         def _go():
+            if not widget.winfo_exists():
+                return     # the step was re-drawn before we got here
             self.update_idletasks()
             total = self.body.winfo_height()
             view = self.canvas.winfo_height()

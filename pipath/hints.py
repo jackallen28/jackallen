@@ -2,6 +2,7 @@
 
 No AI. Three layers:
   1. precheck()        - before running: blanks left in, empty file
+     gpio_lint()       - before running GPIO code: friendly warnings (never blocks a run)
   2. diagnose()        - after a crash: parse the traceback, match errors.toml
   3. evaluate_checks() - after a clean run: did the program do what the step asked?
 """
@@ -43,6 +44,7 @@ class CheckResult:
     label: str
     passed: bool
     fail: str = ""
+    type: str = ""
 
 
 # ------------------------------------------------------------------ traceback parsing
@@ -197,11 +199,12 @@ class HintEngine:
 
 
 def evaluate_checks(checks: list[dict], code: str, output: str, crashed: bool,
-                    runs_this_step: int = 1) -> list[CheckResult]:
+                    runs_this_step: int = 1, confirmed: set[int] | None = None) -> list[CheckResult]:
+    """confirmed: indexes of "confirm" checks the student has ticked. None means all ticked."""
     feats = code_features(code)
     out_lines = [l for l in output.splitlines() if l.strip()]
     results = []
-    for c in checks:
+    for i, c in enumerate(checks):
         t = c["type"]
         label = c.get("label", t)
         flags = re.I if c.get("ignore_case", t in ("output_contains",)) else 0
@@ -223,7 +226,86 @@ def evaluate_checks(checks: list[dict], code: str, output: str, crashed: bool,
             ok = feats.get(c["value"], 0) >= c.get("min", 1)
         elif t == "run_count_min":
             ok = runs_this_step >= c.get("min", 1)
+        elif t == "confirm":
+            ok = confirmed is None or i in confirmed
         else:
             ok = True  # unknown check types never block a student
-        results.append(CheckResult(label, ok, c.get("fail", "")))
+        results.append(CheckResult(label, ok, c.get("fail", ""), t))
     return results
+
+
+# ------------------------------------------------------------------ GPIO lint
+
+EVENT_ATTRS = {"when_pressed", "when_released", "when_held", "when_motion", "when_no_motion",
+               "when_activated", "when_deactivated", "when_light", "when_dark", "when_line", "when_no_line"}
+WAITING_CALLS = {"sleep", "pause", "wait_for_press", "wait_for_release", "wait_for_motion",
+                 "wait_for_no_motion", "wait_for_active", "wait_for_inactive", "input", "wait",
+                 "take_photo", "capture_grid", "join"}
+# gpiozero classes whose arguments are pin numbers (positional, or these keywords)
+PIN_CLASSES = {
+    "LED": ("pin",), "PWMLED": ("pin",), "Button": ("pin",), "Buzzer": ("pin",), "TonalBuzzer": ("pin",),
+    "MotionSensor": ("pin",), "LineSensor": ("pin",), "LightSensor": ("pin",),
+    "DigitalInputDevice": ("pin",), "DigitalOutputDevice": ("pin",), "OutputDevice": ("pin",),
+    "InputDevice": ("pin",), "PWMOutputDevice": ("pin",),
+    "RGBLED": ("red", "green", "blue"), "TrafficLights": ("red", "amber", "yellow", "green"),
+    "LEDBoard": (), "LEDBarGraph": (), "DistanceSensor": ("echo", "trigger"),
+}
+
+
+def _pin_args(call: ast.Call) -> list[int]:
+    name = call.func.id if isinstance(call.func, ast.Name) else getattr(call.func, "attr", "")
+    if name not in PIN_CLASSES:
+        return []
+    vals = [a for a in call.args]
+    vals += [k.value for k in call.keywords if k.arg in PIN_CLASSES[name] or (not PIN_CLASSES[name] and k.arg is None)]
+    if name not in ("LEDBoard", "LEDBarGraph", "RGBLED", "TrafficLights", "DistanceSensor"):
+        vals = vals[:1]
+    return [v.value for v in vals if isinstance(v, ast.Constant) and type(v.value) is int]
+
+
+def gpio_lint(code: str) -> list[str]:
+    """Friendly warnings for common GPIO slip-ups. Each starts with the line number."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+    if "gpiozero" not in code:
+        return []
+    warnings: list[tuple[int, str]] = []
+    user_funcs = {n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    seen_pins: dict[int, int] = {}
+
+    for node in ast.walk(tree):
+        # 1. button.when_pressed = light.on()   <- brackets run it now, not later
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            for t in node.targets:
+                if isinstance(t, ast.Attribute) and t.attr in EVENT_ATTRS:
+                    call = ast.get_source_segment(code, node.value) or "..."
+                    if not node.value.args and not node.value.keywords and call.endswith("()"):
+                        fix = f"`{ast.get_source_segment(code, t)} = {call[:-2]}`"
+                    else:
+                        fix = "a function name with no brackets"
+                    warnings.append((node.lineno, f"`{t.attr} = {call}` has brackets, so it runs straight away "
+                                                  f"instead of waiting for the event. Use {fix}."))
+        # 2. while True: with nothing that waits
+        elif isinstance(node, ast.While) and isinstance(node.test, ast.Constant) and node.test.value in (True, 1):
+            calls = {(n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
+                     for n in ast.walk(node) if isinstance(n, ast.Call)}
+            if not calls & (WAITING_CALLS | user_funcs):
+                warnings.append((node.lineno, "this `while True` loop never waits, so it runs flat out and keeps "
+                                              "the Pi busy. Add `sleep(0.01)` inside it, or use `when_pressed`."))
+        # 3 + 4. pin numbers
+        elif isinstance(node, ast.Call):
+            for pin in _pin_args(node):
+                if not 2 <= pin <= 27:
+                    warnings.append((node.lineno, f"pin `{pin}` isn't a GPIO number. On a Pi they go from 2 to 27. "
+                                                  "Use the GPIO number (like 17), not the pin's position on the board."))
+                elif pin in (2, 3, 14, 15):
+                    warnings.append((node.lineno, f"GPIO{pin} is a special pin ({'I²C' if pin < 4 else 'serial'}). "
+                                                  "It may not behave like the others. The pin plan uses 4-6, 13 and 17-27."))
+                elif pin in seen_pins and seen_pins[pin] != node.lineno:
+                    warnings.append((node.lineno, f"GPIO{pin} is already used on line {seen_pins[pin]}. "
+                                                  "Each part needs its own pin."))
+                else:
+                    seen_pins.setdefault(pin, node.lineno)
+    return [f"Line {n}: {w}" for n, w in sorted(warnings)]

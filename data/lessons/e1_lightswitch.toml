@@ -1,9 +1,9 @@
-# ELECTRONICS LAB 1 - status "planned" in catalog.toml until GPIO support is built (see CLAUDE.md, Phase 3).
-# New lesson keys used here (not needed by the Simple lessons):
-#   requires_gpio = true          -> show wiring card, enable Practice mode (mock pins + virtual board)
-#   [[wiring]]                    -> rows for the wiring card / diagram
-#   run_mode = "until_stopped"    -> program runs forever (pause()); checks are evaluated when the student presses Stop
+# ELECTRONICS LAB 1. GPIO lesson keys (see CLAUDE.md §5.2):
+#   requires_gpio = true          -> Wiring card + Simulator / Real Pi switch + on-screen board
+#   [[wiring]]                    -> part, connect (text); kind + pin/pins + colour put the part on the board
+#   run_mode = "until_stopped"    -> program runs until Stop; checks are evaluated when the student presses Stop
 #   check type "confirm"          -> a tick-box the student clicks: "I saw it happen"
+#   demo / demo_events / demo_seconds -> the model answer, played by "Watch the goal" (and tested in tests/)
 
 id = "e1_lightswitch"
 title = "Light Switch Lab"
@@ -37,10 +37,15 @@ You used `LED`, `Button`, events with `when_pressed`, `toggle()`, and brightness
 
 [[wiring]]
 part = "LED"
+kind = "led"
+pin = 17
+colour = "red"
 connect = "GPIO17 (pin 11) → 330Ω resistor → LED long leg (+). LED short leg (−) → GND (pin 9)."
 
 [[wiring]]
 part = "Button"
+kind = "button"
+pin = 23
 connect = "One leg → GPIO23 (pin 16). Opposite leg → GND (pin 14). No resistor needed: gpiozero turns on the Pi's built-in pull-up."
 
 # ------------------------------------------------------------------ STEP 1
@@ -70,7 +75,7 @@ hints = [
   "`sleep(3)` waits 3 seconds.",
 ]
 success = "Your code just controlled real electricity!"
-error_hints = { BadPinFactory = "Not on a Raspberry Pi? Turn on **Practice mode** to use the on-screen board." }
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button to use the on-screen board." }
 
 [[steps.checks]]
 type = "runs_ok"
