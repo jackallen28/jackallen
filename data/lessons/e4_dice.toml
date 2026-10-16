@@ -1,0 +1,270 @@
+# ELECTRONICS LAB 4 - status "planned" until GPIO support is built. See e1_lightswitch.toml for the new keys.
+
+id = "e4_dice"
+title = "Bar Graph & Digital Dice"
+file_name = "led_dice.py"
+requires_gpio = true
+
+intro = """
+## Six LEDs, lots of ideas
+
+A row of LEDs can show a **level** (like a volume meter), a **count**, or an **animation**.
+
+In this project you will:
+- control six LEDs at once with `LEDBoard`
+- make a scanning light animation
+- build an up/down **counter** with limits
+- turn it all into an electronic **dice**, and then make it **shakeable**!
+
+This project needs a fair bit of wiring. Build it neatly and test each LED as you go.
+"""
+
+outro = """
+## Your LED dice is ready to roll!
+
+You used `LEDBoard` and `LEDBarGraph`, built animations with loops, kept a counter inside limits, and discovered that **any switch is a button**.
+
+**Extension ideas:**
+- Two-player mode: take turns rolling and keep score
+- Show the roll as a dice face pattern instead of a bar
+- Use a reed switch and a magnet to make a "secret door" alarm
+"""
+
+[[wiring]]
+part = "6 LEDs (left to right)"
+connect = "GPIO17, GPIO27, GPIO22, GPIO5, GPIO6, GPIO13 → each through its own 330Ω resistor → LED long leg. All short legs → GND rail."
+
+[[wiring]]
+part = "Up button"
+connect = "GPIO23 (pin 16) and GND."
+
+[[wiring]]
+part = "Down / Roll button"
+connect = "GPIO24 (pin 18) and GND."
+
+[[wiring]]
+part = "Tilt switch (step 5, optional)"
+connect = "One leg → GPIO25 (pin 22), other leg → GND. It works exactly like a button."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Light the whole row"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LEDBoard
+from time import sleep
+
+bar = LEDBoard(17, 27, 22, 5, 6, 13)
+
+bar.on()
+sleep(1)
+bar.off()
+sleep(0.5)
+bar.value = (1, 0, 1, 0, 1, 0)    # every second LED
+sleep(1)
+'''
+text = """
+`LEDBoard` controls a group of LEDs as one thing. `bar.on()` lights them all.
+
+`bar.value` takes a **tuple** with one number per LED: `1` for on, `0` for off.
+
+**Your task:** run it to check all six LEDs work. Then add **two more patterns** of your own (for example, the outside two only, or the left half).
+"""
+hints = [
+  "Outside two only: `(1, 0, 0, 0, 0, 1)`",
+  "Add each pattern on its own line, followed by `sleep(1)` so you can see it.",
+]
+success = "All six LEDs under your control."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "attr:value"
+min = 3
+label = "You show at least 3 patterns"
+
+[[steps.checks]]
+type = "confirm"
+label = "All six LEDs light up"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Scanner animation"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LEDBoard
+from time import sleep
+
+bar = LEDBoard(17, 27, 22, 5, 6, 13)
+
+for repeat in range(3):
+    for led in bar:            # left to right
+        led.on()
+        sleep(0.1)
+        led.off()
+'''
+text = """
+You can loop through an `LEDBoard` just like a list. This makes a light **run** across the row.
+
+**Your task:** make the light bounce **back and forth** like a scanner, 3 times.
+"""
+hints = [
+  "After the left-to-right loop, add a right-to-left loop inside the same `repeat` loop.",
+  "`reversed(bar.leds)` gives the LEDs from right to left.",
+  "Example:\n```\nfor repeat in range(3):\n    for led in bar:\n        led.on(); sleep(0.1); led.off()\n    for led in reversed(bar.leds):\n        led.on(); sleep(0.1); led.off()\n```",
+]
+success = "Smooth! Animation is just loops plus timing."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:reversed"
+label = "The light comes back the other way"
+
+[[steps.checks]]
+type = "confirm"
+label = "The light bounces back and forth"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Up / down counter"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import LEDBarGraph, Button
+from signal import pause
+
+graph = LEDBarGraph(17, 27, 22, 5, 6, 13)
+up = Button(23)
+down = Button(24)
+
+count = 0
+
+def show():
+    graph.value = count / 6       # 0 = no LEDs, 1 = all six
+    print("Count:", count)
+
+def go_up():
+    global count
+    count = count + 1
+    show()
+
+def go_down():
+    global count
+    count = count - 1
+    show()
+
+up.when_pressed = go_up
+down.when_pressed = go_down
+show()
+pause()
+'''
+text = """
+`LEDBarGraph` lights LEDs **from the left like a meter**. Its `value` goes from `0` (none) to `1` (all six), so `count / 6` turns our count into the right level.
+
+**Your task:** run it and press **up** 8 times. Read the Coach when it breaks!
+
+Then fix it so the count **never goes above 6 or below 0**. These are called **limits**.
+"""
+hints = [
+  "The bar graph only understands values from 0 to 1. What's 7 / 6?",
+  "Only add 1 if `count < 6`. Only take away 1 if `count > 0`.",
+  "Example:\n```\ndef go_up():\n    global count\n    if count < 6:\n        count = count + 1\n    show()\n```",
+]
+success = "A counter with limits: the same idea is in every volume control."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''count\s*<\s*6|count\s*<=\s*5|min\('''
+label = "The count can't go above 6"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''count\s*>\s*0|count\s*>=\s*1|max\('''
+label = "The count can't go below 0"
+
+[[steps.checks]]
+type = "confirm"
+label = "The bar goes up and down with the buttons"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Roll the dice"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+**Goal:** turn your counter into a **dice**. When the **down** button (now the *Roll* button) is pressed:
+
+1. Play a short "rolling" animation: show random numbers quickly, about 10 times
+2. Pick the final number from **1 to 6**
+3. Show it on the bar graph and print `You rolled a 4!`
+
+Keep the **up** button doing whatever you like, or remove it.
+"""
+hints = [
+  "Write a new function `roll()` and set `down.when_pressed = roll`.",
+  "Animation: `for i in range(10):` pick a random number, show it, `sleep(0.05)`.",
+  "Final roll: `count = random.randint(1, 6)` then `show()` and print it. Don't forget `import random` and `from time import sleep`.",
+]
+success = "Rolling! Try making the animation slow down at the end, like a real dice."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''randint\(\s*1\s*,\s*6\s*\)'''
+label = "The dice rolls 1 to 6"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:sleep"
+label = "There's a rolling animation"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''rolled'''
+ignore_case = true
+label = "It prints what you rolled"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: shake to roll"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Here's a secret: to gpiozero, **any switch is a button**. A **tilt switch** has a tiny ball inside that connects two wires when it's upright and disconnects when you tip it.
+
+**Goal:** add a tilt switch on **GPIO25** so **shaking** the breadboard rolls the dice.
+
+```
+shake = Button(25)
+shake.when_pressed = roll
+```
+
+No tilt switch? Use a third push button instead, or try a **reed switch** with a magnet. The code is the same!
+
+**Extra challenge:** stop the dice rolling again while it's already rolling. *(Hint: a variable like `rolling = True`.)*
+"""
+hints = [
+  "It really is just `Button(25)` with `when_pressed` pointing at your roll function.",
+  "If it rolls too often, the ball is bouncing. Try `Button(25, bounce_time=0.3)`.",
+]
+success = "You've built a shake-to-roll dice. You now know lights, buttons, events, functions, lists and limits!"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''Button\(\s*25'''
+label = "A third input on GPIO25"
+
+[[steps.checks]]
+type = "confirm"
+label = "Shaking (or the third button) rolls the dice"

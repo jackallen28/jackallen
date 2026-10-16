@@ -1,0 +1,259 @@
+# ELECTRONICS LAB 2 - status "planned" until GPIO support is built. See e1_lightswitch.toml for the new keys.
+
+id = "e2_moodlamp"
+title = "RGB Mood Lamp"
+file_name = "mood_lamp.py"
+requires_gpio = true
+
+intro = """
+## One LED, millions of colours
+
+An **RGB LED** has three tiny lights inside it: **R**ed, **G**reen and **B**lue. Mix them and you can make almost any colour. That's how every screen works!
+
+In this project you will:
+- mix colours using **tuples** like `(1, 0.5, 0)`
+- cycle through a **list** of colours with a button
+- use `%` (modulo) to loop back to the start of a list
+- add a secret **party mode** when you hold the button down
+"""
+
+outro = """
+## Your mood lamp is glowing!
+
+You used `RGBLED`, colour tuples, lists, `%` to wrap around, and `when_held` for a long press.
+
+**Extension ideas:**
+- A "sunrise" mode that slowly fades from deep red to bright yellow over 30 seconds
+- A second button that goes *backwards* through the colours
+- Ask the user to type a colour name with `input()` and look it up in a dictionary
+"""
+
+[[wiring]]
+part = "RGB LED (common cathode)"
+connect = "Longest leg → GND (pin 6). Red leg → 330Ω → GPIO17 (pin 11). Green leg → 330Ω → GPIO27 (pin 13). Blue leg → 330Ω → GPIO22 (pin 15)."
+
+[[wiring]]
+part = "Button"
+connect = "One leg → GPIO23 (pin 16). Opposite leg → GND (pin 14)."
+
+[[wiring]]
+part = "Tip"
+connect = "If your LED is *common anode* (long leg to 3.3V), add `active_high=False` to RGBLED(...). Your teacher will know which kind you have."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Mix your first colours"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import RGBLED
+from time import sleep
+
+lamp = RGBLED(red=17, green=27, blue=22)
+
+lamp.color = (1, 0, 0)    # red
+sleep(1)
+lamp.color = (0, 1, 0)    # green
+sleep(1)
+lamp.color = (1, 1, 0)    # red + green = ?
+sleep(2)
+'''
+text = """
+A colour is written as a **tuple** of three numbers: `(red, green, blue)`. Each number goes from `0` (off) to `1` (full).
+
+**Your task:** run it. What colour does red + green make?
+
+Then add two more colours of your own: try **purple** (red + blue) and **white** (all three).
+"""
+hints = [
+  "Purple is red and blue together: `(1, 0, 1)`",
+  "White is everything on: `(1, 1, 1)`. Add each colour with its own `sleep()` so you can see it.",
+]
+success = "Red + green = yellow. Light mixes differently to paint!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\(\s*1\s*,\s*0\s*,\s*1\s*\)'''
+label = "You made purple (1, 0, 1)"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\(\s*1\s*,\s*1\s*,\s*1\s*\)'''
+label = "You made white (1, 1, 1)"
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw the colours change"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "A rainbow loop"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import RGBLED
+from time import sleep
+
+lamp = RGBLED(red=17, green=27, blue=22)
+
+rainbow = [
+    (1, 0, 0),      # red
+    (1, 0.3, 0),    # orange
+    ___,            # yellow
+    (0, 1, 0),      # green
+    (0, 0, 1),      # blue
+    (0.5, 0, 1),    # violet
+]
+
+for colour in rainbow:
+    lamp.color = colour
+    sleep(0.5)
+'''
+text = """
+A **list** can hold colours too. The `for` loop takes each colour from the list, one at a time, and shows it.
+
+**Your task:** fill in the missing colour (yellow), run it, then make the rainbow repeat **3 times**.
+"""
+hints = [
+  "Yellow is red + green: `(1, 1, 0)`",
+  "To repeat, put the `for colour in rainbow:` loop inside another loop: `for i in range(3):`",
+  "Example:\n```\nfor i in range(3):\n    for colour in rainbow:\n        lamp.color = colour\n        sleep(0.5)\n```",
+]
+success = "A loop inside a loop: a nested loop!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''range\(\s*3\s*\)'''
+label = "The rainbow repeats 3 times"
+
+[[steps.checks]]
+type = "code_count"
+value = "node:For"
+min = 2
+label = "You use a loop inside a loop"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Button changes the colour"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import RGBLED, Button
+from signal import pause
+
+lamp = RGBLED(red=17, green=27, blue=22)
+button = Button(23)
+
+colours = [(1, 0, 0), (1, 0.3, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (0.5, 0, 1)]
+position = 0
+
+def next_colour():
+    global position
+    position = position + 1
+    lamp.color = colours[position]
+
+lamp.color = colours[position]
+button.when_pressed = next_colour
+pause()
+'''
+text = """
+Now a button press moves to the next colour in the list.
+
+**Your task:** run it and press the button **lots** of times. Something will go wrong after the last colour. Read the Coach!
+
+Then fix it using **`%` (modulo)**. It gives the *remainder* after dividing, so `6 % 6` is `0`. That's perfect for wrapping back to the start of a list:
+
+```
+position = (position + 1) % len(colours)
+```
+"""
+hints = [
+  "The list has 6 colours at positions 0 to 5. What happens when position becomes 6?",
+  "Use `% len(colours)` so the position wraps back to 0.",
+  "Change the middle line of the function to `position = (position + 1) % len(colours)`",
+]
+error_hints = { IndexError = "Position 6 doesn't exist: the list stops at 5. How could you wrap back to 0? Look at the `%` tip in the step." }
+success = "Your lamp cycles forever. `%` is a programmer's favourite trick for wrapping around."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''%\s*len\(\s*colours\s*\)'''
+label = "Position wraps around with % len(colours)"
+
+[[steps.checks]]
+type = "confirm"
+label = "I can press past the last colour and it goes back to red"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Secret party mode"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Buttons can tell a **short press** from a **long press**. `when_held` runs when the button is held down (1 second by default).
+
+**Goal:** holding the button switches to **party mode**, where the lamp flashes random colours. A normal press goes back to cycling colours.
+
+**Tips:**
+- `random.random()` gives a random number between 0 and 1, perfect for each part of a colour
+- `lamp.blink(on_time=0.2, off_time=0.1, on_color=..., n=10)` flashes a colour 10 times. Look it up or experiment!
+"""
+hints = [
+  "Write a new function `party()` and set `button.when_held = party`.",
+  "A random colour: `(random.random(), random.random(), random.random())`. Don't forget `import random`.",
+  "Example:\n```\ndef party():\n    for i in range(20):\n        lamp.color = (random.random(), random.random(), random.random())\n        sleep(0.1)\n\nbutton.when_held = party\n```",
+]
+success = "Party mode unlocked! Two behaviours from one button."
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:when_held"
+label = "You use when_held for a long press"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:random"
+label = "You use random colours"
+
+[[steps.checks]]
+type = "confirm"
+label = "Holding the button starts party mode"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Design your own lamp"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+**Goal:** make the lamp your own. Choose **at least one** of these:
+
+- **Moods:** give each colour a name in a **dictionary** (`{"calm": (0, 0.3, 1), ...}`) and print the mood name each time it changes
+- **Breathing:** `lamp.pulse(on_color=..., fade_in_time=2, fade_out_time=2)` for a slow glow
+- **Sunrise:** fade from dark red to bright yellow using a loop and small steps
+
+Test it, then show a classmate.
+"""
+hints = [
+  "Pick one idea and get the simplest version working first.",
+  "For a dictionary: `moods = {\"calm\": (0, 0.3, 1), \"happy\": (1, 0.8, 0)}` then `for name, colour in moods.items():`",
+]
+success = "Your own design. That's what makers do!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "confirm"
+label = "I added my own lamp feature and tested it"

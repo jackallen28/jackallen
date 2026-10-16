@@ -1,0 +1,270 @@
+id = "s3_guess"
+title = "Guess My Number"
+file_name = "guess_my_number.py"
+
+intro = """
+## Build a guessing game
+
+The computer will pick a **secret number** and you'll try to guess it. To build it you'll learn three of the most important ideas in programming:
+
+- **randomness**, using Python's `random` module
+- **decisions**, with `if`, `elif` and `else`
+- **loops**, with `while`, so the game keeps going until you win
+
+This project gives you **less help** as you go. By the last step you'll write code from just a goal. That's what real programmers do!
+"""
+
+outro = """
+## You built a real game!
+
+You used `random` to make a secret, `if/elif/else` to make decisions, a `while` loop to keep the game going, and a **counter** to keep score.
+
+You've finished the **Simple** projects. That's a big deal!
+
+**Extension ideas:**
+- Let the player choose easy (1-10), medium (1-50) or hard (1-100)
+- Give the player only 7 tries, then reveal the number
+- Keep the best score in a variable and ask "Play again?"
+"""
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Pick a secret number"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+import random
+
+secret = random.randint(1, 10)
+print("Psst... the secret number is", secret)
+'''
+text = """
+`import random` loads Python's **random** module, a toolbox for chance.
+
+`random.randint(1, 10)` picks a whole number from **1 to 10** (both included).
+
+**Your task:** press **Run 3 or 4 times**. Does the secret number change?
+
+(We're printing the secret for now so we can test. We'll hide it later!)
+"""
+hints = [
+  "Just press Run a few times and watch the number in the Output.",
+]
+success = "A different number (usually) each time. That's randomness."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:random"
+label = "You import the random module"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:randint"
+label = "You use random.randint()"
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You ran it more than once"
+fail = "Press Run again. Does the number change?"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Take a guess"
+support = "scaffolded"
+starter_mode = "append"
+starter = '''
+
+guess = int(input("Guess my number (1-10): "))
+
+if guess ___ secret:
+    print("You got it!")
+else:
+    print("Nope! It was", secret)
+'''
+text = """
+Now the player can make a guess. The `if` checks a **condition**:
+
+- if it's **True**, Python runs the indented lines under `if`
+- otherwise, it runs the lines under `else`
+
+To **compare** two values, Python uses **`==`** (two equals signs). One `=` *stores* a value, two `==` *compare*.
+
+**Your task:** fill in the blank with the right comparison, then run it and make a guess.
+"""
+hints = [
+  "You want to check: is the guess **equal to** the secret?",
+  "Use two equals signs: `==`",
+  "The line should read `if guess == secret:`",
+]
+error_hints = { SyntaxError = "Inside an `if`, use `==` to compare. A single `=` is for storing values." }
+success = "Your program can make decisions now!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:If"
+label = "You use an if statement"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''if\s+guess\s*==\s*secret\s*:|if\s+secret\s*==\s*guess\s*:'''
+label = "You compare guess and secret with =="
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Higher or lower?"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+"Nope" isn't a very helpful clue! Let's tell the player whether to go **higher** or **lower**.
+
+`elif` means **"else if"**. It lets you check more than one condition:
+
+```
+if temperature > 30:
+    print("Hot!")
+elif temperature < 10:
+    print("Cold!")
+else:
+    print("Just right")
+```
+
+**Your task:** change your `if` so it says:
+- `"You got it!"` if the guess is correct
+- `"Too low!"` if the guess is **less than** the secret (`<`)
+- `"Too high!"` if the guess is **greater than** the secret (`>`)
+"""
+hints = [
+  "You'll need an `if`, then an `elif`, then an `else` (or two `elif`s).",
+  "`elif guess < secret:` checks if the guess is too low.",
+  "Example:\n```\nif guess == secret:\n    print(\"You got it!\")\nelif guess < secret:\n    print(\"Too low!\")\nelse:\n    print(\"Too high!\")\n```",
+]
+success = "Now your game gives useful clues."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "elif"
+label = "You use elif"
+fail = "Add an `elif` line to check another condition."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''too\s+low'''
+ignore_case = true
+label = "Your game can say \"Too low\""
+
+[[steps.checks]]
+type = "code_regex"
+value = '''too\s+high'''
+ignore_case = true
+label = "Your game can say \"Too high\""
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Keep guessing with a loop"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+import random
+
+secret = random.randint(1, 10)
+guess = 0
+
+while guess ___ secret:
+    guess = int(input("Guess my number (1-10): "))
+
+    if guess < secret:
+        print("Too low!")
+    elif guess > secret:
+        print("Too high!")
+
+print("You got it! The number was", secret)
+'''
+text = """
+Right now the player only gets **one** guess. A **`while` loop** repeats the indented code **as long as** its condition is True.
+
+Your code has been rearranged into a loop (and the secret is now hidden!). Notice:
+- `guess = 0` gives `guess` a starting value so the loop can check it
+- everything indented under `while` repeats
+- the last `print` is **not** indented, so it only runs after the loop ends
+
+**Your task:** fill in the blank so the loop keeps going while the guess is **not equal** to the secret. In Python, "not equal" is `!=`.
+
+Run it and play until you win!
+"""
+hints = [
+  "The loop should repeat while the guess is NOT the secret.",
+  "\"Not equal to\" in Python is written `!=`",
+  "The line should read `while guess != secret:`",
+]
+success = "A real game loop! It keeps going until the player wins."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "You use a while loop"
+
+[[steps.checks]]
+type = "output_contains"
+value = "You got it"
+label = "You played until you won"
+fail = "Keep guessing until you find the number! Use the Too low / Too high clues."
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: count the guesses"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** make the game harder and keep score.
+
+1. Change the game to pick a number from **1 to 100**
+2. Count how many guesses the player takes
+3. When they win, print how many tries it took, e.g. `You took 6 tries!`
+
+**Tip:** a *counter* is a variable that starts at 0 and goes up by 1 each time something happens.
+"""
+hints = [
+  "Make a counter before the loop: `tries = 0`",
+  "Inside the loop (indented!) add one each time: `tries = tries + 1`",
+  "After the loop: `print(f\"You took {tries} tries!\")`. Also change randint and the question to use 100.",
+]
+success = "Challenge complete. You wrote that part with hardly any help!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''randint\(\s*1\s*,\s*100\s*\)'''
+label = "Numbers go from 1 to 100"
+fail = "Change `randint(1, 10)` to pick from 1 to 100."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''(\w+)\s*\+=\s*1|(\w+)\s*=\s*\w+\s*\+\s*1'''
+label = "You have a counter that goes up by 1"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+\s*(tries|guesses|goes|attempts)'''
+ignore_case = true
+label = "The game says how many tries it took"
+fail = "Play until you win. Does your program print something like \"You took 6 tries!\"?"

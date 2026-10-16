@@ -1,0 +1,283 @@
+# ELECTRONICS LAB 3 - status "planned" until GPIO support is built. See e1_lightswitch.toml for the new keys.
+
+id = "e3_simon"
+title = "Simon Says"
+file_name = "simon_says.py"
+requires_gpio = true
+
+intro = """
+## Build a memory game
+
+The lights flash a pattern. You repeat it on the buttons. Each round the pattern gets **one step longer**. How far can you get?
+
+This is the biggest program so far. You will:
+- store LEDs and buttons in **lists** so one loop controls them all
+- pair them up with `zip()`
+- write **functions** that `return` an answer
+- build a full **game loop** with a score and a game-over
+
+Wire all three LED + button pairs before you start (see the **Wiring** card).
+"""
+
+outro = """
+## You built Simon Says!
+
+That's a real game with lists, functions, return values, a game loop and hardware. Seriously impressive.
+
+**Extension ideas:**
+- Speed up the flashes as the score grows
+- Add a buzzer with a different note for each colour (`from gpiozero import TonalBuzzer`)
+- Save the high score to a file so it survives restarting the game
+"""
+
+[[wiring]]
+part = "Red LED + button"
+connect = "LED: GPIO17 (pin 11) → 330Ω → long leg, short leg → GND. Button: GPIO23 (pin 16) and GND."
+
+[[wiring]]
+part = "Green LED + button"
+connect = "LED: GPIO27 (pin 13) → 330Ω → long leg, short leg → GND. Button: GPIO24 (pin 18) and GND."
+
+[[wiring]]
+part = "Blue LED + button"
+connect = "LED: GPIO22 (pin 15) → 330Ω → long leg, short leg → GND. Button: GPIO25 (pin 22) and GND."
+
+[[wiring]]
+part = "Tip"
+connect = "Put each button directly under its LED so players know which is which. Use the breadboard's blue (−) rail for all the GNDs."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Lists of lights"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED
+from time import sleep
+
+leds = [LED(17), LED(27), LED(22)]   # red, green, blue
+
+for led in leds:
+    led.on()
+    sleep(0.5)
+    led.off()
+'''
+text = """
+Instead of three separate variables, all the LEDs live in **one list**. Now a single `for` loop can control them all, and adding a fourth LED later is just one more item in the list.
+
+`leds[0]` is red, `leds[1]` is green, `leds[2]` is blue.
+
+**Your task:** run it. Then make the lights run **forwards then backwards** (red, green, blue, green, red).
+"""
+hints = [
+  "You can loop through a list backwards with `reversed(leds)`.",
+  "Add a second loop: `for led in reversed(leds):`",
+]
+success = "One loop, any number of LEDs. That's the power of lists."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "node:For"
+min = 2
+label = "Lights go forwards and backwards"
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw all three LEDs light in order"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Match buttons to lights"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import LED, Button
+from signal import pause
+
+leds = [LED(17), LED(27), LED(22)]
+buttons = [Button(23), Button(24), Button(25)]
+
+for led, button in zip(leds, buttons):
+    button.when_pressed = led.on
+    button.when_released = led.off
+
+pause()
+'''
+text = """
+`zip()` pairs up two lists like a zipper: the first LED with the first button, the second with the second, and so on.
+
+**Your task:** run it and test each button. Each one should light **its own** LED while you hold it.
+
+If a button lights the wrong LED, it's a wiring mix-up. Swap the wires or swap the numbers in the list.
+"""
+hints = [
+  "Press each button one at a time and watch which LED lights.",
+  "If red and green are swapped, swap `Button(23)` and `Button(24)` in the list.",
+]
+success = "Three inputs, three outputs, three lines of code."
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:zip"
+label = "You use zip() to pair LEDs and buttons"
+
+[[steps.checks]]
+type = "confirm"
+label = "Every button lights its own LED"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Show a random pattern"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Button
+from time import sleep
+import random
+
+leds = [LED(17), LED(27), LED(22)]
+buttons = [Button(23), Button(24), Button(25)]
+
+def flash(number):
+    """Flash one LED. number is 0, 1 or 2."""
+    leds[number].on()
+    sleep(0.4)
+    leds[number].off()
+    sleep(0.2)
+
+pattern = []
+for i in range(4):
+    pattern.append(random.randint(0, ___))
+
+print("Pattern:", pattern)
+for number in pattern:
+    flash(number)
+'''
+text = """
+The game needs a **pattern**: a list of numbers, where `0` means red, `1` green and `2` blue.
+
+`flash(number)` is a **function**: a named, reusable chunk of code. We call it once for every number in the pattern.
+
+**Your task:** fill in the blank so `randint` picks 0, 1 **or 2**. Run it a few times and check the lights match the printed pattern.
+"""
+hints = [
+  "LED positions in the list go 0, 1, 2. What's the biggest?",
+  "`random.randint(0, 2)` picks 0, 1 or 2.",
+]
+error_hints = { IndexError = "`leds[3]` doesn't exist. The list only has positions 0, 1 and 2. Check your randint numbers." }
+success = "The computer can make patterns. Now let's see if a human can copy them!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''randint\(\s*0\s*,\s*2\s*\)'''
+label = "Picks a random LED from 0 to 2"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Pattern: \[\d(, \d){3}\]'''
+label = "A 4-step pattern is printed"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Which button?"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+To check the player's answer we need a function that **waits for any button** and **returns** which one was pressed.
+
+```
+def get_press():
+    while True:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                flash(number)          # light it up as feedback
+                return number          # send the answer back
+        sleep(0.01)                    # rest a moment so the Pi stays cool
+```
+
+`return` sends a value back to whoever called the function, like `choice = get_press()`.
+
+**Your task:** add `get_press()` under your `flash` function. Then at the bottom of your program, loop through the pattern and check each press:
+
+- if the press matches, keep going
+- if not, print `"Wrong! Game over"` and stop with `break`
+
+If they get them all, print `"You win!"`.
+"""
+hints = [
+  "After flashing the pattern: `for number in pattern:` then `choice = get_press()`.",
+  "Compare with `if choice != number:`, then print the game-over message and `break`.",
+  "Example:\n```\nfor number in pattern:\n    choice = get_press()\n    if choice != number:\n        print(\"Wrong! Game over\")\n        break\nelse:\n    print(\"You win!\")\n```\n(A `for` loop's `else` runs only if the loop didn't `break`.)",
+]
+success = "Your game checks the player's memory. Functions that return values are a big step!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "Your get_press() function returns a value"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Break"
+label = "A wrong press ends the round"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''You win|Game over'''
+ignore_case = true
+label = "You played a round"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: the full game"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** turn it into real Simon Says.
+
+1. Start with a pattern of **1** step
+2. Each round: show the pattern, check the player, then **add one more** random step
+3. Keep going until the player makes a mistake
+4. Then flash **all three LEDs** 3 times and print the score: how many rounds they survived
+
+**Tip:** wrap your round in a `while` loop, and use a variable like `playing = True` that becomes `False` on a mistake.
+"""
+hints = [
+  "Start with `pattern = []` and `score = 0`. Each round: `pattern.append(random.randint(0, 2))`.",
+  "`while playing:` then show the pattern, then check it. On a mistake set `playing = False`.",
+  "Game-over flash: `for i in range(3):` then turn every LED on, sleep, every LED off, sleep.",
+]
+success = "That's a complete game you could put in a case and give to someone. Brilliant work!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "Your game keeps going round after round"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:append"
+label = "The pattern grows each round"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''score|round'''
+ignore_case = true
+label = "Your game shows a score at the end"

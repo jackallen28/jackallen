@@ -1,0 +1,187 @@
+# PiPath project catalogue
+# Every project shown on the home screen is listed here, in order.
+# status = "ready"   -> a lesson file exists in data/lessons/<id>.toml and can be played
+# status = "planned" -> shown on the map as "Coming soon" (build these next in Claude Code)
+#
+# support describes the gradual release of responsibility across the lesson:
+#   guided     - starter code with blanks, hints available straight away
+#   scaffolded - step-by-step instructions, hints unlock after one try
+#   brief      - just the goal and the checks, hints unlock after two tries
+
+[[tier]]
+id = "simple"
+title = "Simple"
+tagline = "Python on the screen"
+description = "Print, variables, input, decisions and loops."
+
+[[tier]]
+id = "moderate"
+title = "Moderate"
+tagline = "Bigger programs"
+description = "Lists, dictionaries, functions, files and graphics."
+
+[[tier]]
+id = "advanced"
+title = "Advanced"
+tagline = "Electronics with GPIO"
+description = "Control LEDs, buttons, buzzers and sensors with gpiozero."
+
+[[tier]]
+id = "lab"
+title = "Electronics Lab"
+tagline = "Extra hardware projects"
+description = "More lights and inputs. Unlocks after Traffic Lights; do them in any order."
+
+# ---------------------------------------------------------------- SIMPLE
+[[project]]
+id = "s1_hello"
+tier = "simple"
+title = "Hello, Pi!"
+subtitle = "Your first program, and your first bug hunt"
+concepts = ["print()", "text (strings)", "comments", "reading errors"]
+minutes = 15
+support = "guided"
+status = "ready"
+
+[[project]]
+id = "s2_pibot"
+tier = "simple"
+title = "Meet PiBot"
+subtitle = "A chatbot that asks questions and remembers answers"
+concepts = ["variables", "input()", "f-strings", "int()"]
+minutes = 20
+support = "guided → scaffolded"
+status = "ready"
+
+[[project]]
+id = "s3_guess"
+tier = "simple"
+title = "Guess My Number"
+subtitle = "A game with a secret, some clues and a loop"
+concepts = ["import random", "if / elif / else", "while loops", "counters"]
+minutes = 30
+support = "scaffolded → brief"
+status = "ready"
+
+# ---------------------------------------------------------------- MODERATE
+[[project]]
+id = "m1_quiz"
+tier = "moderate"
+title = "Quiz Master"
+subtitle = "A quiz game with scores, built from a list of questions"
+concepts = ["lists", "for loops", "functions", ".lower() / .strip()", "scores"]
+minutes = 40
+support = "scaffolded"
+status = "planned"
+
+[[project]]
+id = "m2_turtle"
+tier = "moderate"
+title = "Turtle Art Studio"
+subtitle = "Draw shapes, patterns and spirals with code"
+concepts = ["turtle module", "functions with parameters", "nested loops", "random colours"]
+minutes = 40
+support = "scaffolded → brief"
+status = "planned"
+
+[[project]]
+id = "m3_tuckshop"
+tier = "moderate"
+title = "Tuckshop Till"
+subtitle = "A point-of-sale program that totals orders and prints receipts"
+concepts = ["dictionaries", "while menus", "money formatting", "GST", "saving to a file"]
+minutes = 50
+support = "brief"
+status = "planned"
+
+# ---------------------------------------------------------------- ADVANCED (GPIO)
+[[project]]
+id = "a1_traffic"
+tier = "advanced"
+title = "Traffic Lights"
+subtitle = "Three LEDs and a pedestrian button"
+concepts = ["gpiozero LED", "Button", "sleep()", "functions", "sequences"]
+minutes = 45
+support = "scaffolded"
+status = "planned"
+gpio = true
+parts = ["red, yellow, green LEDs", "3 x 330Ω resistors", "1 push button", "breadboard + jumper wires"]
+
+[[project]]
+id = "a2_reaction"
+tier = "advanced"
+title = "Reaction Timer"
+subtitle = "Who is fastest? A two-player button game"
+concepts = ["random delays", "time.monotonic()", "events", "high scores in a file"]
+minutes = 50
+support = "scaffolded → brief"
+status = "planned"
+gpio = true
+parts = ["1 LED + 330Ω resistor", "2 push buttons", "buzzer (optional)", "breadboard + jumper wires"]
+
+[[project]]
+id = "a3_alarm"
+tier = "advanced"
+title = "Motion Alarm & Logger"
+subtitle = "A sensor alarm that arms, beeps and keeps a log"
+concepts = ["MotionSensor", "Buzzer", "states (armed / disarmed)", "CSV logging", "datetime"]
+minutes = 60
+support = "brief"
+status = "planned"
+gpio = true
+parts = ["PIR motion sensor (HC-SR501)", "active buzzer", "LED + 330Ω resistor", "1 push button"]
+
+# ---------------------------------------------------------------- ELECTRONICS LAB (optional, any order)
+# unlock_after: these unlock as soon as that project is complete (not in strict order)
+
+[[project]]
+id = "e1_lightswitch"
+tier = "lab"
+title = "Light Switch Lab"
+subtitle = "Buttons that switch, toggle and dim an LED"
+concepts = ["Button", "when_pressed", "toggle()", "PWMLED brightness", "pause()"]
+minutes = 35
+support = "guided → brief"
+status = "planned"
+gpio = true
+unlock_after = "a1_traffic"
+parts = ["1 LED + 330Ω resistor", "1 push button", "breadboard + jumper wires"]
+
+[[project]]
+id = "e2_moodlamp"
+tier = "lab"
+title = "RGB Mood Lamp"
+subtitle = "Mix any colour with one LED, then build a colour-changing lamp"
+concepts = ["RGBLED", "colour tuples", "lists + modulo %", "when_held", "random"]
+minutes = 45
+support = "scaffolded → brief"
+status = "planned"
+gpio = true
+unlock_after = "a1_traffic"
+parts = ["1 RGB LED (common cathode)", "3 x 330Ω resistors", "1 push button", "breadboard + jumper wires"]
+
+[[project]]
+id = "e3_simon"
+tier = "lab"
+title = "Simon Says"
+subtitle = "A memory game: repeat the light pattern as it gets longer"
+concepts = ["lists of LEDs and Buttons", "zip()", "functions that return", "game loop", "sequences"]
+minutes = 60
+support = "scaffolded → brief"
+status = "planned"
+gpio = true
+unlock_after = "a1_traffic"
+parts = ["3 LEDs (red, green, blue) + 3 x 330Ω", "3 push buttons", "buzzer (optional)", "breadboard + jumper wires"]
+
+[[project]]
+id = "e4_dice"
+tier = "lab"
+title = "Bar Graph & Digital Dice"
+subtitle = "Six LEDs as a level meter, a counter and a dice you can shake"
+concepts = ["LEDBoard", "LEDBarGraph", "counters with limits", "animation loops", "tilt switch input"]
+minutes = 50
+support = "scaffolded → brief"
+status = "planned"
+gpio = true
+unlock_after = "a1_traffic"
+parts = ["6 LEDs + 6 x 330Ω resistors", "2 push buttons", "tilt switch (optional)", "breadboard + jumper wires"]

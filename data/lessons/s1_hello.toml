@@ -1,0 +1,215 @@
+id = "s1_hello"
+title = "Hello, Pi!"
+file_name = "hello_pi.py"
+
+intro = """
+## Welcome to your first program!
+
+A **program** is a list of instructions for a computer. Python reads your instructions from the **top down, one line at a time**.
+
+In this project you will:
+- make Python **print** messages on the screen
+- write **comments** (notes for humans)
+- go on your first **bug hunt**, and learn how to read error messages
+
+Don't worry about breaking things. Mistakes are how programmers learn!
+"""
+
+outro = """
+## You wrote your first Python program!
+
+You used `print()` to show text, wrote comments with `#`, and fixed real bugs using the Coach.
+
+**Extension ideas** (try these in Free Build later):
+- Print a poem or a joke with a punchline line
+- Use `print()` with nothing in the brackets to add an empty line
+- Print a big ASCII-art picture of an animal
+"""
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Run your first program"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+# This is a comment. Python ignores lines that start with #
+# Comments are notes for humans.
+
+print("Hello, Pi!")
+'''
+text = """
+Some code is already in the **editor** on the right.
+
+`print()` tells Python to show something on the screen. The text inside the quotes is called a **string**.
+
+**Your task:** press the green **Run** button (or press **F5**) and look at the **Output** box.
+"""
+hints = [
+  "The Run button is green and sits just above the code.",
+  "After you press Run, look in the dark Output box at the bottom right.",
+]
+success = "That's your first program running! Python read the `print` line and showed the message."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Hello"
+label = "It prints a hello message"
+fail = "Make sure the line `print(\"Hello, Pi!\")` is still there."
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Make it say hello to YOU"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+# Change the blank to your own name
+print("Hello, ___!")
+'''
+text = """
+Now let's change the message.
+
+The `___` is a **blank**. Replace it (all three underscores) with your own name.
+
+Keep the quote marks `"` exactly where they are. They show Python where the text starts and ends.
+
+**Your task:** fill in the blank, then press **Run**.
+"""
+hints = [
+  "Click just after the three underscores, delete them, and type your name.",
+  "Your line should look like `print(\"Hello, Sam!\")` but with your name.",
+]
+success = "Nice! You just changed what a program does. That's coding!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Hello, (?!Pi!)\S+'''
+label = "It says hello to someone new"
+fail = "Your message still says \"Hello, Pi!\". Change it to your name."
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "More than one line"
+support = "guided"
+starter_mode = "append"
+starter = '''
+print("My favourite food is ___")
+print("___")
+'''
+text = """
+Python runs your lines in order, from top to bottom.
+
+Two new `print` lines have been added under your code.
+
+**Your task:**
+- fill in your favourite food
+- make the last line print **anything you like** (a fact about you, a joke, a goal)
+
+You should end up with **at least 3 lines** of output.
+"""
+hints = [
+  "Replace each `___` with your own words. Keep the quote marks.",
+  "Every print line needs brackets AND quotes: `print(\"I like pizza\")`.",
+  "Example:\n```\nprint(\"Hello, Sam!\")\nprint(\"My favourite food is dumplings\")\nprint(\"I can juggle three balls\")\n```",
+]
+success = "Three lines, in order. Python always reads from the top down."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "call:print"
+min = 3
+label = "You have at least 3 print lines"
+fail = "Add another `print(\"...\")` line so you have at least 3."
+
+[[steps.checks]]
+type = "output_lines_min"
+min = 3
+label = "3 or more lines show in the Output"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Bug hunt!"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+# Bug hunt! This code has TWO bugs on purpose.
+# Run it, read what the Coach says, and fix one bug at a time.
+
+print("I am learning Python)
+prnt("Bugs are just clues")
+'''
+text = """
+Every programmer writes bugs. A good programmer reads the error message and uses it as a **clue**.
+
+This code has **two bugs** hidden in it on purpose.
+
+**Your task:**
+1. Press **Run**. The program will crash. That's expected!
+2. Read the **Coach** card that pops up below. It tells you which line and what went wrong.
+3. Fix that bug, then **Run again** to find the next one.
+
+The line with the problem will glow **red** in the editor.
+"""
+hints = [
+  "Run the code first. The Coach will point to the line with the problem.",
+  "Bug 1 is about quote marks. Bug 2 is about spelling.",
+  "Text needs a quote at both ends, and the function is spelled `print`.",
+]
+error_hints = { NameError = "Python reads `prnt` as a word it doesn't know. How should `print` be spelled?" }
+success = "Bugs squashed! You just used error messages like a real programmer."
+
+[[steps.checks]]
+type = "runs_ok"
+label = "No more errors"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Bugs are just clues"
+label = "Both messages print"
+fail = "Make sure you fixed the bugs rather than deleting the lines!"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Text art challenge"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+# Text art! Draw a picture using print lines.
+# Here's a robot head to get you started:
+
+print("  [o_o]  ")
+'''
+text = """
+Programmers sometimes draw pictures using only keyboard characters. It's called **ASCII art**.
+
+**Your task:** make a picture that's **at least 4 lines tall**. It could be a robot, a cat, a house, a rocket or your initials.
+
+This time there's less help. Plan your picture first, then build it line by line, pressing **Run** to check as you go.
+"""
+hints = [
+  "Each row of your picture is its own `print(\"...\")` line.",
+  "Characters like `/ \\ | _ - ( ) [ ] o *` are great for drawing.",
+  "A cat:\n```\nprint(\" /\\\\_/\\\\ \")\nprint(\"( o.o )\")\nprint(\" > ^ < \")\nprint(\"/     \\\\\")\n```",
+]
+success = "Brilliant. A picture made of code!"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "output_lines_min"
+min = 4
+label = "Your picture is at least 4 lines tall"
+fail = "Add more `print` lines until your picture is 4 or more lines tall."
