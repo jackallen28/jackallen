@@ -1,5 +1,7 @@
 # ADVANCED 1: Traffic Lights. See e1_lightswitch.toml for the GPIO lesson keys.
 # Pin plan (CLAUDE.md §7): red 17, amber 27, green 22, button 23, buzzer 18.
+# Step by step: one LED -> the light sequence -> a loop -> test the button on its own ->
+# lights + button together -> add the beeper -> challenge.
 
 id = "a1_traffic"
 title = "Traffic Lights"
@@ -11,11 +13,12 @@ intro = """
 
 Every traffic light at an intersection is run by a small computer following a **sequence**: a list of steps done in order, with exact timings.
 
-In this activity you will:
-- switch real LEDs on and off with code
+You'll build it the way engineers do: get **one part** working, then the next, then put them together.
+- switch one LED on and off with code
 - make the **Australian** traffic light sequence: green, amber, red
 - use a **function** and a **loop** so the lights run forever
-- add a **pedestrian button**, and a beeper so everyone knows when it's safe to cross
+- test the **pedestrian button** on its own
+- join the lights and the button into a real crossing, then add a beeper
 
 **No kit yet?** Choose **Simulator** next to the Run button and use the board on screen. When you've got parts, switch to **Real Pi** and see your lights for real.
 """
@@ -23,7 +26,7 @@ In this activity you will:
 outro = """
 ## Your intersection is open!
 
-You used `LED`, `Button` and `Buzzer`, timed a **sequence** with `sleep()`, grouped it in a **function**, and made it repeat with a **loop**. Real traffic engineers do exactly this, with a few more lights!
+You used `LED`, `Button` and `Buzzer`, timed a **sequence** with `sleep()`, grouped it in a **function**, and made it repeat with a **loop**. You also tested each part on its own before joining them up. Real engineers work exactly like that.
 
 **Extension ideas:**
 - gpiozero has a `TrafficLights` class: `lights = TrafficLights(17, 27, 22)`, then `lights.green.on()`. Rewrite your program with it.
@@ -59,7 +62,7 @@ pin = 23
 connect = "One leg → GPIO23 (pin 16). The leg on the other side of the middle gap → GND rail. No resistor needed: gpiozero turns on the Pi's built-in pull-up."
 
 [[wiring]]
-part = "Buzzer (step 5)"
+part = "Buzzer (step 6)"
 kind = "buzzer"
 pin = 18
 connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → GND rail."
@@ -108,10 +111,10 @@ demo = '''
 from gpiozero import LED
 from time import sleep
 
-red = LED(17)
+red = LED(17)       # the red LED is wired to GPIO17
 
 red.on()
-sleep(1)
+sleep(1)            # wait 1 second
 red.off()
 sleep(1)
 red.on()
@@ -250,7 +253,7 @@ hints = [
   "Select every line from the green print down to `red.off()` and press **Tab** so they're indented under `def`.",
   "At the very bottom, not indented: `while True:` and on the next line (indented) `cycle()`.",
 ]
-success = "Your lights run forever, just like the real thing."
+success = "Your lights run forever, just like the real thing. Next, the button."
 demo = '''
 from gpiozero import LED
 from time import sleep
@@ -304,39 +307,120 @@ label = "The lights go round and round until I press Stop"
 
 # ------------------------------------------------------------------ STEP 4
 [[steps]]
-title = "The pedestrian button"
-support = "scaffolded"
-starter_mode = "keep"
-run_mode = "until_stopped"
+title = "Test the button"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+
+button = Button(23)     # the pedestrian button is wired to GPIO23
+
+for i in range(3):
+    print("Press the button...")
+    button.___()        # wait here until the button is pressed
+    print("Pressed!", i + 1)
+    button.wait_for_release()
+
+print("Your button works!")
+'''
 text = """
-At a pedestrian crossing, the lights stay **green for cars** until someone presses the button. Then they change so people can cross.
+Before the button joins the lights, test it **on its own**. Engineers test each part by itself first. Then, if something goes wrong later, you know it isn't the button.
 
-`button.wait_for_press()` makes the program **wait** right there until the button is pressed.
+`button.wait_for_press()` makes your program **stop and wait** right there until the button is pressed. `wait_for_release()` waits until you let go.
 
-**Your task:**
-1. Add `Button` to your import line: `from gpiozero import LED, Button`
-2. Make a button on GPIO23: `button = Button(23)`
-3. Change your loop so it goes like this:
+Don't worry about your traffic light code: it's saved in your `backups` folder, and the next step joins the lights and the button together.
 
-```
-while True:
-    green.on()
-    print("Press the button to cross")
-    button.wait_for_press()
-    green.off()
-    cycle()
-```
+**Your task:** fill in the blank so the program waits for a press. Run it and press the button **3 times**.
 
-4. Take the green part **out** of `cycle()`, so `cycle()` is just amber then red. While the light is red, print `Walk!`
-
-Run it. *Simulator:* click and hold the button on the board. *Real Pi:* press your real button.
+*Simulator:* click the button on the board. *Real Pi:* press your real button. Nothing happens? Open **Wiring + Safety** and press **Check my wiring**.
 """
 hints = [
-  "Your `cycle()` function should now start with `amber.on()`.",
-  "Put `print(\"Walk!\")` straight after `red.on()`, so people know it's safe to cross.",
-  "Example:\n```\ndef cycle():\n    amber.on()\n    sleep(2)\n    amber.off()\n    red.on()\n    print(\"Walk!\")\n    sleep(4)\n    red.off()\n```",
+  "The method's name is in the instructions: it *waits for* a *press*.",
+  "Replace `___` with `wait_for_press`.",
+  "The line is `button.wait_for_press()`",
 ]
-error_hints = { NameError = "Did you add `Button` to the import line at the top? `from gpiozero import LED, Button`" }
+success = "Your button works. Now you know both parts are good, so let's join them up."
+demo = '''
+from gpiozero import Button
+
+button = Button(23)     # the pedestrian button is wired to GPIO23
+
+for i in range(3):
+    print("Press the button...")
+    button.wait_for_press()
+    print("Pressed!", i + 1)
+    button.wait_for_release()
+
+print("Your button works!")
+'''
+demo_events = ["1 tap 23", "1.8 tap 23", "2.6 tap 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:wait_for_press"
+label = "The program waits for the button"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Your button works"
+label = "You pressed the button 3 times"
+fail = "Run it again and press the button 3 times (Simulator: click it on the board)."
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "The pedestrian crossing"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import LED, Button
+from time import sleep
+
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+button = Button(23)
+
+def cycle():
+    """Amber, then red while people cross."""
+    amber.on()
+    sleep(2)
+    amber.off()
+    red.on()
+    print("Walk!")
+    sleep(4)
+    red.off()
+
+while True:
+    green.on()              # cars can go until someone presses the button
+    print("Press the button to cross")
+    button.___()
+    green.off()
+    ___()
+'''
+text = """
+Now put the two parts together. At a pedestrian crossing, the lights stay **green for cars** until someone presses the button. Then they change so people can cross.
+
+Here are your lights and your button test, joined up:
+- `cycle()` is now just **amber, then red** (with `Walk!`)
+- **green** waits in the loop, until the button is pressed
+
+**Your task:** fill in the two blanks:
+1. wait for the button to be pressed
+2. then run the amber and red part: call the `cycle` function
+
+Run it and press the button a few times. Press **Stop** when you're done.
+"""
+hints = [
+  "The first blank is the same method you used in the button test.",
+  "The second blank is the name of the function that does amber and red.",
+  "The lines are `button.wait_for_press()` and `cycle()`.",
+]
+error_hints = { NameError = "Check the spelling of `cycle`. It must match the name after `def`." }
 success = "Now the lights respond to people. Input + output + timing!"
 demo = '''
 from gpiozero import LED, Button
@@ -348,6 +432,7 @@ green = LED(22)
 button = Button(23)
 
 def cycle():
+    """Amber, then red while people cross."""
     amber.on()
     sleep(2)
     amber.off()
@@ -357,7 +442,7 @@ def cycle():
     red.off()
 
 while True:
-    green.on()
+    green.on()              # cars can go until someone presses the button
     print("Press the button to cross")
     button.wait_for_press()
     green.off()
@@ -368,13 +453,14 @@ demo_seconds = 10
 
 [[steps.checks]]
 type = "code_uses"
-value = "import:Button"
-label = "You import Button"
-
-[[steps.checks]]
-type = "code_uses"
 value = "call:wait_for_press"
 label = "The lights wait for the button"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''^\s+cycle\(\s*\)'''
+label = "After the press, the loop runs cycle()"
+fail = "Inside the loop, after the button is pressed, call `cycle()`."
 
 [[steps.checks]]
 type = "output_contains"
@@ -386,29 +472,30 @@ fail = "Run it, press the button, and wait for the red light. Does your program 
 type = "confirm"
 label = "The lights only change after I press the button"
 
-# ------------------------------------------------------------------ STEP 5
+# ------------------------------------------------------------------ STEP 6
 [[steps]]
-title = "Challenge: safe to cross"
-support = "brief"
+title = "Add a beeper"
+support = "scaffolded"
 starter_mode = "keep"
 run_mode = "until_stopped"
 text = """
-Real crossings help people who can't see the lights. They make a fast **tick-tick** sound while it's safe to cross, then the red figure **flashes** to say "don't start crossing now".
+Real crossings help people who can't see the lights. They make a fast **tick-tick** sound while it's safe to cross.
 
-**Goal:**
-1. Add a **buzzer** on GPIO18. While people are crossing (red for cars), make it beep quickly.
-2. Stop the beeping, then **flash** the red LED 5 times before the lights go back to green.
+`buzzer.beep(0.1, 0.1)` beeps over and over **in the background** (0.1 seconds on, 0.1 off), so your program carries on while it beeps. `buzzer.off()` stops it.
 
-**Tips:**
-- `buzzer = Buzzer(18)` (add `Buzzer` to your import)
-- `buzzer.beep(0.1, 0.1)` beeps over and over **in the background** until `buzzer.off()`
-- `red.blink(0.2, 0.2, n=5, background=False)` flashes 5 times, then carries on
+**Your task:**
+1. Add `Buzzer` to your import line: `from gpiozero import LED, Button, Buzzer`
+2. Make a buzzer on GPIO18: `buzzer = Buzzer(18)`
+3. In `cycle()`, start beeping straight after `print("Walk!")`
+4. Stop the beeping after the `sleep(4)`, before the red light goes off
 """
 hints = [
-  "Put `buzzer.beep(0.1, 0.1)` just after `print(\"Walk!\")`, and `buzzer.off()` after the `sleep()`.",
-  "After `buzzer.off()`, flash the red light: `red.blink(0.2, 0.2, n=5, background=False)`.",
+  "Add `buzzer = Buzzer(18)` under `button = Button(23)`.",
+  "Inside `cycle()`, after `print(\"Walk!\")`: `buzzer.beep(0.1, 0.1)`.",
+  "After `sleep(4)`, still inside `cycle()`: `buzzer.off()`.",
 ]
-success = "Your crossing is safer for everyone. That's thoughtful design!"
+error_hints = { NameError = "Did you add `Buzzer` to the import line, and make `buzzer = Buzzer(18)`?" }
+success = "Your crossing talks to people who can't see it. That's thoughtful design."
 demo = '''
 from gpiozero import LED, Button, Buzzer
 from time import sleep
@@ -420,6 +507,7 @@ button = Button(23)
 buzzer = Buzzer(18)
 
 def cycle():
+    """Amber, then red while people cross."""
     amber.on()
     sleep(2)
     amber.off()
@@ -428,18 +516,17 @@ def cycle():
     buzzer.beep(0.1, 0.1)      # tick-tick-tick while people cross
     sleep(4)
     buzzer.off()
-    red.blink(0.2, 0.2, n=5, background=False)   # flashing red: don't start crossing
     red.off()
 
 while True:
-    green.on()
+    green.on()              # cars can go until someone presses the button
     print("Press the button to cross")
     button.wait_for_press()
     green.off()
     cycle()
 '''
 demo_events = ["1.5 tap 23"]
-demo_seconds = 11
+demo_seconds = 10
 
 [[steps.checks]]
 type = "code_uses"
@@ -453,9 +540,93 @@ label = "The buzzer beeps while people cross"
 
 [[steps.checks]]
 type = "code_regex"
-value = '''blink\(|for\s+\w+\s+in\s+range'''
-label = "The red light flashes before green comes back"
+value = '''buzzer\.off\(\)'''
+label = "The beeping stops before the lights change"
+fail = "Add `buzzer.off()` after `sleep(4)` so the beeping stops."
+
+[[steps.checks]]
+type = "output_contains"
+value = "Walk"
+label = "You tested it with the button"
+fail = "Run it and press the button before you press Stop."
 
 [[steps.checks]]
 type = "confirm"
-label = "I heard (or saw) the beeping, then the red light flashed"
+label = "I heard (or saw) the buzzer beeping while it said Walk"
+
+# ------------------------------------------------------------------ STEP 7
+[[steps]]
+title = "Challenge: the full crossing"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Real crossings count down, so people know how long they have. Then the red figure **flashes** to say "don't start crossing now".
+
+**Goal:**
+1. While people cross, count down: print `Walk 5`, `Walk 4` ... `Walk 1`, one second apart, with the beeping on.
+2. Then stop the beeping and **flash** the red light 5 times before green comes back.
+
+**Tips:**
+- `for n in range(5, 0, -1):` counts 5, 4, 3, 2, 1
+- `red.blink(0.2, 0.2, n=5, background=False)` flashes 5 times, then carries on
+"""
+hints = [
+  "Replace `print(\"Walk!\")` and `sleep(4)` with a loop: `for n in range(5, 0, -1):` then (indented) `print(\"Walk\", n)` and `sleep(1)`.",
+  "After `buzzer.off()`, flash the red light: `red.blink(0.2, 0.2, n=5, background=False)`.",
+]
+success = "A complete pedestrian crossing, built one part at a time. Brilliant work!"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from time import sleep
+
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+button = Button(23)
+buzzer = Buzzer(18)
+
+def cycle():
+    """Amber, then red with a countdown while people cross, then flashing red."""
+    amber.on()
+    sleep(2)
+    amber.off()
+    red.on()
+    buzzer.beep(0.1, 0.1)          # tick-tick-tick while people cross
+    for n in range(5, 0, -1):      # 5, 4, 3, 2, 1
+        print("Walk", n)
+        sleep(1)
+    buzzer.off()
+    red.blink(0.2, 0.2, n=5, background=False)   # flashing red: don't start crossing now
+    red.off()
+
+while True:
+    green.on()              # cars can go until someone presses the button
+    print("Press the button to cross")
+    button.wait_for_press()
+    green.off()
+    cycle()
+'''
+demo_events = ["1.5 tap 23"]
+demo_seconds = 12
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "A loop counts down"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Walk\W*1\b'''
+label = "The countdown gets to Walk 1"
+fail = "Press the button and wait. Does your countdown print `Walk 5` down to `Walk 1`?"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''blink\(|(for\s[\s\S]*){2}'''
+label = "The red light flashes before green comes back"
+fail = "After the countdown, flash the red light: `red.blink(0.2, 0.2, n=5, background=False)`."
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw the countdown with beeping, then the red light flashed"

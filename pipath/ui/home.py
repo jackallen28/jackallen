@@ -64,8 +64,8 @@ class HomeScreen(Screen):
             c.pack(side="left", padx=(0, 6))
             c.bind("<Button-1>", lambda e, k=key: self.set_level(k))
             self.level_chips[key] = c
-        self.level_blurb = label(lv, "", font="small", fg=C["muted"])
-        self.level_blurb.pack(side="left", padx=(8, 0))
+        self.level_blurb = label(head, "", font="small", fg=C["muted"])
+        self.level_blurb.pack(anchor="w", pady=(4, 0))
 
         chips = tk.Frame(head, bg=C["bg"])
         chips.pack(fill="x", pady=(10, 0))

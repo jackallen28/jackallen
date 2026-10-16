@@ -1,6 +1,6 @@
-"""Every GPIO / camera activity step must be solvable: its demo (the model answer that
-"Watch the goal" plays) passes that step's checks in the Simulator, with the demo's
-simulated button presses. Starters must also start cleanly.
+"""Every step of every activity must be solvable: its demo (the model answer that
+"Watch the goal" plays) passes that step's checks, in the Simulator for GPIO / camera
+activities, with the demo's simulated presses and typed answers. Starters must start cleanly.
 
     python3 -m unittest tests.test_activities
 """
@@ -18,11 +18,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pipath.content import DATA_DIR, Catalog  # noqa: E402
 from pipath.hints import evaluate_checks, precheck  # noqa: E402
+from pipath.levels import has_goal  # noqa: E402
 from shimrun import HAVE_GPIOZERO, run_shim  # noqa: E402
 
 LESSONS_DIR = DATA_DIR / "lessons"
 WORKERS = max(2, min(8, (os.cpu_count() or 2) * 2))
 SUPPORT = {"guided", "scaffolded", "brief"}
+
+
+def all_lessons() -> list[str]:
+    return [f.stem for f in sorted(LESSONS_DIR.glob("*.toml"))]
 
 
 def hardware_lessons() -> list[str]:
@@ -61,6 +66,9 @@ class TestLessonFiles(unittest.TestCase):
                     self.assertIn(step["support"], SUPPORT, f"step {i + 1}")
                     self.assertLessEqual(len(step["hints"]), 3, f"step {i + 1}")
                     self.assertTrue(step.get("text"), f"step {i + 1}")
+                    self.assertTrue(has_goal(step), f"step {i + 1}: add a **Your task:** or **Goal:** "
+                                                    "line (Advanced shows just the goal)")
+                    self.assertTrue(step.get("checks"), f"step {i + 1} has no checklist")
                     for c in step["checks"]:
                         if c["type"] in ("output_regex", "code_regex", "file_contains"):
                             re.compile(c["value"])
@@ -79,11 +87,11 @@ class TestLessonFiles(unittest.TestCase):
 
 
 @unittest.skipUnless(HAVE_GPIOZERO, "gpiozero is not installed")
-class TestHardwareActivitiesSolvable(unittest.TestCase):
+class TestActivitiesSolvable(unittest.TestCase):
     def test_every_step_demo_passes_its_checks(self):
         cat = Catalog()
         jobs = []
-        for lid in hardware_lessons():
+        for lid in all_lessons():
             for i, step in enumerate(cat.lesson(lid)["steps"]):
                 self.assertIn("demo", step, f"{lid} step {i + 1} needs a demo (model answer)")
                 jobs.append((lid, i, step))

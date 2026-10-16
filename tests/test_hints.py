@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipath.content import Catalog  # noqa: E402
-from pipath.hints import HintEngine, evaluate_checks, parse_traceback, precheck  # noqa: E402
+from pipath.hints import HintEngine, parse_traceback, precheck  # noqa: E402
 
 ENGINE = HintEngine()
 
@@ -78,54 +78,16 @@ class TestDiagnose(unittest.TestCase):
 
 
 class TestLessonsSolvable(unittest.TestCase):
-    """Model answers for every step must pass that step's checks."""
-
-    ANSWERS = {
-        "s1_hello": [
-            ('print("Hello, Pi!")', ""),
-            ('print("Hello, Sam!")', ""),
-            ('print("Hello, Sam!")\nprint("My favourite food is dumplings")\nprint("I can juggle")', ""),
-            ('print("I am learning Python")\nprint("Bugs are just clues")', ""),
-            ('print(" /\\\\_/\\\\ ")\nprint("( o.o )")\nprint(" > ^ < ")\nprint("/     \\\\")', ""),
-        ],
-        "s2_pibot": [
-            ('bot_name = "Sparky"\nprint("Beep boop! I am", bot_name)', ""),
-            ('name = input("What is your name? ")\nprint(f"Nice to meet you, {name}!")', "Sam\n"),
-            ('age = int(input("How old are you? "))\nprint(f"Next year you will be {age + 1}!")', "12\n"),
-            ('a = input("a")\nb = input("b")\nfood = input("Food? ")\nprint(food.upper())', "x\ny\npizza\n"),
-            ('a = input()\nb = input()\nc = input().upper()\nd = int(input())\nprint(d * 4)', "x\ny\nz\n2\n"),
-        ],
-        "s3_guess": [
-            ('import random\nsecret = random.randint(1, 10)\nprint(secret)', ""),
-            ('import random\nsecret = 5\nguess = int(input())\nif guess == secret:\n    print("You got it!")\nelse:\n    print("Nope")', "5\n"),
-            ('import random\nsecret = 5\nguess = int(input())\nif guess == secret:\n    print("You got it!")\nelif guess < secret:\n    print("Too low!")\nelse:\n    print("Too high!")', "5\n"),
-            ('import random\nsecret = random.randint(1, 1)\nguess = 0\nwhile guess != secret:\n    guess = int(input())\nprint("You got it!")', "1\n"),
-            ('import random\nsecret = random.randint(1, 100)\nguess = 0\ntries = 0\nwhile guess != 50:\n    guess = int(input())\n    tries += 1\nprint(f"You got it! You took {tries} tries!")', "50\n"),
-        ],
-    }
-
-    def test_model_answers(self):
-        cat = Catalog()
-        for lid, answers in self.ANSWERS.items():
-            steps = cat.lesson(lid)["steps"]
-            self.assertEqual(len(steps), len(answers), lid)
-            for i, (code, stdin) in enumerate(answers):
-                with self.subTest(lesson=lid, step=i + 1):
-                    with tempfile.TemporaryDirectory() as d:
-                        p = Path(d) / "a.py"
-                        p.write_text(code)
-                        r = subprocess.run([sys.executable, "a.py"], cwd=d, input=stdin,
-                                           capture_output=True, text=True, timeout=10)
-                    res = evaluate_checks(steps[i]["checks"], code, r.stdout, r.returncode != 0,
-                                          runs_this_step=3)
-                    failed = [c.label for c in res if not c.passed]
-                    self.assertEqual(failed, [], r.stderr)
+    """Starters with blanks are caught before they run."""
 
     def test_starters_fail_until_edited(self):
-        """Starter code with blanks should be caught by precheck, not crash oddly."""
+        """Starter code with blanks should be caught by precheck, not crash oddly.
+        (Every step's model answer is its demo, tested in test_activities.py.)"""
         cat = Catalog()
-        for lid in self.ANSWERS:
-            for step in cat.lesson(lid)["steps"]:
+        for p in cat.projects:
+            if p.get("status") != "ready":
+                continue
+            for step in cat.lesson(p["id"])["steps"]:
                 st = step.get("starter", "")
                 if "___" in st:
                     self.assertIsNotNone(precheck(st, st))

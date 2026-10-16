@@ -1,5 +1,7 @@
 # ADVANCED 2: Reaction Timer. See e1_lightswitch.toml for the GPIO lesson keys.
 # Pin plan: LED 17, player 1 button 23, player 2 button 24, (optional) buzzer 18.
+# Step by step: the LED -> a random wait -> test the button (and the stopwatch) on its own ->
+# light + button together -> no cheating -> two players -> challenge.
 
 id = "a2_reaction"
 title = "Reaction Timer"
@@ -11,9 +13,10 @@ intro = """
 
 A light comes on at a random moment. Press your button as fast as you can. The Pi times you to the **millisecond** (a thousandth of a second).
 
-In this activity you will:
-- use **random** waits so nobody can guess when the light comes on
-- use the Pi as a **stopwatch** with `time.monotonic()`
+You'll build it one part at a time:
+- light the LED, then add a **random** wait so nobody can guess when it comes on
+- test the button on its own, and use the Pi as a **stopwatch** with `time.monotonic()`
+- put the light and the button together to time your reactions
 - catch **cheaters** who press too early
 - race a friend with **events** (`when_pressed`)
 - save a **high score** to a file, so it's still there tomorrow
@@ -49,13 +52,77 @@ connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND ra
 part = "Player 2 button"
 kind = "button"
 pin = 24
-connect = "One leg → GPIO24 (pin 18). The leg across the middle gap → GND rail. (Needed from step 4.)"
+connect = "One leg → GPIO24 (pin 18). The leg across the middle gap → GND rail. (Needed from step 6.)"
 
 [[wiring]]
 part = "Tip"
 connect = "Put the two buttons at opposite ends of the breadboard so the players don't bump hands!"
 
 # ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Light the LED"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED
+from time import sleep
+
+light = LED(___)        # the LED is wired to GPIO17
+
+light.on()
+print("Light on!")
+sleep(2)
+light.off()
+print("Light off")
+'''
+text = """
+First, check the light works on its own.
+
+`LED(17)` makes an **object** that controls the LED wired to **GPIO17**. Then `light.on()` and `light.off()` switch it on and off, and `sleep(2)` waits 2 seconds in between.
+
+**Your task:** fill in the blank with the LED's GPIO number (it's in the **Wiring + Safety** card). Run it and watch the light.
+
+*Simulator:* the LED on the board lights up. *Real Pi:* your breadboard LED does!
+"""
+hints = [
+  "Look for the LED in the Wiring + Safety card. Which GPIO number is it on?",
+  "The LED is on GPIO17, so the blank is `17`.",
+  "The line is `light = LED(17)`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "The light works. That's the first part of your game."
+demo = '''
+from gpiozero import LED
+from time import sleep
+
+light = LED(17)         # the LED is wired to GPIO17
+
+light.on()
+print("Light on!")
+sleep(2)
+light.off()
+print("Light off")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''LED\(\s*17\s*\)'''
+label = "You use the LED on GPIO17"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Light off"
+label = "Your program gets to the end"
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw the LED light up for 2 seconds"
+
+# ------------------------------------------------------------------ STEP 2
 [[steps]]
 title = "Wait for it..."
 support = "scaffolded"
@@ -90,7 +157,7 @@ hints = [
   "Just run it two or three times and watch for the light.",
   "Copy the `print` line from the instructions to the bottom of your code.",
 ]
-success = "Random waits: impossible to guess, so it's a fair test."
+success = "Random waits: impossible to guess, so it's a fair test. Next, the button."
 demo = '''
 from gpiozero import LED
 from time import sleep
@@ -130,7 +197,86 @@ ignore_case = true
 label = "You print how long the wait was"
 fail = "Add the `print(\"The wait was\", round(wait, 1), \"seconds\")` line at the bottom."
 
-# ------------------------------------------------------------------ STEP 2
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Test the button"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+from time import monotonic
+
+button = Button(23)        # player 1's button is wired to GPIO23
+
+for i in range(3):
+    print("Press and hold the button...")
+    button.wait_for_press()
+    start = monotonic()        # the stopwatch reading when you press
+    button.___()               # wait here until you let go
+    held = monotonic() - start
+    print(f"You held it for {round(held, 1)} seconds")
+
+print("Your button works!")
+'''
+text = """
+Before the button joins the game, test it **on its own**. While you're at it, meet the Pi's **stopwatch**.
+
+`monotonic()` is like a stopwatch that's always running. It gives a number of seconds. The number itself doesn't matter, but the **difference** between two readings is exact:
+
+- `start = monotonic()` when you press
+- `monotonic() - start` when you let go is how long you held the button
+
+`button.wait_for_press()` waits until the button is pressed. `button.wait_for_release()` waits until you let go.
+
+**Your task:** fill in the blank so the program waits for you to **let go**. Run it and press and hold the button 3 times: once quickly, once for longer.
+
+*Simulator:* click and hold the button on the board. Nothing happens on a Real Pi? Press **Check my wiring** in the Wiring + Safety card.
+"""
+hints = [
+  "You want the method that waits for the button to be *released*.",
+  "Replace `___` with `wait_for_release`.",
+  "The line is `button.wait_for_release()`",
+]
+success = "Your button works, and you've used a stopwatch. Now let's join the light and the button."
+demo = '''
+from gpiozero import Button
+from time import monotonic
+
+button = Button(23)        # player 1's button is wired to GPIO23
+
+for i in range(3):
+    print("Press and hold the button...")
+    button.wait_for_press()
+    start = monotonic()        # the stopwatch reading when you press
+    button.wait_for_release()
+    held = monotonic() - start
+    print(f"You held it for {round(held, 1)} seconds")
+
+print("Your button works!")
+'''
+demo_events = ["1 press 23", "1.8 release 23", "2.4 press 23", "2.7 release 23", "3.3 press 23", "4.5 release 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:wait_for_release"
+label = "The program waits for you to let go"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''held it for \d'''
+label = "The stopwatch timed how long you held it"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Your button works"
+label = "You pressed the button 3 times"
+fail = "Run it again and press and hold the button 3 times (Simulator: click and hold it on the board)."
+
+# ------------------------------------------------------------------ STEP 4
 [[steps]]
 title = "Start the stopwatch"
 support = "scaffolded"
@@ -155,13 +301,13 @@ reaction = end - start
 print(f"Your reaction time: {round(reaction * 1000)} ms")
 '''
 text = """
-`monotonic()` is like a stopwatch that's always running. It gives a number of seconds. The number itself doesn't matter, but the **difference** between two readings is exact.
+Now put the parts together: the light and the random wait from step 2, and the button and stopwatch from step 3.
 
 - `start = monotonic()` when the light comes on
 - `end = monotonic()` when the button is pressed
 - `end - start` is your reaction time in seconds. Times 1000 gives **milliseconds** (ms).
 
-**Your task:** fill in the blank so `end` is the stopwatch reading after the press. Run it and test your reactions!
+**Your task:** fill in the blank so `end` is the stopwatch reading after the press. Run it, and press the button as soon as the light comes on!
 """
 hints = [
   "You need another stopwatch reading, just like the `start` line.",
@@ -205,7 +351,7 @@ value = '''\d+\s*ms'''
 label = "Your reaction time is printed in ms"
 fail = "Run it and press the button when the light comes on."
 
-# ------------------------------------------------------------------ STEP 3
+# ------------------------------------------------------------------ STEP 5
 [[steps]]
 title = "No cheating!"
 support = "scaffolded"
@@ -275,13 +421,15 @@ value = "Too soon"
 label = "You tested a false start and saw Too soon!"
 fail = "Run it again and press the button **before** the light comes on."
 
-# ------------------------------------------------------------------ STEP 4
+# ------------------------------------------------------------------ STEP 6
 [[steps]]
 title = "Two-player race"
 support = "brief"
 starter_mode = "keep"
 text = """
 **Goal:** two players, two buttons. When the light comes on, the **first** to press wins.
+
+First wire player 2's button to **GPIO24** and test it with **Check my wiring** (in the Wiring + Safety card).
 
 `wait_for_press()` can only watch one button, so use **events** instead:
 
@@ -359,7 +507,7 @@ ignore_case = true
 label = "Your game says who wins"
 fail = "Play a round: when the light comes on, press one of the buttons."
 
-# ------------------------------------------------------------------ STEP 5
+# ------------------------------------------------------------------ STEP 7
 [[steps]]
 title = "Challenge: best of 5 and a high score"
 support = "brief"

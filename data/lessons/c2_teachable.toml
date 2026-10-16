@@ -3,6 +3,8 @@
 # demo_files: sample training data (data/demo_files/c2/examples.json, made with the Simulator's
 # Ball and Box), copied next to the demo so "Watch the goal" works before students collect their own.
 # Pin plan: green LED 22 (first thing), red LED 17 (second thing), button 23.
+# Step by step: pictures as numbers -> collect examples -> distance -> a guess on its own ->
+# button + lights join in -> challenge.
 
 id = "c2_teachable"
 title = "Teachable Machine"
@@ -19,7 +21,8 @@ In this activity you'll build a tiny version yourself, with no AI library and no
 - see how a computer stores a picture: **as numbers**
 - collect **training examples** of two things
 - write a **distance** function that measures how different two pictures are
-- make the Pi **guess** what it's looking at, and light the matching LED
+- make the Pi **guess** what it's looking at
+- add a button and lights, so the matching LED lights up
 - **test** how accurate it is, and find out why it gets things wrong
 
 **Pick two things** the camera can tell apart: a ball and a box, a red cup and a book, thumbs up and thumbs down. In the **Simulator**, use **Ball** and **Box** on the board.
@@ -324,8 +327,171 @@ label = "You print a distance for each example"
 title = "Make a guess"
 support = "scaffolded"
 starter_mode = "replace"
-run_mode = "until_stopped"
 starter = '''
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+
+with open("examples.json") as f:
+    examples = json.load(f)
+
+def distance(a, b):
+    total = 0
+    for x, y in zip(a, b):
+        total = total + abs(x - y)
+    return total
+
+def classify(pixels):
+    """Find the example that looks most like these pixels, and return its label."""
+    best_label = None
+    best_distance = None
+    for ex in examples:
+        d = distance(pixels, ex["pixels"])
+        if best_distance is None or d < ___:
+            best_distance = d
+            best_label = ex["label"]
+    return best_label
+
+def snap():
+    """Take a 16 x 16 picture and join its rows into one list of 256 numbers."""
+    grid = cam.capture_grid(16, 16)
+    pixels = []
+    for row in grid:
+        pixels = pixels + row
+    return pixels
+
+print("Looking...")
+guess = classify(snap())
+print("I think it's a", guess)
+'''
+text = """
+Now the clever bit. To guess what's in a new photo, `classify()` compares it with **every** training example and finds the **closest** one (the smallest distance). Its label is the guess. That's a **nearest neighbour** classifier.
+
+It works like you looking at a new dog photo and thinking "that looks most like the Labrador I saw before".
+
+**Your task:** fill in the blank so a new example wins if its distance `d` is **smaller** than the best so far.
+
+Then test it with **both** things: run it with one thing in front of the camera, then run it again with the other. (Simulator: choose **Ball** on the board and run it, then choose **Box** and run it again.)
+"""
+hints = [
+  "We keep the smallest distance so far in `best_distance`.",
+  "Compare `d` with `best_distance`.",
+  "The line is `if best_distance is None or d < best_distance:`",
+]
+error_hints = { FileNotFoundError = "There's no `examples.json` yet. Go back to step 2 and collect your examples first." }
+success = "Your Pi is recognising things it has never seen before. That's machine learning!"
+demo = '''
+from pipath_camera import Camera
+import json
+
+cam = Camera()
+
+with open("examples.json") as f:
+    examples = json.load(f)
+
+def distance(a, b):
+    total = 0
+    for x, y in zip(a, b):
+        total = total + abs(x - y)
+    return total
+
+def classify(pixels):
+    """Find the example that looks most like these pixels, and return its label."""
+    best_label = None
+    best_distance = None
+    for ex in examples:
+        d = distance(pixels, ex["pixels"])
+        if best_distance is None or d < best_distance:
+            best_distance = d
+            best_label = ex["label"]
+    return best_label
+
+def snap():
+    """Take a 16 x 16 picture and join its rows into one list of 256 numbers."""
+    grid = cam.capture_grid(16, 16)
+    pixels = []
+    for row in grid:
+        pixels = pixels + row
+    return pixels
+
+print("Looking...")
+guess = classify(snap())
+print("I think it's a", guess)
+'''
+demo_files = ["c2/examples.json"]
+demo_events = ["0.1 show ball"]
+
+[[steps.checks]]
+type = "code_regex"
+value = '''d\s*<\s*best_distance|best_distance\s*>\s*d'''
+label = "The closest example wins"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "classify() returns its guess"
+
+[[steps.checks]]
+type = "output_contains"
+value = "I think"
+label = "Your machine made a guess"
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You tested it more than once"
+fail = "Run it again with the other thing in front of the camera."
+
+[[steps.checks]]
+type = "confirm"
+label = "It guessed right for both of my things"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Show the answer with lights"
+support = "scaffolded"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Your machine can guess. Now make it a real gadget: press a **button** to look, and the **LED** for its guess lights up.
+
+**Your task:**
+1. At the top, add `from gpiozero import Button, LED`. Under `cam = Camera()`, make `button = Button(23)`, `green = LED(22)` (first thing) and `red = LED(17)` (second thing).
+2. After `examples` is loaded, make a list of your two labels, in the order you collected them:
+
+```
+things = []
+for ex in examples:
+    if ex["label"] not in things:
+        things.append(ex["label"])
+```
+
+3. Replace the last three lines with a loop:
+
+```
+print("Show me something and press the button!")
+while True:
+    button.wait_for_press()
+    guess = classify(snap())
+    print("I think it's a", guess)
+    green.value = guess == things[0]
+    red.value = guess == things[1]
+    button.wait_for_release()
+```
+
+`green.value = guess == things[0]` turns the green LED **on** when the guess is your first thing, and **off** when it isn't.
+
+Run it, show the camera each thing, and press the button. Press **Stop** when you've tested both.
+"""
+hints = [
+  "Put `button`, `green` and `red` near the top, under `cam = Camera()`.",
+  "`things` must come after the `with open(\"examples.json\")` part. Copy the 4 lines from the instructions.",
+  "Replace `print(\"Looking...\")` and the two lines after it with the `while True:` loop from the instructions.",
+]
+error_hints = { FileNotFoundError = "There's no `examples.json` yet. Go back to step 2 and collect your examples first.", NameError = "Did you import `Button` and `LED`, and make `button`, `green`, `red` and `things`?" }
+success = "Press, look, light up. You've built a machine that learns and shows its answer!"
+demo = '''
 from gpiozero import Button, LED
 from pipath_camera import Camera
 import json
@@ -354,75 +520,13 @@ def classify(pixels):
     best_distance = None
     for ex in examples:
         d = distance(pixels, ex["pixels"])
-        if best_distance is None or d < ___:
-            best_distance = d
-            best_label = ex["label"]
-    return best_label
-
-def snap():
-    grid = cam.capture_grid(16, 16)
-    pixels = []
-    for row in grid:
-        pixels = pixels + row
-    return pixels
-
-print("Show me something and press the button!")
-while True:
-    button.wait_for_press()
-    guess = classify(snap())
-    print("I think it's a", guess)
-    green.value = guess == things[0]
-    red.value = guess == things[1]
-    button.wait_for_release()
-'''
-text = """
-Now the clever bit. To guess what's in a new photo, `classify()` compares it with **every** training example and finds the **closest** one (the smallest distance). Its label is the guess. That's a **nearest neighbour** classifier.
-
-It works like you looking at a new dog photo and thinking "that looks most like the Labrador I saw before".
-
-**Your task:** fill in the blank so a new example wins if its distance `d` is **smaller** than the best so far. Run it, show the camera each thing, and press the button. Does the right LED light up? Press **Stop** when you've tested both.
-"""
-hints = [
-  "We keep the example with the smallest distance so far in `best_distance`.",
-  "Compare `d` with `best_distance`.",
-  "The line is `if best_distance is None or d < best_distance:`",
-]
-error_hints = { FileNotFoundError = "There's no `examples.json` yet. Go back to step 2 and collect your examples first." }
-success = "Your Pi is recognising things it has never seen before. That's machine learning!"
-demo = '''
-from gpiozero import Button, LED
-from pipath_camera import Camera
-import json
-
-cam = Camera()
-button = Button(23)
-green = LED(22)
-red = LED(17)
-
-with open("examples.json") as f:
-    examples = json.load(f)
-things = []
-for ex in examples:
-    if ex["label"] not in things:
-        things.append(ex["label"])
-
-def distance(a, b):
-    total = 0
-    for x, y in zip(a, b):
-        total = total + abs(x - y)
-    return total
-
-def classify(pixels):
-    best_label = None
-    best_distance = None
-    for ex in examples:
-        d = distance(pixels, ex["pixels"])
         if best_distance is None or d < best_distance:
             best_distance = d
             best_label = ex["label"]
     return best_label
 
 def snap():
+    """Take a 16 x 16 picture and join its rows into one list of 256 numbers."""
     grid = cam.capture_grid(16, 16)
     pixels = []
     for row in grid:
@@ -443,26 +547,31 @@ demo_events = ["0.5 show ball", "1.5 tap 23", "3 show box", "4 tap 23", "5.5 sho
 demo_seconds = 8.5
 
 [[steps.checks]]
-type = "code_regex"
-value = '''d\s*<\s*best_distance|best_distance\s*>\s*d'''
-label = "The closest example wins"
+type = "code_uses"
+value = "import:Button"
+label = "You use a Button"
 
 [[steps.checks]]
 type = "code_uses"
-value = "node:Return"
-label = "classify() returns its guess"
+value = "import:LED"
+label = "You use LEDs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "A loop keeps it looking"
 
 [[steps.checks]]
 type = "output_contains"
 value = "I think"
-label = "Your machine made a guess"
+label = "You pressed the button and it made a guess"
 fail = "Run it, show the camera something, and press the button before you press Stop."
 
 [[steps.checks]]
 type = "confirm"
-label = "It guessed right most of the time, and the matching LED lit up"
+label = "The matching LED lit up for each thing"
 
-# ------------------------------------------------------------------ STEP 5
+# ------------------------------------------------------------------ STEP 6
 [[steps]]
 title = "Challenge: how accurate is it?"
 support = "brief"

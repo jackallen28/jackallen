@@ -7,6 +7,8 @@ from .theme import C
 from .widgets import PButton
 
 MAX_LINES = 1500
+PROMPT = "Type your answer here, then press Enter ▸"
+SHORT_PROMPT = "Answer ▸"          # when the Output is narrow (the board takes the room on a small screen)
 
 
 class Console(tk.Frame):
@@ -39,8 +41,7 @@ class Console(tk.Frame):
         # input row
         self.in_row = tk.Frame(self, bg="#1B1F26", padx=8, pady=6)
         self.in_row.pack(fill="x")
-        self.in_label = tk.Label(self.in_row, text="Type your answer here, then press Enter ▸",
-                                 font="small_bold", fg="#5A606B", bg="#1B1F26")
+        self.in_label = tk.Label(self.in_row, text=PROMPT, font="small_bold", fg="#5A606B", bg="#1B1F26")
         self.in_label.pack(side="left", padx=(4, 8))
         self.entry = tk.Entry(self.in_row, font="code", bg="#262B34", fg="#FFFFFF",
                               insertbackground="#FFFFFF", relief="flat", highlightthickness=2,
@@ -51,7 +52,14 @@ class Console(tk.Frame):
         self.send_btn.pack(side="left", padx=(8, 0))
         self.entry.bind("<Return>", self._send)
         self.entry.bind("<KP_Enter>", self._send)
+        self.in_row.bind("<Configure>", self._fit_prompt)
         self.set_input_enabled(False)
+
+    def _fit_prompt(self, e) -> None:
+        """Keep the answer box visible: a shorter label when the Output is narrow."""
+        text = PROMPT if e.width >= 560 else SHORT_PROMPT
+        if self.in_label.cget("text") != text:
+            self.in_label.configure(text=text)
 
     def _send(self, _e=None):
         if str(self.entry.cget("state")) == "disabled":

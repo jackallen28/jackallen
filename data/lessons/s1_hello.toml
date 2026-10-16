@@ -49,6 +49,12 @@ hints = [
   "After you press Run, look in the dark Output box at the bottom right.",
 ]
 success = "That's your first program running! Python read the `print` line and showed the message."
+demo = '''
+# This is a comment. Python ignores lines that start with #
+# Comments are notes for humans.
+
+print("Hello, Pi!")
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -83,6 +89,10 @@ hints = [
   "Your line should look like `print(\"Hello, Sam!\")` but with your name.",
 ]
 success = "Nice! You just changed what a program does. That's coding!"
+demo = '''
+# Change the blank to your own name
+print("Hello, Sam!")
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -120,6 +130,12 @@ hints = [
   "Example:\n```\nprint(\"Hello, Sam!\")\nprint(\"My favourite food is dumplings\")\nprint(\"I can juggle three balls\")\n```",
 ]
 success = "Three lines, in order. Python always reads from the top down."
+demo = '''
+# Change the blank to your own name
+print("Hello, Sam!")
+print("My favourite food is dumplings")
+print("I can juggle three balls")
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -168,6 +184,13 @@ hints = [
 ]
 error_hints = { NameError = "Python reads `prnt` as a word it doesn't know. How should `print` be spelled?" }
 success = "Bugs squashed! You just used error messages like a real programmer."
+demo = '''
+# Bug hunt! This code has TWO bugs on purpose.
+# Run it, read what the Coach says, and fix one bug at a time.
+
+print("I am learning Python")
+print("Bugs are just clues")
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -203,6 +226,15 @@ hints = [
   "A cat:\n```\nprint(\" /\\\\_/\\\\ \")\nprint(\"( o.o )\")\nprint(\" > ^ < \")\nprint(\"/     \\\\\")\n```",
 ]
 success = "Brilliant. A picture made of code!"
+demo = '''
+# Text art! Draw a picture using print lines.
+# Here's a robot head to get you started:
+
+print("  [o_o]  ")
+print(" /[ = ]\\ ")
+print("   | |   ")
+print("  _| |_  ")
+'''
 
 [[steps.checks]]
 type = "runs_ok"

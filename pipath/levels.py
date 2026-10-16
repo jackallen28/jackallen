@@ -47,6 +47,11 @@ def goal_text(step: dict) -> str | None:
     return step["text"][m.start():]
 
 
+def has_goal(step: dict) -> bool:
+    """Lesson lint: Advanced needs a goal to show, a `goal` key or a 'Your task' / 'Goal' marker."""
+    return bool(step.get("goal") or _GOAL.search(step.get("text", "")))
+
+
 def can_skip(level: str) -> bool:
     return level == "advanced"
 

@@ -184,6 +184,11 @@ class Workspace(Screen):
         self._special: str | None = None      # None (a normal run), "demo" or "wiring"
         self._special_jobs: list = []
         self._special_dir: str | None = None
+        self._demo_input: list[str] = []      # answers "Watch the goal" types in, one at a time
+        self._type_job = None
+        self._typed = 0
+        self._out_tail = "\n"                 # last character the program printed
+        self._last_out = 0.0
         self._warm_job = None
         self._keys_bound = False
         self.gpio = False                     # set by set_gpio()
@@ -202,13 +207,14 @@ class Workspace(Screen):
         self.home_btn = PButton(bar, "◂ Activities", self.go_home, kind="ghost", font="small_bold")
         self.home_btn.pack(side="left")
         tk.Frame(bar, bg=C["line"], width=1, height=28).pack(side="left", padx=10)
+        # the buttons on the right are packed before the title, so on a small screen only the subtitle is cut
+        self.help_btn = PButton(bar, "? Tour", self.start_tour, kind="ghost", font="small_bold")
+        self.help_btn.pack(side="right")
+        label(bar, app.student.first_name, font="small_bold", fg=C["muted"], bg=C["panel"]).pack(side="right", padx=12)
         self.title_lbl = label(bar, title, font="h3", bg=C["panel"])
         self.title_lbl.pack(side="left")
         self.sub_lbl = label(bar, f"   {subtitle}", font="small", fg=C["muted"], bg=C["panel"])
         self.sub_lbl.pack(side="left")
-        self.help_btn = PButton(bar, "? Tour", self.start_tour, kind="ghost", font="small_bold")
-        self.help_btn.pack(side="right")
-        label(bar, app.student.first_name, font="small_bold", fg=C["muted"], bg=C["panel"]).pack(side="right", padx=12)
 
         # ---- body
         self.pane = tk.PanedWindow(self, orient="horizontal", sashwidth=6, bg=C["line"], bd=0, sashrelief="flat")
@@ -378,6 +384,7 @@ class Workspace(Screen):
         self._exit_code = None
         self._run_code = code
         self._run_started = time.time()
+        self._out_tail, self._last_out = "\n", time.monotonic()
         if self.board:
             self.board.reset()
         self.runner.start(path, path.parent, env, shim=SHIM if self.gpio else None)
@@ -542,8 +549,8 @@ class Workspace(Screen):
         if kind == "demo" and self.board:
             self.board.set_mode("sim")
         self._launch(code, path, env, status="playing the goal…" if kind == "demo" else "checking wiring…")
-        for line in stdin.splitlines():
-            self.runner.send_input(line)
+        self._demo_input = stdin.splitlines()
+        self._typed = 0
         for when, command in expand_events(events):
             self._special_jobs.append(self.after(int(when * 1000), lambda c=command: self._demo_command(c)))
         if seconds:
@@ -554,7 +561,29 @@ class Workspace(Screen):
         if command.startswith("show ") and self.board:
             self.board.set_camera_object(command.split()[1])   # the picker follows the demo
 
+    def _maybe_type_demo(self):
+        """Watch the goal: type the next answer when the program is waiting at a prompt."""
+        if not self._demo_input or self._type_job is not None or not self.runner.running:
+            return
+        quiet = time.monotonic() - self._last_out
+        if (self._out_tail != "\n" and quiet > 0.05) or quiet > 1.5:
+            self._type_job = self.after(350 if self._typed < 5 else 60, self._type_demo)
+
+    def _type_demo(self):
+        self._type_job = None
+        if not self._demo_input or not self.runner.running:
+            return
+        line = self._demo_input.pop(0)
+        self._typed += 1
+        self.console.write(line + "\n", "in")      # shown as if someone typed it
+        self._out_tail, self._last_out = "\n", time.monotonic()
+        self.runner.send_input(line)
+
     def _cancel_special_jobs(self):
+        self._demo_input = []
+        if self._type_job is not None:
+            self.after_cancel(self._type_job)
+            self._type_job = None
         for job in self._special_jobs:
             try:
                 self.after_cancel(job)
@@ -593,9 +622,13 @@ class Workspace(Screen):
             elif kind == "exit":
                 self._exit_code = ev[1]
         if out:
-            self.console.write("".join(out))
+            text = "".join(out)
+            self.console.write(text)
+            self._out_tail, self._last_out = text[-1], time.monotonic()
         if pins is not None and self.board:
             self._on_gpio(pins)
+        if self._demo_input:
+            self._maybe_type_demo()
         if self._exit_code is not None and self._closed_streams >= 2:
             self._finished()
         else:
@@ -1128,11 +1161,12 @@ class LessonWorkspace(Workspace):
         self.next_btn.configure(text="Finish activity  ★" if last else "Next step  ▸")
         self.next_btn.set_kind("primary" if done else "secondary")
         self.next_btn.set_enabled(done or self.app.teacher_mode)
-        if can_skip(self.level) and not done and not last:
+        skip = can_skip(self.level) and not done and not last
+        if skip:
             self.skip_btn.pack(side="right", before=self.next_btn, padx=(0, 6))
         else:
             self.skip_btn.pack_forget()
-        self.foot_note.configure(text="" if done else "Tick all boxes")
+        self.foot_note.configure(text="" if done or skip else "Tick all boxes")
 
     def prev_step(self):
         if self.step_i > 0:

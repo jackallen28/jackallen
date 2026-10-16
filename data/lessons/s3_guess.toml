@@ -51,6 +51,12 @@ hints = [
   "Just press Run a few times and watch the number in the Output.",
 ]
 success = "A different number (usually) each time. That's randomness."
+demo = '''
+import random
+
+secret = random.randint(1, 10)
+print("Psst... the secret number is", secret)
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -103,6 +109,20 @@ hints = [
 ]
 error_hints = { SyntaxError = "Inside an `if`, use `==` to compare. A single `=` is for storing values." }
 success = "Your program can make decisions now!"
+demo = '''
+import random
+
+secret = random.randint(1, 10)
+print("Psst... the secret number is", secret)
+
+guess = int(input("Guess my number (1-10): "))
+
+if guess == secret:
+    print("You got it!")
+else:
+    print("Nope! It was", secret)
+'''
+demo_input = "7\n"
 
 [[steps.checks]]
 type = "runs_ok"
@@ -148,6 +168,22 @@ hints = [
   "Example:\n```\nif guess == secret:\n    print(\"You got it!\")\nelif guess < secret:\n    print(\"Too low!\")\nelse:\n    print(\"Too high!\")\n```",
 ]
 success = "Now your game gives useful clues."
+demo = '''
+import random
+
+secret = random.randint(1, 10)
+print("Psst... the secret number is", secret)
+
+guess = int(input("Guess my number (1-10): "))
+
+if guess == secret:
+    print("You got it!")
+elif guess < secret:
+    print("Too low!")
+else:
+    print("Too high!")
+'''
+demo_input = "7\n"
 
 [[steps.checks]]
 type = "runs_ok"
@@ -210,6 +246,23 @@ hints = [
   "The line should read `while guess != secret:`",
 ]
 success = "A real game loop! It keeps going until the player wins."
+demo = '''
+import random
+
+secret = random.randint(1, 10)
+guess = 0
+
+while guess != secret:
+    guess = int(input("Guess my number (1-10): "))
+
+    if guess < secret:
+        print("Too low!")
+    elif guess > secret:
+        print("Too high!")
+
+print("You got it! The number was", secret)
+'''
+demo_input = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
 
 [[steps.checks]]
 type = "runs_ok"
@@ -246,6 +299,25 @@ hints = [
   "After the loop: `print(f\"You took {tries} tries!\")`. Also change randint and the question to use 100.",
 ]
 success = "Challenge complete. You wrote that part with hardly any help!"
+demo = '''
+import random
+
+secret = random.randint(1, 100)
+guess = 0
+tries = 0
+
+while guess != secret:
+    guess = int(input("Guess my number (1-100): "))
+    tries = tries + 1
+
+    if guess < secret:
+        print("Too low!")
+    elif guess > secret:
+        print("Too high!")
+
+print(f"You got it! The number was {secret}. You took {tries} tries!")
+'''
+demo_input = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n93\n94\n95\n96\n97\n98\n99\n100\n"
 
 [[steps.checks]]
 type = "runs_ok"

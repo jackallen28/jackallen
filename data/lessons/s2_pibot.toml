@@ -58,6 +58,12 @@ hints = [
   "Your line could look like `bot_name = \"Sparky\"`.",
 ]
 success = "Your bot has a name! The variable `bot_name` remembers it."
+demo = '''
+# A variable is like a labelled box that stores a value
+bot_name = "Sparky"
+
+print("Beep boop! I am", bot_name)
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -101,6 +107,16 @@ hints = [
   "The finished line is `print(f\"Nice to meet you, {name}!\")`",
 ]
 success = "PiBot listened and used your answer. That's what variables are for!"
+demo = '''
+# A variable is like a labelled box that stores a value
+bot_name = "Sparky"
+
+print("Beep boop! I am", bot_name)
+
+name = input("What is your name? ")
+print(f"Nice to meet you, {name}!")
+'''
+demo_input = "Sam\n"
 
 [[steps.checks]]
 type = "runs_ok"
@@ -150,6 +166,20 @@ hints = [
 ]
 error_hints = { TypeError = "`age` holds text like \"12\", and you can't add the number 1 to text. How could you turn `age` into a number?" }
 success = "You fixed one of the most famous bugs in Python. Remember: input() gives text, int() makes it a number."
+demo = '''
+# A variable is like a labelled box that stores a value
+bot_name = "Sparky"
+
+print("Beep boop! I am", bot_name)
+
+name = input("What is your name? ")
+print(f"Nice to meet you, {name}!")
+
+age = int(input("How old are you? "))
+next_year = age + 1
+print(f"Next year you will be {next_year}!")
+'''
+demo_input = "Sam\n12\n"
 
 [[steps.checks]]
 type = "runs_ok"
@@ -191,6 +221,23 @@ hints = [
   "Example:\n```\nfood = input(\"What's your favourite food? \")\nprint(f\"{food.upper()}? YUM!\")\n```",
 ]
 success = "SHOUTY PIBOT APPROVES!"
+demo = '''
+# A variable is like a labelled box that stores a value
+bot_name = "Sparky"
+
+print("Beep boop! I am", bot_name)
+
+name = input("What is your name? ")
+print(f"Nice to meet you, {name}!")
+
+age = int(input("How old are you? "))
+next_year = age + 1
+print(f"Next year you will be {next_year}!")
+
+food = input("What is your favourite food? ")
+print(f"{food.upper()}? YUM! I LOVE {food.upper()}!")
+'''
+demo_input = "Sam\n12\npizza\n"
 
 [[steps.checks]]
 type = "runs_ok"
@@ -227,6 +274,26 @@ hints = [
   "Example:\n```\npets = int(input(\"How many dogs do you have? \"))\nprint(f\"That's {pets * 4} paws to clean!\")\n```",
 ]
 success = "PiBot is now a real conversation, and you designed part of it yourself."
+demo = '''
+# A variable is like a labelled box that stores a value
+bot_name = "Sparky"
+
+print("Beep boop! I am", bot_name)
+
+name = input("What is your name? ")
+print(f"Nice to meet you, {name}!")
+
+age = int(input("How old are you? "))
+next_year = age + 1
+print(f"Next year you will be {next_year}!")
+
+food = input("What is your favourite food? ")
+print(f"{food.upper()}? YUM! I LOVE {food.upper()}!")
+
+pets = int(input("How many pets do you have? "))
+print(f"If they're all dogs, that's {pets * 4} legs!")
+'''
+demo_input = "Sam\n12\npizza\n2\n"
 
 [[steps.checks]]
 type = "runs_ok"

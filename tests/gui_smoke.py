@@ -113,6 +113,15 @@ def scenes(app):
     def check_wiring():
         app.screen.check_wiring()
 
+    def set_level(level):
+        def go():
+            if hasattr(app.screen, "set_level"):
+                app.screen.set_level(level)
+            else:
+                while app.screen.level != level:
+                    app.screen.cycle_level()
+        return go
+
     return [
         ("01_welcome_first_run", lambda: None),
         ("02_profile", profile),
@@ -143,8 +152,9 @@ def scenes(app):
         ("24_a1_step1", lambda: (open_lesson("a1_traffic")(), start_lesson())),
         ("25_a1_header_map", lambda: app.screen.guide.canvas.yview_moveto(0.33)),
         ("26_a1_step2_goal", lambda: (to_step(1)(), goal()), 4200),
-        ("27_a3_pir", lambda: (stop(), open_lesson("a3_alarm")(), start_lesson(), app.screen.editor.set_code(
-            app.screen.steps[0]["starter"].replace("___", "no_motion")), press_run()), 1200),
+        ("27_a3_pir", lambda: (stop(), open_lesson("a3_alarm")(), start_lesson(), to_step(1)(),
+                               app.screen.editor.set_code(app.screen.steps[1]["starter"].replace("___", "no_motion")),
+                               press_run()), 1200),
         ("28_a3_motion", press(4), 1200),
         ("29_a3_checked", lambda: (stop()), 2500),
         ("30_camera_activities", lambda: (app.show("home"), app.screen.set_filter("camera"))),
@@ -152,6 +162,13 @@ def scenes(app):
             app.screen.steps[0]["starter"].replace("___", "me")), press_run()), 2500),
         ("32_c2_grid_goal", lambda: (open_lesson("c2_teachable")(), start_lesson(), to_step(1)(),
                                      app.screen._pick_object("box"), goal()), 6500),
+        ("33_s2_goal_typed", lambda: (stop(), open_lesson("s2_pibot")(), start_lesson(), skip_tour(), to_step(3)(),
+                                      goal()), 4500),
+        ("34_level_advanced", lambda: (app.show("home"), set_level("advanced")())),
+        ("35_a2_advanced_step", lambda: (open_lesson("a2_reaction")(), start_lesson())),
+        ("36_a2_full_text", lambda: app.screen._toggle_explanation()),
+        ("37_a2_skipped", lambda: app.screen.skip_step()),
+        ("38_level_moderate", lambda: set_level("moderate")()),
     ]
 
 

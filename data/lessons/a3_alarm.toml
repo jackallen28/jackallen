@@ -1,5 +1,7 @@
 # ADVANCED 3: Motion Alarm & Logger. See e1_lightswitch.toml for the GPIO lesson keys.
 # Pin plan: PIR OUT 4 (VCC 5V pin 2, GND pin 6), LED 17, button 23, buzzer 18.
+# Step by step: test the light + buzzer -> test the sensor -> sensor + alarm together ->
+# the arm button -> logging -> challenge.
 
 id = "a3_alarm"
 title = "Motion Alarm & Logger"
@@ -11,9 +13,10 @@ intro = """
 
 A **PIR** sensor (passive infrared) notices the heat from a moving person or animal. Shops, schools and homes use them to switch on lights and sound alarms.
 
-In this activity you will:
-- react to **motion** with events
-- sound an **alarm** with a buzzer and a light
+You'll build it one part at a time:
+- test the **light** and **buzzer** on their own
+- test the **sensor** on its own: react to **motion** with events
+- put them together to sound an **alarm**
 - use a **state** variable so the alarm can be **armed** and **disarmed**
 - keep a **log** of every event in a CSV file, then read it back to make a **report**
 
@@ -57,13 +60,85 @@ connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → G
 part = "Arm button"
 kind = "button"
 pin = 23
-connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 3.)"
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 4.)"
 
 [[wiring]]
 part = "Tip"
 connect = "The PIR has two small orange dials. Turn the 'time' dial fully anticlockwise for the shortest hold time, and leave 'sensitivity' in the middle."
 
 # ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Test the light and buzzer"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Buzzer
+from time import sleep
+
+light = LED(17)
+buzzer = Buzzer(18)
+
+print("Testing the light...")
+light.on()
+sleep(1)
+light.off()
+
+print("Testing the buzzer...")
+buzzer.beep(0.1, 0.1, n=___, background=False)    # beep 3 times
+print("Both work!")
+'''
+text = """
+An alarm needs a light and a buzzer. Test them **on their own** first, so you know they work before the sensor joins in.
+
+`buzzer.beep(0.1, 0.1, n=3, background=False)` beeps **3 times**: 0.1 seconds on, 0.1 seconds off. `background=False` means your program waits until the beeping is finished.
+
+**Your task:** fill in the blank so the buzzer beeps **3 times**. Run it: the LED should light for a second, then the buzzer beeps.
+
+Nothing happens on a Real Pi? Press **Check my wiring** in the Wiring + Safety card.
+"""
+hints = [
+  "`n=` is how many beeps.",
+  "Replace `___` with `3`.",
+  "The line is `buzzer.beep(0.1, 0.1, n=3, background=False)`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "The light and buzzer both work. Next, the sensor."
+demo = '''
+from gpiozero import LED, Buzzer
+from time import sleep
+
+light = LED(17)
+buzzer = Buzzer(18)
+
+print("Testing the light...")
+light.on()
+sleep(1)
+light.off()
+
+print("Testing the buzzer...")
+buzzer.beep(0.1, 0.1, n=3, background=False)    # beep 3 times
+print("Both work!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''n\s*=\s*3\b'''
+label = "The buzzer beeps 3 times"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Both work"
+label = "Your program gets to the end"
+
+[[steps.checks]]
+type = "confirm"
+label = "The LED lit up, then the buzzer beeped 3 times"
+
+# ------------------------------------------------------------------ STEP 2
 [[steps]]
 title = "Something moved!"
 support = "scaffolded"
@@ -88,7 +163,7 @@ print("Watching... (a real sensor needs about a minute to warm up)")
 pause()
 '''
 text = """
-`MotionSensor(4)` is the PIR on **GPIO4**. Like a button, it has **events**:
+Now test the **sensor** on its own. `MotionSensor(4)` is the PIR on **GPIO4**. Like a button, it has **events**:
 
 - `pir.when_motion` runs a function when something moves
 - `pir.when_no_motion` runs a function when things go still again
@@ -103,7 +178,7 @@ hints = [
   "The line is `pir.when_no_motion = no_motion`",
 ]
 error_hints = { BadEventHandler = "Did you add brackets? Write `no_motion`, not `no_motion()`." }
-success = "Your Pi can feel movement. That's the heart of every alarm."
+success = "Your Pi can feel movement. That's the heart of every alarm. Now let's join the parts up."
 demo = '''
 from gpiozero import MotionSensor
 from signal import pause
@@ -142,16 +217,16 @@ value = "All quiet"
 label = "It noticed when things went quiet"
 fail = "After waving, keep still for a few seconds before pressing Stop."
 
-# ------------------------------------------------------------------ STEP 2
+# ------------------------------------------------------------------ STEP 3
 [[steps]]
 title = "Sound the alarm"
 support = "scaffolded"
 starter_mode = "keep"
 run_mode = "until_stopped"
 text = """
-Printing `Motion!` won't scare anyone away. Let's add a flashing light and a beeping buzzer.
+Printing `Motion!` won't scare anyone away. Put the parts together: the sensor from step 2, with the light and buzzer you tested in step 1.
 
-`buzzer.beep(0.1, 0.1, n=5)` beeps 5 times: 0.1 seconds on, 0.1 seconds off.
+`buzzer.beep(0.1, 0.1, n=5)` beeps 5 times **in the background**, so the sensor keeps watching while it beeps.
 
 **Your task:**
 1. Import `LED` and `Buzzer` too: `from gpiozero import MotionSensor, LED, Buzzer`
@@ -218,29 +293,41 @@ fail = "Wave in front of the sensor (Simulator: click it) before pressing Stop."
 type = "confirm"
 label = "The LED and buzzer went off when something moved"
 
-# ------------------------------------------------------------------ STEP 3
+# ------------------------------------------------------------------ STEP 4
 [[steps]]
 title = "Arm and disarm"
-support = "brief"
+support = "scaffolded"
 starter_mode = "keep"
 run_mode = "until_stopped"
 text = """
-An alarm that goes off every time *you* walk past isn't much use. Real alarms can be **armed** (on guard) or **disarmed** (off).
+An alarm that goes off every time *you* walk past isn't much use. Real alarms can be **armed** (on guard) or **disarmed** (off). The last part joins in: the **button**.
 
-**Goal:**
-1. Add a button on GPIO23. Each press **switches** between armed and disarmed.
-2. Keep track with a **state** variable: `armed = False` at the start.
-3. The LED now shows the state: **on = armed**, off = disarmed. Print `Armed` or `Disarmed` each time.
-4. Motion only sounds the buzzer **when armed**.
+A **state** variable remembers which one it is: `armed = False` at the start. `armed = not armed` flips True to False and False to True.
 
-**Tips:**
-- `armed = not armed` flips True to False and False to True
-- A function that changes `armed` needs `global armed` as its first line
-- You won't need `no_motion()` any more
+```
+def toggle_armed():
+    global armed          # this function changes armed
+    armed = not armed
+    if armed:
+        light.on()
+        print("Armed")
+    else:
+        light.off()
+        print("Disarmed")
+```
+
+**Your task:**
+1. Add a button on GPIO23 (import `Button` too), and `armed = False` near the top
+2. Add the `toggle_armed()` function, and connect it: `button.when_pressed = toggle_armed`
+3. The LED now shows the state (on = armed), so take `light.on()` out of `motion()`
+4. In `motion()`, only beep `if armed:`. You won't need `no_motion()` any more.
+
+Test it: move while it's disarmed, then arm it and move again.
 """
 hints = [
-  "Write `def toggle_armed():` with `global armed`, then `armed = not armed`, then turn the light on or off to match.",
-  "In `motion()`, wrap the alarm in `if armed:`. Connect the button with `button.when_pressed = toggle_armed`.",
+  "Near the top: `button = Button(23)` and `armed = False`. Copy `toggle_armed()` from the instructions.",
+  "In `motion()`, put the beep inside `if armed:` (indented under it).",
+  "At the bottom, next to `pir.when_motion = motion`: `button.when_pressed = toggle_armed`.",
 ]
 success = "Your alarm has a memory: its state. Lots of programs work like this."
 demo = '''
@@ -304,7 +391,7 @@ fail = "Press the button while it's running. Does it print `Armed`?"
 type = "confirm"
 label = "The alarm only goes off when it's armed"
 
-# ------------------------------------------------------------------ STEP 4
+# ------------------------------------------------------------------ STEP 5
 [[steps]]
 title = "Keep a log"
 support = "brief"
@@ -398,7 +485,7 @@ value = '''\d{4}-\d\d-\d\dT\d\d:\d\d'''
 label = "Your run added a dated line to motion_log.csv"
 fail = "Run it, arm the alarm and set it off. Does a line appear in motion_log.csv?"
 
-# ------------------------------------------------------------------ STEP 5
+# ------------------------------------------------------------------ STEP 6
 [[steps]]
 title = "Challenge: cooldown and report"
 support = "brief"

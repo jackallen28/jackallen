@@ -89,8 +89,9 @@ class RichText(tk.Text):
         self.tag_configure("b", font="ui_bold")
         self.tag_configure("i", font="ui_italic")
         self.tag_configure("code", font="code_ui", background="#EFEBE2", foreground="#7A1531")
+        # long code lines wrap (indented a little more), so nothing is cut off in a narrow panel
         self.tag_configure("block", font="code_ui", background="#262A33", foreground="#E8E8E8",
-                           lmargin1=10, lmargin2=10, rmargin=6, spacing1=0, spacing3=0, wrap="none")
+                           lmargin1=10, lmargin2=34, rmargin=6, spacing1=0, spacing3=0, wrap="word")
         self.tag_configure("bullet", lmargin1=6, lmargin2=22)
         self.configure(state="disabled")
         self._last_w = 0
@@ -128,8 +129,8 @@ class RichText(tk.Text):
                 continue
             self._inline(raw, ())
             self.insert("end", "\n")
-        # trim trailing blank line
-        if self.get("end-2c", "end-1c") == "\n":
+        # trim the trailing newline (but not a code block's: its dark background needs it)
+        if self.get("end-2c", "end-1c") == "\n" and "block" not in self.tag_names("end-2c"):
             self.delete("end-2c", "end-1c")
         self.configure(state="disabled")
         self.fit_height()
