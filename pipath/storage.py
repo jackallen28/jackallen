@@ -5,7 +5,7 @@ Everything lives in plain files under ~/PiPath (or $PIPATH_HOME):
     ~/PiPath/
         app.json                      last student used, etc.
         students/<slug>/
-            profile.json              first name, school, class, tour_done
+            profile.json              first name, school, tour_done (older profiles may have class_code)
             progress.json             per-lesson status, step, hints used
             lessons/<file>.py         code for each lesson
             lessons/backups/          code saved before a step replaces it
@@ -71,7 +71,7 @@ def slugify(text: str) -> str:
 NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' \-]{0,29}$")
 
 
-def validate_profile(first_name: str, school: str, class_code: str) -> dict[str, str]:
+def validate_profile(first_name: str, school: str, class_code: str = "") -> dict[str, str]:
     errors = {}
     if not first_name.strip():
         errors["first_name"] = "Please type your first name."
@@ -212,7 +212,16 @@ def list_students() -> list[Student]:
     return sorted(out, key=lambda s: s.profile.get("last_seen", ""), reverse=True)
 
 
-def create_student(first_name: str, school: str, class_code: str) -> Student:
+def find_student(first_name: str, school: str) -> Student | None:
+    """An existing student with the same first name and school (ignoring capitals and spaces)."""
+    key = (first_name.strip().lower(), " ".join(school.lower().split()))
+    for s in list_students():
+        if (s.first_name.strip().lower(), " ".join(s.profile.get("school", "").lower().split())) == key:
+            return s
+    return None
+
+
+def create_student(first_name: str, school: str, class_code: str = "") -> Student:
     base = slugify(f"{first_name}-{class_code}" if class_code.strip() else first_name)
     folder = STUDENTS / base
     n = 2

@@ -164,7 +164,7 @@ class Workspace(Screen):
         # ---- top bar
         bar = tk.Frame(self, bg=C["panel"], highlightthickness=1, highlightbackground=C["line"], padx=12, pady=8)
         bar.pack(fill="x")
-        self.home_btn = PButton(bar, "◂ Projects", self.go_home, kind="ghost", font="small_bold")
+        self.home_btn = PButton(bar, "◂ Activities", self.go_home, kind="ghost", font="small_bold")
         self.home_btn.pack(side="left")
         tk.Frame(bar, bg=C["line"], width=1, height=28).pack(side="left", padx=10)
         self.title_lbl = label(bar, title, font="h3", bg=C["panel"])
@@ -322,6 +322,7 @@ class Workspace(Screen):
         return []
 
     def start_tour(self):
+        self._touring = True
         Tour(self.app, self.tour_steps(), on_done=self.tour_done).start()
 
     def tour_done(self):
@@ -337,7 +338,7 @@ class LessonWorkspace(Workspace):
         self.steps = self.lesson["steps"]
         self.lp = app.student.lesson(lesson_id)
         tier = next(t for t in app.catalog.tiers if t["id"] == self.project["tier"])
-        super().__init__(app, self.lesson["title"], f"{tier['title']} project  ·  {self.project['subtitle']}")
+        super().__init__(app, self.lesson["title"], f"{tier['title']} activity  ·  {self.project['subtitle']}")
         self.tier_colour = TIER_COLOURS.get(self.project["tier"], C["accent"])
         self.file_lbl.configure(text=self.lesson["file_name"])
 
@@ -418,7 +419,8 @@ class LessonWorkspace(Workspace):
     def show_intro(self):
         self._clear_guide()
         self.view = "intro"
-        chip(self.g, self.project["tier"].upper() + " PROJECT", "#FFFFFF", self.tier_colour).pack(anchor="w")
+        tier_title = next(t["title"] for t in self.app.catalog.tiers if t["id"] == self.project["tier"])
+        chip(self.g, tier_title.upper() + " ACTIVITY", "#FFFFFF", self.tier_colour).pack(anchor="w")
         label(self.g, self.lesson["title"], font="h1").pack(anchor="w", pady=(8, 10))
         rt = RichText(self.g, font="ui")
         rt.pack(fill="x")
@@ -455,7 +457,7 @@ class LessonWorkspace(Workspace):
         st = stars_for(self.app, self.lp.get("hints_used", 0))
         box = tk.Frame(self.g, bg=C["ink"], padx=20, pady=20)
         box.pack(fill="x")
-        label(box, "PROJECT COMPLETE", font="small_bold", fg=C["syn_def"], bg=C["ink"]).pack(anchor="w")
+        label(box, "ACTIVITY COMPLETE", font="small_bold", fg=C["syn_def"], bg=C["ink"]).pack(anchor="w")
         label(box, self.lesson["title"], font="h1", fg="#FFFFFF", bg=C["ink"]).pack(anchor="w", pady=(4, 6))
         label(box, "★" * st + "☆" * (3 - st), font="glyph", fg="#F5B800", bg=C["ink"]).pack(anchor="w")
         msg = {3: "Independence stars: you barely needed any hints!",
@@ -477,7 +479,7 @@ class LessonWorkspace(Workspace):
             self.next_btn.configure(text=f"Next: {nxt['title']}  ▸")
             self.next_btn.command = lambda: self.app.open_lesson(nxt["id"])
         else:
-            self.next_btn.configure(text="Back to projects  ▸")
+            self.next_btn.configure(text="Back to activities  ▸")
             self.next_btn.command = self.go_home
         self.next_btn.set_kind("primary")
         self.next_btn.set_enabled(True)
@@ -510,6 +512,36 @@ class LessonWorkspace(Workspace):
         self.console.clear()
         self.console.set_status("")
         self.editor.focus()
+        self._maybe_offer_tour()
+
+    def _maybe_offer_tour(self):
+        """First time in a step: offer the tour, but don't force it."""
+        if self.app.student.profile.get("tour_done") or getattr(self, "_tour_offered", False):
+            return
+        self._tour_offered = True
+        self.after(300, self._offer_tour)
+
+    def _offer_tour(self):
+        if getattr(self, "_touring", False):
+            return
+        ov = card(self, padx=22, pady=18, border=C["accent"])
+        ov.place(relx=.5, rely=.42, anchor="center")
+        label(ov, "First time here?", font="h2", bg=C["panel"]).pack(anchor="w")
+        label(ov, "Want a quick look around the workspace? It takes about 30 seconds.",
+              fg=C["muted"], bg=C["panel"], wraplength=340).pack(anchor="w", pady=(4, 14))
+        row = tk.Frame(ov, bg=C["panel"])
+        row.pack(fill="x")
+
+        def skip():
+            ov.destroy()
+            self.tour_done()
+
+        def go():
+            ov.destroy()
+            self.start_tour()
+
+        PButton(row, "No thanks, I'll explore", skip, kind="ghost", font="small_bold").pack(side="left")
+        PButton(row, "Show me around  ▸", go, kind="primary").pack(side="right", padx=(16, 0))
 
     def _render_step(self):
         self._clear_guide()
@@ -558,7 +590,7 @@ class LessonWorkspace(Workspace):
         self.back_btn.set_enabled(self.step_i > 0)
         self.next_btn.command = self.next_step
         if last:
-            self.next_btn.configure(text="Finish project  ★")
+            self.next_btn.configure(text="Finish activity  ★")
         else:
             self.next_btn.configure(text="Next step  ▸")
         self.next_btn.set_kind("primary" if done else "secondary")
@@ -626,7 +658,7 @@ class LessonWorkspace(Workspace):
             if self.step_i not in self.lp["steps_done"]:
                 self.lp["steps_done"].append(self.step_i)
             self.coach.message("ok", "Step complete!", step.get("success", "Well done!") +
-                               ("\n\nPress **Finish project** to see your stars." if self.step_i == len(self.steps) - 1
+                               ("\n\nPress **Finish activity** to see your stars." if self.step_i == len(self.steps) - 1
                                 else "\n\nPress **Next step** when you're ready."))
             self.coach.set_hints([], None)
             self.console.set_status("✓ step complete", C["con_in"])
@@ -671,16 +703,18 @@ class LessonWorkspace(Workspace):
             {"widget": self.coach, "side": "right", "title": "6. The Coach",
              "text": "If your code breaks, the Coach explains why in plain English and shows which line. Hints start small. Try one at a time."},
             {"widget": self.home_btn, "side": "bottom", "title": "7. Saving",
-             "text": "Your code **saves automatically**. Use **Projects** to go back to the map anytime. Press **? Tour** to see this again."},
+             "text": "Your code **saves automatically**. Use **Activities** to pick something else anytime. Press **? Tour** to see this again."},
         ]
 
     def tour_done(self):
+        self._touring = False
         p = self.app.student.profile
         if not p.get("tour_done"):
             p["tour_done"] = True
             self.app.student.save_profile()
-            self.coach.message("info", f"Ready, {self.app.student.first_name}?",
-                               "Start with step 1: press the green **Run** button and see what happens.")
+            if self.view == "step" and self.step_i not in self.lp["steps_done"]:
+                self.coach.message("info", f"Ready, {self.app.student.first_name}?",
+                                   "Read the step, then press the green **Run** button and see what happens.")
 
 
 # ====================================================================== Free Build

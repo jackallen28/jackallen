@@ -1,4 +1,4 @@
-"""PiPath main window: screen routing, unlock rules and the teacher panel."""
+"""PiPath main window: screen routing, activity states and the teacher panel."""
 from __future__ import annotations
 
 import tkinter as tk
@@ -7,7 +7,7 @@ from . import storage
 from .content import Catalog, load_config
 from .hints import HintEngine
 from .ui.home import HomeScreen
-from .ui.onboarding import IntroScreen, ProfileScreen, WelcomeScreen
+from .ui.onboarding import ProfileScreen, WelcomeScreen
 from .ui.theme import C, setup_fonts
 from .ui.widgets import PButton, card, label
 from .ui.workspace import FreeBuildWorkspace, LessonWorkspace
@@ -49,16 +49,13 @@ class PiPathApp(tk.Tk):
         screen.pack(fill="both", expand=True)
 
     def show(self, name: str) -> None:
-        screens = {"welcome": WelcomeScreen, "profile": ProfileScreen, "intro": IntroScreen, "home": HomeScreen}
+        screens = {"welcome": WelcomeScreen, "profile": ProfileScreen, "home": HomeScreen}
         self._swap(screens[name](self))
 
-    def login(self, s: storage.Student, new: bool = False) -> None:
+    def login(self, s: storage.Student) -> None:
         self.student = s
         storage.touch_student(s)
-        if new or not s.profile.get("tour_done"):
-            self.show("intro")
-        else:
-            self.show("home")
+        self.show("home")
 
     def logout(self) -> None:
         self.student = None
@@ -69,8 +66,7 @@ class PiPathApp(tk.Tk):
         self._swap(LessonWorkspace(self, lesson_id, tour=tour))
 
     def open_free_build(self) -> None:
-        if self.free_build_unlocked():
-            self._swap(FreeBuildWorkspace(self))
+        self._swap(FreeBuildWorkspace(self))
 
     def quit_app(self) -> None:
         if self.screen is not None:
@@ -78,33 +74,13 @@ class PiPathApp(tk.Tk):
             self.screen = None
         self.destroy()
 
-    # ------------------------------------------------------------------ unlock rules
-    def previous_project(self, p: dict) -> dict | None:
-        ps = self.catalog.projects
-        i = ps.index(p)
-        return ps[i - 1] if i > 0 else None
-
+    # ------------------------------------------------------------------ activity state
     def project_state(self, p: dict) -> str:
+        """planned | ready | in_progress | complete. Nothing is locked: students choose freely."""
         if p.get("status") != "ready":
             return "planned"
         status = self.student.lesson_status(p["id"])
-        if status == "complete":
-            return "complete"
-        if status == "in_progress":
-            return "in_progress"
-        prev = self.catalog.project(p["unlock_after"]) if p.get("unlock_after") else self.previous_project(p)
-        if self.teacher_mode or prev is None or self.student.lesson_status(prev["id"]) == "complete":
-            return "ready"
-        return "locked"
-
-    def free_build_unlocked(self) -> bool:
-        rule = self.settings.get("free_build_unlock", "simple")
-        if rule == "always" or self.teacher_mode:
-            return True
-        tiers = [t["id"] for t in self.catalog.tiers]
-        needed = tiers[: tiers.index(rule) + 1] if rule in tiers else tiers[:1]
-        required = [p for p in self.catalog.projects if p["tier"] in needed and p.get("status") == "ready"]
-        return all(self.student.lesson_status(p["id"]) == "complete" for p in required)
+        return status if status in ("complete", "in_progress") else "ready"
 
     # ------------------------------------------------------------------ teacher panel
     def teacher_panel(self) -> None:
@@ -125,7 +101,7 @@ class PiPathApp(tk.Tk):
         def unlocked():
             for w in body.winfo_children():
                 w.destroy()
-            label(body, "Unlock every project and step for this session (students can't do this).",
+            label(body, "Teacher mode lets you skip ahead: Next step is always enabled, for this session only.",
                   fg=C["muted"], bg=C["panel"], wraplength=380).pack(anchor="w")
             PButton(body, "Teacher mode: " + ("ON (turn off)" if self.teacher_mode else "OFF (turn on)"),
                     toggle, kind="primary").pack(anchor="w", pady=(6, 14))

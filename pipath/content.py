@@ -17,7 +17,6 @@ def load_config() -> dict:
         "app_name": "PiPath",
         "tagline": "Learn Python one step at a time.",
         "teacher_pin": "2468",
-        "free_build_unlock": "simple",
         "busy_loop_seconds": 8,
         "max_output_lines": 3000,
         "three_star_max_hints": 2,
