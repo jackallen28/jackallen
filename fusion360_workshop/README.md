@@ -12,6 +12,6 @@ Five STEP assemblies for practising the Fusion 360 **Animation** workspace.
 
 All models are in millimetres and built **Z-up**. Upload each one to Fusion 360 through the Data Panel (Upload) or File > Open > Open from my computer. Every part comes in as a named component.
 
-See **ANIMATION_STEPS.md** for brief animation steps for each file.
+See **Animation_Steps.docx** for brief animation steps for each file.
 
 `source/` contains the CadQuery scripts that generate the models (`python simple_gear_reduction.py` etc., requires `pip install cadquery`).
