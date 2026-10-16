@@ -114,9 +114,9 @@ concepts = ["gpiozero LED", "Button", "sleep()", "functions", "sequences"]
 minutes = 45
 support = "scaffolded"
 try_first = ["s3_guess"]
-status = "planned"
+status = "ready"
 gpio = true
-parts = ["red, yellow, green LEDs", "3 x 330Ω resistors", "1 push button", "breadboard + jumper wires"]
+parts = ["red, amber, green LEDs", "3 x 330Ω resistors", "1 push button", "active buzzer (step 5)", "breadboard + jumper wires"]
 
 [[project]]
 id = "a2_reaction"
@@ -127,9 +127,9 @@ concepts = ["random delays", "time.monotonic()", "events", "high scores in a fil
 minutes = 50
 support = "scaffolded → brief"
 try_first = ["a1_traffic"]
-status = "planned"
+status = "ready"
 gpio = true
-parts = ["1 LED + 330Ω resistor", "2 push buttons", "buzzer (optional)", "breadboard + jumper wires"]
+parts = ["1 LED + 330Ω resistor", "2 push buttons", "breadboard + jumper wires"]
 
 [[project]]
 id = "a3_alarm"
@@ -140,9 +140,9 @@ concepts = ["MotionSensor", "Buzzer", "states (armed / disarmed)", "CSV logging"
 minutes = 60
 support = "brief"
 try_first = ["a1_traffic"]
-status = "planned"
+status = "ready"
 gpio = true
-parts = ["PIR motion sensor (HC-SR501)", "active buzzer", "LED + 330Ω resistor", "1 push button"]
+parts = ["PIR motion sensor (HC-SR501)", "active buzzer", "LED + 330Ω resistor", "1 push button", "breadboard + jumper wires"]
 
 # ---------------------------------------------------------------- ELECTRONICS LAB (optional, any order)
 
@@ -154,7 +154,7 @@ subtitle = "Buttons that switch, toggle and dim an LED"
 concepts = ["Button", "when_pressed", "toggle()", "PWMLED brightness", "pause()"]
 minutes = 35
 support = "guided → brief"
-status = "planned"
+status = "ready"
 gpio = true
 try_first = ["a1_traffic"]
 parts = ["1 LED + 330Ω resistor", "1 push button", "breadboard + jumper wires"]
@@ -167,7 +167,7 @@ subtitle = "Mix any colour with one LED, then build a colour-changing lamp"
 concepts = ["RGBLED", "colour tuples", "lists + modulo %", "when_held", "random"]
 minutes = 45
 support = "scaffolded → brief"
-status = "planned"
+status = "ready"
 gpio = true
 try_first = ["a1_traffic"]
 parts = ["1 RGB LED (common cathode)", "3 x 330Ω resistors", "1 push button", "breadboard + jumper wires"]
@@ -180,7 +180,7 @@ subtitle = "A memory game: repeat the light pattern as it gets longer"
 concepts = ["lists of LEDs and Buttons", "zip()", "functions that return", "game loop", "sequences"]
 minutes = 60
 support = "scaffolded → brief"
-status = "planned"
+status = "ready"
 gpio = true
 try_first = ["a1_traffic"]
 parts = ["3 LEDs (red, green, blue) + 3 x 330Ω", "3 push buttons", "buzzer (optional)", "breadboard + jumper wires"]
@@ -193,7 +193,7 @@ subtitle = "Six LEDs as a level meter, a counter and a dice you can shake"
 concepts = ["LEDBoard", "LEDBarGraph", "counters with limits", "animation loops", "tilt switch input"]
 minutes = 50
 support = "scaffolded → brief"
-status = "planned"
+status = "ready"
 gpio = true
 try_first = ["a1_traffic"]
 parts = ["6 LEDs + 6 x 330Ω resistors", "2 push buttons", "tilt switch (optional)", "breadboard + jumper wires"]

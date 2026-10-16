@@ -50,8 +50,8 @@ class VirtualBoard(tk.Frame):
         self.mode_lbl = tk.Label(head, text="", font="small_bold", fg="#FFFFFF", padx=6)
         self.mode_lbl.pack(side="left")
         self.goal_btn = PButton(head, "Watch the goal  ▶", self._goal, kind="dark", font="small_bold", padx=10, pady=2)
-        self.status = tk.Label(head, text="", font="small", fg="#8B93A1", bg="#1B1F26", padx=10)
-        self.status.pack(side="right")
+        self._status_text = ""
+        self._status_id = None
         self.canvas = tk.Canvas(self, bg=BG, highlightthickness=0, bd=0, height=150)
         self.canvas.pack(fill="both", expand=True)
         self.canvas.bind("<Configure>", lambda e: self._schedule_redraw())
@@ -70,11 +70,14 @@ class VirtualBoard(tk.Frame):
         self._schedule_redraw()
 
     def set_status(self, text: str) -> None:
-        self.status.configure(text=text)
+        """A short hint in the corner of the board."""
+        self._status_text = text
+        if self._status_id is not None:
+            self.canvas.itemconfigure(self._status_id, text=text)
 
     def show_goal_button(self, on: bool) -> None:
         if on:
-            self.goal_btn.pack(side="right", padx=(0, 6), pady=2)
+            self.goal_btn.pack(side="left", padx=8, pady=2, after=self.mode_lbl)
         else:
             self.goal_btn.pack_forget()
 
@@ -134,6 +137,9 @@ class VirtualBoard(tk.Frame):
         for x in range(10, w, 18):
             for y in range(10, h, 18):
                 cv.create_rectangle(x, y, x + 2, y + 2, fill=HOLE, outline="")
+        self._status_id = cv.create_text(10, 6, anchor="nw", text=self._status_text, fill=MUTED, font="small")
+        top = 22
+        h -= top
         parts = self._layout()
         if not parts:
             cv.create_text(w // 2, h // 2, text="Make an LED or a Button in your code\nand it will appear here.",
@@ -150,7 +156,7 @@ class VirtualBoard(tk.Frame):
         size = min(size, 130)
         rows = -(-n // cols)
         x0 = (w - cols * size) / 2
-        y0 = (h - rows * size * 1.25) / 2
+        y0 = top + (h - rows * size * 1.25) / 2
         for i, p in enumerate(parts):
             r, c = divmod(i, cols)
             cx = x0 + (c + .5) * size

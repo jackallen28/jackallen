@@ -1,0 +1,457 @@
+# ADVANCED 2: Reaction Timer. See e1_lightswitch.toml for the GPIO lesson keys.
+# Pin plan: LED 17, player 1 button 23, player 2 button 24, (optional) buzzer 18.
+
+id = "a2_reaction"
+title = "Reaction Timer"
+file_name = "reaction_timer.py"
+requires_gpio = true
+
+intro = """
+## How fast are you?
+
+A light comes on at a random moment. Press your button as fast as you can. The Pi times you to the **millisecond** (a thousandth of a second).
+
+In this activity you will:
+- use **random** waits so nobody can guess when the light comes on
+- use the Pi as a **stopwatch** with `time.monotonic()`
+- catch **cheaters** who press too early
+- race a friend with **events** (`when_pressed`)
+- save a **high score** to a file, so it's still there tomorrow
+
+Most people react in about 200 to 300 ms. Can you beat that?
+"""
+
+outro = """
+## Ready, set, react!
+
+You used random waits, a stopwatch, decisions, events, a `for` loop, and a **file** that remembers the high score. That's a complete arcade game.
+
+**Extension ideas:**
+- Add a buzzer that beeps when the light comes on, then test: do people react faster to sound or to light?
+- Keep a **leaderboard**: save everyone's name and best time to a CSV file
+- Draw a bar chart of the 5 reaction times with `print("#" * (ms // 20))`
+"""
+
+[[wiring]]
+part = "LED"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Player 1 button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail."
+
+[[wiring]]
+part = "Player 2 button"
+kind = "button"
+pin = 24
+connect = "One leg → GPIO24 (pin 18). The leg across the middle gap → GND rail. (Needed from step 4.)"
+
+[[wiring]]
+part = "Tip"
+connect = "Put the two buttons at opposite ends of the breadboard so the players don't bump hands!"
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Wait for it..."
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED
+from time import sleep
+import random
+
+light = LED(17)
+
+print("Get ready...")
+wait = random.uniform(2, 5)     # a random time between 2 and 5 seconds
+sleep(wait)
+light.on()
+print("NOW!")
+sleep(1)
+light.off()
+'''
+text = """
+If the light always came on after 3 seconds, people would just count! `random.uniform(2, 5)` picks a random number **with decimals** between 2 and 5, like `3.718`.
+
+**Your task:**
+1. Run it **twice**. Does the wait feel different each time?
+2. Add a line at the end that prints how long the wait was, rounded to 1 decimal place:
+
+```
+print("The wait was", round(wait, 1), "seconds")
+```
+"""
+hints = [
+  "Just run it two or three times and watch for the light.",
+  "Copy the `print` line from the instructions to the bottom of your code.",
+]
+success = "Random waits: impossible to guess, so it's a fair test."
+demo = '''
+from gpiozero import LED
+from time import sleep
+import random
+
+light = LED(17)
+
+print("Get ready...")
+wait = random.uniform(2, 5)
+sleep(wait)
+light.on()
+print("NOW!")
+sleep(1)
+light.off()
+print("The wait was", round(wait, 1), "seconds")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:uniform"
+label = "The wait is random"
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You ran it more than once"
+fail = "Press Run again. Is the wait the same?"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''wait.*\d+\.\d'''
+ignore_case = true
+label = "You print how long the wait was"
+fail = "Add the `print(\"The wait was\", round(wait, 1), \"seconds\")` line at the bottom."
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Start the stopwatch"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+light = LED(17)
+button = Button(23)
+
+print("Get ready...")
+sleep(random.uniform(2, 5))
+light.on()
+start = monotonic()             # the stopwatch reading right now, in seconds
+button.wait_for_press()
+end = ___
+light.off()
+
+reaction = end - start
+print(f"Your reaction time: {round(reaction * 1000)} ms")
+'''
+text = """
+`monotonic()` is like a stopwatch that's always running. It gives a number of seconds. The number itself doesn't matter, but the **difference** between two readings is exact.
+
+- `start = monotonic()` when the light comes on
+- `end = monotonic()` when the button is pressed
+- `end - start` is your reaction time in seconds. Times 1000 gives **milliseconds** (ms).
+
+**Your task:** fill in the blank so `end` is the stopwatch reading after the press. Run it and test your reactions!
+"""
+hints = [
+  "You need another stopwatch reading, just like the `start` line.",
+  "Replace `___` with `monotonic()`.",
+]
+success = "You built a stopwatch with a computer. Was it under 300 ms?"
+demo = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+light = LED(17)
+button = Button(23)
+
+print("Get ready...")
+sleep(random.uniform(2, 5))
+light.on()
+start = monotonic()
+button.wait_for_press()
+end = monotonic()
+light.off()
+
+reaction = end - start
+print(f"Your reaction time: {round(reaction * 1000)} ms")
+'''
+demo_events = ["5.5 tap 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "call:monotonic"
+min = 2
+label = "You read the stopwatch twice"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+\s*ms'''
+label = "Your reaction time is printed in ms"
+fail = "Run it and press the button when the light comes on."
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "No cheating!"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+What if someone holds the button down, or presses before the light? Right now they'd get an amazing time. Let's catch them!
+
+`button.wait_for_press(timeout=wait)` waits for a press, but gives up after `wait` seconds. It gives back **True** if the button was pressed, or **False** if time ran out. That's perfect: a press *during* the wait is a false start.
+
+```
+wait = random.uniform(2, 5)
+if button.wait_for_press(timeout=wait):
+    print("Too soon! Wait for the light.")
+else:
+    light.on()
+    start = monotonic()
+    ...
+```
+
+**Your task:** change your program so it uses this. The light, stopwatch and reaction time all go inside the `else:` (indented). Then test it **both** ways: press too early once, and play properly once.
+"""
+hints = [
+  "Replace your `sleep(random.uniform(2, 5))` line with the `wait = ...` and `if button.wait_for_press(timeout=wait):` lines.",
+  "Everything from `light.on()` to the final `print` moves inside the `else:`. Select those lines and press Tab.",
+  "Test the false start: press the button straight after `Get ready...`.",
+]
+success = "No more cheating. Fair tests matter in science and in games."
+demo = '''
+from gpiozero import LED, Button
+from time import monotonic
+import random
+
+light = LED(17)
+button = Button(23)
+
+print("Get ready...")
+wait = random.uniform(2, 5)
+if button.wait_for_press(timeout=wait):
+    print("Too soon! Wait for the light.")
+else:
+    light.on()
+    start = monotonic()
+    button.wait_for_press()
+    end = monotonic()
+    light.off()
+    print(f"Your reaction time: {round((end - start) * 1000)} ms")
+'''
+demo_events = ["1 tap 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''wait_for_press\(\s*timeout'''
+label = "You wait with a timeout"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:If"
+label = "You use if / else"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Too soon"
+label = "You tested a false start and saw Too soon!"
+fail = "Run it again and press the button **before** the light comes on."
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Two-player race"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** two players, two buttons. When the light comes on, the **first** to press wins.
+
+`wait_for_press()` can only watch one button, so use **events** instead:
+
+```
+player1.when_pressed = player1_pressed
+player2.when_pressed = player2_pressed
+```
+
+**Tips:**
+- Make a variable `winner = None` (None means "nobody yet")
+- Each player's function sets `winner` to their name, but **only if** `winner is None`. You'll need `global winner` inside each function.
+- Set up the `when_pressed` events **after** the light comes on, so early presses don't count
+- Then wait until someone wins: `while winner is None:` with `sleep(0.01)` inside
+- Print who won, like `Player 2 wins!`
+"""
+hints = [
+  "Player 2's button is `Button(24)`.",
+  "A player's function:\n```\ndef player1_pressed():\n    global winner\n    if winner is None:\n        winner = \"Player 1\"\n```",
+]
+success = "A real two-player game. Events let your program watch two things at once."
+demo = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+light = LED(17)
+player1 = Button(23)
+player2 = Button(24)
+winner = None
+
+def player1_pressed():
+    global winner
+    if winner is None:
+        winner = "Player 1"
+
+def player2_pressed():
+    global winner
+    if winner is None:
+        winner = "Player 2"
+
+print("Both players: get ready...")
+sleep(random.uniform(2, 5))
+light.on()
+start = monotonic()
+player1.when_pressed = player1_pressed
+player2.when_pressed = player2_pressed
+
+while winner is None:
+    sleep(0.01)
+
+light.off()
+print(f"{winner} wins in {round((monotonic() - start) * 1000)} ms!")
+'''
+demo_events = ["5.8 tap 24"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "attr:when_pressed"
+min = 2
+label = "Both buttons use when_pressed"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''winner\s*=\s*None'''
+label = "You start with winner = None"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''wins'''
+ignore_case = true
+label = "Your game says who wins"
+fail = "Play a round: when the light comes on, press one of the buttons."
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: best of 5 and a high score"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** a one-player game of **5 rounds** that remembers the **high score** in a file.
+
+1. Put one round in a function `play_round()` that **returns** the reaction time in ms
+2. Play 5 rounds with a `for` loop and keep the times in a **list**
+3. Print the best (smallest) time: `min(times)`
+4. Read the old high score from `highscore.txt`. The first time, the file won't exist yet, so catch the error:
+
+```
+try:
+    with open("highscore.txt") as f:
+        high_score = int(f.read())
+except FileNotFoundError:
+    high_score = 9999
+```
+
+5. If the best time beats it, print `New high score!` and save it with `open("highscore.txt", "w")`. Otherwise print the high score to beat.
+"""
+hints = [
+  "`times = []`, then in the loop: `times.append(play_round())`.",
+  "Saving: `with open(\"highscore.txt\", \"w\") as f:` then (indented) `f.write(str(best))`.",
+]
+success = "Your game remembers! Files are how programs keep things after they close."
+demo = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+light = LED(17)
+button = Button(23)
+
+def play_round():
+    print("Get ready...")
+    sleep(random.uniform(2, 5))
+    light.on()
+    start = monotonic()
+    button.wait_for_press()
+    light.off()
+    ms = round((monotonic() - start) * 1000)
+    print(f"{ms} ms")
+    sleep(1)
+    return ms
+
+times = []
+for round_number in range(5):
+    print("Round", round_number + 1)
+    times.append(play_round())
+
+best = min(times)
+print(f"Your best time: {best} ms")
+
+try:
+    with open("highscore.txt") as f:
+        high_score = int(f.read())
+except FileNotFoundError:
+    high_score = 9999
+
+if best < high_score:
+    print("New high score!")
+    with open("highscore.txt", "w") as f:
+        f.write(str(best))
+else:
+    print(f"The high score to beat is {high_score} ms")
+'''
+demo_events = ["1 tap 23 every 0.8 until 36"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "You play the rounds with a for loop"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Try"
+label = "You catch the missing file with try / except"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''open\(\s*["']highscore\.txt["']\s*,\s*["']w["']'''
+label = "You save the high score to highscore.txt"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''high score'''
+ignore_case = true
+label = "Your game talks about the high score"
+fail = "Play all 5 rounds. At the end, does your program print something about the high score?"

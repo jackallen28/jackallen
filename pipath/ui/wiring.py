@@ -88,7 +88,9 @@ class WiringCard(tk.Frame):
                 colour = LED_COLOURS.get(p.get("colour", ""), C["accent"]) if p["kind"] == "led" else C["accent"]
                 if p["kind"] == "rgbled":
                     colour = ("#FF3B30", "#2ED158", "#3B82F6")[i % 3]
-                used[g] = (p["label"] + (f" {'RGB'[i]}" if p["kind"] == "rgbled" else ""), colour)
+                name = p["label"].split(" (")[0]
+                name = name if len(name) <= 13 else name[:12] + "…"
+                used[g] = (name + (f" {'RGB'[i]}" if p["kind"] == "rgbled" else ""), colour)
         row_h, w = 15, 340
         cv = tk.Canvas(master, width=w, height=20 * row_h + 16, bg=C["panel"], highlightthickness=0)
         cv.pack(anchor="w", pady=(10, 0))

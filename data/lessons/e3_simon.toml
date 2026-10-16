@@ -102,6 +102,23 @@ hints = [
 ]
 success = "One loop, any number of LEDs. That's the power of lists."
 
+demo = '''
+from gpiozero import LED
+from time import sleep
+
+leds = [LED(17), LED(27), LED(22)]   # red, green, blue
+
+for led in leds:
+    led.on()
+    sleep(0.5)
+    led.off()
+
+for led in reversed(leds):
+    led.on()
+    sleep(0.5)
+    led.off()
+'''
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -147,6 +164,22 @@ hints = [
   "If red and green are swapped, swap `Button(23)` and `Button(24)` in the list.",
 ]
 success = "Three inputs, three outputs, three lines of code."
+
+demo = '''
+from gpiozero import LED, Button
+from signal import pause
+
+leds = [LED(17), LED(27), LED(22)]
+buttons = [Button(23), Button(24), Button(25)]
+
+for led, button in zip(leds, buttons):
+    button.when_pressed = led.on
+    button.when_released = led.off
+
+pause()
+'''
+demo_events = ["1 press 23", "1.6 release 23", "2 press 24", "2.6 release 24", "3 press 25", "3.6 release 25"]
+demo_seconds = 4.5
 
 [[steps.checks]]
 type = "code_uses"
@@ -199,6 +232,30 @@ hints = [
 error_hints = { IndexError = "`leds[3]` doesn't exist. The list only has positions 0, 1 and 2. Check your randint numbers." }
 success = "The computer can make patterns. Now let's see if a human can copy them!"
 
+demo = '''
+from gpiozero import LED, Button
+from time import sleep
+import random
+
+leds = [LED(17), LED(27), LED(22)]
+buttons = [Button(23), Button(24), Button(25)]
+
+def flash(number):
+    """Flash one LED. number is 0, 1 or 2."""
+    leds[number].on()
+    sleep(0.4)
+    leds[number].off()
+    sleep(0.2)
+
+pattern = []
+for i in range(4):
+    pattern.append(random.randint(0, 2))
+
+print("Pattern:", pattern)
+for number in pattern:
+    flash(number)
+'''
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -247,6 +304,48 @@ hints = [
 ]
 success = "Your game checks the player's memory. Functions that return values are a big step!"
 
+demo = '''
+from gpiozero import LED, Button
+from time import sleep
+import random
+
+leds = [LED(17), LED(27), LED(22)]
+buttons = [Button(23), Button(24), Button(25)]
+
+def flash(number):
+    leds[number].on()
+    sleep(0.4)
+    leds[number].off()
+    sleep(0.2)
+
+def get_press():
+    while True:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                flash(number)
+                return number
+        sleep(0.01)
+
+pattern = []
+for i in range(4):
+    pattern.append(random.randint(0, 2))
+
+print("Pattern:", pattern)
+for number in pattern:
+    flash(number)
+
+print("Your turn!")
+for number in pattern:
+    choice = get_press()
+    if choice != number:
+        print("Wrong! Game over")
+        break
+else:
+    print("You win!")
+'''
+demo_events = ["3.5 tap 23 every 1 until 12"]
+demo_seconds = 15
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -288,6 +387,57 @@ hints = [
   "Game-over flash: `for i in range(3):` then turn every LED on, sleep, every LED off, sleep.",
 ]
 success = "That's a complete game you could put in a case and give to someone. Brilliant work!"
+
+demo = '''
+from gpiozero import LED, Button
+from time import sleep
+import random
+
+leds = [LED(17), LED(27), LED(22)]
+buttons = [Button(23), Button(24), Button(25)]
+
+def flash(number):
+    leds[number].on()
+    sleep(0.4)
+    leds[number].off()
+    sleep(0.2)
+
+def get_press():
+    while True:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                flash(number)
+                return number
+        sleep(0.01)
+
+pattern = []
+score = 0
+playing = True
+
+while playing:
+    pattern.append(random.randint(0, 2))
+    print("Round", score + 1)
+    for number in pattern:
+        flash(number)
+    for number in pattern:
+        if get_press() != number:
+            playing = False
+            break
+    if playing:
+        score = score + 1
+        sleep(0.5)
+
+for i in range(3):
+    for led in leds:
+        led.on()
+    sleep(0.3)
+    for led in leds:
+        led.off()
+    sleep(0.3)
+print("Game over! Your score:", score)
+'''
+demo_events = ["1.2 tap 23 every 1 until 24"]
+demo_seconds = 28
 
 [[steps.checks]]
 type = "runs_ok"

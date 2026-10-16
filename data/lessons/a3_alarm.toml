@@ -1,0 +1,514 @@
+# ADVANCED 3: Motion Alarm & Logger. See e1_lightswitch.toml for the GPIO lesson keys.
+# Pin plan: PIR OUT 4 (VCC 5V pin 2, GND pin 6), LED 17, button 23, buzzer 18.
+
+id = "a3_alarm"
+title = "Motion Alarm & Logger"
+file_name = "motion_alarm.py"
+requires_gpio = true
+
+intro = """
+## Build a security system
+
+A **PIR** sensor (passive infrared) notices the heat from a moving person or animal. Shops, schools and homes use them to switch on lights and sound alarms.
+
+In this activity you will:
+- react to **motion** with events
+- sound an **alarm** with a buzzer and a light
+- use a **state** variable so the alarm can be **armed** and **disarmed**
+- keep a **log** of every event in a CSV file, then read it back to make a **report**
+
+**About the sensor:** a real PIR needs **30 to 60 seconds to warm up** after the Pi turns on. It may trigger by itself while it settles. In the Simulator, click the sensor on the board to "wave" at it.
+
+**Safety:** the PIR's power pin goes to **5V**, but its OUT pin only sends **3.3V**, which is safe for a GPIO pin. Never connect anything that *outputs* 5V straight to a GPIO pin.
+"""
+
+outro = """
+## Your alarm is armed and logging!
+
+You used a sensor, events, a **state** variable, a **cooldown** timer, and files for **logging** and **reporting**. Real security systems are built from exactly these ideas.
+
+**Extension ideas:**
+- Only sound the alarm at night: check `datetime.now().hour`
+- Arm with a **secret code**: a pattern of short and long presses
+- Make a bar chart of events per hour with `print("#" * count)`
+- Combine it with the **Photo Booth**: take a photo when motion is detected!
+"""
+
+[[wiring]]
+part = "PIR motion sensor"
+kind = "pir"
+pin = 4
+connect = "VCC → 5V (pin 2). OUT → GPIO4 (pin 7). GND → GND (pin 6). Check the labels on your sensor: some put the pins in a different order."
+
+[[wiring]]
+part = "LED"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Buzzer"
+kind = "buzzer"
+pin = 18
+connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → GND rail."
+
+[[wiring]]
+part = "Arm button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 3.)"
+
+[[wiring]]
+part = "Tip"
+connect = "The PIR has two small orange dials. Turn the 'time' dial fully anticlockwise for the shortest hold time, and leave 'sensitivity' in the middle."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Something moved!"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import MotionSensor
+from signal import pause
+
+pir = MotionSensor(4)
+
+def motion():
+    print("Motion!")
+
+def no_motion():
+    print("All quiet")
+
+pir.when_motion = motion
+pir.when_no_motion = ___
+
+print("Watching... (a real sensor needs about a minute to warm up)")
+pause()
+'''
+text = """
+`MotionSensor(4)` is the PIR on **GPIO4**. Like a button, it has **events**:
+
+- `pir.when_motion` runs a function when something moves
+- `pir.when_no_motion` runs a function when things go still again
+
+Remember: no brackets after the function name. We're telling gpiozero *which* function to run later.
+
+**Your task:** fill in the blank so the program prints `All quiet` when the motion stops. Run it, wave your hand in front of the sensor (Simulator: click the sensor on the board), wait for it to go quiet, then press **Stop**.
+"""
+hints = [
+  "Which function prints `All quiet`?",
+  "Use the function's name, with no brackets: `no_motion`",
+  "The line is `pir.when_no_motion = no_motion`",
+]
+error_hints = { BadEventHandler = "Did you add brackets? Write `no_motion`, not `no_motion()`." }
+success = "Your Pi can feel movement. That's the heart of every alarm."
+demo = '''
+from gpiozero import MotionSensor
+from signal import pause
+
+pir = MotionSensor(4)
+
+def motion():
+    print("Motion!")
+
+def no_motion():
+    print("All quiet")
+
+pir.when_motion = motion
+pir.when_no_motion = no_motion
+
+print("Watching... (a real sensor needs about a minute to warm up)")
+pause()
+'''
+demo_events = ["1.5 press 4", "4 release 4"]
+demo_seconds = 5.5
+
+[[steps.checks]]
+type = "code_regex"
+value = '''when_no_motion\s*=\s*no_motion\s*$'''
+label = "Quiet runs the no_motion function"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Motion!"
+label = "The sensor saw you move"
+fail = "While it's running, wave in front of the sensor (Simulator: click the sensor on the board). Then press Stop."
+
+[[steps.checks]]
+type = "output_contains"
+value = "All quiet"
+label = "It noticed when things went quiet"
+fail = "After waving, keep still for a few seconds before pressing Stop."
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Sound the alarm"
+support = "scaffolded"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Printing `Motion!` won't scare anyone away. Let's add a flashing light and a beeping buzzer.
+
+`buzzer.beep(0.1, 0.1, n=5)` beeps 5 times: 0.1 seconds on, 0.1 seconds off.
+
+**Your task:**
+1. Import `LED` and `Buzzer` too: `from gpiozero import MotionSensor, LED, Buzzer`
+2. Make `light = LED(17)` and `buzzer = Buzzer(18)`
+3. In `motion()`, turn the light on and beep 5 times
+4. In `no_motion()`, turn the light off
+
+Test it, then press **Stop**.
+"""
+hints = [
+  "Inside `motion()` (indented): `light.on()` then `buzzer.beep(0.1, 0.1, n=5)`.",
+  "Inside `no_motion()` (indented): `light.off()`.",
+]
+error_hints = { NameError = "Did you import `LED` and `Buzzer`, and make `light` and `buzzer` near the top?" }
+success = "An alarm that beeps and flashes. Intruders beware!"
+demo = '''
+from gpiozero import MotionSensor, LED, Buzzer
+from signal import pause
+
+pir = MotionSensor(4)
+light = LED(17)
+buzzer = Buzzer(18)
+
+def motion():
+    print("Motion!")
+    light.on()
+    buzzer.beep(0.1, 0.1, n=5)
+
+def no_motion():
+    print("All quiet")
+    light.off()
+
+pir.when_motion = motion
+pir.when_no_motion = no_motion
+
+print("Watching...")
+pause()
+'''
+demo_events = ["1.5 press 4", "4.5 release 4"]
+demo_seconds = 6
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:Buzzer"
+label = "You use a Buzzer"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:beep"
+label = "The buzzer beeps"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:LED"
+label = "You use an LED"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Motion"
+label = "You tested it with some movement"
+fail = "Wave in front of the sensor (Simulator: click it) before pressing Stop."
+
+[[steps.checks]]
+type = "confirm"
+label = "The LED and buzzer went off when something moved"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Arm and disarm"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+An alarm that goes off every time *you* walk past isn't much use. Real alarms can be **armed** (on guard) or **disarmed** (off).
+
+**Goal:**
+1. Add a button on GPIO23. Each press **switches** between armed and disarmed.
+2. Keep track with a **state** variable: `armed = False` at the start.
+3. The LED now shows the state: **on = armed**, off = disarmed. Print `Armed` or `Disarmed` each time.
+4. Motion only sounds the buzzer **when armed**.
+
+**Tips:**
+- `armed = not armed` flips True to False and False to True
+- A function that changes `armed` needs `global armed` as its first line
+- You won't need `no_motion()` any more
+"""
+hints = [
+  "Write `def toggle_armed():` with `global armed`, then `armed = not armed`, then turn the light on or off to match.",
+  "In `motion()`, wrap the alarm in `if armed:`. Connect the button with `button.when_pressed = toggle_armed`.",
+]
+success = "Your alarm has a memory: its state. Lots of programs work like this."
+demo = '''
+from gpiozero import MotionSensor, LED, Buzzer, Button
+from signal import pause
+
+pir = MotionSensor(4)
+light = LED(17)          # on = armed
+buzzer = Buzzer(18)
+button = Button(23)
+armed = False
+
+def toggle_armed():
+    global armed
+    armed = not armed
+    if armed:
+        light.on()
+        print("Armed")
+    else:
+        light.off()
+        print("Disarmed")
+
+def motion():
+    if armed:
+        print("Intruder alert!")
+        buzzer.beep(0.1, 0.1, n=5)
+    else:
+        print("Motion, but the alarm is off")
+
+button.when_pressed = toggle_armed
+pir.when_motion = motion
+print("Press the button to arm the alarm")
+pause()
+'''
+demo_events = ["1 press 4", "2.5 release 4", "3.5 tap 23", "4.5 press 4", "6.5 release 4"]
+demo_seconds = 8
+
+[[steps.checks]]
+type = "code_regex"
+value = '''armed\s*=\s*False'''
+label = "You start with armed = False"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''not\s+armed|armed\s*=\s*True'''
+label = "The button changes the state"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:when_pressed"
+label = "The button uses when_pressed"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\barmed\b'''
+ignore_case = true
+label = "You armed it and it said so"
+fail = "Press the button while it's running. Does it print `Armed`?"
+
+[[steps.checks]]
+type = "confirm"
+label = "The alarm only goes off when it's armed"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Keep a log"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Security systems keep a **log**: a record of every event and when it happened. We'll save ours as a **CSV** file (comma-separated values), which any spreadsheet can open.
+
+**Goal:** every time the alarm is armed, disarmed or set off, add one line to `motion_log.csv`, like this:
+
+```
+2026-10-16T09:41:07,motion
+```
+
+**Tips:**
+
+```
+from datetime import datetime
+
+def log(event):
+    with open("motion_log.csv", "a") as f:
+        f.write(f"{datetime.now().isoformat(timespec='seconds')},{event}\\n")
+```
+
+- `"a"` means **append**: add to the end of the file instead of starting again
+- `\\n` starts a new line
+- Call `log("motion")`, `log("armed")` and `log("disarmed")` in the right places
+
+Find the file in your PiPath folder afterwards and open it in a spreadsheet!
+"""
+hints = [
+  "Copy the `log` function from the tips, and put `from datetime import datetime` at the top.",
+  "Call `log(\"motion\")` inside the `if armed:` part of `motion()`. Call `log(\"armed\")` / `log(\"disarmed\")` in `toggle_armed()`.",
+]
+error_hints = { NameError = "Did you add `from datetime import datetime` at the top?" }
+success = "Your alarm keeps records. That's called data logging."
+demo = '''
+from gpiozero import MotionSensor, LED, Buzzer, Button
+from signal import pause
+from datetime import datetime
+
+pir = MotionSensor(4)
+light = LED(17)
+buzzer = Buzzer(18)
+button = Button(23)
+armed = False
+
+def log(event):
+    with open("motion_log.csv", "a") as f:
+        f.write(f"{datetime.now().isoformat(timespec='seconds')},{event}\n")
+    print("Logged:", event)
+
+def toggle_armed():
+    global armed
+    armed = not armed
+    if armed:
+        light.on()
+        log("armed")
+    else:
+        light.off()
+        log("disarmed")
+
+def motion():
+    if armed:
+        print("Intruder alert!")
+        log("motion")
+        buzzer.beep(0.1, 0.1, n=5)
+
+button.when_pressed = toggle_armed
+pir.when_motion = motion
+print("Press the button to arm the alarm")
+pause()
+'''
+demo_events = ["1 tap 23", "2 press 4", "4 release 4"]
+demo_seconds = 6
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:datetime"
+label = "You use datetime"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''open\([^)]*["']a["']'''
+label = "You open the log in append mode (\"a\")"
+
+[[steps.checks]]
+type = "file_contains"
+file = "motion_log.csv"
+value = '''\d{4}-\d\d-\d\dT\d\d:\d\d'''
+label = "Your run added a dated line to motion_log.csv"
+fail = "Run it, arm the alarm and set it off. Does a line appear in motion_log.csv?"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Challenge: cooldown and report"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Two problems with real alarms: they can go off again and again for the same person, and nobody reads the log.
+
+**Goal 1: a 10-second cooldown.** After the alarm goes off, ignore motion for 10 seconds.
+- Keep the time of the last alarm: `last_alarm = 0` at the start
+- In `motion()`: if `monotonic() - last_alarm < 10`, do nothing (`return`)
+- Otherwise set `last_alarm = monotonic()` and sound the alarm
+
+**Goal 2: a report.** Write `report()`, which reads `motion_log.csv` and prints how many **motion** events happened in each hour, like `09:00  3 events`. Call it after each alarm.
+
+**Tips:**
+- `with open("motion_log.csv") as f:` then `for line in f:` reads one line at a time
+- `when, event = line.strip().split(",")` splits a line at the comma
+- `when[11:13]` is the hour, e.g. `"09"`
+- Count with a **dictionary**: `counts[hour] = counts.get(hour, 0) + 1`
+"""
+hints = [
+  "Don't forget `from time import monotonic` and `global last_alarm` inside `motion()`.",
+  "Report:\n```\ndef report():\n    counts = {}\n    with open(\"motion_log.csv\") as f:\n        for line in f:\n            when, event = line.strip().split(\",\")\n            if event == \"motion\":\n                counts[when[11:13]] = counts.get(when[11:13], 0) + 1\n    for hour, n in counts.items():\n        print(f\"{hour}:00  {n} events\")\n```",
+]
+success = "Cooldowns, logs and reports: you've built a real security system. Brilliant work!"
+demo = '''
+from gpiozero import MotionSensor, LED, Buzzer, Button
+from signal import pause
+from datetime import datetime
+from time import monotonic
+
+pir = MotionSensor(4)
+light = LED(17)
+buzzer = Buzzer(18)
+button = Button(23)
+armed = False
+last_alarm = -100
+
+def log(event):
+    with open("motion_log.csv", "a") as f:
+        f.write(f"{datetime.now().isoformat(timespec='seconds')},{event}\n")
+
+def report():
+    counts = {}
+    with open("motion_log.csv") as f:
+        for line in f:
+            when, event = line.strip().split(",")
+            if event == "motion":
+                hour = when[11:13]
+                counts[hour] = counts.get(hour, 0) + 1
+    for hour, n in counts.items():
+        print(f"{hour}:00  {n} events")
+
+def toggle_armed():
+    global armed
+    armed = not armed
+    if armed:
+        light.on()
+        print("Armed")
+        log("armed")
+    else:
+        light.off()
+        print("Disarmed")
+        log("disarmed")
+
+def motion():
+    global last_alarm
+    if not armed:
+        return
+    if monotonic() - last_alarm < 10:
+        print("(cooldown: ignored)")
+        return
+    last_alarm = monotonic()
+    print("Intruder alert!")
+    log("motion")
+    buzzer.beep(0.1, 0.1, n=5)
+    report()
+
+button.when_pressed = toggle_armed
+pir.when_motion = motion
+print("Press the button to arm the alarm")
+pause()
+'''
+demo_events = ["1 tap 23", "2 press 4", "3.5 release 4", "5 press 4", "6 release 4", "13 press 4", "14 release 4"]
+demo_seconds = 15
+
+[[steps.checks]]
+type = "code_regex"
+value = '''(<|>|<=|>=)\s*10(\.0)?\b'''
+label = "You added a 10-second cooldown"
+
+[[steps.checks]]
+type = "code_count"
+value = "call:open"
+min = 2
+label = "You write the log and read it back"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Dict"
+label = "You count events with a dictionary"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+\s+events?'''
+ignore_case = true
+label = "Your report shows how many events"
+fail = "Arm the alarm and set it off. Does your report print something like `09:00  1 events`?"
+
+[[steps.checks]]
+type = "confirm"
+label = "Moving twice quickly only sets the alarm off once"

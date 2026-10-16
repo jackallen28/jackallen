@@ -198,9 +198,25 @@ class HintEngine:
         )
 
 
+def _fresh_files(folder: Path | None, pattern: str, since: float | None) -> list[Path]:
+    """Files matching pattern that the program wrote this run (modified since it started)."""
+    if folder is None:
+        return []
+    out = []
+    for p in folder.glob(pattern):
+        try:
+            if p.is_file() and (since is None or p.stat().st_mtime >= since - 1):
+                out.append(p)
+        except OSError:
+            pass
+    return out
+
+
 def evaluate_checks(checks: list[dict], code: str, output: str, crashed: bool,
-                    runs_this_step: int = 1, confirmed: set[int] | None = None) -> list[CheckResult]:
-    """confirmed: indexes of "confirm" checks the student has ticked. None means all ticked."""
+                    runs_this_step: int = 1, confirmed: set[int] | None = None,
+                    folder: Path | None = None, since: float | None = None) -> list[CheckResult]:
+    """confirmed: indexes of "confirm" checks the student has ticked. None means all ticked.
+    folder / since: where the program ran and when it started (for file checks)."""
     feats = code_features(code)
     out_lines = [l for l in output.splitlines() if l.strip()]
     results = []
@@ -228,6 +244,11 @@ def evaluate_checks(checks: list[dict], code: str, output: str, crashed: bool,
             ok = runs_this_step >= c.get("min", 1)
         elif t == "confirm":
             ok = confirmed is None or i in confirmed
+        elif t == "file_exists":
+            ok = len(_fresh_files(folder, c["value"], since)) >= c.get("min", 1)
+        elif t == "file_contains":
+            ok = any(re.search(c["value"], p.read_text(encoding="utf-8", errors="replace"), flags | re.M)
+                     for p in _fresh_files(folder, c["file"], since))
         else:
             ok = True  # unknown check types never block a student
         results.append(CheckResult(label, ok, c.get("fail", ""), t))

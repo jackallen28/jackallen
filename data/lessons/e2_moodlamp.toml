@@ -75,6 +75,24 @@ hints = [
 ]
 success = "Red + green = yellow. Light mixes differently to paint!"
 
+demo = '''
+from gpiozero import RGBLED
+from time import sleep
+
+lamp = RGBLED(red=17, green=27, blue=22)
+
+lamp.color = (1, 0, 0)    # red
+sleep(1)
+lamp.color = (0, 1, 0)    # green
+sleep(1)
+lamp.color = (1, 1, 0)    # red + green = yellow
+sleep(1)
+lamp.color = (1, 0, 1)    # purple
+sleep(1)
+lamp.color = (1, 1, 1)    # white
+sleep(1)
+'''
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -128,6 +146,27 @@ hints = [
   "Example:\n```\nfor i in range(3):\n    for colour in rainbow:\n        lamp.color = colour\n        sleep(0.5)\n```",
 ]
 success = "A loop inside a loop: a nested loop!"
+
+demo = '''
+from gpiozero import RGBLED
+from time import sleep
+
+lamp = RGBLED(red=17, green=27, blue=22)
+
+rainbow = [
+    (1, 0, 0),      # red
+    (1, 0.3, 0),    # orange
+    (1, 1, 0),      # yellow
+    (0, 1, 0),      # green
+    (0, 0, 1),      # blue
+    (0.5, 0, 1),    # violet
+]
+
+for i in range(3):
+    for colour in rainbow:
+        lamp.color = colour
+        sleep(0.5)
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -188,6 +227,28 @@ hints = [
 error_hints = { IndexError = "Position 6 doesn't exist: the list stops at 5. How could you wrap back to 0? Look at the `%` tip in the step." }
 success = "Your lamp cycles forever. `%` is a programmer's favourite trick for wrapping around."
 
+demo = '''
+from gpiozero import RGBLED, Button
+from signal import pause
+
+lamp = RGBLED(red=17, green=27, blue=22)
+button = Button(23)
+
+colours = [(1, 0, 0), (1, 0.3, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (0.5, 0, 1)]
+position = 0
+
+def next_colour():
+    global position
+    position = (position + 1) % len(colours)
+    lamp.color = colours[position]
+
+lamp.color = colours[position]
+button.when_pressed = next_colour
+pause()
+'''
+demo_events = ["1 tap 23 every 0.6 until 5.8"]
+demo_seconds = 6.5
+
 [[steps.checks]]
 type = "code_regex"
 value = '''%\s*len\(\s*colours\s*\)'''
@@ -218,6 +279,38 @@ hints = [
   "Example:\n```\ndef party():\n    for i in range(20):\n        lamp.color = (random.random(), random.random(), random.random())\n        sleep(0.1)\n\nbutton.when_held = party\n```",
 ]
 success = "Party mode unlocked! Two behaviours from one button."
+
+demo = '''
+from gpiozero import RGBLED, Button
+from signal import pause
+from time import sleep
+import random
+
+lamp = RGBLED(red=17, green=27, blue=22)
+button = Button(23)
+
+colours = [(1, 0, 0), (1, 0.3, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (0.5, 0, 1)]
+position = 0
+
+def next_colour():
+    global position
+    position = (position + 1) % len(colours)
+    lamp.color = colours[position]
+
+def party():
+    print("Party mode!")
+    for i in range(20):
+        lamp.color = (random.random(), random.random(), random.random())
+        sleep(0.1)
+    lamp.color = colours[position]
+
+lamp.color = colours[position]
+button.when_pressed = next_colour
+button.when_held = party
+pause()
+'''
+demo_events = ["1 tap 23", "2 tap 23", "3 press 23", "5 release 23"]
+demo_seconds = 7
 
 [[steps.checks]]
 type = "code_uses"
@@ -253,6 +346,20 @@ hints = [
   "For a dictionary: `moods = {\"calm\": (0, 0.3, 1), \"happy\": (1, 0.8, 0)}` then `for name, colour in moods.items():`",
 ]
 success = "Your own design. That's what makers do!"
+
+demo = '''
+from gpiozero import RGBLED
+from time import sleep
+
+lamp = RGBLED(red=17, green=27, blue=22)
+
+moods = {"calm": (0, 0.3, 1), "happy": (1, 0.8, 0), "fire": (1, 0.2, 0)}
+
+for name, colour in moods.items():
+    print("Mood:", name)
+    lamp.pulse(fade_in_time=1, fade_out_time=1, on_color=colour, n=1, background=False)
+'''
+demo_seconds = 8
 
 [[steps.checks]]
 type = "runs_ok"

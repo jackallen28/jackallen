@@ -138,6 +138,14 @@ def scenes(app):
         ("20_e1_step3_ticked", tick_confirms),
         ("21_e3_wiring", lambda: open_lesson("e3_simon")()),
         ("22_e4_board", lambda: (open_lesson("e4_dice")(), start_lesson())),
+        ("23_a1_activities", lambda: (app.show("home"), app.screen.set_filter("advanced"))),
+        ("24_a1_step1", lambda: (open_lesson("a1_traffic")(), start_lesson())),
+        ("25_a1_header_map", lambda: app.screen.guide.canvas.yview_moveto(0.33)),
+        ("26_a1_step2_goal", lambda: (to_step(1)(), goal()), 4200),
+        ("27_a3_pir", lambda: (stop(), open_lesson("a3_alarm")(), start_lesson(), app.screen.editor.set_code(
+            app.screen.steps[0]["starter"].replace("___", "no_motion")), press_run()), 1200),
+        ("28_a3_motion", press(4), 1200),
+        ("29_a3_checked", lambda: (stop()), 2500),
     ]
 
 
@@ -156,13 +164,13 @@ def main():
         if not todo:
             app.after(100, app.quit_app)
             return
-        name, action = todo.pop(0)
+        name, action, *settle = todo.pop(0)
         try:
             action()
         except Exception:
             failures.append(name)
             traceback.print_exc()
-        app.after(SETTLE_MS, lambda: (shoot(name), app.after(50, step)))
+        app.after(settle[0] if settle else SETTLE_MS, lambda: (shoot(name), app.after(50, step)))
 
     app.after(600, step)
     app.mainloop()

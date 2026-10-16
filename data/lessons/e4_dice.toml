@@ -125,6 +125,24 @@ hints = [
 ]
 success = "All six LEDs under your control."
 
+demo = '''
+from gpiozero import LEDBoard
+from time import sleep
+
+bar = LEDBoard(17, 27, 22, 5, 6, 13)
+
+bar.on()
+sleep(1)
+bar.off()
+sleep(0.5)
+bar.value = (1, 0, 1, 0, 1, 0)    # every second LED
+sleep(1)
+bar.value = (1, 0, 0, 0, 0, 1)    # the outside two
+sleep(1)
+bar.value = (1, 1, 1, 0, 0, 0)    # the left half
+sleep(1)
+'''
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -167,6 +185,23 @@ hints = [
   "Example:\n```\nfor repeat in range(3):\n    for led in bar:\n        led.on(); sleep(0.1); led.off()\n    for led in reversed(bar.leds):\n        led.on(); sleep(0.1); led.off()\n```",
 ]
 success = "Smooth! Animation is just loops plus timing."
+
+demo = '''
+from gpiozero import LEDBoard
+from time import sleep
+
+bar = LEDBoard(17, 27, 22, 5, 6, 13)
+
+for repeat in range(3):
+    for led in bar:                  # left to right
+        led.on()
+        sleep(0.1)
+        led.off()
+    for led in reversed(bar.leds):   # right to left
+        led.on()
+        sleep(0.1)
+        led.off()
+'''
 
 [[steps.checks]]
 type = "runs_ok"
@@ -230,6 +265,40 @@ hints = [
 ]
 success = "A counter with limits: the same idea is in every volume control."
 
+demo = '''
+from gpiozero import LEDBarGraph, Button
+from signal import pause
+
+graph = LEDBarGraph(17, 27, 22, 5, 6, 13)
+up = Button(23)
+down = Button(24)
+
+count = 0
+
+def show():
+    graph.value = count / 6
+    print("Count:", count)
+
+def go_up():
+    global count
+    if count < 6:
+        count = count + 1
+    show()
+
+def go_down():
+    global count
+    if count > 0:
+        count = count - 1
+    show()
+
+up.when_pressed = go_up
+down.when_pressed = go_down
+show()
+pause()
+'''
+demo_events = ["1 tap 23 every 0.4 until 4.2", "4.8 tap 24 every 0.4 until 7"]
+demo_seconds = 8
+
 [[steps.checks]]
 type = "code_regex"
 value = '''count\s*<\s*6|count\s*<=\s*5|min\('''
@@ -265,6 +334,45 @@ hints = [
   "Final roll: `count = random.randint(1, 6)` then `show()` and print it. Don't forget `import random` and `from time import sleep`.",
 ]
 success = "Rolling! Try making the animation slow down at the end, like a real dice."
+
+demo = '''
+from gpiozero import LEDBarGraph, Button
+from signal import pause
+from time import sleep
+import random
+
+graph = LEDBarGraph(17, 27, 22, 5, 6, 13)
+up = Button(23)
+down = Button(24)
+
+count = 0
+
+def show():
+    graph.value = count / 6
+
+def go_up():
+    global count
+    if count < 6:
+        count = count + 1
+    show()
+
+def roll():
+    global count
+    for i in range(10):              # the rolling animation
+        count = random.randint(1, 6)
+        show()
+        sleep(0.05)
+    count = random.randint(1, 6)
+    show()
+    print(f"You rolled a {count}!")
+
+up.when_pressed = go_up
+down.when_pressed = roll
+show()
+pause()
+'''
+demo_events = ["1 tap 24", "3 tap 24"]
+demo_seconds = 5
 
 [[steps.checks]]
 type = "code_regex"
@@ -307,6 +415,44 @@ hints = [
   "If it rolls too often, the ball is bouncing. Try `Button(25, bounce_time=0.3)`.",
 ]
 success = "You've built a shake-to-roll dice. You now know lights, buttons, events, functions, lists and limits!"
+
+demo = '''
+from gpiozero import LEDBarGraph, Button
+from signal import pause
+from time import sleep
+import random
+
+graph = LEDBarGraph(17, 27, 22, 5, 6, 13)
+down = Button(24)
+shake = Button(25, bounce_time=0.3)
+
+count = 0
+rolling = False
+
+def show():
+    graph.value = count / 6
+
+def roll():
+    global count, rolling
+    if rolling:
+        return
+    rolling = True
+    for i in range(10):
+        count = random.randint(1, 6)
+        show()
+        sleep(0.05)
+    count = random.randint(1, 6)
+    show()
+    print(f"You rolled a {count}!")
+    rolling = False
+
+down.when_pressed = roll
+shake.when_pressed = roll
+show()
+pause()
+'''
+demo_events = ["1 tap 25", "3 tap 25"]
+demo_seconds = 5
 
 [[steps.checks]]
 type = "code_regex"

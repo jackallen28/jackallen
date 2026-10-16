@@ -77,6 +77,17 @@ hints = [
 success = "Your code just controlled real electricity!"
 error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button to use the on-screen board." }
 
+demo = '''
+from gpiozero import LED
+from time import sleep
+
+light = LED(17)     # the LED is wired to GPIO17
+
+light.on()
+sleep(3)            # stay on for 3 seconds
+light.off()
+'''
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -118,6 +129,21 @@ hints = [
   "Try turning the button 90° on the breadboard. Button legs come in pairs.",
 ]
 success = "Input → program → output. That's every gadget ever made!"
+
+demo = '''
+from gpiozero import LED, Button
+from time import sleep
+
+light = LED(17)
+button = Button(23)
+
+print("Press the button...")
+button.wait_for_press()
+print("Pressed!")
+light.on()
+sleep(2)
+'''
+demo_events = ["1.5 tap 23"]
 
 [[steps.checks]]
 type = "runs_ok"
@@ -170,6 +196,21 @@ hints = [
 error_hints = { TypeError = "Did you add brackets? Write `light.off`, not `light.off()`. We want Python to remember the method for later." }
 success = "Your program now reacts every single time. That's event-driven programming."
 
+demo = '''
+from gpiozero import LED, Button
+from signal import pause
+
+light = LED(17)
+button = Button(23)
+
+button.when_pressed = light.on
+button.when_released = light.off
+
+pause()
+'''
+demo_events = ["1 press 23", "2.5 release 23", "3.5 press 23", "4.2 release 23"]
+demo_seconds = 5
+
 [[steps.checks]]
 type = "runs_ok"
 label = "Your program runs"
@@ -207,6 +248,20 @@ hints = [
   "Delete the `when_released` line and use `button.when_pressed = light.toggle`",
 ]
 success = "A working light switch!"
+
+demo = '''
+from gpiozero import LED, Button
+from signal import pause
+
+light = LED(17)
+button = Button(23)
+
+button.when_pressed = light.toggle
+
+pause()
+'''
+demo_events = ["1 tap 23 every 1.5 until 4"]
+demo_seconds = 5.5
 
 [[steps.checks]]
 type = "runs_ok"
@@ -246,6 +301,28 @@ hints = [
   "Example:\n```\ndef next_level():\n    global level\n    level = (level + 1) % len(levels)\n    light.value = levels[level]\n\nbutton.when_pressed = next_level\n```",
 ]
 success = "You built a dimmer switch. Lists + functions + events, all working together!"
+
+demo = '''
+from gpiozero import PWMLED, Button
+from signal import pause
+
+light = PWMLED(17)
+button = Button(23)
+
+levels = [0, 0.25, 0.5, 1]
+level = 0
+
+def next_level():
+    global level
+    level = (level + 1) % len(levels)
+    light.value = levels[level]
+    print("Brightness:", levels[level])
+
+button.when_pressed = next_level
+pause()
+'''
+demo_events = ["1 tap 23 every 1 until 5"]
+demo_seconds = 6
 
 [[steps.checks]]
 type = "runs_ok"

@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+import time
 import tkinter as tk
 from pathlib import Path
 
 from .. import storage
-from ..gpio import SHIM, SIM_ENV, mode_env, on_real_pi, wiring_check_program, wiring_parts
+from ..gpio import SHIM, SIM_ENV, expand_events, mode_env, on_real_pi, wiring_check_program, wiring_parts
 from ..hints import (CheckResult, Diagnosis, ErrorInfo, HintEngine, code_features, evaluate_checks, gpio_lint,
                      parse_traceback, precheck)
 from ..runner import Runner
@@ -231,7 +232,7 @@ class Workspace(Screen):
                                       on_goal=self.watch_goal)
             self.board.set_mode(self.mode)
             if not self.real_pi:
-                self.board.set_status("Not a Raspberry Pi, so the Simulator is on")
+                self.board.set_status("Simulator only (not a Pi)")
             vpane.add(self.bottom, minsize=150, height=270, stretch="never")
         else:
             self.console = Console(vpane, on_send=self.runner.send_input)
@@ -302,6 +303,7 @@ class Workspace(Screen):
         self._closed_streams = 0
         self._exit_code = None
         self._run_code = code
+        self._run_started = time.time()
         if self.board:
             self.board.reset()
         self.runner.start(path, path.parent, env, shim=SHIM if self.gpio else None)
@@ -396,10 +398,8 @@ class Workspace(Screen):
         self._launch(code, path, env, status="playing the goal…" if kind == "demo" else "checking wiring…")
         for line in stdin.splitlines():
             self.runner.send_input(line)
-        for ev in events or []:
-            when, action, pin = str(ev).split()
-            self._special_jobs.append(self.after(int(float(when) * 1000),
-                                                 lambda a=action, p=pin: self.runner.send_command(f"{a} {p}")))
+        for when, command in expand_events(events):
+            self._special_jobs.append(self.after(int(when * 1000), lambda c=command: self.runner.send_command(c)))
         if seconds:
             self._special_jobs.append(self.after(int(seconds * 1000), lambda: self.runner.stop("special")))
 
@@ -527,7 +527,7 @@ class LessonWorkspace(Workspace):
         self.hint_ctx = None
         self.revealed: dict = {}
         self.confirmed: set[int] = set()      # "I saw it happen" boxes ticked this step
-        self._last_eval = None                # (code, stdout, crashed) of the last run, for re-checking
+        self._last_eval = None                # (code, stdout, crashed, started) of the last run, for re-checking
         self.wiring_card: WiringCard | None = None
         self.parts = wiring_parts(self.lesson) if self.lesson.get("requires_gpio") else []
 
@@ -779,7 +779,7 @@ class LessonWorkspace(Workspace):
                 icon.pack(side="left", padx=(3, 7), pady=2)
                 txt_box = tk.Frame(row, bg=C["panel"], cursor="hand2")
                 txt_box.pack(side="left", fill="x")
-                txt = label(txt_box, c.get("label", c["type"]), bg=C["panel"], wraplength=300)
+                txt = label(txt_box, c.get("label", c["type"]), bg=C["panel"], wraplength=280)
                 txt.pack(anchor="w")
                 label(txt_box, "Tick this when you've seen it happen", font="small", fg=C["muted"],
                       bg=C["panel"]).pack(anchor="w")
@@ -789,7 +789,7 @@ class LessonWorkspace(Workspace):
                 icon = tk.Label(row, text="✓" if done else "○", font="ui_bold", width=2,
                                 fg=C["ok"] if done else C["faint"], bg=C["panel"])
                 icon.pack(side="left")
-                txt = label(row, c.get("label", c["type"]), bg=C["panel"], wraplength=320)
+                txt = label(row, c.get("label", c["type"]), bg=C["panel"], wraplength=300)
                 txt.pack(side="left", fill="x")
             self.check_rows.append((icon, txt))
 
@@ -871,8 +871,9 @@ class LessonWorkspace(Workspace):
                 self.lp["errors"] = self.lp.get("errors", 0) + 1
             self.editor.mark_error_line(diag.line)
 
-        self._last_eval = (code, stdout, crashed)
-        results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed)
+        self._last_eval = (code, stdout, crashed, self._run_started)
+        results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed,
+                                  folder=self.code_path().parent, since=self._run_started)
         self._show_results(results)
         passed = all(r.passed for r in results)
         waiting = [r for r in results if not r.passed]
@@ -931,9 +932,10 @@ class LessonWorkspace(Workspace):
         ticked = idx in self.confirmed
         icon.configure(text="✓" if ticked else "", highlightbackground=C["ok"] if ticked else C["faint"])
         if self._last_eval and ticked:
-            code, stdout, crashed = self._last_eval
+            code, stdout, crashed, started = self._last_eval
             step = self.steps[self.step_i]
-            results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed)
+            results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed,
+                                      folder=self.code_path().parent, since=started)
             if all(r.passed for r in results):
                 self._show_results(results)
                 self._complete_step()

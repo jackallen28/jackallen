@@ -18,6 +18,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from pipath.gpio import expand_events  # noqa: E402
+
 SHIM = ROOT / "pipath" / "gpio_shim.py"
 SIM_ENV = {"GPIOZERO_PIN_FACTORY": "mock", "GPIOZERO_MOCK_PIN_CLASS": "mockpwmpin", "PIPATH_CAMERA": "sim"}
 
@@ -36,6 +39,7 @@ class ShimResult:
     stopped: bool                      # True if we sent Stop (SIGTERM), like the student pressing Stop
     messages: list = field(default_factory=list)
     folder: Path | None = None
+    started: float = 0.0               # time.time() when the program started (for file checks)
 
     @property
     def devices(self) -> list:
@@ -53,6 +57,7 @@ def run_shim(code: str, events: list | None = None, seconds: float | None = None
     d = tempfile.mkdtemp(prefix="pipath_test_")
     path = Path(d) / file_name
     path.write_text(code, encoding="utf-8")
+    started = time.time()
     sr, sw = os.pipe()
     cr, cw = os.pipe()
     e = dict(os.environ, PYTHONUNBUFFERED="1", PIPATH_STATE_FD=str(sw), PIPATH_CMD_FD=str(cr), **SIM_ENV)
@@ -64,7 +69,7 @@ def run_shim(code: str, events: list | None = None, seconds: float | None = None
     if stdin:
         p.stdin.write(stdin.encode())
         p.stdin.flush()
-    todo = sorted((float(t), f"{a} {pin}") for t, a, pin in (str(ev).split() for ev in (events or [])))
+    todo = expand_events(events)
     start = time.monotonic()
     buf, out, err = b"", b"", b""
     stopped = False
@@ -103,4 +108,4 @@ def run_shim(code: str, events: list | None = None, seconds: float | None = None
     msgs = [json.loads(line) for line in buf.decode().splitlines() if line.strip()]
     if not keep_folder:
         shutil.rmtree(d, ignore_errors=True)
-    return ShimResult(out.decode(), err.decode(), rc, stopped, msgs, Path(d) if keep_folder else None)
+    return ShimResult(out.decode(), err.decode(), rc, stopped, msgs, Path(d) if keep_folder else None, started)
