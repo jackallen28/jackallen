@@ -92,6 +92,9 @@ _FONTS = []  # keep references: a tkinter Font is deleted when garbage-collected
 SCALE = {"value": 1.0}
 
 
+CODE_SIZE = {"value": 12}      # the code font's starting size (a student's own size goes on top)
+
+
 def setup_fonts(root, scale: float = 1.0) -> None:
     SCALE["value"] = scale
     have = set(tkfont.families(root))     # listing fonts is slow on a Pi, so do it once
@@ -119,6 +122,7 @@ def setup_fonts(root, scale: float = 1.0) -> None:
     mk("big", ui, 13)
     mk("big_bold", ui, 13, "bold")
     mk("code", mono, 12)
+    CODE_SIZE["value"] = int(12 * scale)
     mk("code_ui", mono, 10)
     mk("glyph", ui, 34, "bold")
     tkfont.nametofont("TkDefaultFont").configure(family=ui, size=int(11 * scale))

@@ -10,7 +10,7 @@ from .hints import HintEngine
 from .ui.home import HomeScreen
 from .ui.onboarding import ProfileScreen, SetupScreen, WelcomeScreen
 from .ui.settings import SettingsDialog
-from .ui.theme import C, setup_fonts
+from .ui.theme import C, setup_fonts, CODE_SIZE
 from .ui.widgets import PButton, TitleBar, entry, label
 from .ui.workspace import FreeBuildWorkspace, LessonWorkspace
 
@@ -97,8 +97,9 @@ class PiPathApp(tk.Tk):
         self.student = s
         storage.touch_student(s)
         size = s.profile.get("code_size")
-        if isinstance(size, int) and 9 <= size <= 26:
-            tkfont.nametofont("code").configure(size=size)
+        if not (isinstance(size, int) and 9 <= size <= 26):
+            size = CODE_SIZE["value"]          # not the last student's size
+        tkfont.nametofont("code").configure(size=size)
         self.show("home")
 
     def logout(self) -> None:
@@ -110,13 +111,27 @@ class PiPathApp(tk.Tk):
 
     # ------------------------------------------------------------------ settings (the cog)
     def open_settings(self, tab: str = "help") -> None:
-        if self.student is None:
+        if self.student is None or self.overlay_open():
             return
+        self.end_tour()                        # a tour bubble can't sit on top of the dialog
         if self._settings is not None and self._settings.winfo_exists():
             self._settings.show_tab(tab)
             self._settings.lift()
             return
         self._settings = SettingsDialog(self, tab)
+
+    def overlay_open(self) -> bool:
+        ov = getattr(self, "_teacher_overlay", None)
+        return bool(ov is not None and ov.winfo_exists())
+
+    def end_tour(self) -> None:
+        tour = getattr(self.screen, "_tour", None)
+        if tour is not None:
+            tour.finish()
+
+    def busy_with_dialog(self) -> bool:
+        """Settings or the teacher panel is open: keys like F5 shouldn't reach the screen behind."""
+        return self.overlay_open() or (self._settings is not None and self._settings.winfo_exists())
 
     def close_settings(self) -> None:
         if self._settings is not None and self._settings.winfo_exists():
@@ -160,8 +175,10 @@ class PiPathApp(tk.Tk):
 
     # ------------------------------------------------------------------ teacher panel
     def teacher_panel(self) -> None:
-        if getattr(self, "_teacher_overlay", None) and self._teacher_overlay.winfo_exists():
+        if self.overlay_open():
             return
+        self.close_settings()                  # its grab would swallow the panel's clicks
+        self.end_tour()
         ov = tk.Frame(self, bg=C["desk"])          # the teal desktop, covering the student's screen
         ov.place(relx=0, rely=0, relwidth=1, relheight=1)
         self._teacher_overlay = ov

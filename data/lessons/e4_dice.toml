@@ -300,6 +300,10 @@ demo_events = ["1 tap 23 every 0.4 until 4.2", "4.8 tap 24 every 0.4 until 7"]
 demo_seconds = 8
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_regex"
 value = '''count\s*<\s*6|count\s*<=\s*5|min\('''
 label = "The count can't go above 6"
@@ -373,6 +377,10 @@ pause()
 '''
 demo_events = ["1 tap 24", "3 tap 24"]
 demo_seconds = 5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_regex"
@@ -453,6 +461,10 @@ pause()
 '''
 demo_events = ["1 tap 25", "3 tap 25"]
 demo_seconds = 5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_regex"

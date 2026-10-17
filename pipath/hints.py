@@ -57,11 +57,15 @@ def parse_traceback(stderr: str, student_file: str, code: str) -> ErrorInfo | No
     lines = [l for l in stderr.rstrip().splitlines() if l.strip()]
     if not lines:
         return None
-    # The last line that looks like "SomeError: message"
+    # "SomeError: message" is the first line after the last indented line (the frames, the code and
+    # the ^^^ markers). A message can go on over more lines. No frames at all (sys.exit("Bye")): no error.
+    indented = [i for i, l in enumerate(lines) if l.startswith((" ", "\t"))]
+    if not indented:                       # an error with no frames: only trust a real exception name
+        m = _LAST_RE.match(lines[-1].strip())
+        if not (m and re.search(r"(Error|Exception|Warning|Interrupt|Exit)$", m.group("type"))):
+            return None
     err_type, msg = None, ""
-    for l in reversed(lines):
-        if l.startswith((" ", "\t")):
-            continue
+    for l in lines[(indented[-1] + 1) if indented else -1:]:
         m = _LAST_RE.match(l.strip())
         if m:
             err_type = m.group("type").split(".")[-1]    # gpiozero.exc.GPIOPinInUse -> GPIOPinInUse
@@ -284,18 +288,30 @@ def _pin_args(call: ast.Call) -> list[int]:
     return [v.value for v in vals if isinstance(v, ast.Constant) and type(v.value) is int]
 
 
-def _repeats_while_held(loop: ast.AST, user_funcs: set) -> bool:
-    """A loop that waits for a press but never for the release (or anything else): one long press
-    counts again and again, as fast as the Pi can go."""
-    calls = {(n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
-             for n in ast.walk(loop) if isinstance(n, ast.Call)}
-    return "wait_for_press" in calls and not calls & ({"wait_for_release", "sleep", "beep", "blink",
-                                                       "take_photo", "input"} | user_funcs)
+def _repeats_while_held(loop: ast.AST, user_funcs: set) -> str | None:
+    """A loop that waits for a press but never for the release (or anything else that takes time):
+    one long press counts again and again, as fast as the Pi can go. Returns the button's name."""
+    calls, button = set(), None
+    for n in ast.walk(loop):
+        if isinstance(n, ast.Call):
+            name = n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", "")
+            if name in ("beep", "blink") and not any(k.arg == "background" for k in n.keywords):
+                continue                       # these return straight away unless background=False
+            calls.add(name)
+            if name == "wait_for_press" and isinstance(n.func, ast.Attribute):
+                button = ast.unparse(n.func.value)
+        elif isinstance(n, ast.Attribute) and n.attr in ("is_pressed", "is_active", "is_held"):
+            calls.add(n.attr)                  # waiting in a loop of its own for the let-go
+    waits = {"wait_for_release", "wait_for_inactive", "is_pressed", "is_active", "is_held", "sleep", "beep",
+             "blink", "take_photo", "input"} | user_funcs
+    if "wait_for_press" in calls and not calls & waits:
+        return button or "button"
+    return None
 
 
-def _HELD_TIP(line: int) -> tuple[int, str]:
+def _HELD_TIP(line: int, button: str) -> tuple[int, str]:
     return (line, "this loop waits for a press but not for the button to be let go, so holding it down "
-                  "counts again and again. Add `button.wait_for_release()` inside the loop.")
+                  f"counts again and again. Add `{button}.wait_for_release()` inside the loop.")
 
 
 def gpio_lint(code: str) -> list[str]:
@@ -330,9 +346,9 @@ def gpio_lint(code: str) -> list[str]:
                 warnings.append((node.lineno, "this `while True` loop never waits, so it runs flat out and keeps "
                                               "the Pi busy. Add `sleep(0.01)` inside it, or use `when_pressed`."))
             elif _repeats_while_held(node, user_funcs):
-                warnings.append(_HELD_TIP(node.lineno))
+                warnings.append(_HELD_TIP(node.lineno, _repeats_while_held(node, user_funcs)))
         elif isinstance(node, ast.For) and _repeats_while_held(node, user_funcs):
-            warnings.append(_HELD_TIP(node.lineno))
+            warnings.append(_HELD_TIP(node.lineno, _repeats_while_held(node, user_funcs)))
         # 3 + 4. pin numbers
         elif isinstance(node, ast.Call):
             for pin in _pin_args(node):

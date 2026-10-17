@@ -459,13 +459,20 @@ class RichText(tk.Text):
             if not part:
                 continue
             if part.startswith("**") and part.endswith("**"):
-                self.insert("end", part[2:-2], base + ("b",))
+                self._styled(part[2:-2], base + ("b",))
             elif part.startswith("`") and part.endswith("`") and len(part) > 1:
                 self.insert("end", part[1:-1], base + ("code",))
             elif part.startswith("*") and part.endswith("*") and len(part) > 2:
-                self.insert("end", part[1:-1], base + ("i",))
+                self._styled(part[1:-1], base + ("i",))
             else:
                 self.insert("end", part, base)
+
+    def _styled(self, inner: str, tags: tuple) -> None:
+        """Bold or italic text, which can hold `code` of its own."""
+        if "`" in inner:
+            self._inline(inner, tags)
+        else:
+            self.insert("end", inner, tags)
 
     # Every RichText that needs measuring waits here, so one layout pass measures them all.
     # (A layout pass per widget made each step change several times slower on a Pi 3B.)

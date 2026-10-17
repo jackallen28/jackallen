@@ -196,7 +196,8 @@ Run pressed
   → precheck(code, step.starter)   blanks (___) from the starter still there? → Coach, stop
   → gpio_lint(code)                GPIO activities: warnings in the Output ("⚠ Coach tip"), never blocks
   → save file, Runner.start()      python3 -u pipath/gpio_shim.py <file> (every run); own
-                                   process group (Stop: SIGTERM to the shim, then SIGKILL the group).
+                                   process group (Stop: SIGTERM to the shim, then SIGKILL the group;
+                                   when the shim exits, anything it left running is killed too).
                                    Warm start: if a spare shim (--wait) is waiting, it gets one
                                    JSON line {"run","cwd","env"} instead; a new spare starts
                                    ~0.4 s after each run ends
@@ -532,7 +533,9 @@ board (and camera panel) appears as soon as a program makes an LED, Button or ph
   pin from the board and drops gpiozero's "use pigpio" warning. A missing echo shows a Coach tip
   (`DistanceSensorNoEcho`) instead of a wall of warnings.
 - **Lint** (`hints.gpio_lint`): `when_pressed = f()` brackets, `while True` that never
-  waits, a pin used twice, pins outside 2–27 or special pins.
+  waits, a loop that waits for a press but never for the release (holding the button repeats
+  it), a pin used twice, pins outside 2–27 or special pins. Lesson demos must be lint-free
+  (`tests/test_activities.py`).
 - **Camera** (`student_lib/pipath_camera.py`): `sim` (pure Python, PNG), `usb` (V4L2 via
   ctypes/ioctl/mmap: MJPEG for photos with standard Huffman tables added if missing, YUYV
   for grids; Picamera2 fallback), `ribbon` (Picamera2, or `rpicam-still`). Photos and grid

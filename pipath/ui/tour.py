@@ -42,10 +42,11 @@ class Tour:
         self._cfg = root.bind("<Configure>", self._relayout, add="+")
         self.bubble.bind("<Configure>", self._relayout)
         self._place_job = None
+        self._start_job = None
 
     def start(self):
         self.i = 0
-        self.root.after(120, self._show)
+        self._start_job = self.root.after(120, self._show)
 
     def forward(self):
         if self.i < len(self.steps) - 1:
@@ -64,9 +65,10 @@ class Tour:
             self.root.unbind("<Configure>", self._cfg)
         except tk.TclError:
             pass
-        if self._place_job is not None:
-            self.root.after_cancel(self._place_job)
-            self._place_job = None
+        for job in (self._place_job, self._start_job):
+            if job is not None:
+                self.root.after_cancel(job)
+        self._place_job = self._start_job = None
         for f in self.frames:
             f.destroy()
         self.bubble.destroy()
@@ -83,6 +85,9 @@ class Tour:
         self._place()
 
     def _show(self):
+        self._start_job = None
+        if not self.steps:                     # finished before it was shown
+            return
         s = self.steps[self.i]
         self.counter.configure(text=f"TOUR  {self.i + 1} / {len(self.steps)}")
         self.title.configure(text=s["title"])

@@ -423,6 +423,10 @@ demo_files = ["c2/examples.json"]
 demo_events = ["0.1 show ball"]
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_regex"
 value = '''d\s*<\s*best_distance|best_distance\s*>\s*d'''
 label = "The closest example wins"
@@ -545,6 +549,10 @@ while True:
 demo_files = ["c2/examples.json"]
 demo_events = ["0.5 show ball", "1.5 tap 23", "3 show box", "4 tap 23", "5.5 show ball", "6.5 tap 23"]
 demo_seconds = 8.5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_uses"

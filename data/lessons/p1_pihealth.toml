@@ -551,7 +551,7 @@ Keep the lights and warnings working. Run it for at least 10 seconds, then press
 Tips: `from datetime import datetime`, then `datetime.now().strftime("%H:%M:%S")` gives the time. `open("pi_health.csv", "a")` adds to the end of a file. Count the loops to know when 5 seconds have passed.
 """
 hints = [
-  "Your loop runs every 0.5 seconds, so every 10th time round is 5 seconds. Keep a counter.",
+  "Your loop runs every 0.5 seconds, so every 10th time round is 5 seconds. Keep a counter: `count = 0` before the loop.",
   "`count = count + 1`, then `if count % 10 == 0:` to write a line.",
 ]
 success = "A log the Pi writes by itself. Open it in a spreadsheet to make a graph of your Pi's day!"
@@ -604,7 +604,7 @@ label = "It uses the time"
 [[steps.checks]]
 type = "file_contains"
 file = "*.csv"
-value = '''\d+:\d+:\d+,[\d.]+,[\d.]+,[\d.]+'''
+value = '''\d+:\d+:\d+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+'''
 label = "pi_health.csv has time, temperature, CPU and RAM"
 fail = "Each line in the file needs the time, then the three numbers, with commas between."
 

@@ -21,6 +21,7 @@ class Console(tk.Frame):
         super().__init__(master, bg=C["bg"], relief="sunken", bd=2)
         self.on_send = on_send
         self.history: list[str] = []
+        self._cr_pending = False
         self._hist_i = 0
 
         head = tk.Frame(self, bg=C["bg"], relief="raised", bd=1)
@@ -115,8 +116,15 @@ class Console(tk.Frame):
         t = self.text
         at_bottom = t.yview()[1] >= 0.999
         t.configure(state="normal")
+        if self._cr_pending:               # the last write ended in \r: this one writes over that line
+            self._cr_pending = False
+            if not text.startswith("\n"):
+                t.delete("end-1c linestart", "end-1c")
+        text = text.replace("\r\n", "\n")
+        if text.endswith("\r"):            # "Loading 3\r": keep it on screen until the next text comes
+            text = text.rstrip("\r")
+            self._cr_pending = True
         if "\r" in text:
-            text = text.replace("\r\n", "\n")
             parts = text.split("\r")
             t.insert("end", parts[0], (tag,) if tag else ())
             for part in parts[1:]:          # \r: back to the start of the line, and write over it
@@ -132,6 +140,7 @@ class Console(tk.Frame):
             t.see("end")
 
     def clear(self) -> None:
+        self._cr_pending = False
         self.text.configure(state="normal")
         self.text.delete("1.0", "end")
         self.text.configure(state="disabled")

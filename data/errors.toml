@@ -270,7 +270,7 @@ hints = [
 id = "syntax_generic"
 type = "SyntaxError"
 title = "Python can't read this line"
-explain = "Something on line {line} isn't written the way Python expects. Python said: *{message}*"
+explain = "Something on line {line} isn't written the way Python expects. Python said: `{message}`"
 hints = [
   "Read line {line} slowly, character by character.",
   "Check for missing or extra brackets, quotes, colons and commas. Sometimes the real problem is on the line **above**.",
@@ -281,7 +281,7 @@ hints = [
 id = "indent_generic"
 type = "IndentationError"
 title = "Indentation problem"
-explain = "The spaces at the start of line {line} aren't quite right. Python said: *{message}*"
+explain = "The spaces at the start of line {line} aren't quite right. Python said: `{message}`"
 hints = [
   "Check how far line {line} is pushed in from the left.",
   "Lines inside an if/while/for block use 4 spaces. Other lines start at the left edge.",
@@ -327,7 +327,7 @@ hints = [
 [[error]]
 id = "unbound_local"
 type = "UnboundLocalError"
-message = '''(?P<name>\w+)'''
+message = '''local variable '(?P<name>\w+)''''
 title = "Variable used before it has a value"
 explain = "Inside a function you used `{name}` before giving it a value in that function."
 hints = [
@@ -434,7 +434,7 @@ hints = [
 id = "type_generic"
 type = "TypeError"
 title = "Mixing up types"
-explain = "Python got the wrong *type* of value on line {line} (for example text instead of a number). Python said: *{message}*"
+explain = "Python got the wrong *type* of value on line {line} (for example text instead of a number). Python said: `{message}`"
 hints = [
   "Which values on line {line} are text and which are numbers?",
   "Remember `input()` always gives text. Use `int()` to turn it into a number.",
@@ -478,7 +478,7 @@ hints = [
 id = "value_generic"
 type = "ValueError"
 title = "A value that doesn't fit"
-explain = "Something on line {line} got a value it couldn't use. Python said: *{message}*"
+explain = "Something on line {line} got a value it couldn't use. Python said: `{message}`"
 hints = [
   "What value was being used on line {line}? Print it out to check.",
 ]
@@ -678,7 +678,7 @@ hints = [
 id = "camera_not_found"
 type = "CameraNotFound"
 title = "PiPath can't find the camera"
-explain = "Your code is fine. The camera isn't answering. PiPath said: *{message}*"
+explain = "Your code is fine. The camera isn't answering. PiPath said: `{message}`"
 hints = [
   "Look at the camera panel on the board. Does it say your kind of camera, **USB** or **Ribbon**? Click its title to change.",
   "USB: unplug the camera and plug it back in. Ribbon: ask your teacher to check the cable. Don't turn the Pi off yourself: you'd lose your progress.",
@@ -730,7 +730,7 @@ hints = [
 id = "generic"
 type = "*"
 title = "Something went wrong"
-explain = "Python stopped with a **{type}** on line {line}. Python said: *{message}*"
+explain = "Python stopped with a **{type}** on line {line}. Python said: `{message}`"
 hints = [
   "Read line {line} carefully. What is it trying to do?",
   "Add a `print()` just before line {line} to see what your variables hold.",

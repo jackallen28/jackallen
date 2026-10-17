@@ -251,6 +251,10 @@ class Runner:
 
     def _wait(self, proc: subprocess.Popen, q: queue.Queue) -> None:
         rc = proc.wait()
+        try:          # anything the program started and left running holds the pipes open: end it too
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:
+            pass
         try:
             proc.stdin.close()
         except (OSError, ValueError):

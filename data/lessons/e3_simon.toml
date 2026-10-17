@@ -182,6 +182,10 @@ demo_events = ["1 press 23", "1.6 release 23", "2 press 24", "2.6 release 24", "
 demo_seconds = 4.5
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_uses"
 value = "call:zip"
 label = "You use zip() to pair LEDs and buttons"
@@ -284,6 +288,7 @@ def get_press():
         for number in range(3):
             if buttons[number].is_pressed:
                 flash(number)          # light it up as feedback
+                buttons[number].wait_for_release()   # one press counts once
                 return number          # send the answer back
         sleep(0.01)                    # rest a moment so the Pi stays cool
 ```
@@ -323,6 +328,7 @@ def get_press():
         for number in range(3):
             if buttons[number].is_pressed:
                 flash(number)
+                buttons[number].wait_for_release()
                 return number
         sleep(0.01)
 
@@ -407,6 +413,7 @@ def get_press():
         for number in range(3):
             if buttons[number].is_pressed:
                 flash(number)
+                buttons[number].wait_for_release()
                 return number
         sleep(0.01)
 

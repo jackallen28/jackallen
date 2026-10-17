@@ -32,7 +32,7 @@ TAGS = {"KEYWORD": "syn_kw", "STRING": "syn_str", "COMMENT": "syn_com", "NUMBER"
         "BUILTIN": "syn_builtin", "DEF": "syn_def"}
 # Keys Tk gives a Text box for Emacs users. Students press them by accident and lose work.
 EMACS_KEYS = ("<Control-k>", "<Control-t>", "<Control-o>", "<Control-d>", "<Control-b>", "<Control-e>",
-              "<Control-n>", "<Control-p>", "<Control-w>")
+              "<Control-n>", "<Control-p>", "<Control-w>", "<Control-i>")
 
 SKIP = re.compile("|".join([_STRING, _COMMENT]))      # where brackets don't count
 
@@ -502,13 +502,20 @@ class CodeEditor(tk.Frame):
         return "break"
 
 
+ASTRAL = re.compile("[\U00010000-\U0010FFFF]")
+
+
 def _indexer(code: str):
     """A function turning a character offset in code into a Tk "line.column" index."""
     starts = [0] + [m.end() for m in re.finditer("\n", code)]
+    wide = ASTRAL.search(code) is not None      # Tk 8.6 counts an emoji as 2 characters
 
     def idx(pos: int) -> str:
         ln = bisect.bisect_right(starts, pos) - 1
-        return f"{ln + 1}.{pos - starts[ln]}"
+        col = pos - starts[ln]
+        if wide:
+            col += len(ASTRAL.findall(code, starts[ln], pos))
+        return f"{ln + 1}.{col}"
     return idx
 
 

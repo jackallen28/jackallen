@@ -83,6 +83,28 @@ class TestProfiles(unittest.TestCase):
         s.set_show("../../etc")                          # not a tier id
         self.assertEqual(st.list_students()[0].show, "all")
 
+    def test_names_in_any_language(self):
+        st = self.storage
+        for name in ("Thảo", "Ngāti", "Łukasz", "Zoë", "O'Brien", "Mary-Jane"):
+            self.assertEqual(st.validate_names([name], "Bayside SC"), {}, name)
+        for name in ("x×y", "R2D2", "Sam!"):
+            self.assertIn("name0", st.validate_names([name], "Bayside SC"), name)
+
+    def test_damaged_files_and_spreadsheet_safety(self):
+        st = self.storage
+        s = st.create_student("Sam", "=1+1")
+        folder = st.STUDENTS / "broken"
+        folder.mkdir()
+        (folder / "profile.json").write_text("[]")              # valid JSON, but not a profile
+        self.assertEqual(len(st.list_students()), 2)
+        s.profile["school"] = None
+        s.save_profile()
+        self.assertIsNone(st.find_student("Nobody", "Bayside SC"))
+        s.profile["school"] = "=1+1"
+        s.save_profile()
+        text = st.export_progress_csv([]).read_text(encoding="utf-8")
+        self.assertIn("'=1+1", text)
+
     def test_progress_is_read_when_needed(self):
         st = self.storage
         s = st.create_student("Sam", "Bayside SC")

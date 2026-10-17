@@ -250,6 +250,10 @@ demo_events = ["1 tap 23 every 0.6 until 5.8"]
 demo_seconds = 6.5
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_regex"
 value = '''%\s*len\(\s*colours\s*\)'''
 label = "Position wraps around with % len(colours)"
@@ -275,7 +279,7 @@ Buttons can tell a **short press** from a **long press**. `when_held` runs when 
 """
 hints = [
   "Write a new function `party()` and set `button.when_held = party`.",
-  "A random colour: `(random.random(), random.random(), random.random())`. Don't forget `import random`.",
+  "A random colour: `(random.random(), random.random(), random.random())`. Don't forget `import random` and `from time import sleep` at the top.",
   "Example:\n```\ndef party():\n    for i in range(20):\n        lamp.color = (random.random(), random.random(), random.random())\n        sleep(0.1)\n\nbutton.when_held = party\n```",
 ]
 success = "Party mode unlocked! Two behaviours from one button."
@@ -311,6 +315,10 @@ pause()
 '''
 demo_events = ["1 tap 23", "2 tap 23", "3 press 23", "5 release 23"]
 demo_seconds = 7
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_uses"

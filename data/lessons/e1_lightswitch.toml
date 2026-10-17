@@ -222,7 +222,7 @@ label = "You use when_released"
 
 [[steps.checks]]
 type = "code_regex"
-value = '''when_released\s*=\s*\w+\.off\s*$'''
+value = '''when_released\s*=\s*\w+\.off\b(?!\s*\()'''
 label = "Letting go turns the light off"
 
 [[steps.checks]]
@@ -269,7 +269,7 @@ label = "Your program runs"
 
 [[steps.checks]]
 type = "code_regex"
-value = '''when_pressed\s*=\s*\w+\.toggle\s*$'''
+value = '''when_pressed\s*=\s*\w+\.toggle\b(?!\s*\()'''
 label = "Pressing toggles the light"
 
 [[steps.checks]]

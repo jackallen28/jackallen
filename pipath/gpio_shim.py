@@ -52,6 +52,7 @@ _send_lock = threading.Lock()
 _state_fd = int(os.environ["PIPATH_STATE_FD"]) if os.environ.get("PIPATH_STATE_FD") else None
 _student = ""                # full path of the student's file
 _callback_crashed: list = []  # set when an event handler (e.g. when_pressed) crashes
+_main_done: list = []         # set when the student's main code has finished (only threads are left)
 _devices: list = []          # weakrefs to gpiozero devices, in the order they were made
 _groups: list = []           # weakrefs to RGBLEDs (three pins shown as one light)
 camera_view = {"object": os.environ.get("PIPATH_CAMERA_OBJECT", "face")}   # what the simulated camera sees
@@ -98,6 +99,14 @@ def _patch_gpiozero(gz) -> None:
         _groups.append(weakref.ref(self))
 
     gz.RGBLED.__init__ = rgb_init
+
+    orig_tonal = gz.TonalBuzzer.__init__
+
+    def tonal_init(self, *a, **kw):
+        orig_tonal(self, *a, **kw)
+        _groups.append(weakref.ref(self))
+
+    gz.TonalBuzzer.__init__ = tonal_init
 
     # Simulator: mock pins can't send an ultrasonic echo, so the distance comes from the board
     orig_read = gz.DistanceSensor._read
@@ -160,7 +169,7 @@ def _distance_value(d):
 
 def _snapshot():
     devs, pins, in_group = [], {}, set()
-    triggers = set()
+    triggers, skip = set(), set()
     for ref in list(_devices):
         d = ref()
         if d is not None and not d.closed and isinstance(d, _gz.DistanceSensor) and d._trigger is not None:
@@ -177,6 +186,14 @@ def _snapshot():
         g = ref()
         if g is None or g.closed:
             continue
+        if isinstance(g, _gz.TonalBuzzer):     # one pin; "on" while it plays a note
+            p = _bcm(g._all[0].pin) if g._all else None
+            if p is not None:
+                devs.append({"kind": "TonalBuzzer", "pins": [p]})
+                pins[str(p)] = 1.0 if g.is_active else 0.0
+                in_group.add(p)
+                skip.add(p)
+            continue
         ps = [_bcm(led.pin) for led in g._leds]
         if None not in ps:
             devs.append({"kind": "RGBLED", "pins": ps})
@@ -186,7 +203,8 @@ def _snapshot():
         if d is None or d.closed:
             continue
         p = _bcm(d.pin)
-        if p is None or isinstance(d, _gz.DistanceSensor) or (p in triggers and type(d) is _gz.GPIODevice):
+        if (p is None or p in skip or isinstance(d, _gz.DistanceSensor)
+                or (p in triggers and type(d) is _gz.GPIODevice)):
             continue          # distance sensors were reported above (reading is_active would wait)
         try:
             # outputs: how bright / on (honours active_high); inputs: pressed / motion seen
@@ -223,10 +241,17 @@ def _find_device(pin_no: int):
     return None
 
 
+def _run_command(line: bytes) -> None:
+    try:
+        _command(line.decode("utf-8", "replace").split())
+    except SystemExit:                     # sys.exit() in a when_pressed handler: end the program
+        os.kill(os.getpid(), signal.SIGTERM)
+
+
 def _listener(fd: int, buf: bytes = b"") -> None:
     while b"\n" in buf:
         line, buf = buf.split(b"\n", 1)
-        _command(line.decode("utf-8", "replace").split())
+        _run_command(line)
     while True:
         try:
             chunk = os.read(fd, 1024)
@@ -237,7 +262,7 @@ def _listener(fd: int, buf: bytes = b"") -> None:
         buf += chunk
         while b"\n" in buf:
             line, buf = buf.split(b"\n", 1)
-            _command(line.decode("utf-8", "replace").split())
+            _run_command(line)
 
 
 def _command(words: list[str]) -> None:
@@ -270,15 +295,28 @@ def _command(words: list[str]) -> None:
     on = words[0] == "press"
     # The student's when_pressed handler runs right here; if it crashes, the error
     # reaches _thread_crashed below, just like a crash in the main program.
-    if on == active_low:
-        pin.drive_low()
-    else:
-        pin.drive_high()
+    try:
+        if on == active_low:
+            pin.drive_low()
+        else:
+            pin.drive_high()
+    except Exception:
+        if not getattr(d, "closed", False):
+            raise                          # a real crash in the student's handler
+        # the program closed the button at the same moment it was pressed: nothing to do
 
 
 # ---------------------------------------------------------------- running the student's file
 
 def _stop(_signum, _frame):
+    if _main_done:                         # only the student's threads are left: switch off and go
+        try:
+            from gpiozero.devices import _shutdown
+            _shutdown()
+        except Exception:
+            pass
+        sys.stdout.flush()
+        os._exit(1 if _callback_crashed else 0)
     raise SystemExit(0)
 
 
@@ -347,6 +385,7 @@ def _run(student: str, cmd_buf: bytes = b"") -> int:
     except BaseException as e:   # noqa: BLE001 - every crash is reported, then the app explains it
         _print_student_traceback(e, student)
         return 1
+    _main_done.append(True)
     return 0
 
 

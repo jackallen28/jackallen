@@ -70,6 +70,27 @@ class TestShim(unittest.TestCase):
         err = parse_traceback(r.stderr, "student.py", code)
         self.assertEqual((err.type, err.line), ("IndexError", 8))
 
+    def test_tonal_buzzer_shows_as_a_buzzer(self):
+        r = run_shim("from gpiozero import TonalBuzzer\nfrom time import sleep\nt = TonalBuzzer(18)\n"
+                     "t.play(440)\nsleep(0.4)\nt.stop()\nsleep(0.2)\n")
+        self.assertEqual(r.devices, [{"kind": "TonalBuzzer", "pins": [18]}])
+        self.assertTrue(r.ever_on(18))
+
+    def test_sys_exit_in_a_handler_ends_the_program(self):
+        code = ("import sys\nfrom gpiozero import Button\nfrom signal import pause\nb = Button(23)\n"
+                "def bye():\n    print('bye')\n    sys.exit()\nb.when_pressed = bye\npause()\n")
+        r = run_shim(code, events=["0.8 tap 23"], timeout=10)
+        self.assertIn("bye", r.stdout)
+        self.assertFalse(r.stopped, "the program ended by itself")
+
+    def test_crash_in_a_thread_after_the_main_code_is_reported(self):
+        code = ("import threading, time\ndef work():\n    time.sleep(0.5)\n    print(1 / 0)\n"
+                "threading.Thread(target=work).start()\nprint('main done')\n")
+        r = run_shim(code, timeout=10)
+        self.assertEqual(r.rc, 1)
+        self.assertIn("ZeroDivisionError", r.stderr)
+        self.assertNotIn("gpio_shim", r.stderr)
+
     def test_traceback_points_at_student_file(self):
         code = "x = 1\nprint(y)\n"
         r = run_shim(code)
@@ -141,6 +162,21 @@ def _collect(r: Runner, timeout: float = 10, on_event=None) -> tuple[int | None,
                 closed += 1
         time.sleep(0.02)
     return rc, events
+
+
+class TestRunnerEdgeCases(unittest.TestCase):
+    def test_program_that_leaves_a_process_running_still_finishes(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "student.py"
+            p.write_text("import subprocess\nsubprocess.Popen(['sleep', '30'])\nprint('done')\n")
+            r = Runner()
+            r.start(p, Path(d), {}, shim=SHIM)
+            t0 = time.monotonic()
+            rc, events = _collect(r, timeout=10)
+            self.assertEqual(rc, 0)
+            self.assertEqual(sum(1 for e in events if e[0] == "closed"), 2)
+            self.assertLess(time.monotonic() - t0, 5)
+            r.close()
 
 
 @needs_gpiozero
@@ -295,6 +331,13 @@ class TestLint(unittest.TestCase):
         fixed = held + "    b.wait_for_release()\n"
         self.assertTrue(any("wait_for_release" in w for w in gpio_lint(held)))
         self.assertEqual(gpio_lint(fixed), [])
+
+    def test_press_loop_lint_knows_other_waits(self):
+        base = "from gpiozero import Button, Buzzer\nb = Button(23)\nz = Buzzer(18)\nwhile True:\n    b.wait_for_press()\n"
+        self.assertEqual(gpio_lint(base + "    b.wait_for_inactive()\n"), [])
+        self.assertEqual(gpio_lint(base + "    z.beep(0.1, 0.1, n=2, background=False)\n"), [])
+        tip = gpio_lint(base + "    z.beep()\n")          # beep() returns straight away
+        self.assertTrue(tip and "`b.wait_for_release()`" in tip[0], tip)
 
     def test_pins(self):
         w = gpio_lint("from gpiozero import LED, Button\na = LED(17)\nb = Button(17)\nc = LED(40)\nd = LED(2)\n")

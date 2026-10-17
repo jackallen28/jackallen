@@ -10,7 +10,7 @@ import tkinter as tk
 import tkinter.font as tkfont
 
 from .. import storage
-from ..gpio import CAMERA_KINDS, on_real_pi
+from ..gpio import CAMERA_KINDS, guess_camera, on_real_pi
 from .onboarding import level_options, show_options
 from .theme import C
 from .widgets import ChoiceList, PButton, TitleBar, entry, label
@@ -133,7 +133,7 @@ class SettingsDialog(tk.Frame):
             label(page, "Real Pi appears here when PiPath runs on a Raspberry Pi.", font="small",
                   fg=C["muted"]).pack(anchor="w", pady=(0, 8))
         label(page, "Camera", font="h3").pack(anchor="w")
-        cam = state.get("camera", "sim")
+        cam = state.get("camera") or guess_camera()      # what the activities use until one is chosen
         cams = [("sim", "Simulated", "Pretend pictures"), ("usb", "USB", "A USB webcam"),
                 ("ribbon", "Ribbon", "Pi camera on the ribbon")]
         ChoiceList(page, cams, cam if cam in CAMERA_KINDS else "sim", columns=3, wrap=140,

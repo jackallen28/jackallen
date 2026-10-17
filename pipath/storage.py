@@ -53,9 +53,10 @@ def write_json(path: Path, data) -> None:
 def read_json(path: Path, default):
     try:
         with open(path, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
     except (OSError, ValueError):
         return default
+    return data if type(data) is type(default) else default      # e.g. a profile that isn't a {...}
 
 
 def write_text(path: Path, text: str) -> None:
@@ -73,7 +74,7 @@ def slugify(text: str) -> str:
 
 # ---------------------------------------------------------------- validation
 
-NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' \-]{0,29}$")
+NAME_RE = re.compile(r"^[^\W\d_](?:[^\W\d_]|['’ \-]){0,29}$")      # letters in any language (Thảo, Ngāti, Łukasz)
 MAX_NAMES = 4                     # students can share a Pi (pair or group work)
 SHOW_CHOICES = ["all", "simple", "moderate", "computer", "advanced", "lab", "camera"]   # tier ids
 
@@ -191,7 +192,10 @@ class Student:
 
     @property
     def names(self) -> list[str]:
-        return list(self.profile.get("names") or [self.first_name])
+        names = self.profile.get("names")
+        if isinstance(names, list) and names and all(isinstance(n, str) for n in names):
+            return list(names)
+        return [self.first_name]
 
     def set_names(self, names: list[str]) -> None:
         names = [n.strip() for n in names if n.strip()][:MAX_NAMES]
@@ -301,7 +305,7 @@ def find_student(names, school: str) -> Student | None:
     """An existing profile with the same name(s) and school (ignoring capitals, spaces and order)."""
     key = (_names_key(names), " ".join(school.lower().split()))
     for s in list_students():
-        if (_names_key(s.names), " ".join(s.profile.get("school", "").lower().split())) == key:
+        if (_names_key(s.names), " ".join(str(s.profile.get("school") or "").lower().split())) == key:
             return s
     return None
 
@@ -344,6 +348,12 @@ def touch_student(s: Student) -> None:
 
 # ---------------------------------------------------------------- teacher export
 
+def _cell(value) -> str:
+    """Spreadsheets run a cell starting with = + - @ as a formula: make it plain text."""
+    text = "" if value is None else str(value)
+    return "'" + text if text[:1] in ("=", "+", "-", "@") else text
+
+
 def export_progress_csv(catalog_projects: list[dict]) -> Path:
     out = APP_HOME / "exports" / f"progress_{datetime.now():%Y-%m-%d_%H%M}.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -354,8 +364,8 @@ def export_progress_csv(catalog_projects: list[dict]) -> Path:
             header += [f"{p['id']}_status", f"{p['id']}_hints", f"{p['id']}_runs"]
         w.writerow(header)
         for s in list_students():
-            row = [s.first_name, s.profile.get("class_code", ""), s.profile.get("school", ""),
-                   s.help_level, s.profile.get("last_seen", "")]
+            row = [_cell(v) for v in (s.first_name, s.profile.get("class_code", ""), s.profile.get("school", ""),
+                                      s.help_level, s.profile.get("last_seen", ""))]
             for p in catalog_projects:
                 lp = s.progress.get("lessons", {}).get(p["id"], {})
                 row += [lp.get("status", "new"), lp.get("hints_used", 0), lp.get("runs", 0)]

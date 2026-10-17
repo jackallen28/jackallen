@@ -46,6 +46,7 @@ CASES = [
     ('x = 1\nelse:\n    pass', "", "else_without_if"),
     ('def f(a):\n    pass\nf()', "", "missing_argument"),
     ('print = 5\nprint("hi")', "", "not_callable"),
+    ('score = 0\ndef add():\n    score += 1\nadd()', "", "unbound_local"),
 ]
 
 
@@ -69,6 +70,17 @@ class TestDiagnose(unittest.TestCase):
                 self.assertEqual(d.entry_id, expected, f"{err.type}: {err.message}")
                 self.assertNotIn("{", d.title + d.explain, "unfilled placeholder")
                 self.assertTrue(d.line, "line number found")
+
+    def test_names_and_messages_are_filled_in(self):
+        stderr, path = run('score = 0\ndef add():\n    score += 1\nadd()', "")
+        d = ENGINE.diagnose(parse_traceback(stderr, path, ""))
+        self.assertIn("`score`", d.explain)
+
+    def test_sys_exit_with_a_message_is_not_an_error(self):
+        stderr, path = run('import sys\nsys.exit("Bye")', "")
+        self.assertIsNone(parse_traceback(stderr, path, ""))
+        stderr, path = run('raise ValueError("first line\\nsecond line")', "")
+        self.assertEqual(parse_traceback(stderr, path, "").type, "ValueError")
 
     def test_blanks_precheck(self):
         starter = '# fill in the ___\nprint("Hello, ___!")'

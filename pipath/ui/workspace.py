@@ -29,6 +29,11 @@ from .wiring import WiringCard
 DEMO_FILES = DATA_DIR / "demo_files"
 
 
+def short_names(names: str, limit: int = 28) -> str:
+    """Four long names don't fit in the title bar: keep the start."""
+    return names if len(names) <= limit else names[:limit - 1].rstrip() + "…"
+
+
 def copy_sample(src: Path, folder: Path, keep: bool = False) -> None:
     """Copy a sample file or folder from data/demo_files into folder. keep: don't replace what's there."""
     dest = folder / src.name
@@ -226,7 +231,7 @@ class Workspace(Screen):
         self.cog_btn = bar.add_right(CogButton(bar, lambda: app.open_settings()), pad=8)
         self.help_btn = bar.add_right(PButton(bar, "? Tour", self.start_tour, kind="secondary", font="small_bold",
                                               pady=3), pad=8)
-        self.names_lbl = bar.add_right(tk.Label(bar, text=app.student.first_name, font="small_bold", fg="#FFFFFF",
+        self.names_lbl = bar.add_right(tk.Label(bar, text=short_names(app.student.first_name), font="small_bold", fg="#FFFFFF",
                                                 bg=C["title_b"]), pad=12)
 
         # ---- body
@@ -305,14 +310,15 @@ class Workspace(Screen):
     def settings_changed(self, what: str) -> None:
         """Settings changed something: names, hardware (Simulator / Real Pi, camera) or text size."""
         if what == "names":
-            self.names_lbl.configure(text=self.app.student.first_name)
+            self.names_lbl.configure(text=short_names(self.app.student.first_name))
             self.topbar._layout()
         elif what == "hardware":
             state = storage.app_state()
             mode = state.get("gpio_mode", "real")
             mode = mode if self.real_pi and mode in ("sim", "real") else "sim"
             if mode != self.mode:
-                self.stop()
+                if self.runner.running:
+                    self._abandon_run()        # switching pins mid-run: stop without checking
                 self.mode = mode
                 if self.mode_box is not None:
                     self._paint_mode()
@@ -320,7 +326,8 @@ class Workspace(Screen):
                     self.board.set_mode(mode)
             cam = state.get("camera")
             if cam in CAMERA_KINDS and cam != self.camera:
-                self.stop()
+                if self.uses_camera() and self.runner.running:
+                    self._abandon_run()        # the program was using the old camera
                 self.camera = cam
                 if self.board:
                     self.board.set_camera_kind(cam)
@@ -335,7 +342,7 @@ class Workspace(Screen):
         if not self._keys_bound:
             self._keys_bound = True
             for seq, fn in (("<F5>", self.run), ("<Shift-F5>", self.stop), ("<Control-s>", self.save_now)):
-                self.bind_all(seq, lambda e, f=fn: (f(), "break")[1])
+                self.bind_all(seq, lambda e, f=fn: (None if self.app.busy_with_dialog() else f(), "break")[1])
         self._schedule_warm(900)        # once the screen is up
 
     def hide(self) -> None:
@@ -504,6 +511,8 @@ class Workspace(Screen):
         return mods
 
     def _schedule_warm(self, delay: int = 400):
+        if self.app.screen is not self:        # out of sight: no spare process (saves memory on a Pi 3B)
+            return
         if self._warm_job is None:
             self._warm_job = self.after(delay, self.warm_up)
 
@@ -517,7 +526,8 @@ class Workspace(Screen):
     def next_camera(self):
         """Cycle Simulated -> USB -> Ribbon. Saved for this Pi (it's the Pi's hardware, not the student's)."""
         kinds = list(CAMERA_KINDS)
-        self.stop()
+        if self.runner.running:
+            self._abandon_run()
         self.camera = kinds[(kinds.index(self.camera) + 1) % len(kinds)]
         storage.set_app_state(camera=self.camera)
         if self.board:
@@ -566,7 +576,8 @@ class Workspace(Screen):
     def set_mode(self, mode: str):
         if mode == self.mode or (mode == "real" and not self.real_pi):
             return
-        self.stop()
+        if self.runner.running:
+            self._abandon_run()
         self.mode = mode
         storage.set_app_state(gpio_mode=mode)
         self._paint_mode()
@@ -805,8 +816,10 @@ class Workspace(Screen):
             err = ErrorInfo("PiPathRunaway", msg)
             self.console.write("\n■ PiPath stopped your program: it looked like a never-ending loop.\n", "err")
         elif rc != 0:
-            err = parse_traceback(stderr, str(self.code_path()), code) or ErrorInfo(
-                "Crash", f"exit code {rc}", None)
+            err = parse_traceback(stderr, str(self.code_path()), code)
+            if err is None and not (rc == 1 and "File \"" not in stderr):
+                err = ErrorInfo("Crash", f"exit code {rc}", None)
+            # (rc 1 with no traceback is sys.exit("Bye"): the program chose to stop, so it finished)
         crashed = err is not None
         if crashed:
             self.console.set_status("error", C["err"])
@@ -825,6 +838,11 @@ class Workspace(Screen):
         return []
 
     def start_tour(self):
+        if self._tour is not None:             # one tour at a time
+            self._tour.finish()
+        offer = getattr(self, "_tour_offer", None)
+        if offer is not None and offer.winfo_exists():
+            offer.destroy()
         self._touring = True
         self._tour = Tour(self.app, self.tour_steps(), on_done=self._tour_finished)
         self._tour.start()

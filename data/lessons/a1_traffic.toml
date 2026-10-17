@@ -452,6 +452,10 @@ demo_events = ["2 tap 23"]
 demo_seconds = 10
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_uses"
 value = "call:wait_for_press"
 label = "The lights wait for the button"
@@ -529,6 +533,10 @@ demo_events = ["1.5 tap 23"]
 demo_seconds = 10
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_uses"
 value = "import:Buzzer"
 label = "You use a Buzzer"
@@ -572,7 +580,7 @@ Real crossings count down, so people know how long they have. Then the red figur
 - `red.blink(0.2, 0.2, n=5, background=False)` flashes 5 times, then carries on
 """
 hints = [
-  "Replace `print(\"Walk!\")` and `sleep(4)` with a loop: `for n in range(5, 0, -1):` then (indented) `print(\"Walk\", n)` and `sleep(1)`.",
+  "Move `buzzer.beep(0.1, 0.1)` up to just after `red.on()`, then replace `print(\"Walk!\")` and `sleep(4)` with a loop: `for n in range(5, 0, -1):` then (indented) `print(\"Walk\", n)` and `sleep(1)`.",
   "After `buzzer.off()`, flash the red light: `red.blink(0.2, 0.2, n=5, background=False)`.",
 ]
 success = "A complete pedestrian crossing, built one part at a time. Brilliant work!"
@@ -609,6 +617,10 @@ while True:
 '''
 demo_events = ["1.5 tap 23"]
 demo_seconds = 12
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_uses"

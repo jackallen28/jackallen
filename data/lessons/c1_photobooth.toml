@@ -459,6 +459,10 @@ demo_events = ["1 tap 23", "6 tap 23"]
 demo_seconds = 11
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_uses"
 value = "import:datetime"
 label = "You use datetime"
@@ -497,13 +501,13 @@ Photo booths at parties print a **strip** of photos taken quickly one after anot
 
 1. Name them so they stay together, ending in `_1` to `_4`, like `strip_09-41-07_1.jpg`
 2. Use a `for` loop with `range(1, 5)` (that's 1, 2, 3, 4)
-3. Count the photos with the `glob` module: `len(glob.glob("*.jpg"))`, and print `You have 12 photos`
+3. Count the photos with the `glob` module: `len(glob.glob("*.jpg") + glob.glob("*.png"))`, and print `You have 12 photos`
 
 **Bonus:** flash all three LEDs on each snap, like a camera flash.
 """
 hints = [
   "Make the start of the name once: `stamp = datetime.now().strftime(\"strip_%H-%M-%S\")`, then in the loop `cam.take_photo(f\"{stamp}_{i}.jpg\")`.",
-  "`import glob` at the top, then after the strip: `print(\"You have\", len(glob.glob(\"*.jpg\")), \"photos\")`.",
+  "`import glob` at the top, then after the strip: `print(\"You have\", len(glob.glob(\"*.jpg\") + glob.glob(\"*.png\")), \"photos\")`.",
 ]
 success = "A whole photo strip from one button press. Brilliant!"
 demo = '''
@@ -539,7 +543,7 @@ def photo_strip():
             light.off()
         print("Snap", i)
         sleep(0.5)
-    print("You have", len(glob.glob("*.jpg")), "photos")
+    print("You have", len(glob.glob("*.jpg") + glob.glob("*.png")), "photos")
 
 while True:
     print("Press the button for a photo strip")
@@ -548,6 +552,10 @@ while True:
 '''
 demo_events = ["1 tap 23"]
 demo_seconds = 9
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_uses"

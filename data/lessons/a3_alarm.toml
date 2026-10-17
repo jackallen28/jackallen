@@ -270,8 +270,12 @@ demo_events = ["1.5 distance 26 15", "3.5 distance 26 90"]
 demo_seconds = 5.5
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_regex"
-value = '''when_out_of_range\s*=\s*clear\s*$'''
+value = '''when_out_of_range\s*=\s*clear\b(?!\s*\()'''
 label = "Moving away runs the clear function"
 
 [[steps.checks]]
@@ -338,6 +342,10 @@ demo_events = ["1.5 distance 26 15", "4 distance 26 90"]
 demo_seconds = 5.5
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_uses"
 value = "import:Buzzer"
 label = "You use a Buzzer"
@@ -389,7 +397,7 @@ def toggle_armed():
 1. Add a button on GPIO23 (import `Button` too), and `armed = False` near the top
 2. Add the `toggle_armed()` function, and connect it: `button.when_pressed = toggle_armed`
 3. The LED now shows the state (on = armed), so take `light.on()` out of `close()`
-4. In `close()`, only beep `if armed:`. You won't need `clear()` any more.
+4. In `close()`, only beep `if armed:`. You won't need `clear()` any more: delete it **and** the `sensor.when_out_of_range = clear` line.
 
 Test it: come close while it's disarmed, then arm it and come close again.
 """
@@ -433,6 +441,10 @@ pause()
 '''
 demo_events = ["1 distance 26 15", "2.2 distance 26 90", "3.2 tap 23", "4.2 distance 26 15", "6 distance 26 90"]
 demo_seconds = 7.5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_regex"
@@ -536,6 +548,10 @@ pause()
 '''
 demo_events = ["1 tap 23", "2 distance 26 15", "3.5 distance 26 90"]
 demo_seconds = 5.5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
 
 [[steps.checks]]
 type = "code_uses"
@@ -644,8 +660,12 @@ demo_events = ["1 tap 23", "2 distance 26 15", "3.5 distance 26 90", "5 distance
 demo_seconds = 15.5
 
 [[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
 type = "code_regex"
-value = '''(<|>|<=|>=)\s*10(\.0)?\b'''
+value = '''(<|>|<=|>=)\s*(10(\.0)?\b|[A-Z_]{3,})'''
 label = "You added a 10-second cooldown"
 
 [[steps.checks]]

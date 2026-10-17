@@ -49,7 +49,8 @@ class HomeScreen(Screen):
         # ---- greeting and "show" buttons (a handful of real widgets)
         head = tk.Frame(self, bg=C["bg"], padx=PAD, pady=10, relief="raised", bd=2)
         head.pack(fill="x")
-        self.hello = label(head, f"Hi {s.first_name}! What would you like to make?", font="h2", fg=C["purple"])
+        self.hello = label(head, f"Hi {s.first_name}! What would you like to make?", font="h2", fg=C["purple"],
+                           wraplength=900)
         self.hello.pack(anchor="w")
         self.sub_lbl = label(head, self._subline(), fg=C["muted"])
         self.sub_lbl.pack(anchor="w", pady=(2, 8))

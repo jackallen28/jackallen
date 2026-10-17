@@ -47,6 +47,29 @@ class TestEditor(unittest.TestCase):
         self.t.tag_remove("sel", "1.0", "end")
         self.t.tag_add("sel", a, b)
 
+    def test_ctrl_i_does_not_insert_a_tab(self):
+        self.put("x")
+        self.t.focus_force()
+        self.t.event_generate("<Control-i>")
+        self.root.update()
+        self.assertEqual(self.code(), "x")
+
+    def test_emoji_keep_highlighting_in_place(self):
+        self.ed.set_code("print('🎉', 5)\n")
+        self.ed.highlight()
+        rng = self.t.tag_ranges("syn_num")
+        self.assertEqual(self.t.get(rng[0], rng[1]), "5")
+
+    def test_output_progress_line_with_carriage_return(self):
+        from pipath.ui.console import Console
+        c = Console(self.root)
+        for chunk in ("Loading 1\r", "Loading 2\r"):
+            c.write(chunk)
+        self.assertEqual(c.text.get("1.0", "end-1c"), "Loading 2")
+        c.write("Done\n")
+        self.assertEqual(c.text.get("1.0", "end-1c"), "Done\n")
+        c.destroy()
+
     # ---- indenting
     def test_enter_indents_after_colon_and_keeps_indent(self):
         self.put("for i in range(3):")

@@ -146,7 +146,7 @@ open_file(___)
 text = """
 Next, the camera and the screen. Your sensor code is safe in `backups/`.
 
-`cam.take_photo("test.jpg")` takes a photo and **returns** the name it saved it as. (The pretend camera saves a `.png` instead, so always use the name it gives back.)
+`cam.take_photo("test.jpg")` takes a photo and **returns** the name it saved it as. (Sometimes it has to save a `.png` instead, so always use the name it gives back.)
 
 `open_file()` opens a file on the screen, like double-clicking it.
 
@@ -564,5 +564,5 @@ fail = "Bring a visitor close twice, less than 10 seconds apart. The second time
 [[steps.checks]]
 type = "file_contains"
 file = "*.csv"
-value = '''^\d+,\d+-\d+-\d+,\S+'''
+value = '''^\d+\s*,\s*[\dT:.-]+\s*,\s*\S+'''
 label = "visitors.csv has the number, time and photo"

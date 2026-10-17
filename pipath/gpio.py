@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 SHIM = Path(__file__).resolve().parent / "gpio_shim.py"
@@ -111,7 +112,7 @@ def wiring_check_program(parts: list[dict]) -> str:
         'print("Checking your wiring, one part at a time.")',
     ]
     for p in parts:
-        name, pins, k = p["label"], p["pins"], p["kind"]
+        name, pins, k = re.sub(r'["\\{}]', "", str(p["label"])), p["pins"], p["kind"]   # safe inside "..."
         pin = pins[0]
         if k == "led":
             lines += [f'print("Watch the {name} (GPIO{pin}): it should blink 3 times.")',
