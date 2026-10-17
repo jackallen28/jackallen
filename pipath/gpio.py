@@ -56,10 +56,13 @@ SIM_OBJECTS = [("face", "Face"), ("ball", "Ball"), ("box", "Box"), ("nothing", "
 
 def guess_camera() -> str:
     """A sensible first choice: a plugged-in USB webcam, else the ribbon camera on a Pi, else the Simulator."""
-    for node in Path("/sys/class/video4linux").glob("video*"):
-        if os.path.basename(os.path.realpath(node / "device" / "driver")) == "uvcvideo":
-            return "usb"
-    return "ribbon" if on_real_pi() else "sim"
+    drivers = {os.path.basename(os.path.realpath(node / "device" / "driver"))
+               for node in Path("/sys/class/video4linux").glob("video*")}
+    if "uvcvideo" in drivers:
+        return "usb"
+    if drivers & {"unicam", "rp1-cfe", "bcm2835-unicam"}:      # a camera on the ribbon socket
+        return "ribbon"
+    return "sim"
 
 
 def expand_events(events: list | None) -> list[tuple[float, str]]:

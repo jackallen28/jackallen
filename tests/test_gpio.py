@@ -264,6 +264,15 @@ class TestGpioErrors(unittest.TestCase):
                 self.assertEqual(d.entry_id, expected, f"{err.type}: {err.message}")
                 self.assertNotIn("{", d.title + d.explain, "unfilled placeholder")
 
+    def test_real_pi_pin_errors(self):
+        # lgpio raises lgpio.error on a real Pi; these programs raise the same kind of error
+        for message, expected in (("'GPIO busy'", "gpio_busy_real"), ("'can not open gpiochip'", "gpio_no_permission")):
+            code = f"class error(Exception):\n    pass\n\nraise error({message!r})\n"
+            with self.subTest(expected=expected):
+                r = run_shim(code)
+                err = parse_traceback(r.stderr, "student.py", code)
+                self.assertEqual(ENGINE.diagnose(err).entry_id, expected, r.stderr)
+
     def test_runaway_entries(self):
         self.assertEqual(ENGINE.diagnose(ErrorInfo("PiPathRunaway", "busy_gpio")).entry_id, "runaway_busy_gpio")
         self.assertEqual(ENGINE.diagnose(ErrorInfo("PiPathRunaway", "busy")).entry_id, "runaway_busy")

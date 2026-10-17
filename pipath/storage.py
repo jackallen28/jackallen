@@ -19,6 +19,7 @@ import csv
 import json
 import os
 import re
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -32,7 +33,8 @@ STUDENTS = APP_HOME / "students"
 RESERVED_NAMES = {
     "random", "time", "turtle", "math", "string", "gpiozero", "tkinter", "csv",
     "datetime", "json", "os", "sys", "signal", "statistics", "test", "code", "pipath",
-}
+    "pipath_camera", "pipath_computer", "picamera2", "glob", "subprocess", "webbrowser", "wave",
+} | set(getattr(sys, "stdlib_module_names", ()))
 
 
 def _now() -> str:
@@ -73,7 +75,12 @@ def slugify(text: str) -> str:
 
 NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' \-]{0,29}$")
 MAX_NAMES = 4                     # students can share a Pi (pair or group work)
-SHOW_CHOICES = ["all", "simple", "moderate", "advanced", "lab", "camera"]
+SHOW_CHOICES = ["all", "simple", "moderate", "computer", "advanced", "lab", "camera"]   # tier ids
+
+
+def _show_ok(value) -> bool:
+    """"all" or any tier id (a teacher can add tiers to catalog.toml)."""
+    return isinstance(value, str) and re.fullmatch(r"[a-z0-9_]{1,30}", value) is not None
 
 
 def join_names(names: list[str]) -> str:
@@ -176,10 +183,10 @@ class Student:
     def show(self) -> str:
         """Which tier the activity picker shows ("all" = everything)."""
         value = self.profile.get("show", "all")
-        return value if value in SHOW_CHOICES else "all"
+        return value if _show_ok(value) else "all"
 
     def set_show(self, value: str) -> None:
-        self.profile["show"] = value if value in SHOW_CHOICES else "all"
+        self.profile["show"] = value if _show_ok(value) else "all"
         self.save_profile()
 
     @property
@@ -322,7 +329,7 @@ def create_student(names, school: str, class_code: str = "", help_level: str | N
         "last_seen": _now(),
         "tour_done": False,
         "help_level": normalise_level(help_level or DEFAULT_LEVEL),
-        "show": show if show in SHOW_CHOICES else "all",
+        "show": show if _show_ok(show) else "all",
     }
     s.save_profile()
     s.save_progress()

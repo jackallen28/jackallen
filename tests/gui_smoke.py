@@ -198,6 +198,15 @@ def scenes(app):
         ("36_a2_full_text", lambda: app.screen._toggle_explanation()),
         ("37_a2_skipped", lambda: app.screen.skip_step()),
         ("38_level_moderate", lambda: set_level("moderate")()),
+        ("39_computer_tier", lambda: (app.show("home"), app.screen.set_filter("computer"))),
+        ("40_p1_live_lights_goal", lambda: (open_lesson("p1_pihealth")(), start_lesson(), to_step(5)(), goal()), 4500),
+        ("41_p2_binary_clock", lambda: (stop(), open_lesson("p2_binaryclock")(), start_lesson(), to_step(4)(),
+                                        goal()), 3500),
+        ("42_p3_dice_dj_goal", lambda: (stop(), open_lesson("p3_dicedj")(), start_lesson(), to_step(4)(),
+                                        goal()), 3500),
+        ("43_p4_doorbell_goal", lambda: (stop(), open_lesson("p4_doorbell")(), start_lesson(), to_step(5)(),
+                                         goal()), 4000),
+        ("44_done", lambda: (stop(), app.show("home"))),
     ]
 
 

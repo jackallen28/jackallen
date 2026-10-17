@@ -56,6 +56,33 @@ class TestProfiles(unittest.TestCase):
         s.set_help_level("expert")                       # unknown levels fall back to the default
         self.assertEqual(st.list_students()[0].help_level, "beginner")
 
+    def test_several_names_on_one_profile(self):
+        st = self.storage
+        self.assertEqual(st.join_names(["Sam"]), "Sam")
+        self.assertEqual(st.join_names(["Sam", "Alex"]), "Sam & Alex")
+        self.assertEqual(st.join_names(["Sam", " ", "Alex", "Priya"]), "Sam, Alex & Priya")
+        self.assertEqual(st.validate_names(["Sam", "Alex"], "Bayside SC"), {})
+        self.assertIn("name0", st.validate_names(["", ""], "Bayside SC"))
+        self.assertIn("school", st.validate_names(["Sam"], ""))
+        s = st.create_student(["Sam", "Alex"], "Bayside SC", help_level="moderate", show="computer")
+        again = st.list_students()[0]
+        self.assertEqual(again.names, ["Sam", "Alex"])
+        self.assertEqual(again.first_name, "Sam & Alex")
+        self.assertEqual((again.help_level, again.show), ("moderate", "computer"))
+        self.assertIsNotNone(st.find_student(["alex", "sam"], "bayside sc"))     # any order
+        self.assertIsNone(st.find_student(["Sam"], "Bayside SC"))
+        s.set_names(["Sam", "Alex", "Priya"])
+        self.assertEqual(st.list_students()[0].first_name, "Sam, Alex & Priya")
+
+    def test_show_choice(self):
+        st = self.storage
+        s = st.create_student("Sam", "Bayside SC")
+        self.assertEqual(s.show, "all")
+        s.set_show("lab")
+        self.assertEqual(st.list_students()[0].show, "lab")
+        s.set_show("../../etc")                          # not a tier id
+        self.assertEqual(st.list_students()[0].show, "all")
+
     def test_progress_is_read_when_needed(self):
         st = self.storage
         s = st.create_student("Sam", "Bayside SC")

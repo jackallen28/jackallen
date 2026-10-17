@@ -60,6 +60,8 @@ class Console(tk.Frame):
         self.entry.bind("<KP_Enter>", self._send)
         self.entry.bind("<Up>", lambda e: self._recall(-1))
         self.entry.bind("<Down>", lambda e: self._recall(1))
+        for seq in ("<Control-k>", "<Control-t>", "<Control-d>", "<Control-h>", "<Control-w>"):
+            self.entry.bind(seq, lambda e: "break")       # Tk's Emacs keys: easy to press by accident
         self.in_row.bind("<Configure>", self._fit_prompt)
         self.set_input_enabled(False)
 
@@ -111,6 +113,7 @@ class Console(tk.Frame):
         if len(text) > MAX_WRITE:      # keep the end: that's what the student is looking at
             text = "... (lots of output skipped) ...\n" + text[-MAX_WRITE:]
         t = self.text
+        at_bottom = t.yview()[1] >= 0.999
         t.configure(state="normal")
         if "\r" in text:
             text = text.replace("\r\n", "\n")
@@ -125,7 +128,8 @@ class Console(tk.Frame):
         if lines > MAX_LINES:
             t.delete("1.0", f"{lines - MAX_LINES}.0")
         t.configure(state="disabled")
-        t.see("end")
+        if at_bottom:                  # scrolled up to read something? Don't jump away from it
+            t.see("end")
 
     def clear(self) -> None:
         self.text.configure(state="normal")

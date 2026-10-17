@@ -64,7 +64,7 @@ C = {
     "syn_def": "#FFE680",
 }
 
-TIER_COLOURS = {"simple": "#0B8F96", "moderate": "#3F6FB5", "advanced": "#704988", "lab": "#9A4F8F",
+TIER_COLOURS = {"simple": "#0B8F96", "moderate": "#3F6FB5", "computer": "#A8521C", "advanced": "#704988", "lab": "#9A4F8F",
                 "camera": "#2E7D5B"}
 
 # The logo's pixel squares: (column, row, colour) on a grid, as in the school's logo

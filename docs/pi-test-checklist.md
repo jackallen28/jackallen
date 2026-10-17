@@ -23,8 +23,14 @@ python3 -m unittest discover -s tests
 ## 2. First launch (5 min)
 
 - [ ] PiPath opens in under about 4 seconds (time it from the menu click).
-- [ ] Create a profile with a first name and school. It goes straight to the activities.
-- [ ] Creating the same name + school again shows the "already a ... from this school" message.
+- [ ] The look: teal desktop, bevelled windows with purple-to-teal title bars, and the Tech
+      School logo in the top-left corner of every screen.
+- [ ] Create a profile with two names (**+ Add another student**) and a school. **Next** goes to
+      step 2: pick a help level and what to show, then **Start** opens the activities, showing
+      only what you picked. The greeting says both names.
+- [ ] Creating the same names + school again shows the "already has a profile" message.
+- [ ] The **Settings** cog (activity picker and every activity) opens a dialog: change the help
+      level, what to show, the names, the hardware and the text size. Changes apply straight away.
 - [ ] Filter chips (Simple, Advanced, Camera & AI...) show the right cards. Nothing is locked.
 - [ ] Open **Hello, Pi!**, start step 1: the "First time here?" box appears. Try **Show me around**.
 - [ ] Press **Watch the goal ▶** (next to Run) on Meet PiBot step 2: the answers are typed into
@@ -32,7 +38,7 @@ python3 -m unittest discover -s tests
 - [ ] Text is readable on your projector (try `python3 main.py --scale 1.25` if not).
 - [ ] Choose **Advanced** under "How much help do you want?". In an activity, a step shows just
       its goal with **▸ Show the full explanation**, and a **Skip** button is next to Next step.
-      **Help:** in the top bar switches level, and the activity picker remembers it.
+      The Settings cog switches level, and the activity picker remembers it.
 - [ ] Going back and forth between the activity picker and an activity feels quick (well under
       half a second, apart from the very first activity you open).
 
@@ -46,7 +52,10 @@ Open **Traffic Lights**.
 
 ## 4. Real Pi: GPIO (20 min)
 
-Wire the standard pin plan. Choose **Real Pi**.
+Take the blue HAT off, wire the standard pin plan, put the HAT back on. Choose **Real Pi**.
+
+- [ ] While a program runs, the board's header shows **REAL PI ● LIVE** (red), and the board
+      changes at the same moment as the breadboard.
 
 - [ ] **Check my wiring** (in the Wiring card) blinks each LED in turn, beeps the buzzer, and
       ticks the button when you press it.
@@ -59,13 +68,31 @@ Wire the standard pin plan. Choose **Real Pi**.
 - [ ] Press **Stop** while an LED is on: **the real LED turns off**.
 - [ ] Reaction Timer step 4: the printed reaction time looks believable (about 200-400 ms).
 - [ ] Motion Alarm step 1: the LED lights, then the buzzer beeps 3 times.
-- [ ] Motion Alarm step 2: after the PIR warms up (30-60 s), waving prints `Motion!` and later
-      `All quiet`. Step 5 writes `motion_log.csv` in `~/PiPath/students/<name>/lessons/`.
+- [ ] Motion Alarm (HC-SR04: TRIG GPIO4, ECHO GPIO26 through the 1kΩ / 2kΩ divider) step 2:
+      the printed centimetres match a ruler (within about 2 cm) and change as your hand moves.
+      Step 3: a hand closer than 30 cm prints `Something's close!`, moving away prints
+      `All clear`. Step 6 writes `alarm_log.csv` in `~/PiPath/students/<name>/lessons/`.
+- [ ] Unplug the ECHO wire and run step 2: the Output shows a Coach tip about the sensor not
+      answering (not a crash). Plug it back in.
+- [ ] Run a GPIO program in Thonny (leave it running), then run one in PiPath on Real Pi: the
+      Coach says "Another program has that pin". Stop the Thonny one and try again.
 - [ ] Light Switch Lab step 5 (dimmer): the real LED gets brighter with each press.
 - [ ] In Free Build, a loop with no `sleep` is stopped after about 8 seconds and the Coach
       suggests `sleep(0.01)`. Try `while True:` then `if button.is_pressed: print("hi")`, and
       don't press the button.
 - [ ] Idle CPU with PiPath open and nothing running is near 0% (`top`).
+
+## 4b. Pi & Computer (15 min)
+
+- [ ] **Pi Health Lights** step 1 prints a believable temperature (40-60 °C), CPU % and RAM %.
+      Step 2 prints the raw file (like `48312`) and the same temperature in °C.
+- [ ] Step 6 on Real Pi: open Chromium while it runs. The CPU LED gets brighter, then dims again.
+- [ ] **Binary Clock** step 5: the right-hand LED flips every second, and the LEDs read the
+      seconds correctly (32 16 8 4 2 1).
+- [ ] **Dice DJ** step 5 with headphones plugged in: each roll plays that many beeps. Step 6: copy
+      a short video into the `party` folder; a roll opens it in VLC (time how long it takes).
+- [ ] **Doorbell Cam** step 6 with a USB camera: a hand closer than 30 cm rings the bell, takes a
+      photo and opens it on the screen.
 
 ## 5. USB webcam (10 min)
 

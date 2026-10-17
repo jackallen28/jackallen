@@ -59,7 +59,10 @@ def run_shim(code: str, events: list | None = None, seconds: float | None = None
     path = Path(d) / file_name
     path.write_text(code, encoding="utf-8")
     for f in files or []:
-        shutil.copy(f, Path(d) / Path(f).name)
+        if Path(f).is_dir():
+            shutil.copytree(f, Path(d) / Path(f).name)
+        else:
+            shutil.copy(f, Path(d) / Path(f).name)
     started = time.time()
     sr, sw = os.pipe()
     cr, cw = os.pipe()

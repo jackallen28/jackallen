@@ -8,7 +8,7 @@ teacher_pin = "2468"
 
 # Runaway-program protection
 busy_loop_seconds = 8       # stop a program that keeps the CPU busy this long with no output
-max_output_lines = 3000     # stop a program that prints more lines than this in one run
+max_output_lines = 3000     # stop a program that prints more lines than this in 20 seconds (a flood)
 
 # Independence stars: total hints used in a lesson -> stars
 three_star_max_hints = 2

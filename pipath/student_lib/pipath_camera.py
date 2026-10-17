@@ -17,6 +17,7 @@ Desktop) are used when they're there.
 from __future__ import annotations
 
 import ctypes
+import errno
 import fcntl
 import json
 import math
@@ -217,6 +218,36 @@ def fourcc(s: str) -> int:
 
 
 MJPG, YUYV = fourcc("MJPG"), fourcc("YUYV")
+RPICAM = shutil.which("rpicam-still") or shutil.which("libcamera-still")
+
+
+def ribbon_camera_fitted() -> bool:
+    """Is a camera on the ribbon (CSI) socket? Its video nodes use the unicam (or rp1-cfe) driver."""
+    for node in Path("/sys/class/video4linux").glob("video*"):
+        try:
+            driver = os.path.basename(os.path.realpath(node / "device" / "driver"))
+        except OSError:
+            continue
+        if driver in ("unicam", "rp1-cfe", "bcm2835-unicam"):
+            return True
+    return False
+
+
+def yuyv_to_rgb(data: bytes, width: int, height: int, bpl: int) -> bytes:
+    """Turn a YUYV picture (2 pixels in every 4 bytes) into RGB bytes."""
+    out = bytearray(width * height * 3)
+    o = 0
+    for y in range(height):
+        row = y * bpl
+        for x in range(0, width - 1, 2):
+            y0, u, y1, v = data[row + x * 2: row + x * 2 + 4]
+            d, e = u - 128, v - 128
+            for yy in (y0, y1):
+                out[o] = max(0, min(255, int(yy + 1.402 * e)))
+                out[o + 1] = max(0, min(255, int(yy - 0.344 * d - 0.714 * e)))
+                out[o + 2] = max(0, min(255, int(yy + 1.772 * d)))
+                o += 3
+    return bytes(out)
 
 
 def find_usb_cameras() -> list[str]:
@@ -251,6 +282,20 @@ def find_usb_cameras() -> list[str]:
 def v4l2_grab(device: str, width: int, height: int, pixfmt: int, warmup: int = 8) -> tuple[bytes, int, int, int, int]:
     """Grab one frame. Returns (data, width, height, bytes_per_line, pixel_format) as the camera gave it."""
     try:
+        return _v4l2_grab(device, width, height, pixfmt, warmup)
+    except (CameraNotFound, CameraBusy):
+        raise
+    except OSError as e:
+        if e.errno == errno.EBUSY:
+            raise CameraBusy("Another program is using the USB camera. Close it and try again.") from e
+        if e.errno in (errno.ENODEV, errno.ENOENT, errno.ENXIO):
+            raise CameraNotFound("The USB camera was unplugged. Plug it back in, then run your program again.") from e
+        raise CameraNotFound(f"The USB camera stopped answering ({e.strerror}). Unplug it, plug it back in, "
+                             "and try again.") from e
+
+
+def _v4l2_grab(device: str, width: int, height: int, pixfmt: int, warmup: int) -> tuple[bytes, int, int, int, int]:
+    try:
         fd = os.open(device, os.O_RDWR)
     except PermissionError as e:
         raise CameraNotFound(f"No permission to use {device}. Ask your teacher to add you to the 'video' group.") from e
@@ -261,12 +306,7 @@ def v4l2_grab(device: str, width: int, height: int, pixfmt: int, warmup: int = 8
         f = _Format()
         f.type = CAPTURE
         f.fmt.pix.width, f.fmt.pix.height, f.fmt.pix.pixelformat = width, height, pixfmt
-        try:
-            fcntl.ioctl(fd, VIDIOC_S_FMT, f)
-        except OSError as e:
-            if e.errno == 16:
-                raise CameraBusy("Another program is using the USB camera. Close it and try again.") from e
-            raise
+        fcntl.ioctl(fd, VIDIOC_S_FMT, f)
         req = _RequestBuffers(count=3, type=CAPTURE, memory=MMAP)
         fcntl.ioctl(fd, VIDIOC_REQBUFS, req)
         for i in range(req.count):
@@ -348,16 +388,13 @@ class Camera:
         self._usb = None
         if self.kind == "usb":
             cams = find_usb_cameras()
-            if cams:
-                self._usb = cams[0]
-            else:
-                self._picam = self._start_picamera2(usb=True)
-                if self._picam is None:
-                    raise CameraNotFound("No USB camera found. Check it's plugged in and try again. "
+            if not cams:
+                raise CameraNotFound("No USB camera found. Check it's plugged in and try again. "
                                      "No camera? Switch the camera panel on the board to Simulated.")
+            self._usb = cams[0]
         elif self.kind == "ribbon":
-            self._picam = self._start_picamera2(usb=False)
-            if self._picam is None and not (shutil.which("rpicam-still") or shutil.which("libcamera-still")):
+            self._picam = self._start_picamera2()
+            if self._picam is None and not RPICAM:
                 raise CameraNotFound("No ribbon camera found. Ask your teacher to check the ribbon cable "
                                      "(blue side facing the right way), then try again.")
 
@@ -365,37 +402,44 @@ class Camera:
     def _guess() -> str:
         if find_usb_cameras():
             return "usb"
-        try:
-            if "Raspberry Pi" in Path("/proc/device-tree/model").read_text(errors="ignore"):
-                return "ribbon"
-        except OSError:
-            pass
-        return "sim"
+        return "ribbon" if ribbon_camera_fitted() else "sim"
 
     # ---------------------------------------------------------------- Picamera2
-    def _start_picamera2(self, usb: bool):
+    def _start_picamera2(self):
+        """The ribbon camera through Picamera2 (None if Picamera2 isn't installed: rpicam-still is used)."""
         try:
             from picamera2 import Picamera2
         except ImportError:
             return None
+        infos = []                # Picamera2 is here, so it decides whether there's a camera
         try:
             infos = Picamera2.global_camera_info()
-            index = next((i for i, c in enumerate(infos) if ("usb" in str(c.get("Id", "")).lower()) == usb), None)
-            if index is None:
-                return None
+        except Exception:
+            pass
+        index = next((i for i, c in enumerate(infos) if "usb" not in str(c.get("Id", "")).lower()), None)
+        if index is None:
+            raise CameraNotFound("No ribbon camera found. Ask your teacher to check the ribbon cable "
+                                 "(blue side facing the right way), then try again.")
+        cam = None
+        try:
             cam = Picamera2(index)
             config = cam.create_still_configuration(main={"size": (1280, 720), "format": "RGB888"},
-                                                    lores=None if usb else {"size": (320, 240)})
+                                                    lores={"size": (320, 240)})
             cam.configure(config)
             cam.start()
             time.sleep(1.5)       # let the camera adjust to the light
             return cam
-        except RuntimeError as e:
-            if "busy" in str(e).lower():
+        except Exception as e:
+            if cam is not None:
+                try:
+                    cam.close()
+                except Exception:
+                    pass
+            text = f"{e} {e.__cause__ or ''} {e.__context__ or ''}".lower()
+            if "busy" in text or "in use" in text:
                 raise CameraBusy("Another program is using the camera. Close it and try again.") from e
-            return None
-        except Exception:
-            return None
+            raise CameraNotFound("The ribbon camera didn't start. Ask your teacher to check the cable, "
+                                 "then try again.") from e
 
     def _picam_array(self):
         arr = self._picam.capture_array("main")
@@ -404,25 +448,28 @@ class Camera:
     # ---------------------------------------------------------------- public
     def take_photo(self, file_name: str = "photo.jpg") -> str:
         """Save a photo and return the name it was saved as."""
-        path = Path(file_name)
+        path = Path(str(file_name))
+        if not path.suffix:
+            path = path.with_suffix(".jpg")      # "me" -> "me.jpg"
         if path.parent != Path("."):
             path.parent.mkdir(parents=True, exist_ok=True)
         preview = _preview_path()
         if self.kind == "sim":
             path = self._sim_photo(path, preview)
         elif self._usb:
-            frame, *_ = v4l2_grab(self._usb, 1280, 720, MJPG)
-            path.write_bytes(complete_mjpeg(frame))
+            frame, w, h, bpl, fmt = v4l2_grab(self._usb, 1280, 720, MJPG)
+            if fmt == MJPG:
+                path.write_bytes(complete_mjpeg(frame))
+            else:                                # a webcam without JPEG: save its raw picture as a PNG
+                frame, w, h, bpl, fmt = v4l2_grab(self._usb, 640, 480, YUYV)
+                path = path.with_suffix(".png")
+                write_png(path, w, h, yuyv_to_rgb(frame, w, h, bpl))
             preview = self._preview_from_file(path, preview)
         elif self._picam is not None:
             self._picam.capture_file(str(path))
             preview = self._preview_from_file(path, preview)
         else:
-            cmd = shutil.which("rpicam-still") or shutil.which("libcamera-still")
-            r = subprocess.run([cmd, "-n", "-t", "1500", "--width", "1280", "--height", "720", "-o", str(path)],
-                               capture_output=True, text=True)
-            if r.returncode != 0 or not path.exists():
-                raise CameraNotFound("The ribbon camera didn't take a photo. Check the cable and try again.")
+            self._rpicam(path, 1280, 720, 1500)
             preview = self._preview_from_file(path, preview)
         _tell_pipath(path, preview, self.kind)
         return str(path)
@@ -453,10 +500,25 @@ class Camera:
             self._send_grid_preview(grid)
             return grid
         path = Path(tempfile.gettempdir()) / f"pipath_grid_{os.getpid()}.jpg"
-        cmd = shutil.which("rpicam-still") or shutil.which("libcamera-still")
-        subprocess.run([cmd, "-n", "-t", "800", "--width", "320", "--height", "240", "-o", str(path)],
-                       capture_output=True)
-        return self._grid_from_jpeg(path.read_bytes(), rows, cols)
+        try:
+            self._rpicam(path, 320, 240, 800)
+            return self._grid_from_jpeg(path.read_bytes(), rows, cols)
+        finally:
+            path.unlink(missing_ok=True)
+
+    @staticmethod
+    def _rpicam(path: Path, width: int, height: int, wait_ms: int) -> None:
+        """Take a photo with the rpicam-still command (Pi OS without Picamera2)."""
+        try:
+            r = subprocess.run([RPICAM, "-n", "-t", str(wait_ms), "--width", str(width), "--height", str(height),
+                                "-o", str(path)], capture_output=True, text=True, timeout=20)
+        except (OSError, TypeError, subprocess.TimeoutExpired) as e:
+            raise CameraNotFound("The ribbon camera didn't answer. Ask your teacher to check the cable.") from e
+        if r.returncode != 0 or not path.exists():
+            if "busy" in (r.stderr or "").lower():
+                raise CameraBusy("Another program is using the camera. Close it and try again.")
+            raise CameraNotFound("No ribbon camera found. Ask your teacher to check the ribbon cable "
+                                 "(blue side facing the right way), then try again.")
 
     def close(self) -> None:
         if self._picam is not None:

@@ -621,6 +621,28 @@ hints = [
 ]
 
 [[error]]
+id = "gpio_busy_real"
+type = "error"
+message = '''GPIO busy'''
+title = "Another program has that pin"
+explain = "On the real Pi, a GPIO pin can only belong to one program at a time. Another program (maybe one still running in Thonny or a terminal, or an earlier run that didn't stop) is using one of your pins."
+hints = [
+  "Close any other program that uses the GPIO pins (Thonny, a terminal running Python), then press **Run** again.",
+  "Still stuck? Save your work and log out and back in, or ask your teacher. Don't turn the Pi off.",
+]
+
+[[error]]
+id = "gpio_no_permission"
+type = "error"
+message = '''(can ?not open gpiochip|Permission denied)'''
+title = "Not allowed to use the GPIO pins"
+explain = "Your Pi account isn't allowed to use the GPIO pins yet."
+hints = [
+  "Ask your teacher to add your account to the `gpio` group, then log out and back in.",
+  "Want to keep going now? Choose **Simulator** next to the Run button.",
+]
+
+[[error]]
 id = "gpio_no_factory"
 type = "BadPinFactory"
 title = "Can't talk to the GPIO pins"

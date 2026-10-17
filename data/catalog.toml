@@ -26,6 +26,12 @@ tagline = "Bigger programs"
 description = "Lists, dictionaries, functions, files and graphics."
 
 [[tier]]
+id = "computer"
+title = "Pi & Computer"
+tagline = "Hardware that talks to the computer"
+description = "Show the Pi's own numbers on LEDs, and make buttons and sensors control the computer."
+
+[[tier]]
 id = "advanced"
 title = "Advanced"
 tagline = "Electronics with GPIO"
@@ -109,6 +115,80 @@ minutes = 50
 support = "brief"
 try_first = ["s3_guess"]
 status = "planned"
+
+# ---------------------------------------------------------------- PI & COMPUTER (simple → moderate)
+
+[[project]]
+id = "p1_pihealth"
+tier = "computer"
+title = "Pi Health Lights"
+subtitle = "Three LEDs glow with the Pi's temperature, CPU load and memory"
+concepts = ["reading system files", "try / except", "while loops", "scaling numbers", "PWMLED", "CSV log"]
+minutes = 45
+support = "guided → brief"
+status = "ready"
+gpio = true
+parts = ["3 LEDs (red, amber, green) + 3 × 330Ω resistors", "breadboard + jumper wires"]
+
+[[project]]
+id = "p2_binaryclock"
+tier = "computer"
+title = "Binary Clock"
+subtitle = "The Pi's clock ticking in binary on six LEDs"
+concepts = ["datetime", "binary numbers", "format()", "LEDBoard", "tuples", "modes with a button"]
+minutes = 45
+support = "guided → brief"
+status = "ready"
+gpio = true
+parts = ["6 LEDs + 6 × 330Ω resistors", "1 push button", "breadboard + jumper wires"]
+
+[[project]]
+id = "p3_dicedj"
+tier = "computer"
+title = "Dice DJ"
+subtitle = "Roll an LED dice and the computer plays a sound, song or video"
+concepts = ["randint()", "LEDBarGraph", "lists and positions", "open_file()", "glob", "when_pressed"]
+minutes = 45
+support = "guided → brief"
+status = "ready"
+gpio = true
+parts = ["6 LEDs + 6 × 330Ω resistors", "2 push buttons", "headphones or a speaker", "breadboard + jumper wires"]
+
+[[project]]
+id = "p4_doorbell"
+tier = "computer"
+title = "Doorbell Cam"
+subtitle = "A visitor comes close: ring, snap their photo and show it on the screen"
+concepts = ["DistanceSensor", "events", "take_photo()", "return values", "cooldown timer", "CSV log"]
+minutes = 55
+support = "guided → brief"
+try_first = ["c1_photobooth"]
+status = "ready"
+gpio = true
+camera = true
+parts = ["HC-SR04 ultrasonic distance sensor", "1kΩ + 2kΩ resistors (for ECHO)", "LED + 330Ω resistor", "active buzzer", "USB webcam or Pi camera", "breadboard + jumper wires"]
+
+[[project]]
+id = "p5_focustimer"
+tier = "computer"
+title = "Focus Timer"
+subtitle = "A study timer: LEDs count down, the screen pops up a message, and a log adds up your study time"
+concepts = ["countdowns", "LEDBarGraph", "desktop messages", "CSV log", "adding up a column"]
+minutes = 45
+support = "scaffolded → brief"
+status = "planned"
+gpio = true
+
+[[project]]
+id = "p6_controlpad"
+tier = "computer"
+title = "Control Pad"
+subtitle = "Three buttons that open your favourite app, take a screenshot and change the volume"
+concepts = ["subprocess", "dictionaries of actions", "when_pressed", "when_held"]
+minutes = 40
+support = "scaffolded → brief"
+status = "planned"
+gpio = true
 
 # ---------------------------------------------------------------- ADVANCED (GPIO)
 [[project]]

@@ -132,3 +132,31 @@ class TestCameraErrors(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCameraClues(unittest.TestCase):
+    """Hardware problems become clues the Coach can explain, never raw OSErrors."""
+
+    def test_v4l2_errors_become_clues(self):
+        import errno
+        from unittest import mock
+        cases = [(errno.EBUSY, pc.CameraBusy), (errno.ENODEV, pc.CameraNotFound), (errno.EIO, pc.CameraNotFound)]
+        for code, exc in cases:
+            with self.subTest(errno=code), mock.patch.object(pc, "_v4l2_grab", side_effect=OSError(code, "x")):
+                with self.assertRaises(exc):
+                    pc.v4l2_grab("/dev/video0", 640, 480, pc.MJPG)
+
+    def test_yuyv_grey_stays_grey(self):
+        rgb = pc.yuyv_to_rgb(bytes([128, 128, 128, 128]) * 2, 4, 1, 8)
+        self.assertEqual(rgb, bytes([128]) * 12)
+
+    def test_photo_name_gets_an_extension(self):
+        import os
+        with tempfile.TemporaryDirectory() as d:
+            old = os.getcwd()
+            os.chdir(d)
+            try:
+                name = pc.Camera("sim").take_photo("me")
+            finally:
+                os.chdir(old)
+            self.assertIn(Path(name).suffix, (".jpg", ".png"))

@@ -11,11 +11,14 @@
 PiPath is a desktop app that runs on a student's Raspberry Pi. It works like a
 tutor sitting beside them:
 
-1. **Login:** welcome → pick your name, or create a profile with **first name + school only**
-   → straight to the **activity picker**. The workspace tour is *offered* (not forced) the
-   first time a student reaches a step.
+1. **Login:** welcome → pick your name, or create a profile: **first name(s) + school only**
+   (up to 4 names when students share a Pi) → step 2: **how much help** and **what to show** →
+   the **activity picker**. A **Settings cog** on every screen changes these (and names,
+   hardware, text size) at any time. The workspace tour is *offered* (not forced) the first
+   time a student reaches a step.
 2. **Free choice:** every activity is open from day one, and students do as many or as few
-   as they like, in any order. Tiers (Simple, Moderate, Advanced, Electronics Lab, Camera & AI)
+   as they like, in any order. Tiers (Simple, Moderate, Pi & Computer, Advanced, Electronics Lab,
+   Camera & AI)
    are a **guide**: a colour badge, a filter chip, and optional "Good to try first" tips.
    Nothing is locked, and **Free Build** is always open.
 3. **Help level, chosen by the student:** **Beginner** (full explanations, hints any time),
@@ -39,6 +42,16 @@ tutor sitting beside them:
 errors (`data/errors.toml`) and per-step hints written by the teacher. (The *Teachable
 Machine* activity is machine learning the students write themselves: a nearest-neighbour
 classifier over tiny greyscale grids. No model, library or internet.)
+
+**Look:** retro (Windows 95 / early-90s Mac) in the Banyule Nillumbik Tech School colours: teal
+desktop, bevelled lavender windows with purple→teal gradient title bars, the school logo in the
+top-left corner (`data/brand/`, made by `tools/make_logo_assets.py`). Colours and fonts live in
+`ui/theme.py`; the retro pieces (TitleBar, PButton, CogButton, ChoiceList, window, bevel) in
+`ui/widgets.py`. Keep new screens in this style.
+
+**Hardware safety:** classes use a **blue GPIO HAT**. Student-facing text always says: take the
+blue HAT off before changing wires, put it back on after, and **never turn the Pi off** (they'd
+lose their progress). `gpio.SAFETY` and `gpio.HAT_FIX` hold the wording.
 
 Audience: secondary students (roughly Years 7–10) who are new to text-based coding.
 The author is a teacher; content is aligned to Victorian Curriculum Digital
@@ -87,9 +100,9 @@ only when they change. `tests/perf_probe.py` times the main interactions.
    that DejaVu Sans has: ✓ ✗ ○ ● ▶ ■ ◂ ▸ ▾ ★ ☆ ⚠ •
 6. **No floating windows for UI.** Overlays (tour, tour offer, teacher panel) are frames
    drawn with `place()` inside the main window, so they behave the same on X11 and Wayland.
-7. **Student code always runs in a separate process** (`pipath/runner.py`, through
-   `pipath/gpio_shim.py` for GPIO/camera activities and Free Build), never `exec()` inside
-   the app. The app must survive any student program.
+7. **Student code always runs in a separate process** (`pipath/runner.py`, always through
+   `pipath/gpio_shim.py`, which reports pins, photos and `input()` waits), never `exec()`
+   inside the app. The app must survive any student program.
 8. **Every lesson step must have a model answer: its `demo`**, run by
    `tests/test_activities.py` (GPIO/camera steps in the Simulator with `demo_events`; all
    steps with `demo_input` typed in). It must pass the step's own checks. Every step also needs
@@ -106,7 +119,7 @@ only when they change. `tests/perf_probe.py` times the main interactions.
 
 ---
 
-## 4. What exists (v0.3)
+## 4. What exists (v0.4)
 
 Run it: `python3 main.py` (add `--scale 1.25` for big screens). Test: `python3 -m unittest discover -s tests`.
 
@@ -121,13 +134,17 @@ repo root
 ├── data/
 │   ├── config.toml          app name, teacher PIN, runaway limits, star thresholds
 │   ├── catalog.toml         tiers + all activities (status ready | planned, try_first, gpio, camera)
-│   ├── errors.toml          the Coach's knowledge (61 entries incl. GPIO + camera)
+│   ├── errors.toml          the Coach's knowledge (63 entries incl. GPIO + camera)
 │   ├── demo_files/c2/examples.json   sample training data for Teachable Machine demos
 │   └── lessons/
 │       ├── s1_hello, s2_pibot, s3_guess        Simple (screen only)
 │       ├── a1_traffic, a2_reaction, a3_alarm   Advanced GPIO
+│       ├── p1_pihealth, p2_binaryclock, p3_dicedj, p4_doorbell   Pi & Computer
 │       ├── e1_lightswitch, e2_moodlamp, e3_simon, e4_dice   Electronics Lab
 │       └── c1_photobooth, c2_teachable          Camera & AI
+│   ├── demo_files/p3/party/1.wav..6.wav  Dice DJ sounds (copied to the student's folder)
+│   └── brand/               the school logo: original + corner / full sizes (RGBA PNG)
+├── tools/make_logo_assets.py, make_party_sounds.py   remake the brand images / Dice DJ sounds
 ├── pipath/
 │   ├── app.py               main window, routing, activity states, teacher panel
 │   ├── content.py           loads config / catalogue / lessons / errors
@@ -140,24 +157,32 @@ repo root
 │   │                        demo event expansion, wiring-check program, camera guess
 │   ├── gpio_shim.py         runs INSIDE the student process: mock/real pins, state + commands
 │   ├── student_lib/
-│   │   └── pipath_camera.py the students' camera helper (Simulated / USB via V4L2 / ribbon)
+│   │   ├── pipath_camera.py   the students' camera helper (Simulated / USB via V4L2 / ribbon)
+│   │   └── pipath_computer.py cpu_temp / cpu_load / ram_used (from /sys, /proc), open_file /
+│   │                          open_website (xdg-open; Watch the goal only prints what it would open)
 │   └── ui/
-│       ├── theme.py         colours + named fonts (DejaVu fallbacks), tier colours
-│       ├── widgets.py       PButton, RichText (mini-markdown), ScrollFrame, card, chip
-│       ├── editor.py        code editor
-│       ├── console.py       Output box + "type your answer" input row
+│       ├── theme.py         logo colours, named fonts (DejaVu fallbacks), tier colours, LOGO_SQUARES
+│       ├── widgets.py       PButton, TitleBar, CogButton, ChoiceList, window, bevel, RichText
+│       │                    (mini-markdown), ScrollFrame, PopupMenu, card, chip
+│       ├── settings.py      Settings dialog (cog): Help · Show · Students · Hardware · Text size
+│       ├── editor.py        code editor (undo groups, find/replace, go to line, brackets, smart paste)
+│       ├── console.py       Output box + "type your answer" row (history, \r, live stderr)
 │       ├── tour.py          coach-mark tour (place()-based overlay)
-│       ├── onboarding.py    Welcome / profile picker, Create profile (name + school)
+│       ├── onboarding.py    Welcome / profile picker, Create profile (names + school), Setup
+│       │                    (help level + what to show)
 │       ├── home.py          activity picker: help level, filter chips, cards drawn on one Canvas
-│       ├── board.py         VirtualBoard: LEDs, RGB LEDs, buttons, buzzers, PIR, camera panel
+│       ├── board.py         VirtualBoard: LEDs, RGB LEDs, buttons, buzzers, PIR, distance sensor
+│       │                    (slider), camera panel, ● LIVE badge in Real Pi mode
 │       ├── wiring.py        Wiring + Safety card with 40-pin header map and "Check my wiring"
 │       └── workspace.py     LessonWorkspace (one, re-used for every activity) and FreeBuildWorkspace
 └── tests/
     ├── test_hints.py        real broken programs → Coach entry; blanks precheck
-    ├── test_storage.py      profiles: name + school, duplicates, old profiles, help level; levels
+    ├── test_storage.py      profiles: names + school, duplicates, old profiles, help level, show; levels
     ├── test_gpio.py         shim, warm start, simulated presses, GPIO errors, lint, confirm checks,
     │                        wiring check
-    ├── test_camera.py       V4L2 layouts + ioctl numbers, MJPEG fix-up, PNG, Simulator camera
+    ├── test_camera.py       V4L2 layouts + ioctl numbers, MJPEG fix-up, PNG, Simulator camera, clues
+    ├── test_computer.py     pipath_computer numbers, pretend stats, opening files (never for real)
+    ├── test_editor.py       editor behaviour (needs Tk + a display; skipped otherwise)
     ├── test_activities.py   every step's demo passes its checks (all activities); lesson lint
     ├── shimrun.py           helper: run code through the shim with timed presses
     ├── gui_smoke.py         drives the real app under Xvfb and saves screenshots (not unittest)
@@ -170,8 +195,8 @@ repo root
 Run pressed
   → precheck(code, step.starter)   blanks (___) from the starter still there? → Coach, stop
   → gpio_lint(code)                GPIO activities: warnings in the Output ("⚠ Coach tip"), never blocks
-  → save file, Runner.start()      python3 -u <file>, or python3 -u pipath/gpio_shim.py <file>
-                                   for GPIO/camera activities and Free Build; own process group.
+  → save file, Runner.start()      python3 -u pipath/gpio_shim.py <file> (every run); own
+                                   process group (Stop: SIGTERM to the shim, then SIGKILL the group).
                                    Warm start: if a spare shim (--wait) is waiting, it gets one
                                    JSON line {"run","cwd","env"} instead; a new spare starts
                                    ~0.4 s after each run ends
@@ -180,7 +205,9 @@ Run pressed
   → poll every 40 ms               stdout → Output; student types → stdin
                                    shim state pipe → ("gpio", {...}) → board (devices, values, photos)
                                    board clicks → runner.send_command("press 23")
-                                   runaway: >3000 lines, or CPU-busy + silent for 8 s → kill
+                                   runaway: >3000 lines or >300k chars in 20 s, or CPU-busy +
+                                   silent for 8 s → kill. stderr shows live (red); input() →
+                                   ("gpio", {"t": "input"}) → focus the answer box
   → on exit (exit code + both pipes closed)
       Stop pressed on a run_mode="until_stopped" step → treated as a normal finish
       crashed? parse_traceback() → ErrorInfo → HintEngine.diagnose() → Coach card, red line
@@ -200,7 +227,11 @@ Run pressed
   fd in `PIPATH_STATE_FD`) only when something changed. Values: outputs = brightness 0–1,
   inputs = 1 when active.
 - Commands (fd in `PIPATH_CMD_FD`): `press N` / `release N` (Simulator only; pull-up inputs
-  are driven low), `show <object>` (simulated camera).
+  are driven low), `show <object>` (simulated camera), `distance ECHO CM` (Simulator: the
+  DistanceSensor's `_read` is patched on mock pins), `stat temp|load|ram VALUE` (Simulator:
+  pretend numbers for `pipath_computer`, via `PIPATH_SIM_*` env vars).
+- `builtins.input` is wrapped to send `{"t": "input"}` so the app focuses the answer box (and
+  Watch the goal types the next answer).
 - Tracebacks are trimmed to start in the student's file. A crash inside an event handler
   (e.g. `when_pressed`) is reported and ends the program. SIGTERM (Stop) → `SystemExit(0)`
   so gpiozero closes devices and real LEDs switch off.
@@ -211,11 +242,14 @@ Run pressed
 
 ```
 ~/PiPath/app.json                        last_student, gpio_mode (sim|real), camera (sim|usb|ribbon)
-~/PiPath/students/<slug>/profile.json    first_name, school, created, last_seen, tour_done,
-                                          help_level (beginner|moderate|advanced; missing = beginner)
-                                          (older profiles may also have class_code)
+~/PiPath/students/<slug>/profile.json    first_name (all names joined: "Sam & Alex"), names [..],
+                                          school, created, last_seen, tour_done, help_level
+                                          (beginner|moderate|advanced; missing = beginner), show
+                                          ("all" or a tier id), code_size (optional)
+                                          (older profiles may also have class_code; no names = [first_name])
 ~/PiPath/students/<slug>/progress.json   lessons.<id>: status, step, steps_done, steps_started,
-                                          steps_skipped, hints_used, runs, errors, started, completed
+                                          steps_skipped, hints_used, hints_seen, runs, errors,
+                                          started, completed
 ~/PiPath/students/<slug>/lessons/*.py    lesson code (one file per activity, built up step by step)
 ~/PiPath/students/<slug>/lessons/*.jpg|csv|json   photos, logs, examples.json written by programs
 ~/PiPath/students/<slug>/lessons/backups/  code saved before a "replace" step overwrote it
@@ -254,11 +288,14 @@ intro = """markdown"""              # shown before step 1
 outro = """markdown"""              # shown on completion with stars + extension ideas
 requires_gpio = true                # Wiring card, Simulator / Real Pi switch, board
 requires_camera = true              # camera panel on the board (click its title to switch camera)
+files = ["p3/party"]                # optional: copied from data/demo_files/ into the student's
+                                    # folder when the activity opens (never replacing their files)
 
 [[wiring]]                          # one row per part (rows without kind are tips)
 part = "Red LED"                    # name in the card and on the board
-kind = "led"                        # led | rgbled | button | switch | buzzer | pir
-pin = 17                            # GPIO (BCM) number; rgbled uses pins = [r, g, b]
+kind = "led"                        # led | rgbled | button | switch | buzzer | pir | distance
+pin = 17                            # GPIO (BCM) number; rgbled uses pins = [r, g, b];
+                                    # distance uses pins = [echo, trigger]
 colour = "red"                      # led colour on the board: red amber yellow orange green blue white
 connect = "GPIO17 (pin 11) → 330Ω → long leg; short leg → GND"
 
@@ -279,7 +316,8 @@ demo = '''model answer'''           # REQUIRED. Played by "Watch the goal", test
                                     # the editor when an Advanced student skips the step (if the next
                                     # step builds on it, i.e. isn't "replace")
 demo_events = ["2 tap 23", "1.5 press 4", "3 release 4", "0.5 show ball",
-               "1 tap 23 every 0.8 until 30"]   # timed presses / camera objects during the demo
+               "1 tap 23 every 0.8 until 30",
+               "1.5 distance 26 15", "2 stat load 90"]   # presses, camera objects, distances, Pi numbers
 demo_seconds = 10                   # stop the demo after this long (until_stopped programs)
 demo_input = "5\n"                  # answers typed into the Output, one at a time, at each prompt
 demo_files = ["c2/examples.json"]   # copied from data/demo_files/ into the demo's folder
@@ -400,7 +438,8 @@ carries between activities:
 | LED 4, 5, 6 | 5, 6, 13 | 29, 31, 33 |
 | Button 1 / 2 / 3 | 23 / 24 / 25 | 16 / 18 / 22 |
 | Buzzer (active) | 18 | 12 |
-| PIR motion sensor OUT | 4 | 7 (VCC → 5V pin 2, GND → pin 6) |
+| Distance sensor (HC-SR04) TRIG | 4 | 7 (VCC → 5V pin 2, GND → pin 6) |
+| Distance sensor ECHO | 26 | 37, **through a 1kΩ / 2kΩ divider** (5V echo → 3.3V) |
 | GND | | 6, 9, 14, 20, 25, 30, 34, 39 |
 
 Avoid GPIO 2/3 (I²C, fixed pull-ups) and 14/15 (serial console).
@@ -413,9 +452,14 @@ Avoid GPIO 2/3 (I²C, fixed pull-ups) and 14/15 (serial console).
 | Moderate | M1 Quiz Master | 🔲 | see outline below |
 | Moderate | M2 Turtle Art Studio | 🔲 | see outline below |
 | Moderate | M3 Tuckshop Till | 🔲 | see outline below |
+| Pi & Computer | P1 Pi Health Lights | ✅ | `cpu_temp()` etc. (G) · read the temp file with try/except (G) · loop monitor (S) · text bars (S) · test 3 PWMLEDs (G) · live brightness (S) · warnings (S) · CSV log (B) |
+| Pi & Computer | P2 Binary Clock | ✅ | `datetime.now()` (G) · `format(n, "06b")` (G) · ●/○ clock on screen (S) · test 6 LEDs (G) · seconds on LEDBoard (S) · test the button (G) · seconds/minutes/hours modes (B) |
+| Pi & Computer | P3 Dice DJ | ✅ | randint (G) · test the button (G) · test LEDBarGraph (G) · LED dice (S) · `open_file(sounds[roll - 1])` (S) · `glob` playlist (S) · surprise button → `open_website` (B) |
+| Pi & Computer | P4 Doorbell Cam | ✅ | test the distance sensor (G) · test camera + `open_file(name)` (G) · test the bell (G) · `when_in_range` ding dong (S) · snap the visitor (S) · show it (S) · cooldown + visitor CSV (B) |
+| Pi & Computer | P5 Focus Timer · P6 Control Pad | 🔲 | outlines below |
 | Advanced | A1 Traffic Lights | ✅ | flash one LED (G) · green→amber→red (S) · `def cycle()` + `while True` (S) · test the button: 3 × `wait_for_press` (G) · lights + button = pedestrian crossing (S) · add the beeper (S) · countdown + flashing red (B) |
 | Advanced | A2 Reaction Timer | ✅ | light the LED (G) · random wait (S) · test the button: hold timer with `monotonic()` (G) · reaction stopwatch (S) · false start with `wait_for_press(timeout=)` (S) · 2-player `when_pressed` race (B) · best of 5 + `highscore.txt` with try/except (B) |
-| Advanced | A3 Motion Alarm & Logger | ✅ | test the LED + buzzer (G) · `when_motion` / `when_no_motion` (S) · sensor + alarm (S) · armed state + button (S) · CSV log with `datetime` (B) · 10 s cooldown + report by hour (B) |
+| Advanced | A3 Motion Alarm & Logger | ✅ | HC-SR04 ultrasonic: test the LED + buzzer (G) · `sensor.distance * 100` (G) · `when_in_range` / `when_out_of_range` (S) · sensor + alarm (S) · armed state + button (S) · CSV log with `datetime` (B) · cooldown + report (B) |
 | Lab | E1 Light Switch Lab | ✅ | LED · `wait_for_press` (G) · hold-to-light · toggle (S) · PWM dimmer (B) |
 | Lab | E2 RGB Mood Lamp | ✅ | tuples · rainbow nested loop · `%` wrap, planted IndexError (S) · party mode `when_held` · own lamp (B) |
 | Lab | E3 Simon Says | ✅ | lists of LEDs · `zip()` · random pattern · `get_press()` returns (S) · full game (B) |
@@ -446,6 +490,17 @@ about 90% on its ball/box pictures.
 `if item in menu` · total + GST (total ÷ 11) receipt · save receipt with `datetime` ·
 append to `sales.csv` and read back the day's takings.
 
+### Pi & Computer outlines (still to write)
+
+**P5 Focus Timer** (scaffolded → brief): countdown in the Output · six LEDs as a shrinking bar
+(`LEDBarGraph`) · buzzer at the end · a message on the screen (open a picture or text file with
+`open_file`) · log each session to `study_log.csv` and add up today's minutes.
+
+**P6 Control Pad** (scaffolded → brief): three buttons that each run a computer action from a
+**dictionary** of actions: open a favourite website or file, take a screenshot (`grim` on
+Wayland via `subprocess`), change the volume (`wpctl`); `when_held` for a second action.
+Check the commands exist on Trixie/labwc before writing it.
+
 ### Free Build
 Always open. Projects list, new project (names that shadow modules like `random.py` are
 refused), cheat sheet, Coach without checklists. Runs through the shim, so the Simulator
@@ -455,11 +510,13 @@ board (and camera panel) appears as soon as a program makes an LED, Button or ph
 
 ## 8. GPIO + camera design (as built)
 
-- **Simulator / Real Pi** switch in the workspace toolbar (`Run on:`). Real Pi is disabled
-  off a Pi (`/proc/device-tree/model`; `PIPATH_FORCE_SIM=1` pretends). Saved per Pi in app.json.
+- **Simulator / Real Pi** switch in the workspace toolbar (`Run on:`) and in Settings. Real Pi
+  is disabled off a Pi (`/proc/device-tree/model`; `PIPATH_FORCE_SIM=1` pretends). Saved per Pi
+  in app.json; a Pi starts on Real Pi. While a Real Pi run is going the board shows **● LIVE**.
 - **Board** (`ui/board.py`): parts from the lesson's `[[wiring]]` rows (in order), plus any
-  device the program makes. Click and hold buttons; click the PIR to "wave" (3 s). The
-  board switches everything off when a program ends, like real hardware.
+  device the program makes. Click and hold buttons; click the PIR to "wave" (3 s); drag the
+  distance sensor's slider (2–150 cm; hidden in Real Pi mode, where it shows the real reading).
+  The board switches everything off when a program ends, like real hardware.
 - **Watch the goal**: runs the step's `demo` in a temp folder on the Simulator with its
   `demo_events`; the student's code isn't touched and the run isn't counted. `demo_input`
   answers are typed in one at a time, each time the program shows a prompt (and echoed in the
@@ -471,6 +528,9 @@ board (and camera panel) appears as soon as a program makes an LED, Button or ph
 - **Wiring + Safety card** (`ui/wiring.py`): safety list, parts, connect rows, 40-pin header
   map with the activity's pins highlighted, and **Check my wiring** (a generated program
   that blinks each LED, beeps the buzzer and waits for each button / the PIR; ✓/✗ ticks).
+- **Distance sensor:** gpiozero `DistanceSensor(echo=26, trigger=4)`. The shim hides the trigger
+  pin from the board and drops gpiozero's "use pigpio" warning. A missing echo shows a Coach tip
+  (`DistanceSensorNoEcho`) instead of a wall of warnings.
 - **Lint** (`hints.gpio_lint`): `when_pressed = f()` brackets, `while True` that never
   waits, a pin used twice, pins outside 2–27 or special pins.
 - **Camera** (`student_lib/pipath_camera.py`): `sim` (pure Python, PNG), `usb` (V4L2 via
@@ -513,15 +573,17 @@ To build:
 
 ## 11. What's next
 
-Built and passing in the Simulator: the GPIO foundation, A1–A3, the Electronics Lab, the
-Camera & AI tier, student-chosen help levels, the step-by-step (one part at a time) activity
-structure, and the Pi 3B speed work (`docs/perf.md`). Still to do, roughly in this order:
+Built and passing in the Simulator: the GPIO foundation, A1–A3 (A3 now ultrasonic), the
+Electronics Lab, the Camera & AI tier, the Pi & Computer tier (P1–P4), student-chosen help
+levels, the setup step + Settings cog, group profiles, the retro school-branded look, the
+Thonny-style editor, the step-by-step (one part at a time) activity structure, and the Pi 3B
+speed work (`docs/perf.md`). Still to do, roughly in this order:
 
 1. **Real hardware check** (docs/pi-test-checklist.md): Pi 3B on Trixie with a breadboard
    kit, a USB webcam and a ribbon camera. Run `tests/perf_probe.py` and record the timings
    in `docs/perf.md`.
 2. **Moderate tier**: write M1–M3 from §7 with model answers; M2 needs `confirm` +
-   `until_stopped` (both built).
+   `until_stopped` (both built). Then P5–P6 (§7).
 3. **Phase 1 polish**: undo/redo buttons, "Reset step code", underline the exact word from
    the `^^^^` markers, `--scale` per student, high-contrast theme, 80+ errors.toml entries,
    a hidden log of entry ids hit per student.
@@ -555,12 +617,16 @@ structure, and the Pi 3B speed work (`docs/perf.md`). Still to do, roughly in th
 - **Tkinter over a Thonny plugin.** Full control of onboarding, the guide panel and gradual
   release; light enough for a Pi 3B.
 - **TOML for content**: readable, comments allowed, multi-line literal strings for code.
-- **First name + school only.** No class, surnames, emails or photos of students in profiles.
-  Duplicate name + school → suggest adding a surname initial.
+- **First name(s) + school only.** No class, surnames, emails or photos of students in profiles.
+  Up to 4 first names on one profile for students who share a Pi. Duplicate names + school →
+  suggest adding a surname initial.
 - **Free choice.** Every activity is open; tiers are a guide (badge, filter, try_first tips).
 - **Simulator first, then real hardware**, MakeCode-style, with Watch the goal.
 - **One camera helper for students** (`pipath_camera`) so the same code works with a USB
-  webcam, a ribbon camera or the Simulator; the outro shows the real Picamera2 code.
+  webcam, a ribbon camera or the Simulator; the outro shows the real Picamera2 code. Likewise
+  `pipath_computer` for the Pi's numbers and opening files (lessons show the raw code too).
+- **The retro look in the school's colours** (Windows 95 / 90s Mac), logo in the corner.
+- **HC-SR04 ultrasonic sensor** for the alarm (not a PIR): it gives a number to work with.
 - **Blanks are `___`** (3+ underscores), detected only on lines copied from the step's
   starter, so students' own ASCII art with underscores still runs.
 - **Stars measure independence (hints), not speed.**

@@ -225,7 +225,7 @@ class HomeScreen(Screen):
         elif state == "in_progress":
             lp = app.student.lesson(p["id"])
             steps = len(app.catalog.lesson(p["id"])["steps"])
-            status = f"STEP {lp['step'] + 1}/{steps}"
+            status = f"STEP {min(lp['step'], steps - 1) + 1}/{steps}"
         elif dim:
             status = "COMING SOON"
         if status:

@@ -16,6 +16,7 @@ import codecs
 import json
 import os
 import queue
+import signal
 import subprocess
 import sys
 import threading
@@ -25,15 +26,21 @@ from pathlib import Path
 CLK_TCK = os.sysconf("SC_CLK_TCK") if hasattr(os, "sysconf") else 100
 
 
+OUTPUT_WINDOW = 20          # seconds: more than max_lines (or max_chars) in this long is a runaway
+
+
 class Runner:
-    def __init__(self, busy_seconds: float = 8, max_lines: int = 3000):
+    def __init__(self, busy_seconds: float = 8, max_lines: int = 3000, max_chars: int = 300_000):
         self.busy_seconds = busy_seconds
         self.max_lines = max_lines
+        self.max_chars = max_chars          # a flood without newlines (print(x, end="")) counts too
         self.proc: subprocess.Popen | None = None
         self.events: queue.Queue = queue.Queue()
         self.stdout_text: list[str] = []
         self.stderr_text: list[str] = []
         self._lines = 0
+        self._chars = 0
+        self._window = 0.0
         self._stop_reason: str | None = None
         self._last_output = 0.0
         self._busy_since: float | None = None
@@ -52,6 +59,8 @@ class Runner:
         self._close_cmd()
         self.stdout_text, self.stderr_text = [], []
         self._lines = 0
+        self._chars = 0
+        self._window = time.monotonic()
         self._stop_reason = None
         self._last_output = time.monotonic()
         self._busy_since = None
@@ -190,12 +199,16 @@ class Runner:
         if self.running:
             self._stop_reason = reason
             try:
-                self.proc.terminate()
+                self.proc.terminate()          # the shim turns this into SystemExit: gpiozero switches pins off
                 try:
                     self.proc.wait(timeout=1.5)
                 except subprocess.TimeoutExpired:
                     self.proc.kill()
             except OSError:
+                pass
+            try:                               # anything the program started itself goes too
+                os.killpg(self.proc.pid, signal.SIGKILL)
+            except (OSError, AttributeError):
                 pass
 
     # ---------------------------------------------------------------- threads
@@ -257,14 +270,19 @@ class Runner:
             if kind == "out":
                 self.stdout_text.append(ev[1])
                 self._lines += ev[1].count("\n")
+                self._chars += len(ev[1])
                 self._last_output = time.monotonic()
             elif kind == "err":
                 self.stderr_text.append(ev[1])
+                self._chars += len(ev[1])
             elif kind == "exit":
                 self._close_cmd()
             out.append(ev)
         if self.running:
-            if self._lines > self.max_lines:
+            if time.monotonic() - self._window > OUTPUT_WINDOW:     # a monitor that prints all day is fine:
+                self._window = time.monotonic()                     # only a flood (lots, fast) is stopped
+                self._lines = self._chars = 0
+            if self._lines > self.max_lines or self._chars > self.max_chars:
                 self.stop("runaway_output")
             elif self._is_busy_too_long():
                 self.stop("runaway_busy")

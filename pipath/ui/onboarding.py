@@ -6,10 +6,10 @@ import tkinter as tk
 
 from .. import storage
 from ..levels import INFO as LEVEL_INFO, LEVELS
-from .theme import C, LOGO_SQUARES
+from .theme import C
 from .widgets import ChoiceList, CogButton, PButton, PixelMark, ScrollFrame, entry, label, logo_image, window
 
-INITIAL_COLOURS = [c for _x, _y, c in LOGO_SQUARES if c not in ("#CFC2E0", "#C3B2D6", "#DCD0E8")]
+INITIAL_COLOURS = ["#704988", "#0B8F96", "#7E5B95", "#0A7E84", "#523468", "#3F6FB5"]   # dark enough for white letters
 
 
 class Screen(tk.Frame):

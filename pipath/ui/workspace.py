@@ -28,6 +28,20 @@ from .wiring import WiringCard
 
 DEMO_FILES = DATA_DIR / "demo_files"
 
+
+def copy_sample(src: Path, folder: Path, keep: bool = False) -> None:
+    """Copy a sample file or folder from data/demo_files into folder. keep: don't replace what's there."""
+    dest = folder / src.name
+    try:
+        if src.is_dir():
+            shutil.copytree(src, dest, dirs_exist_ok=True,
+                            copy_function=(lambda a, b: None if Path(b).exists() else shutil.copy2(a, b))
+                            if keep else shutil.copy2)
+        elif src.exists() and not (keep and dest.exists()):
+            shutil.copy(src, dest)
+    except OSError:
+        pass
+
 # Reading these in a loop (instead of using events) is the classic "busy loop" on a Pi
 POLLING_FEATURES = ("attr:is_pressed", "attr:is_held", "attr:motion_detected", "attr:is_active")
 
@@ -178,6 +192,8 @@ class Workspace(Screen):
         super().__init__(app)
         self.runner = Runner(app.settings["busy_loop_seconds"], app.settings["max_output_lines"])
         self._poll_job = None
+        self._busy = False                     # a run is under way (from launch until it's been checked)
+        self._tour = None
         self._save_job = None
         self._closed_streams = 0
         self._exit_code = None
@@ -330,26 +346,44 @@ class Workspace(Screen):
 
     def park(self) -> None:
         """Stop everything this screen is doing: the program, timers, the spare runner. Saves the code."""
-        self._cancel_special_jobs()
-        for job in ("_warm_job", "_poll_job"):
-            if getattr(self, job):
-                self.after_cancel(getattr(self, job))
-                setattr(self, job, None)
+        self._abandon_run()
+        if self._warm_job:
+            self.after_cancel(self._warm_job)
+            self._warm_job = None
         self.runner.close()
+        self._save_pending()
+        if self._tour is not None:
+            self._tour.finish()
+            self._tour = None
+
+    def _abandon_run(self) -> None:
+        """Stop a program (or a demo) without checking it: the student has moved on."""
+        self._cancel_special_jobs()
+        if self._poll_job:
+            self.after_cancel(self._poll_job)
+            self._poll_job = None
+        was_running = self.runner.running
+        if was_running:
+            self.runner.stop("abandoned")
+        self._busy = False
         if self._special:
             self._special = None
             if self.board:
                 self.board.set_mode(self.mode)
         self._clean_special_dir()
-        if self._save_job:
-            self.after_cancel(self._save_job)
-            self.save_now()
         self.run_btn.set_enabled(True)
         self.stop_btn.set_enabled(False)
         self.console.set_input_enabled(False)
         if self.board:
             self.board.reset()
             self.board.set_live(False)
+        if was_running:
+            self._schedule_warm()
+
+    def _save_pending(self) -> None:
+        if self._save_job:
+            self.after_cancel(self._save_job)
+            self.save_now()
 
     def _unbind_keys(self) -> None:
         if self._keys_bound:
@@ -384,12 +418,17 @@ class Workspace(Screen):
 
     # ---------------------------------------------------------------- running
     def run(self):
-        if self.runner.running:
+        if self._busy or self.runner.running or not self.run_btn.enabled:
             return
         code = self.editor.get_code()
         self.save_now()
         self.editor.clear_marks()
         self._run_started = time.time()
+        if not code.strip():
+            self.console.clear()
+            self.console.write("Your file is empty. Type some code first (or press Watch the goal to see "
+                               "what it should do).\n", "info")
+            return
         problem = precheck(code, self.current_starter())
         if problem:
             self.console.clear()
@@ -413,6 +452,10 @@ class Workspace(Screen):
             self.console.set_status("running…", C["go"])
 
     def _launch(self, code: str, path: Path, env: dict, status: str = "running…"):
+        if self._poll_job:                 # never two poll loops at once
+            self.after_cancel(self._poll_job)
+            self._poll_job = None
+        self._busy = True
         self.console.set_status(status, C["go"])
         self.run_btn.set_enabled(False)
         self.stop_btn.set_enabled(True)
@@ -586,7 +629,7 @@ class Workspace(Screen):
     def run_special(self, kind: str, code: str, env: dict, intro: str, seconds: float | None = None,
                     events: list | None = None, stdin: str = "", files: list | None = None):
         """Run code that isn't the student's (the goal demo, or a wiring check) in a temp folder."""
-        if self.runner.running:
+        if self._busy or self.runner.running:
             return
         self.save_now()
         self._clean_special_dir()
@@ -595,9 +638,7 @@ class Workspace(Screen):
         path = Path(self._special_dir) / ("goal.py" if kind == "demo" else "wiring_check.py")
         path.write_text(code, encoding="utf-8")
         for rel in files or []:       # sample data the demo needs, from data/demo_files/
-            src = DEMO_FILES / rel
-            if src.exists():
-                shutil.copy(src, Path(self._special_dir) / src.name)
+            copy_sample(DEMO_FILES / rel, Path(self._special_dir))
         self.editor.clear_marks()
         self.console.clear()
         self.console.write(intro + "\n", "info")
@@ -617,6 +658,8 @@ class Workspace(Screen):
         words = command.split()
         if words[0] == "show" and self.board:
             self.board.set_camera_object(words[1])   # the picker follows the demo
+        elif words[0] == "stat" and len(words) == 3:
+            self.console.write(f"(Watch the goal pretends: {words[1]} = {words[2]})\n", "info")
         elif words[0] == "distance" and self.board and len(words) == 3:
             self.board.set_distance(int(words[1]), float(words[2]))      # so does the slider
 
@@ -696,6 +739,7 @@ class Workspace(Screen):
         if self._demo_input:
             self._maybe_type_demo()
         if self._exit_code is not None and self._closed_streams >= 2:
+            self._poll_job = None
             self._finished()
         else:
             self._poll_job = self.after(40, self._poll)
@@ -719,6 +763,7 @@ class Workspace(Screen):
             self.console.waiting_for_answer()
 
     def _finished(self):
+        self._busy = False
         self._schedule_warm()
         if self.board:
             self.board.set_live(False)
@@ -735,7 +780,10 @@ class Workspace(Screen):
             if self.board:
                 self.board.set_mode(self.mode)
             self.console.set_status("")
-            self.special_finished(kind, self.runner.stdout, stderr)
+            if reason == "user":               # stopped part-way: don't report it as finished
+                self.console.write("\n■ Stopped.\n", "info")
+            else:
+                self.special_finished(kind, self.runner.stdout, stderr)
             self._clean_special_dir()
             return
         folder = str(self.code_path().parent) + "/"
@@ -747,6 +795,7 @@ class Workspace(Screen):
                 return
             self.console.write("\n■ Stopped.\n", "info")
             self.console.set_status("stopped")
+            self.editor.focus()
             return
         err: ErrorInfo | None = None
         if reason in ("runaway_output", "runaway_busy"):
@@ -765,6 +814,8 @@ class Workspace(Screen):
             self.console.write("\n✓ Program finished.\n", "info")
             self.console.set_status("finished", C["go"])
         self.after_run(code, err, crashed, self.runner.stdout)
+        if self.focus_get() is None or not isinstance(self.focus_get(), tk.Entry):
+            self.editor.focus()            # back to the code, ready for the next change
 
     def after_run(self, code: str, err: ErrorInfo | None, crashed: bool, stdout: str):
         raise NotImplementedError
@@ -775,7 +826,13 @@ class Workspace(Screen):
 
     def start_tour(self):
         self._touring = True
-        Tour(self.app, self.tour_steps(), on_done=self.tour_done).start()
+        self._tour = Tour(self.app, self.tour_steps(), on_done=self._tour_finished)
+        self._tour.start()
+
+    def _tour_finished(self):
+        self._tour = None
+        if self.app.student is not None:
+            self.tour_done()
 
     def tour_done(self):
         pass
@@ -823,7 +880,7 @@ class LessonWorkspace(Workspace):
         self.attempts = 0
         self.step_runs = 0
         self.hint_ctx = None
-        self.revealed: dict = {}
+        self.revealed: dict = dict(self.lp.get("hints_seen") or {})    # hints opened, kept across visits
         self.confirmed: set[int] = set()      # "I saw it happen" boxes ticked this step
         self._last_eval = None                # (code, stdout, crashed, started) of the last run, for re-checking
         self.show_full = False                # Advanced: has the student opened the full explanation?
@@ -845,6 +902,8 @@ class LessonWorkspace(Workspace):
 
         code = app.student.read_lesson_code(self.lesson["file_name"])
         self.editor.set_code(code if code is not None else "")
+        for rel in self.lesson.get("files", []):      # sample files the activity uses (never overwritten)
+            copy_sample(DEMO_FILES / rel, self.code_path().parent, keep=True)
         self.save_lbl.configure(text="Saved ✓")
         self.console.clear()
         self.console.set_status("")
@@ -879,6 +938,10 @@ class LessonWorkspace(Workspace):
 
     def stop_is_finish(self) -> bool:
         return self.view == "step" and self.steps[self.step_i].get("run_mode") == "until_stopped"
+
+    def run(self):
+        if self.view == "step":            # the intro and the finish screen have nothing to run
+            super().run()
 
     # ---------------------------------------------------------------- help level
     def cycle_level(self):
@@ -947,10 +1010,10 @@ class LessonWorkspace(Workspace):
         self._dot_spans: list[tuple[int, int]] = []
         top = tk.Frame(v, bg=C["bg"])
         top.pack(fill="x")
-        self.step_title = label(top, "", font="h2", wraplength=300)
-        self.step_title.pack(side="left", anchor="w")
         self.step_badge = tk.Label(top, text="", font="small_bold", fg="#FFFFFF", padx=4, pady=1)
-        self.step_badge.pack(side="right", anchor="n", pady=4)
+        self.step_badge.pack(side="right", anchor="n", pady=4)          # packed first: it always gets its room
+        self.step_title = label(top, "", font="h2", wraplength=250)
+        self.step_title.pack(side="left", anchor="w")
         self.instructions = RichText(v)
         self.instructions.pack(fill="x", pady=(8, 0))
         self.explain_link = label(v, "", font="small_bold", fg=C["info"], cursor="hand2")
@@ -1081,7 +1144,8 @@ class LessonWorkspace(Workspace):
     # ---------------------------------------------------------------- steps
     def enter_step(self, i: int, carry_code: str | None = None):
         """Go to step i. carry_code: code to start from (a skipped step's example answer)."""
-        self.run_btn.set_enabled(True)
+        self._abandon_run()                # a program from the last step isn't checked against this one
+        self._save_pending()               # so a backup has the newest code
         student = self.app.student
         step = self.steps[i]
         first_time = i not in self.lp["steps_started"]
@@ -1187,6 +1251,8 @@ class LessonWorkspace(Workspace):
         for row, _icon, _txt in self._row_pool[len(checks):]:
             row.pack_forget()
 
+        for idx in self.confirmed & self._confirm_rows:      # re-drawn (a new help level): keep the ticks
+            self.check_rows[idx][0].configure(text="✓", highlightbackground=C["ok"])
         if not keep_coach:
             if done:
                 self.coach.message("ok", "Step complete", step.get("success", "Well done!"))
@@ -1295,11 +1361,18 @@ class LessonWorkspace(Workspace):
             if left > 0 and not self.app.teacher_mode:
                 locked = ("Have a go first: hints unlock after you press Run." if left == 1 and self.attempts == 0
                           else f"Hints unlock after {left} more tr{'y' if left == 1 else 'ies'}. You can do this!")
-        self.coach.set_hints(hints, locked, self.revealed.get(self.hint_ctx, 0))
+        self.coach.set_hints(hints, locked, self.revealed.get(self._hint_key(), 0))
+
+    def _hint_key(self) -> str:
+        return ":".join(str(x) for x in self.hint_ctx)
 
     def _hint_used(self, shown: int):
-        self.revealed[self.hint_ctx] = shown
-        self.lp["hints_used"] = self.lp.get("hints_used", 0) + 1
+        key = self._hint_key()
+        new = shown > self.revealed.get(key, 0)
+        self.revealed[key] = max(shown, self.revealed.get(key, 0))
+        self.lp["hints_seen"] = self.revealed
+        if new and self.step_i not in self.lp["steps_done"]:      # looking back at a finished step is free
+            self.lp["hints_used"] = self.lp.get("hints_used", 0) + 1
         self.app.student.save_progress()
         self.guide.scroll_to(self.coach)
 
@@ -1320,7 +1393,9 @@ class LessonWorkspace(Workspace):
             self.editor.mark_error_line(diag.line)
 
         self._last_eval = (code, stdout, crashed, self._run_started)
-        results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs, self.confirmed,
+        done = self.step_i in self.lp["steps_done"]          # already ticked off: no need to tick again
+        results = evaluate_checks(step["checks"], code, stdout, crashed, self.step_runs,
+                                  None if done else self.confirmed,
                                   folder=self.code_path().parent, since=self._run_started)
         self._show_results(results)
         passed = all(r.passed for r in results)
@@ -1404,13 +1479,14 @@ class LessonWorkspace(Workspace):
         if not step.get("demo"):
             return
         env = dict(SIM_ENV, **self.camera_env(sim=True)) if self.gpio else {}
+        env["PIPATH_DEMO"] = "1"           # pipath_computer shows what it would open, and opens nothing
         self.run_special("demo", step["demo"], env,
                          "▶ Watch the goal: this is what your program should do. (Your code isn't changed.)",
                          seconds=step.get("demo_seconds"), events=step.get("demo_events"),
                          stdin=step.get("demo_input", ""), files=step.get("demo_files"))
 
     def check_wiring(self):
-        if not self.parts or self.runner.running:
+        if not self.parts or self.runner.running or self._busy:
             return
         where = "on the Simulator board" if self.mode == "sim" else "on your breadboard"
         self.run_special("wiring", wiring_check_program(self.parts), self.extra_env(),
@@ -1586,7 +1662,10 @@ class FreeBuildWorkspace(Workspace):
                 w.bind("<Button-1>", lambda e, path=p: self.open_project(path))
 
     def open_project(self, path: Path):
+        self._abandon_run()                # the running program belongs to the old project
         if self.current:
+            if self._save_job:
+                self.after_cancel(self._save_job)
             self.save_now()
         self.current = path
         self.editor.set_code(path.read_text(encoding="utf-8"))

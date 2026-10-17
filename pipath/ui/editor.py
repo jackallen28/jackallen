@@ -30,6 +30,10 @@ _DEF = r"(?:(?<=\bdef )|(?<=\bclass ))(?P<DEF>\w+)"
 PATTERN = re.compile("|".join([_STRING, _COMMENT, _KW, _BUILTIN, _NUMBER, _DEF]))
 TAGS = {"KEYWORD": "syn_kw", "STRING": "syn_str", "COMMENT": "syn_com", "NUMBER": "syn_num",
         "BUILTIN": "syn_builtin", "DEF": "syn_def"}
+# Keys Tk gives a Text box for Emacs users. Students press them by accident and lose work.
+EMACS_KEYS = ("<Control-k>", "<Control-t>", "<Control-o>", "<Control-d>", "<Control-b>", "<Control-e>",
+              "<Control-n>", "<Control-p>", "<Control-w>")
+
 SKIP = re.compile("|".join([_STRING, _COMMENT]))      # where brackets don't count
 
 DEDENT_AFTER = re.compile(r"\s*(return|pass|break|continue|raise)\b")
@@ -104,6 +108,8 @@ class CodeEditor(tk.Frame):
             ("<Control-minus>", lambda e: self.zoom(-1)),
         ):
             t.bind(seq, fn)
+        for seq in EMACS_KEYS:          # Tk's old Emacs keys (Ctrl+K deletes a line, Ctrl+T swaps letters...)
+            t.bind(seq, lambda e: "break")
         t.bind("<<Modified>>", self._modified)
         t.bind("<Configure>", lambda e: self._draw_gutter())
         t.bind("<KeyRelease>", self._moved)

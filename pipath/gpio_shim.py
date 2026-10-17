@@ -251,6 +251,13 @@ def _command(words: list[str]) -> None:
             except ValueError:
                 pass
         return
+    if len(words) == 3 and words[0] == "stat" and words[1] in ("temp", "load", "ram"):
+        if os.environ.get("GPIOZERO_PIN_FACTORY") == "mock":       # pretend numbers for pipath_computer
+            try:
+                os.environ[f"PIPATH_SIM_{words[1].upper()}"] = str(float(words[2]))
+            except ValueError:
+                pass
+        return
     if len(words) != 2 or words[0] not in ("press", "release") or not words[1].isdigit():
         return
     if os.environ.get("GPIOZERO_PIN_FACTORY") != "mock":

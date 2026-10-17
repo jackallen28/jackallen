@@ -3,7 +3,9 @@ logo, choice lists, rich text and a scrolling frame."""
 from __future__ import annotations
 
 import re
+import time
 import tkinter as tk
+import tkinter.font as tkfont
 from pathlib import Path
 
 from .theme import C, LOGO_SQUARES, SCALE, blend
@@ -37,6 +39,7 @@ class PButton(tk.Label):
                          highlightbackground=self._ring_colour(), highlightcolor=self._ring_colour(), **kw)
         self.command = command
         self._down = False
+        self._last = 0.0
         self.bind("<Enter>", self._hover)
         self.bind("<Leave>", self._unhover)
         self.bind("<ButtonPress-1>", self._press)
@@ -65,7 +68,8 @@ class PButton(tk.Label):
             return
         inside = e is None or (0 <= e.x < self.winfo_width() and 0 <= e.y < self.winfo_height())
         self.configure(relief="raised" if inside else BUTTON_KINDS[self.kind][3])
-        if was_down and inside and self.command:
+        if was_down and inside and self.command and time.monotonic() - self._last > 0.35:
+            self._last = time.monotonic()        # a double-click is one press (a hint, a step, Finish)
             self.command()
 
     def _click(self, _e=None):
@@ -145,6 +149,7 @@ class TitleBar(tk.Canvas):
             self.sub = sub
         self.itemconfigure("title", text=self.text)
         self.itemconfigure("sub", text=self.sub)
+        self._layout()
 
     def add_right(self, widget: tk.Widget, pad: int = 6) -> tk.Widget:
         self._right.append((widget, pad))
@@ -158,6 +163,23 @@ class TitleBar(tk.Canvas):
         for i, (widget, pad) in enumerate(self._right, start=1):
             self.coords(f"w{i}", x, h // 2)
             x -= widget.winfo_reqwidth() + pad
+        self._fit_text(x)
+
+    def _fit_text(self, right: int) -> None:
+        """Shorten the title and subtitle with … so they never run under the buttons on the right."""
+        for tag, full, font in (("title", self.text, self.font), ("sub", self.sub, "small")):
+            items = self.find_withtag(tag)
+            if not items or right <= 0:
+                continue
+            room = right - self.coords(items[0])[0] - 12
+            f = tkfont.nametofont(font)
+            text = full
+            if f.measure(text) > room:
+                while text and f.measure(text + "…") > room:
+                    text = text[:-1]
+                text = text.rstrip() + "…" if text else ""
+            if self.itemcget(items[0], "text") != text:
+                self.itemconfigure(items[0], text=text)
 
     def _redraw(self, _e=None) -> None:
         w, h = self.winfo_width(), int(self.cget("height"))

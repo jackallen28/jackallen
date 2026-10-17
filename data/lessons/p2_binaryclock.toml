@@ -1,0 +1,519 @@
+# PI & COMPUTER 2: Binary Clock. The Pi's clock shown live in binary on six LEDs.
+# See e1_lightswitch.toml for the GPIO lesson keys.
+# Pin plan: LEDs 17, 27, 22, 5, 6, 13 (left = 32, right = 1), mode button 23.
+# Step by step: read the clock -> numbers in binary -> a ticking clock on the screen ->
+# test the six LEDs -> seconds on the LEDs -> test the button -> button switches seconds/minutes/hours.
+
+id = "p2_binaryclock"
+title = "Binary Clock"
+file_name = "binary_clock.py"
+requires_gpio = true
+
+intro = """
+## Tell the time like a computer
+
+Inside every computer, numbers are stored as **binary**: just 1s and 0s, on and off. Six LEDs are enough to show any number from 0 to 63, so they can show the seconds (0 to 59) ticking by.
+
+In this project you'll:
+- read the time from the Pi's clock with `datetime`
+- turn numbers into binary with `format()`
+- make a ticking binary clock on the screen
+- show it **live** on six LEDs
+- add a button to switch between seconds, minutes and hours
+
+Each LED has a value. Add up the values of the LEDs that are on:
+
+```
+32  16   8   4   2   1
+ ●   ○   ●   ○   ○   ●     32 + 8 + 1 = 41
+```
+"""
+
+outro = """
+## Your Pi tells the time in binary!
+
+You read the computer's clock, changed numbers into binary, turned text into a tuple of 1s and 0s, and used a button to change **modes**. Binary clocks are a favourite project for programmers: now you can read one!
+
+**Extension ideas:**
+- Add the buzzer on GPIO18 and make it beep on the hour (when the minutes are 0)
+- Make a countdown timer: count down from 63 in binary
+- Hold the button for 2 seconds to show the hours *and* the minutes, one after the other
+- Show the CPU load in binary with `cpu_load()` from the **Pi Health Lights** activity
+"""
+
+[[wiring]]
+part = "6 LEDs (left to right)"
+connect = "GPIO17, GPIO27, GPIO22, GPIO5, GPIO6, GPIO13 → each through its own 330Ω resistor → LED long leg. All short legs → GND rail. The left LED is worth 32, the right LED is worth 1."
+
+[[wiring]]
+part = "LED 32"
+kind = "led"
+pin = 17
+colour = "blue"
+connect = "GPIO17 (pin 11)"
+
+[[wiring]]
+part = "LED 16"
+kind = "led"
+pin = 27
+colour = "blue"
+connect = "GPIO27 (pin 13)"
+
+[[wiring]]
+part = "LED 8"
+kind = "led"
+pin = 22
+colour = "blue"
+connect = "GPIO22 (pin 15)"
+
+[[wiring]]
+part = "LED 4"
+kind = "led"
+pin = 5
+colour = "blue"
+connect = "GPIO5 (pin 29)"
+
+[[wiring]]
+part = "LED 2"
+kind = "led"
+pin = 6
+colour = "blue"
+connect = "GPIO6 (pin 31)"
+
+[[wiring]]
+part = "LED 1"
+kind = "led"
+pin = 13
+colour = "blue"
+connect = "GPIO13 (pin 33)"
+
+[[wiring]]
+part = "Mode button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 6.)"
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "What time is it?"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from datetime import datetime
+
+now = datetime.now()
+print("Hours:", now.hour)
+print("Minutes:", now.minute)
+print("Seconds:", now.___)
+'''
+text = """
+The Pi has a clock inside. `datetime.now()` asks it for the time **right now**, and gives back a value with parts you can read:
+
+- `now.hour` (0 to 23)
+- `now.minute` (0 to 59)
+- `now.second` (0 to 59)
+
+**Your task:** fill in the blank so the program prints the seconds too. Run it a few times and watch the seconds change.
+"""
+hints = [
+  "Look at how the hours and minutes are printed.",
+  "It's `now.second` (no s on the end).",
+  "The last line is `print(\"Seconds:\", now.second)`",
+]
+success = "Your program can read the clock. Now, how does a computer store a number like 41?"
+demo = '''
+from datetime import datetime
+
+now = datetime.now()
+print("Hours:", now.hour)
+print("Minutes:", now.minute)
+print("Seconds:", now.second)
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''now\.second\b'''
+label = "You read the seconds"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Seconds:\s*\d+'''
+label = "It prints the seconds"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Numbers in binary"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+for n in range(11):
+    print(n, format(n, ___))
+'''
+text = """
+`format(41, "06b")` turns the number 41 into binary text: `101001`.
+
+- the `b` means **binary**
+- the `06` means "use 6 digits, with 0s at the front if needed", so 5 becomes `000101`
+
+**Your task:** fill in the blank with `"06b"` (with the quotes) to print 0 to 10 in binary. Can you see the pattern? The right-hand digit flips every time.
+"""
+hints = [
+  "The blank needs the text that means \"6 binary digits\".",
+  "It's `\"06b\"`, with the quotes.",
+  "The line is `print(n, format(n, \"06b\"))`",
+]
+success = "That's how your Pi stores every number: as 1s and 0s. Six of them are enough for the seconds."
+demo = '''
+for n in range(11):
+    print(n, format(n, "06b"))
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''["']06b["']'''
+label = "You use 6 binary digits"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''^10\s+001010\s*$'''
+label = "10 shows as 001010"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "A binary clock on the screen"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from datetime import datetime
+from time import sleep
+
+for i in range(5):
+    now = datetime.now()
+    bits = format(now.second, "06b")
+    dots = bits.replace("1", "●").replace("0", ___)
+    print(f"{now.second:2}   {bits}   {dots}")
+    sleep(1)
+'''
+text = """
+Let's make the binary look like lights. `.replace("1", "●")` swaps every `1` in the text for a filled dot. Do the same to swap every `0` for an empty dot `○`.
+
+**Your task:** fill in the blank so the 0s become `○`. Run it and watch five seconds tick by in binary. (Copy the `○` from these instructions.)
+"""
+hints = [
+  "The blank is the text that should replace each 0.",
+  "Put the empty dot in quotes: `\"○\"`.",
+  "The line is `dots = bits.replace(\"1\", \"●\").replace(\"0\", \"○\")`",
+]
+success = "A ticking binary clock! The right-hand light flips every second, just like the real one will."
+demo = '''
+from datetime import datetime
+from time import sleep
+
+for i in range(5):
+    now = datetime.now()
+    bits = format(now.second, "06b")
+    dots = bits.replace("1", "●").replace("0", "○")
+    print(f"{now.second:2}   {bits}   {dots}")
+    sleep(1)
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_contains"
+value = "○"
+label = "The 0s become empty dots"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''[●○]{6}'''
+label = "It prints the seconds as dots"
+
+[[steps.checks]]
+type = "output_lines_min"
+min = 5
+label = "It ticks 5 times"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Test the six LEDs"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LEDBoard
+from time import sleep
+
+lights = LEDBoard(17, 27, 22, 5, 6, ___)
+
+for led in lights:         # one at a time, left to right
+    led.on()
+    sleep(0.3)
+sleep(0.5)
+lights.value = (1, 0, 1, 0, 0, 1)      # 32 + 8 + 1 = 41
+sleep(2)
+lights.off()
+'''
+text = """
+Now the hardware. Build the six LEDs (see **Wiring + Safety**, and take the blue HAT off first). Your code is safe in `backups/`.
+
+`LEDBoard` controls a row of LEDs as one thing. `lights.value` takes a **tuple** with a 1 (on) or 0 (off) for each LED, left to right.
+
+**Your task:** the last LED is on **GPIO13**. Fill in the blank and run it. The LEDs should light one by one, then show 41 in binary.
+"""
+hints = [
+  "Look at the Wiring card: which GPIO is the last LED on?",
+  "It's GPIO13.",
+  "The line is `lights = LEDBoard(17, 27, 22, 5, 6, 13)`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "Six lights, all working. Time to make them tick."
+demo = '''
+from gpiozero import LEDBoard
+from time import sleep
+
+lights = LEDBoard(17, 27, 22, 5, 6, 13)
+
+for led in lights:         # one at a time, left to right
+    led.on()
+    sleep(0.3)
+sleep(0.5)
+lights.value = (1, 0, 1, 0, 0, 1)      # 32 + 8 + 1 = 41
+sleep(2)
+lights.off()
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''LEDBoard\(\s*17\s*,\s*27\s*,\s*22\s*,\s*5\s*,\s*6\s*,\s*13\s*\)'''
+label = "All six LEDs are in the LEDBoard"
+
+[[steps.checks]]
+type = "confirm"
+label = "The LEDs lit one by one, then showed 41"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Seconds on the LEDs"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import LEDBoard
+from datetime import datetime
+from time import sleep
+
+lights = LEDBoard(17, 27, 22, 5, 6, 13)
+
+while True:
+    now = datetime.now()
+    bits = format(now.second, "06b")             # like "101001"
+    lights.value = tuple(int(b) for b in ___)    # "101001" -> (1, 0, 1, 0, 0, 1)
+    print(now.second, bits)
+    sleep(1)
+'''
+text = """
+Join the clock to the lights. The LEDs need a tuple like `(1, 0, 1, 0, 0, 1)`, but `format()` gives text like `"101001"`.
+
+`tuple(int(b) for b in bits)` goes through the text one character at a time, turns each one into a number with `int()`, and puts them all in a tuple.
+
+**Your task:** fill in the blank with the name of the binary text. Run it and watch the seconds tick by in binary. Press **Stop** when you've seen it.
+"""
+hints = [
+  "Which variable holds the binary text?",
+  "It's `bits`.",
+  "The line is `lights.value = tuple(int(b) for b in bits)`",
+]
+success = "A working binary clock! Can you read the seconds before the screen does?"
+demo = '''
+from gpiozero import LEDBoard
+from datetime import datetime
+from time import sleep
+
+lights = LEDBoard(17, 27, 22, 5, 6, 13)
+
+while True:
+    now = datetime.now()
+    bits = format(now.second, "06b")             # like "101001"
+    lights.value = tuple(int(b) for b in bits)    # "101001" -> (1, 0, 1, 0, 0, 1)
+    print(now.second, bits)
+    sleep(1)
+'''
+demo_seconds = 6
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''lights\.value\s*=.*\bbits\b'''
+label = "The LEDs show the binary seconds"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "It keeps ticking"
+
+[[steps.checks]]
+type = "confirm"
+label = "The right-hand LED flipped every second"
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Test the button"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+
+button = Button(23)
+
+for i in range(3):
+    print("Press the button...")
+    button.___()
+    print("Got it!")
+'''
+text = """
+One more part: a **button** to switch between seconds, minutes and hours. Wire it up (see **Wiring + Safety**). Your clock is safe in `backups/` and comes back in the next step.
+
+`button.wait_for_press()` stops the program until the button is pressed.
+
+**Your task:** fill in the blank and run it. Press the button three times.
+"""
+hints = [
+  "The program should wait for a press.",
+  "It's `wait_for_press`.",
+  "The line is `button.wait_for_press()`",
+]
+success = "The button works. Now join it to the clock."
+demo = '''
+from gpiozero import Button
+
+button = Button(23)
+
+for i in range(3):
+    print("Press the button...")
+    button.wait_for_press()
+    print("Got it!")
+'''
+demo_events = ["1 tap 23", "2 tap 23", "3 tap 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:wait_for_press"
+label = "It waits for the button"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''(Got it![\s\S]*){3}'''
+label = "You pressed it 3 times"
+
+# ------------------------------------------------------------------ STEP 7
+[[steps]]
+title = "Challenge: seconds, minutes, hours"
+support = "brief"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import LEDBoard, Button
+from datetime import datetime
+from time import sleep
+
+lights = LEDBoard(17, 27, 22, 5, 6, 13)
+button = Button(23)
+mode = "seconds"
+
+# Goal: each press switches seconds -> minutes -> hours -> seconds,
+# and prints which one it's showing.
+
+while True:
+    now = datetime.now()
+    bits = format(now.second, "06b")
+    lights.value = tuple(int(b) for b in bits)
+    sleep(0.2)
+'''
+text = """
+**Goal:** each press of the button switches the clock to the next **mode**: seconds → minutes → hours → back to seconds. Print which one it's showing each time, like `Showing minutes`.
+
+Tips:
+- write a function that changes `mode`, and give it to `button.when_pressed` (no brackets!)
+- a function that changes a variable from outside it needs `global mode` as its first line
+- in the loop, pick `now.second`, `now.minute` or `now.hour` depending on `mode`
+"""
+hints = [
+  "`def next_mode():` then `global mode`, then `if mode == \"seconds\": mode = \"minutes\"` and so on with `elif`.",
+  "In the loop: `number = now.second`, then `if mode == \"minutes\": number = now.minute`, and the same for hours. Use `number` in `format()`.",
+]
+success = "A binary clock with three modes. Ask a friend to read the time from it!"
+demo = '''
+from gpiozero import LEDBoard, Button
+from datetime import datetime
+from time import sleep
+
+lights = LEDBoard(17, 27, 22, 5, 6, 13)
+button = Button(23)
+mode = "seconds"
+
+def next_mode():
+    global mode
+    if mode == "seconds":
+        mode = "minutes"
+    elif mode == "minutes":
+        mode = "hours"
+    else:
+        mode = "seconds"
+    print("Showing", mode)
+
+button.when_pressed = next_mode
+
+while True:
+    now = datetime.now()
+    number = now.second
+    if mode == "minutes":
+        number = now.minute
+    elif mode == "hours":
+        number = now.hour
+    bits = format(number, "06b")
+    lights.value = tuple(int(b) for b in bits)
+    sleep(0.2)
+'''
+demo_events = ["2 tap 23", "4 tap 23", "6 tap 23"]
+demo_seconds = 7.5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:when_pressed"
+label = "The button changes the mode"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''now\.hour'''
+label = "It can show the hours"
+
+[[steps.checks]]
+type = "output_contains"
+value = "minutes"
+label = "It says when it shows the minutes"
+fail = "Print the mode each time it changes, like `print(\"Showing\", mode)`."
