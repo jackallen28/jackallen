@@ -22,7 +22,8 @@ os.environ["PIPATH_HOME"] = tempfile.mkdtemp(prefix="pipath_smoke_")
 os.environ.setdefault("PIPATH_FORCE_SIM", "1")
 
 from pipath import storage  # noqa: E402
-from pipath.app import PiPathApp  # noqa: E402
+from pipath.app import PiPathApp
+from pipath.ui.widgets import PopupMenu, about_box  # noqa: E402
 
 OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "shots")
 OUT.mkdir(parents=True, exist_ok=True)
@@ -206,7 +207,21 @@ def scenes(app):
                                         goal()), 3500),
         ("43_p4_doorbell_goal", lambda: (stop(), open_lesson("p4_doorbell")(), start_lesson(), to_step(5)(),
                                          goal()), 4000),
-        ("44_done", lambda: (stop(), app.show("home"))),
+        ("44_hardware_filter", lambda: (stop(), app.show("home"), app.screen.set_filter("hardware"))),
+        ("45_lab_new", lambda: app.screen.canvas.yview_moveto(0.55)),
+        ("46_parking_goal", lambda: (open_lesson("e5_parking")(), start_lesson(), to_step(5)(), goal()), 4500),
+        ("47_menu_edit", lambda: (stop(), app.screen.menubar.winfo_children()[1].event_generate("<ButtonPress-1>")), 800),
+        ("48_about", lambda: (PopupMenu.of(app).hide(), about_box(app))),
+        ("49_advanced_intro", lambda: (app._about.destroy(), app.show("home"), set_level("advanced")(),
+                                       open_lesson("e6_whackamole")())),
+        ("50_advanced_error", lambda: (app.screen.jump_to_challenge(), set_code("score = 0\ndef hit():\n    score += 1\nhit()\n")(),
+                                       press_run()), 2500),
+        ("51_code_review", lambda: (set_code("from gpiozero import LED\nfrom time import sleep\nled = LED(17)\n"
+                                             + "led.on()\nsleep(0.3)\nled.off()\nsleep(0.3)\n" * 3
+                                             + "q = int(input('How many? '))\n")(), app.screen.review_code())),
+        ("52_level_up_outro", lambda: (app.student.mark_complete("e6_whackamole"), app.screen.show_outro())),
+        ("53_morse_goal", lambda: (open_lesson("e7_morse")(), start_lesson(), to_step(2)(), goal()), 5000),
+        ("54_done", lambda: (stop(), app.show("home"))),
     ]
 
 

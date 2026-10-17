@@ -1,7 +1,7 @@
 # PiPath
 
-A Python coding tutor for Raspberry Pi, in the colours of the Banyule Nillumbik Tech School
-(with a Windows 95 / early-90s Mac look). Students log in with their **first name and school**
+A Python coding tutor for Raspberry Pi with a classic Windows 95/98 look, in the colours of the
+Banyule Nillumbik Tech School. Students log in with their **first name and school**
 (up to four names on one profile when they share a Pi), then choose any activity: screen-only
 Python, the Pi talking to its own computer, electronics with the GPIO pins, or the camera.
 A built-in **Coach** explains errors in plain English and gives tiered hints from a
@@ -11,6 +11,15 @@ GPIO and camera activities work like MakeCode: students try their code on an on-
 **Simulator** board first (and can **Watch the goal** to see what should happen), then
 switch to **Real Pi** and run the same code on their breadboard. In Real Pi mode the board shows
 **● LIVE** while the program drives the real pins.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Welcome](docs/screenshots/01_welcome_first_run.png) | ![Set up](docs/screenshots/02_setup.png) |
+| ![Hardware projects](docs/screenshots/03_hardware_filter.png) | ![Motion Alarm with the Simulator](docs/screenshots/04_a3_close.png) |
+| ![Edit menu](docs/screenshots/06_menu_edit.png) | ![Advanced: Python's own error and a technical explanation](docs/screenshots/08_advanced_error.png) |
+| ![Code review coach](docs/screenshots/09_code_review.png) | ![About PiPath](docs/screenshots/11_about.png) |
 
 ## Quick start (on the Pi)
 
@@ -63,6 +72,23 @@ with Python 3.11+ and Tkinter, in Simulator mode (`pip install gpiozero` for GPI
 6. **Free Build** is always open for their own projects. The board appears as soon as their
    code makes an LED or a Button.
 
+## Coaching for Years 9-10
+
+Students who have used Python before pick **Advanced** (at setup, or with the Settings cog):
+
+- each step starts with the goal, and **Jump to the challenge** on an activity's first page skips the
+  practice steps
+- errors show Python's own message plus a technical explanation (scope, types, callbacks, zero-indexing...)
+- after each step, and any time with **Run > Review my code**, the code review coach looks at *how*
+  the code is written: repeated code, magic numbers, unclear names, input that isn't validated,
+  `global`, bare `except:`, deep nesting, and functions without a test case
+- every activity's first page lists its **Victorian Curriculum Digital Technologies (Levels 9-10)**
+  links, and its finish page has three **Level up** challenges (classes, dictionaries, validation
+  and `assert` test cases, CSV analysis, structured English...)
+
+Moderate students get the code review and the deeper explanation too. Check the curriculum links
+against the version of the Victorian Curriculum your school uses.
+
 ## Activities
 
 | Tier | Activity | Students build | Kit |
@@ -78,6 +104,9 @@ with Python 3.11+ and Tkinter, in Simulator mode (`pip install gpiozero` for GPI
 | Advanced | **Reaction Timer** | the LED, random waits, test the button with a stopwatch, reaction game, false starts, 2-player race, high-score file | LED, 2 buttons |
 | Advanced | **Motion Alarm & Logger** | test the light + buzzer, measure distance with the ultrasonic sensor, "something's close" events, the alarm, arm/disarm state, CSV log, cooldown + report | HC-SR04, LED, buzzer, button |
 | Electronics Lab | Light Switch · RGB Mood Lamp · Simon Says · Bar Graph & Dice | events, PWM, colours, lists, games | see each Wiring card |
+| Electronics Lab | **Parking Sensor** | a car reversing beeper: zones, beeps that speed up, a parking game | HC-SR04, 3 LEDs, buzzer, button |
+| Electronics Lab | **Whack-a-Mole** | an arcade game with timeouts, a score that speeds up and a high-score file | 3 LEDs, 3 buttons, buzzer |
+| Electronics Lab | **Morse Code Messenger** | dictionaries, sending with light and sound, timing a key, decoding, a quiz | LED, buzzer, button |
 | Camera & AI | **Photo Booth** | photo, button photo, LED 3-2-1 countdown, all together, timestamped photos, photo strip | camera, 3 LEDs, button, buzzer |
 | Camera & AI | **Teachable Machine** | images as numbers, training data, distance, a nearest-neighbour guess, lights for the answer, accuracy, bias | camera, 2 LEDs, button |
 

@@ -1,0 +1,819 @@
+# ELECTRONICS LAB 6: Whack-a-Mole. See e1_lightswitch.toml for the GPIO lesson keys.
+# Pin plan: moles = LEDs 17, 27, 22; buttons 23, 24, 25 (button n hits mole n); buzzer 18.
+# One part at a time: the moles -> test the buttons -> which_button() -> one round ->
+# test the buzzer -> ten rounds with a score -> faster and faster -> challenge.
+
+id = "e6_whackamole"
+title = "Whack-a-Mole"
+file_name = "whack_a_mole.py"
+requires_gpio = true
+
+intro = """
+## Build an arcade game
+
+Three moles (LEDs) pop up at random. Hit the button under a mole before it hides again. Every hit makes the next mole **faster**. How many can you whack?
+
+You'll build it one part at a time:
+- make the moles pop up with a **list** of LEDs and `random`
+- test the three buttons on their own
+- write a **function** that waits for a button, but not forever
+- play one round, then a whole game with a **score**
+- test the buzzer, then make it beep on every hit
+- speed the game up, and save a **high score** to a file
+
+**Before you wire:** take the **blue HAT** off the GPIO pins before you change any wires, and put it back on when you're done. **Never turn the Pi off** to change wires: you'd lose your progress.
+"""
+
+outro = """
+## Whack! You built an arcade game
+
+You used lists, random numbers, a function that **returns** a value (or `None`), a game loop with a score, a timer that speeds up, and a file that remembers the high score. Real arcade machines work the same way: a tiny computer reads buttons, lights lamps and keeps score.
+
+**Extension ideas:**
+- Add a **2-player mode**: player 2 gets three more buttons, and the moles are shared. Who whacks first?
+- Add a **golden mole**: once in a while all three LEDs flash, and a hit is worth 5 points
+- Keep a **leaderboard**: save each player's name and score to `scores.csv`, then print the top 3
+"""
+
+[[wiring]]
+part = "Left mole (LED)"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω → long leg, short leg → GND."
+
+[[wiring]]
+part = "Middle mole (LED)"
+kind = "led"
+pin = 27
+colour = "yellow"
+connect = "GPIO27 (pin 13) → 330Ω → long leg, short leg → GND."
+
+[[wiring]]
+part = "Right mole (LED)"
+kind = "led"
+pin = 22
+colour = "green"
+connect = "GPIO22 (pin 15) → 330Ω → long leg, short leg → GND."
+
+[[wiring]]
+part = "Left button"
+kind = "button"
+pin = 23
+connect = "GPIO23 (pin 16) and GND."
+
+[[wiring]]
+part = "Middle button"
+kind = "button"
+pin = 24
+connect = "GPIO24 (pin 18) and GND."
+
+[[wiring]]
+part = "Right button"
+kind = "button"
+pin = 25
+connect = "GPIO25 (pin 22) and GND."
+
+[[wiring]]
+part = "Buzzer (step 5)"
+kind = "buzzer"
+pin = 18
+connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → GND rail."
+
+[[wiring]]
+part = "Tip"
+connect = "Put each button straight under its LED, so players can see which button hits which mole. Use the breadboard's blue (−) rail for all the GNDs."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "The moles pop up"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED
+from time import sleep
+import random
+
+moles = [LED(17), LED(27), LED(22)]   # left, middle, right
+
+for i in range(5):
+    number = random.randint(0, ___)   # pick a mole at random
+    print("Mole", number, "pops up!")
+    moles[number].___()               # light it up
+    sleep(0.8)
+    moles[number].off()
+    sleep(0.3)
+
+print("All the moles are hiding")
+'''
+text = """
+Each mole is an LED. All three live in **one list**, so we can pick one with a number.
+
+Python counts list positions from **0**:
+- `moles[0]` is the left mole
+- `moles[1]` is the middle mole
+- `moles[2]` is the right mole
+
+`random.randint(0, 2)` picks a random whole number from 0 to 2, so a different mole can pop up each time.
+
+**Your task:** fill in the two blanks so a random mole lights up, 5 times. Run it and watch the moles pop up.
+"""
+hints = [
+  "The biggest position in the list is the right mole. What number is it? And which method switches an LED on?",
+  "The first blank is `2`. The second blank is `on`.",
+  "The lines are `number = random.randint(0, 2)` and `moles[number].on()`",
+]
+error_hints = { IndexError = "`moles[3]` doesn't exist. The list only has positions 0, 1 and 2. Check your `randint` numbers." }
+success = "The moles are popping up. Now let's get the buttons ready to whack them."
+demo = '''
+from gpiozero import LED
+from time import sleep
+import random
+
+moles = [LED(17), LED(27), LED(22)]   # left, middle, right
+
+for i in range(5):
+    number = random.randint(0, 2)     # pick a mole at random
+    print("Mole", number, "pops up!")
+    moles[number].on()                # light it up
+    sleep(0.8)
+    moles[number].off()
+    sleep(0.3)
+
+print("All the moles are hiding")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''randint\(\s*0\s*,\s*2\s*\)'''
+label = "A random mole from 0 to 2"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''(Mole \d pops up!\s*){5}'''
+label = "Five moles pop up"
+fail = "Five lines like `Mole 1 pops up!` should show in the Output. Is the loop still `range(5)`?"
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw the moles light up in random places"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Test the buttons"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+
+buttons = [Button(23), Button(24), Button(25)]   # left, middle, right
+
+for number in range(3):
+    print("Press button", number)
+    buttons[number].wait_for_press()
+    print("Button", number, "works!")
+    buttons[number].___()             # wait here until you let go
+
+print("All 3 buttons work!")
+'''
+text = """
+Before the buttons join the game, test each one **on its own**. (Your mole code is safe in the `backups/` folder.)
+
+The buttons are in a list too, in the same order as the moles. So `buttons[0]` hits `moles[0]`, and so on.
+
+`wait_for_press()` waits until the button is pressed. `wait_for_release()` waits until you let go, so one press only counts once.
+
+**Your task:** fill in the blank so the program waits for you to **let go**. Run it and press the left, middle, then right button.
+
+*Simulator:* click the buttons on the board. Nothing happens on a Real Pi? Press **Check my wiring** in the Wiring + Safety card.
+"""
+hints = [
+  "You want the method that waits for the button to be *released*.",
+  "Replace `___` with `wait_for_release`.",
+  "The line is `buttons[number].wait_for_release()`",
+]
+success = "All three buttons work. Next, a function that waits for any of them."
+demo = '''
+from gpiozero import Button
+
+buttons = [Button(23), Button(24), Button(25)]   # left, middle, right
+
+for number in range(3):
+    print("Press button", number)
+    buttons[number].wait_for_press()
+    print("Button", number, "works!")
+    buttons[number].wait_for_release()  # wait here until you let go
+
+print("All 3 buttons work!")
+'''
+demo_events = ["1.5 tap 23 every 0.6 until 12", "1.7 tap 24 every 0.6 until 12", "1.9 tap 25 every 0.6 until 12"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:wait_for_release"
+label = "Each press only counts once"
+
+[[steps.checks]]
+type = "output_contains"
+value = "All 3 buttons work"
+label = "You pressed all three buttons"
+fail = "Press the left, middle and right buttons, in that order."
+
+[[steps.checks]]
+type = "confirm"
+label = "Every button worked when I pressed it"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Which button? Quick!"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < ___:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return ___
+
+for i in range(3):
+    print("Quick! Press a button...")
+    choice = which_button(3)
+    if choice is None:
+        print("Too slow!")
+    else:
+        print("You pressed button", choice)
+'''
+text = """
+In the game, a mole only stays up for a short time. So we need a **function** that waits for **any** button, but **not forever**.
+
+`which_button(timeout)` checks all three buttons, again and again, 100 times a second. `monotonic()` is the Pi's stopwatch: `monotonic() - start` is how many seconds have gone by.
+
+- A button is pressed? `return` its number (0, 1 or 2).
+- Time's up? `return None`. `None` is Python's way of saying *nothing*.
+
+**Your task:** fill in the two blanks:
+1. Keep checking while the time gone by is less than `timeout`
+2. When time's up, return `None`
+
+Run it and play 3 times. Press a button quickly once, and once don't press anything at all.
+
+**Watch out:** we check `if choice is None`, not `if not choice`. Why? To Python, `0` counts as "nothing" too, so the left button would look like "too slow"!
+"""
+hints = [
+  "The function is given the number of seconds to wait. What is that variable called?",
+  "The first blank is `timeout`. The second blank is `None`.",
+  "The lines are `while monotonic() - start < timeout:` and `return None`",
+]
+success = "Your function can tell a quick player from a slow one. That's the heart of the game."
+demo = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < timeout:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return None
+
+for i in range(3):
+    print("Quick! Press a button...")
+    choice = which_button(3)
+    if choice is None:
+        print("Too slow!")
+    else:
+        print("You pressed button", choice)
+'''
+demo_events = ["3 tap 24", "8 tap 25"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "Your function returns an answer"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''pressed button [0-2]'''
+label = "A quick press is caught"
+fail = "Press a button while it says `Quick!`."
+
+[[steps.checks]]
+type = "output_contains"
+value = "Too slow"
+label = "Waiting too long says Too slow"
+fail = "Try one round where you don't press anything. Does it say `Too slow!` after 3 seconds?"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "One round: whack!"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+Now join the moles and the buttons. One round goes like this:
+
+1. Pick a random mole and light it
+2. `choice = which_button(2)` gives the player 2 seconds
+3. Switch the mole off again
+4. Check the answer:
+   - `choice == mole` means **Hit!**
+   - `choice is None` means **Too slow!**
+   - anything else means **Miss!** (wrong button)
+
+**Your task:** delete the `for i in range(3):` test loop at the bottom of your program. In its place, write **one round** with `if`, `elif` and `else`. Play it 2 or 3 times.
+"""
+hints = [
+  "Start with `mole = random.randint(0, 2)` then `moles[mole].on()`.",
+  "After `choice = which_button(2)` and `moles[mole].off()`, use `if choice == mole:` then `elif choice is None:` then `else:`.",
+  "Example:\n```\nmole = random.randint(0, 2)\nmoles[mole].on()\nchoice = which_button(2)\nmoles[mole].off()\nif choice == mole:\n    print(\"Hit!\")\nelif choice is None:\n    print(\"Too slow!\")\nelse:\n    print(\"Miss!\")\n```",
+]
+error_hints = { NameError = "Is `mole` spelt the same every time? And is `which_button` still above the round?" }
+success = "One round works. Now let's make it a whole game, with a beep for every hit."
+demo = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < timeout:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return None
+
+mole = random.randint(0, 2)
+moles[mole].on()
+choice = which_button(2)
+moles[mole].off()
+if choice == mole:
+    print("Hit!")
+elif choice is None:
+    print("Too slow!")
+else:
+    print("Miss!")
+'''
+demo_events = ["2 tap 23 every 0.6 until 8"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''which_button\('''
+label = "The round uses which_button()"
+
+[[steps.checks]]
+type = "code_uses"
+value = "elif"
+label = "Hit, Too slow or Miss: three answers"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Hit|Miss|Too slow'''
+ignore_case = true
+label = "You played a round"
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You played more than once"
+fail = "Press Run again. Does a different mole pop up?"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Test the buzzer"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Buzzer
+from time import sleep
+
+buzzer = Buzzer(___)         # the buzzer is wired to GPIO18
+
+buzzer.on()
+sleep(0.2)
+buzzer.off()
+sleep(0.5)
+
+buzzer.beep(on_time=0.1, off_time=0.1, n=3, background=False)
+print("Buzzer test done")
+'''
+text = """
+Every arcade game needs sound! Test the buzzer **on its own** first. (Your game code is safe in the `backups/` folder, and the next step brings it back.)
+
+- `buzzer.on()` and `buzzer.off()` work just like an LED
+- `buzzer.beep(on_time=0.1, off_time=0.1, n=3)` beeps 3 short times
+
+`background=False` makes the program wait for the beeps to finish before it carries on.
+
+**Your task:** fill in the blank with the buzzer's GPIO number (it's in the **Wiring + Safety** card). Run it and listen: one beep, then three quick ones.
+"""
+hints = [
+  "Look for the buzzer in the Wiring + Safety card. Which GPIO number is it on?",
+  "The buzzer is on GPIO18, so the blank is `18`.",
+  "The line is `buzzer = Buzzer(18)`",
+]
+success = "The buzzer works. Time to put the whole game together."
+demo = '''
+from gpiozero import Buzzer
+from time import sleep
+
+buzzer = Buzzer(18)          # the buzzer is wired to GPIO18
+
+buzzer.on()
+sleep(0.2)
+buzzer.off()
+sleep(0.5)
+
+buzzer.beep(on_time=0.1, off_time=0.1, n=3, background=False)
+print("Buzzer test done")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''Buzzer\(\s*18\s*\)'''
+label = "You use the buzzer on GPIO18"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Buzzer test done"
+label = "Your program gets to the end"
+
+[[steps.checks]]
+type = "confirm"
+label = "I heard one beep, then three quick beeps"
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Ten moles and a score"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Button, Buzzer
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+buzzer = Buzzer(18)
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < timeout:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return None
+
+score = 0
+for turn in range(10):
+    mole = random.randint(0, 2)
+    moles[mole].on()
+    choice = which_button(2)
+    moles[mole].off()
+    if choice == mole:
+        print("Hit!")
+        ___                       # add 1 to the score
+        ___                       # one short beep
+    elif choice is None:
+        print("Too slow!")
+    else:
+        print("Miss!")
+    sleep(0.5)
+
+print("Game over! Score:", score, "out of 10")
+'''
+text = """
+Here's your game again, with the buzzer added and the round inside a `for` loop, so 10 moles pop up.
+
+`score = 0` starts the score at zero, **before** the loop. Each hit should add 1 to it.
+
+**Your task:** replace the two `___` lines:
+1. Add 1 to `score`
+2. Make the buzzer give **one** short beep (look back at the buzzer test)
+
+Play a game. Can you score 10 out of 10?
+"""
+hints = [
+  "To add 1 to a variable, set it to itself plus 1. For the beep, `n=1` means one beep.",
+  "The first line is `score = score + 1`. The second uses `buzzer.beep(...)` with `on_time=0.1` and `n=1`.",
+  "The lines are `score = score + 1` and `buzzer.beep(on_time=0.1, n=1)`",
+]
+error_hints = { NameError = "Is `score = 0` above the loop, and spelt the same every time?" }
+success = "A real game with a score and sound effects. Next: make it harder!"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+buzzer = Buzzer(18)
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < timeout:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return None
+
+score = 0
+for turn in range(10):
+    mole = random.randint(0, 2)
+    moles[mole].on()
+    choice = which_button(2)
+    moles[mole].off()
+    if choice == mole:
+        print("Hit!")
+        score = score + 1         # add 1 to the score
+        buzzer.beep(on_time=0.1, n=1)   # one short beep
+    elif choice is None:
+        print("Too slow!")
+    else:
+        print("Miss!")
+    sleep(0.5)
+
+print("Game over! Score:", score, "out of 10")
+'''
+demo_events = ["1.5 tap 23 every 0.9 until 30", "1.8 tap 24 every 0.9 until 30", "2.1 tap 25 every 0.9 until 30"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''score\s*(\+=|=\s*score\s*\+)\s*1'''
+label = "A hit adds 1 to the score"
+fail = "Inside `if choice == mole:`, add 1 to the score: `score = score + 1`."
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:beep"
+label = "The buzzer beeps on a hit"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score: \d+'''
+label = "The final score is shown"
+
+[[steps.checks]]
+type = "confirm"
+label = "I heard a beep when I hit a mole"
+
+# ------------------------------------------------------------------ STEP 7
+[[steps]]
+title = "Faster and faster"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+Real arcade games get harder as you get better. Let's make the moles hide **faster** after every hit.
+
+Instead of always giving the player 2 seconds, keep the time in a **variable**:
+
+```
+time_allowed = 2.0
+```
+
+After each hit, make it a little shorter:
+
+```
+time_allowed = max(0.5, time_allowed - 0.2)
+```
+
+`max()` picks the bigger number, so the time never drops below half a second. (Otherwise the game would be impossible!)
+
+**Your task:**
+1. Make `time_allowed = 2.0` before the loop
+2. Use `which_button(time_allowed)` instead of `which_button(2)`
+3. Make it shorter after every hit
+4. At the start of each turn, show the time, like `Mole 3: 1.6 seconds`
+"""
+hints = [
+  "Put `time_allowed = 2.0` next to `score = 0`. Change `which_button(2)` to `which_button(time_allowed)`.",
+  "Inside `if choice == mole:`, add `time_allowed = max(0.5, time_allowed - 0.2)`.",
+  "At the top of the loop: `print(f\"Mole {turn + 1}: {time_allowed:.1f} seconds\")`. The `:.1f` shows 1 decimal place.",
+]
+success = "The game fights back now. Can you still get 10 out of 10?"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+buzzer = Buzzer(18)
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < timeout:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return None
+
+score = 0
+time_allowed = 2.0
+for turn in range(10):
+    print(f"Mole {turn + 1}: {time_allowed:.1f} seconds")
+    mole = random.randint(0, 2)
+    moles[mole].on()
+    choice = which_button(time_allowed)
+    moles[mole].off()
+    if choice == mole:
+        print("Hit!")
+        score = score + 1
+        buzzer.beep(on_time=0.1, n=1)
+        time_allowed = max(0.5, time_allowed - 0.2)
+    elif choice is None:
+        print("Too slow!")
+    else:
+        print("Miss!")
+    sleep(0.5)
+
+print("Game over! Score:", score, "out of 10")
+'''
+demo_events = ["1.5 tap 23 every 0.9 until 30", "1.8 tap 24 every 0.9 until 30", "2.1 tap 25 every 0.9 until 30"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''which_button\(\s*[A-Za-z_]\w*\s*\)'''
+label = "which_button() gets a time that can change"
+fail = "Use a variable, like `which_button(time_allowed)`, instead of a number."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''(\w+)\s*=\s*.*\1\s*(-|\*|/)'''
+label = "The time gets shorter"
+fail = "After a hit, make the time smaller: `time_allowed = max(0.5, time_allowed - 0.2)`."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d\.\d\s*sec'''
+label = "Each turn shows the time allowed"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score: \d+'''
+label = "The final score is shown"
+
+# ------------------------------------------------------------------ STEP 8
+[[steps]]
+title = "Challenge: three lives and a high score"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** turn it into a proper arcade game.
+
+1. No more 10 turns: the player has **3 lives**. A miss or a "too slow" loses a life. The game keeps going until all 3 are gone.
+2. At the start, load the **high score** from `highscore.txt`. Use `try` / `except`, because the file won't be there the first time.
+3. At the end, print the score. If it beats the high score, print `New high score!` and save it to the file.
+
+**Tip:** swap the `for` loop for `while misses < 3:`.
+"""
+hints = [
+  "Start with `misses = 0`, use `while misses < 3:`, and add 1 to `misses` on a miss or when the player is too slow.",
+  "Load it with `try:` then `with open(\"highscore.txt\") as file:` and `best = int(file.read())`. Under `except FileNotFoundError:` set `best = 0`.",
+  "Save it with `with open(\"highscore.txt\", \"w\") as file:` then `file.write(str(score))`. `str()` turns the number into text.",
+]
+error_hints = { ValueError = "The high score file might be empty or have words in it. Catch it too: `except (FileNotFoundError, ValueError):`" }
+success = "Lives, speed, sound and a high score that stays. That's a real arcade game. Challenge a friend!"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from time import sleep, monotonic
+import random
+
+moles = [LED(17), LED(27), LED(22)]               # left, middle, right
+buttons = [Button(23), Button(24), Button(25)]
+buzzer = Buzzer(18)
+
+def which_button(timeout):
+    """Wait up to timeout seconds for a button. Return 0, 1 or 2, or None if too slow."""
+    start = monotonic()
+    while monotonic() - start < timeout:
+        for number in range(3):
+            if buttons[number].is_pressed:
+                buttons[number].wait_for_release()
+                return number
+        sleep(0.01)
+    return None
+
+try:
+    with open("highscore.txt") as file:
+        best = int(file.read())
+except (FileNotFoundError, ValueError):
+    best = 0
+print("High score to beat:", best)
+
+score = 0
+misses = 0
+time_allowed = 2.0
+while misses < 3:
+    print(f"Lives: {3 - misses}   Time: {time_allowed:.1f} seconds")
+    mole = random.randint(0, 2)
+    moles[mole].on()
+    choice = which_button(time_allowed)
+    moles[mole].off()
+    if choice == mole:
+        print("Hit!")
+        score = score + 1
+        buzzer.beep(on_time=0.1, n=1)
+        time_allowed = max(0.5, time_allowed - 0.2)
+    else:
+        misses = misses + 1
+        if choice is None:
+            print("Too slow!")
+        else:
+            print("Miss!")
+    sleep(0.5)
+
+print("Game over! Score:", score)
+if score > best:
+    print("New high score!")
+    with open("highscore.txt", "w") as file:
+        file.write(str(score))
+else:
+    print("The high score is still", best)
+'''
+demo_events = ["1.5 tap 23 every 0.9 until 40", "1.8 tap 24 every 0.9 until 40", "2.1 tap 25 every 0.9 until 40"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "The game keeps going until the lives run out"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Try"
+label = "Loading the high score can't crash the game"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''open\(.*["']w["']'''
+label = "The high score is saved to a file"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score: \d+'''
+label = "The final score is shown"

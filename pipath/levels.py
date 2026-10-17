@@ -14,9 +14,10 @@ DEFAULT = "beginner"
 
 INFO = {
     "beginner": ("Beginner", "New to Python. Full explanations, and hints whenever you want them."),
-    "moderate": ("Moderate", "You've done some Python. Help fades as you go: have a try, then hints unlock."),
-    "advanced": ("Advanced", "Confident with Python (Year 9-10). Tutorial off: just the goal, fewer hints, "
-                             "and you can skip steps you already know."),
+    "moderate": ("Moderate", "You've done some Python. Help fades as you go: have a try, then hints unlock. "
+                             "Code reviews after each step."),
+    "advanced": ("Advanced", "I've used Python before (Year 9-10). Tutorial off: just the goal, fewer hints, "
+                             "Python's real error messages, code reviews, and you can skip ahead."),
 }
 
 # The activity's own support level -> (hints unlock after N tries, how many hint tiers you can see)

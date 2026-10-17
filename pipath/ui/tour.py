@@ -20,16 +20,17 @@ class Tour:
         self.steps = steps
         self.on_done = on_done
         self.i = 0
-        self.frames = [tk.Frame(root, bg=C["syn_def"]) for _ in range(4)]
-        self.bubble = tk.Frame(root, bg=C["ink"], padx=18, pady=14, highlightthickness=0)
-        self.counter = label(self.bubble, font="small_bold", fg=C["syn_def"], bg=C["ink"])
+        self.frames = [tk.Frame(root, bg=C["purple"]) for _ in range(4)]
+        # a yellow Windows tooltip balloon with a thin black edge
+        self.bubble = tk.Frame(root, bg=C["tooltip"], padx=16, pady=12, highlightthickness=1,
+                               highlightbackground=C["dark"], highlightcolor=C["dark"])
+        self.counter = label(self.bubble, font="small_bold", fg=C["purple"], bg=C["tooltip"])
         self.counter.pack(anchor="w")
-        self.title = label(self.bubble, font="h3", fg="#FFFFFF", bg=C["ink"])
+        self.title = label(self.bubble, font="h3", fg=C["ink"], bg=C["tooltip"])
         self.title.pack(anchor="w", pady=(2, 6))
-        self.body = RichText(self.bubble, bg=C["ink"], fg="#E9EBEF", width=38)
-        self.body.tag_configure("code", background="#363C49", foreground="#FFD866")
+        self.body = RichText(self.bubble, bg=C["tooltip"], fg=C["ink"], width=38)
         self.body.pack(anchor="w", fill="x")
-        row = tk.Frame(self.bubble, bg=C["ink"])
+        row = tk.Frame(self.bubble, bg=C["tooltip"])
         row.pack(fill="x", pady=(12, 0))
         self.skip = PButton(row, "Skip tour", self.finish, kind="dark", font="small_bold", pady=5)
         self.skip.pack(side="left")

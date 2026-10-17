@@ -43,11 +43,22 @@ errors (`data/errors.toml`) and per-step hints written by the teacher. (The *Tea
 Machine* activity is machine learning the students write themselves: a nearest-neighbour
 classifier over tiny greyscale grids. No model, library or internet.)
 
-**Look:** retro (Windows 95 / early-90s Mac) in the Banyule Nillumbik Tech School colours: teal
-desktop, bevelled lavender windows with purple→teal gradient title bars, the school logo in the
-top-left corner (`data/brand/`, made by `tools/make_logo_assets.py`). Colours and fonts live in
-`ui/theme.py`; the retro pieces (TitleBar, PButton, CogButton, ChoiceList, window, bevel) in
-`ui/widgets.py`. Keep new screens in this style.
+**Look:** classic Windows 95/98 with the Banyule Nillumbik Tech School colours: the teal
+(#008080) desktop, silver-grey (#C0C0C0) windows with two-level bevels, grey buttons with a black
+ring for the default one, white sunken fields, purple→teal gradient title bars (✕ box on dialogs),
+a File / Edit / Run / View / Help menu bar, Help > About PiPath, yellow tooltip-style tour
+balloons, a Visual Basic 6 style white editor and an MS-DOS Prompt style Output. The school logo
+sits in the top-left corner (`data/brand/`, made by `tools/make_logo_assets.py`). Colours and fonts
+live in `ui/theme.py`; the retro pieces (TitleBar, MenuBar, PButton, CogButton, ChoiceList, window,
+bevel, about_box) in `ui/widgets.py`. Keep new screens in this style.
+
+**Year 9-10 coaching:** students who have used Python before choose **Advanced**. They get the
+goal first, Python's real error message plus a technical explanation (`tech` in errors.toml), a
+**code review** after each step (`pipath/review.py`: repeated code, magic numbers, names, input
+validation, globals, bare except, test cases), **Jump to the challenge** on an activity's intro,
+and **Level up** challenges in the outro. Each activity lists its Victorian Curriculum Digital
+Technologies (Levels 9-10) links (`curriculum` in catalog.toml). Moderate students get the code
+review and the deeper "Under the bonnet" explanation too.
 
 **Hardware safety:** classes use a **blue GPIO HAT**. Student-facing text always says: take the
 blue HAT off before changing wires, put it back on after, and **never turn the Pi off** (they'd
@@ -140,7 +151,8 @@ repo root
 │       ├── s1_hello, s2_pibot, s3_guess        Simple (screen only)
 │       ├── a1_traffic, a2_reaction, a3_alarm   Advanced GPIO
 │       ├── p1_pihealth, p2_binaryclock, p3_dicedj, p4_doorbell   Pi & Computer
-│       ├── e1_lightswitch, e2_moodlamp, e3_simon, e4_dice   Electronics Lab
+│       ├── e1_lightswitch, e2_moodlamp, e3_simon, e4_dice,
+│       │   e5_parking, e6_whackamole, e7_morse               Electronics Lab
 │       └── c1_photobooth, c2_teachable          Camera & AI
 │   ├── demo_files/p3/party/1.wav..6.wav  Dice DJ sounds (copied to the student's folder)
 │   └── brand/               the school logo: original + corner / full sizes (RGBA PNG)
@@ -151,6 +163,7 @@ repo root
 │   ├── storage.py           profiles, progress, code files, app state, CSV export (atomic writes)
 │   ├── levels.py            help levels (Beginner / Moderate / Advanced): hint rules, goal text, skip
 │   ├── hints.py             Coach engine: precheck, gpio_lint, traceback parsing, matching, checks
+│   ├── review.py            code review coach (ast): tips on how code is written, for Years 9-10
 │   ├── runner.py            runs student code: live output, stdin, runaway detection, shim pipes,
 │   │                        warm start (a spare shim process with gpiozero already imported)
 │   ├── gpio.py              app-side GPIO: Pi detection, Simulator env, wiring parts, header map,
@@ -183,6 +196,7 @@ repo root
     ├── test_camera.py       V4L2 layouts + ioctl numbers, MJPEG fix-up, PNG, Simulator camera, clues
     ├── test_computer.py     pipath_computer numbers, pretend stats, opening files (never for real)
     ├── test_editor.py       editor behaviour (needs Tk + a display; skipped otherwise)
+    ├── test_review.py       the code review coach
     ├── test_activities.py   every step's demo passes its checks (all activities); lesson lint
     ├── shimrun.py           helper: run code through the shim with timed presses
     ├── gui_smoke.py         drives the real app under Xvfb and saves screenshots (not unittest)
@@ -275,6 +289,8 @@ try_first = ["s3_guess"]  # optional tip "Good to try first: ...", hidden once t
 gpio = true               # optional: card says "needs GPIO kit"
 camera = true             # optional: card says "needs camera"
 parts = [..]              # optional: shopping list, shown in the Wiring card
+curriculum = [..]         # "Strand: what students do" (Victorian Curriculum DT Levels 9-10), on the intro
+stretch = [..]            # Level up challenges for experienced students, in the outro
 ```
 
 Nothing is locked; `unlock_after` and `free_build_unlock` are gone.
@@ -373,6 +389,7 @@ code = '''regex'''                  # optional, searched in the broken line of c
 title = "Can't join text and a number with +"
 explain = "markdown. {line}, {code_line}, {type}, {message} and named groups are filled in"
 hints = ["up to 3, nudge → near-answer"]
+tech = """optional: the deeper why, with technical terms, for Moderate / Advanced (Years 9-10)"""
 ```
 
 First match wins, so **specific entries go above general ones**. The file ends with a
@@ -465,6 +482,9 @@ Avoid GPIO 2/3 (I²C, fixed pull-ups) and 14/15 (serial console).
 | Lab | E2 RGB Mood Lamp | ✅ | tuples · rainbow nested loop · `%` wrap, planted IndexError (S) · party mode `when_held` · own lamp (B) |
 | Lab | E3 Simon Says | ✅ | lists of LEDs · `zip()` · random pattern · `get_press()` returns (S) · full game (B) |
 | Lab | E4 Bar Graph & Digital Dice | ✅ | LEDBoard · scanner · counter with limits (S) · dice roll · shake to roll (B) |
+| Lab | E5 Parking Sensor | ✅ | test the sensor · test 3 LEDs (G) · zones with if/elif (S) · test the buzzer (G) · beep faster when closer (S) · lights + beeps, print on change (S) · parking game (B) |
+| Lab | E6 Whack-a-Mole | ✅ | random mole (G) · test the buttons (G) · `which_button(timeout)` (S) · one round (S) · test the buzzer (G) · 10 moles + score (S) · faster and faster (S) · 3 lives + high score file (B) |
+| Lab | E7 Morse Code Messenger | ✅ | SOS on the LED (G) · Morse dictionary (G) · send a word with light and sound (S) · test the key (G) · dot or dash (S) · decode letters (S) · Morse quiz (B) |
 | Camera & AI | C1 Photo Booth | ✅ | `take_photo` (G) · button to snap (G) · countdown lights + beep, no camera (S) · button → `countdown()` → photo (S) · `datetime` names + loop (S) · 4-photo strip + `glob` count (B) |
 | Camera & AI | C2 Teachable Machine | ✅ | `capture_grid` as `#`/`.` art (S) · collect labelled examples → `examples.json` (S) · `distance()` with `abs()` (S) · nearest-neighbour `classify()` guesses one photo (S) · button + matching LED in a loop (S) · accuracy test (B) |
 

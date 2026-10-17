@@ -34,7 +34,8 @@ class Console(tk.Frame):
         body.pack(fill="both", expand=True)
         self.text = tk.Text(body, bg=C["con_bg"], fg=C["con_fg"], font="code", wrap="word",
                             relief="flat", bd=0, highlightthickness=0, padx=12, pady=8,
-                            insertwidth=0, cursor="arrow", height=8, selectbackground=C["ed_sel"])
+                            insertwidth=0, cursor="arrow", height=8, selectbackground=C["con_fg"],
+                            selectforeground=C["con_bg"])
         sb = tk.Scrollbar(body, command=self.text.yview, width=14)
         self.text.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
@@ -42,7 +43,7 @@ class Console(tk.Frame):
         self.text.tag_configure("err", foreground=C["con_err"])
         self.text.tag_configure("in", foreground=C["con_in"], font="code")
         self.text.tag_configure("info", foreground=C["con_info"], font="code_ui")
-        self.text.tag_configure("warn", foreground="#FFD27A", font="code_ui")
+        self.text.tag_configure("warn", foreground=C["con_warn"], font="code_ui")
         self.text.configure(state="disabled")
         self.text.bind("<Button-3>", self._menu)
 

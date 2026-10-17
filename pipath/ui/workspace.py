@@ -15,6 +15,7 @@ from ..gpio import (CAMERA_KINDS, HAT_FIX, SHIM, SIM_ENV, expand_events, guess_c
 from ..hints import (CheckResult, Diagnosis, ErrorInfo, code_features, evaluate_checks, gpio_lint,
                      parse_traceback, precheck)
 from ..levels import INFO as LEVEL_INFO, LEVELS, can_skip, goal_text, hint_rules, offer_tour
+from ..review import review
 from ..runner import Runner
 from .board import VirtualBoard
 from .console import Console
@@ -23,7 +24,8 @@ from .home import stars_for
 from .onboarding import Screen
 from .theme import C, TIER_COLOURS
 from .tour import Tour
-from .widgets import CogButton, PButton, RichText, ScrollFrame, TitleBar, card, chip, label, window
+from .widgets import (CogButton, MenuBar, PButton, RichText, ScrollFrame, TitleBar, about_box, card, chip,
+                      label, window)
 from .wiring import WiringCard
 
 DEMO_FILES = DATA_DIR / "demo_files"
@@ -120,8 +122,16 @@ class CoachCard(tk.Frame):
     def message(self, kind: str, title: str, text: str):
         self._set(kind, title, text)
 
-    def diagnosis(self, d: Diagnosis):
-        self._set("err", d.title, d.explain)
+    def diagnosis(self, d: Diagnosis, level: str = "beginner"):
+        """Beginner: the plain explanation. Moderate: plus the deeper "why". Advanced (they've used
+        Python before): Python's own words first, then the technical explanation."""
+        text = d.explain
+        if level == "advanced":
+            said = f"Python says: `{d.error_type}: {d.message}`\n\n" if d.message and d.error_type[:6] != "PiPath" else ""
+            text = said + (d.tech or d.explain)
+        elif level == "moderate" and d.tech:
+            text = f"{d.explain}\n\n**Under the bonnet:** {d.tech}"
+        self._set("err", d.title, text)
         for w in self.where.winfo_children():
             w.destroy()
         if d.line:
@@ -130,7 +140,7 @@ class CoachCard(tk.Frame):
             label(self.where, f"Line {d.line}", font="small_bold", fg=C["err"], bg=bg).pack(side="left")
             if d.code_line:
                 tk.Label(self.where, text=f"  {d.code_line[:60]}  ", font="code_ui", bg=C["ed_bg"],
-                         fg="#FFD7D3", padx=4, relief="sunken", bd=2).pack(side="left", padx=8)
+                         fg=C["err"], padx=4, relief="sunken", bd=2).pack(side="left", padx=8)
             self.where.pack(anchor="w", fill="x", pady=(8, 0), before=self.hint_box)
 
     # ---- hints
@@ -233,6 +243,9 @@ class Workspace(Screen):
                                               pady=3), pad=8)
         self.names_lbl = bar.add_right(tk.Label(bar, text=short_names(app.student.first_name), font="small_bold", fg="#FFFFFF",
                                                 bg=C["title_b"]), pad=12)
+        self.menubar = MenuBar(self, [("File", self._menu_file), ("Edit", self._menu_edit), ("Run", self._menu_run),
+                                      ("View", self._menu_view), ("Help", self._menu_help)])
+        self.menubar.pack(fill="x")
 
         # ---- body
         self.pane = tk.PanedWindow(self, orient="horizontal", sashwidth=7, bg=C["bg"], bd=0, sashrelief="raised")
@@ -271,6 +284,72 @@ class Workspace(Screen):
         self.bottom.add(self.console, minsize=220, stretch="always")
         self._bottom_h = 230
         vpane.add(self.bottom, minsize=150, height=self._bottom_h, stretch="never")
+
+    # ---------------------------------------------------------------- the menu bar
+    def _menu_file(self) -> list:
+        return [("Save", "Ctrl+S", self.save_now, True),
+                ("Open my folder", "", self.open_folder, True),
+                None,
+                ("Back to activities", "", self.go_home, True)]
+
+    def _menu_edit(self) -> list:
+        ed = self.editor
+        return [("Undo", "Ctrl+Z", ed.undo, True), ("Redo", "Ctrl+Y", ed.redo, True), None,
+                ("Cut", "Ctrl+X", ed.cut, True), ("Copy", "Ctrl+C", ed.copy, True),
+                ("Paste", "Ctrl+V", ed.paste, True), ("Select all", "Ctrl+A", ed.select_all, True), None,
+                ("Find...", "Ctrl+F", lambda: ed.find_bar.open("find"), True),
+                ("Replace...", "Ctrl+H", lambda: ed.find_bar.open("replace"), True),
+                ("Go to line...", "Ctrl+G", lambda: ed.find_bar.open("line"), True),
+                ("Comment / uncomment", "Ctrl+/", ed.toggle_comment, True)]
+
+    def review_code(self) -> None:
+        """Run > Review my code: tips on how the code is written (no AI: pipath/review.py)."""
+        tips = review(self.editor.get_code())
+        if not tips:
+            self.coach.message("ok", "Code review", "Nothing to flag. Your code is tidy: clear names, no repeats, "
+                                                    "and nothing unchecked that I can spot. Nice work!")
+        else:
+            self.coach.message("info", "Code review", "Your code works the way you wrote it. These are ways to "
+                               "make it *better* code, the kind of thing a programmer checks before sharing:\n\n" +
+                               "\n".join(f"- **{t.title}** ({t.idea}): {t.text}" for t in tips))
+        if hasattr(self, "guide"):
+            self.guide.scroll_to(self.coach)
+
+    def _menu_run(self) -> list:
+        items = [("Run", "F5", self.run, self.run_btn.enabled), ("Stop", "Shift+F5", self.stop, self.runner.running),
+                 ("Review my code", "", self.review_code, True)]
+        if self.can_watch_goal():
+            items.append(("Watch the goal", "", self.watch_goal, not self.runner.running))
+        if self.gpio:
+            items += [None, ("Check my wiring", "", self.check_wiring, bool(getattr(self, "parts", None))),
+                      ("● Simulator" if self.mode == "sim" else "   Simulator", "", lambda: self.set_mode("sim"), True),
+                      ("● Real Pi" if self.mode == "real" else "   Real Pi", "", lambda: self.set_mode("real"),
+                       self.real_pi)]
+        return items
+
+    def _menu_view(self) -> list:
+        return [("Bigger code text", "Ctrl+=", lambda: self.zoom_code(1), True),
+                ("Smaller code text", "Ctrl+−", lambda: self.zoom_code(-1), True), None,
+                ("Settings...", "", self.app.open_settings, True)]
+
+    def _menu_help(self) -> list:
+        return [("Take the tour", "", self.start_tour, True), None,
+                ("About PiPath", "", lambda: about_box(self.app), True)]
+
+    def can_watch_goal(self) -> bool:
+        return False
+
+    def open_folder(self) -> None:
+        """Open the student's work folder in the file manager (photos, logs, the party folder...)."""
+        folder = self.code_path().parent
+        folder.mkdir(parents=True, exist_ok=True)
+        if shutil.which("xdg-open"):
+            import subprocess
+            subprocess.Popen(["xdg-open", str(folder)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+            self.console.write(f"Opening your folder: {folder}\n", "info")
+        else:
+            self.console.write(f"Your work is saved in: {folder}\n", "info")
 
     def set_gpio(self, on: bool, camera: bool = False) -> None:
         """GPIO / camera activities (and Free Build) get the Simulator / Real Pi switch and the board."""
@@ -973,6 +1052,8 @@ class LessonWorkspace(Workspace):
             new = self.app.student.help_level
             if new != self.level:
                 self.level = new
+                if self.view == "intro":
+                    self.show_intro()
                 if self.view == "step":
                     self._render_step(keep_coach=True)
                     self.coach.message("info", f"Help: {LEVEL_INFO[self.level][0]}", LEVEL_INFO[self.level][1])
@@ -991,6 +1072,7 @@ class LessonWorkspace(Workspace):
         self.next_btn = PButton(self.foot, "Next step  ▸", self.next_step, kind="secondary")
         self.next_btn.pack(side="right")
         self.skip_btn = PButton(self.foot, "Skip  ▸", self.skip_step, kind="secondary", font="small_bold")
+
         self.foot_note = label(self.foot, "", font="small", fg=C["muted"])
         self.foot_note.pack(side="right", padx=10)
         self._build_step_view()
@@ -1080,12 +1162,17 @@ class LessonWorkspace(Workspace):
     def show_intro(self):
         if self.intro_view is None:
             self._build_intro_view()
-        self._show_view("intro", wiring_open=True)
+        advanced = self.level == "advanced" and len(self.steps) > 1
+        self._show_view("intro", wiring_open=not advanced)
         if self.board:
             self.board.show_goal_button(False)
         self._show_toolbar_goal(False)
         self.back_btn.set_enabled(False)
         self.skip_btn.pack_forget()
+        if advanced:                       # used Python before: skipping ahead is one click away
+            self._jump_row.pack(fill="x", pady=(0, 12), after=self._intro_title)
+        else:
+            self._jump_row.pack_forget()
         self.next_btn.configure(text="Start step 1  ▸")
         self.next_btn.set_kind("primary")
         self.next_btn.set_enabled(True)
@@ -1099,7 +1186,13 @@ class LessonWorkspace(Workspace):
     def _build_intro_view(self):
         v = self.intro_view = tk.Frame(self.g, bg=C["bg"])
         chip(v, self.tier_title.upper() + " ACTIVITY", "#FFFFFF", self.tier_colour).pack(anchor="w")
-        label(v, self.lesson["title"], font="h1").pack(anchor="w", pady=(8, 10))
+        self._intro_title = label(v, self.lesson["title"], font="h1")
+        self._intro_title.pack(anchor="w", pady=(8, 10))
+        self._jump_row = tk.Frame(v, bg=C["tooltip"], relief="solid", bd=1, padx=10, pady=8)
+        label(self._jump_row, "Used Python before? Skip the practice steps and build the finished project.",
+              font="small", wraplength=330).pack(anchor="w")
+        PButton(self._jump_row, "Jump to the challenge  ▸", self.jump_to_challenge, kind="primary",
+                font="small_bold", pady=3).pack(anchor="w", pady=(6, 0))
         rt = RichText(v, font="ui")
         rt.pack(fill="x")
         rt.render(self.lesson["intro"])
@@ -1118,6 +1211,31 @@ class LessonWorkspace(Workspace):
         rt.pack(fill="x")
         rt.render("**THE PLAN: STEP BY STEP**\nEach step has a checklist and builds on the one before, from the "
                   "first part to the finished project.\n" + steps_md)
+        links = self.project.get("curriculum") or []
+        if links:
+            box = card(v, padx=12, pady=10)
+            box.pack(fill="x", pady=(12, 0))
+            rt = RichText(box, bg=C["panel"], font="small")
+            rt.tag_configure("b", font="small_bold")
+            rt.pack(fill="x")
+            rt.render("**CURRICULUM LINKS**\n*Victorian Curriculum Digital Technologies, Levels 9 and 10*\n" +
+                      "\n".join(f"- {line}" for line in links))
+
+    def jump_to_challenge(self):
+        """Advanced: start at the last step. The step before it's example answer goes in the editor when the
+        challenge builds on it, and the steps in between count as skipped (faint dots), not done."""
+        self.app.student.mark_started(self.lesson["id"])
+        last = len(self.steps) - 1
+        skipped = self.lp.setdefault("steps_skipped", [])
+        for i in range(last):
+            if i not in self.lp["steps_done"] and i not in skipped:
+                skipped.append(i)
+        carry = self.steps[last - 1].get("demo") if self.steps[last].get("starter_mode", "keep") != "replace" else None
+        self.run_btn.set_enabled(True)
+        self.enter_step(last, carry_code=carry)
+        self.coach.message("info", "Straight to the challenge",
+                           "The example code from the step before is in the editor, so you have something to build on. "
+                           "Your own code is saved in backups. Stuck? Go **Back** to any step.")
 
     def start_lesson(self):
         self.app.student.mark_started(self.lesson["id"])
@@ -1148,6 +1266,15 @@ class LessonWorkspace(Workspace):
         rt = RichText(v)
         rt.pack(fill="x", pady=(16, 0))
         rt.render(self.lesson["outro"])
+        stretch = self.project.get("stretch") or []
+        if stretch:
+            lv, lbox = window(v, "Level up  (Year 9-10)", padx=14, pady=10)
+            lv.pack(fill="x", pady=(14, 0))
+            rt = RichText(lbox)
+            rt.pack(fill="x")
+            rt.render("Already know your way around Python? Take this project further:\n" +
+                      "\n".join(f"- {s}" for s in stretch) +
+                      "\n\nUse **Run > Review my code** to check how your code is written, not just whether it works.")
         self._show_view("outro")
         self.skip_btn.pack_forget()
         self.back_btn.set_enabled(True)
@@ -1433,7 +1560,7 @@ class LessonWorkspace(Workspace):
         else:
             self.attempts += 1
             if diag:
-                self.coach.diagnosis(diag)
+                self.coach.diagnosis(diag, self.level)
                 self._refresh_hints(diag)
             else:
                 first = next(r for r in results if not r.passed and r.type != "confirm")
@@ -1454,7 +1581,13 @@ class LessonWorkspace(Workspace):
         else:
             after = (f"\n\n**Next up:** {self.steps[self.step_i + 1]['title']}. "
                      "Press **Next step** when you're ready.")
-        self.coach.message("ok", "Step complete!", step.get("success", "Well done!") + after)
+        review_text = ""
+        if self.level != "beginner":           # Year 9-10: how well is it written, not just does it work?
+            tips = review(self._last_eval[0] if self._last_eval else self.editor.get_code(), max_tips=2)
+            if tips:
+                review_text = "\n\n**Code review** (optional, to level up):\n" + "\n".join(
+                    f"- **{t.title}** ({t.idea}): {t.text}" for t in tips)
+        self.coach.message("ok", "Step complete!", step.get("success", "Well done!") + review_text + after)
         self.coach.set_hints([], None)
         self.console.set_status("✓ step complete", C["ok"])
 
@@ -1502,6 +1635,9 @@ class LessonWorkspace(Workspace):
                          "▶ Watch the goal: this is what your program should do. (Your code isn't changed.)",
                          seconds=step.get("demo_seconds"), events=step.get("demo_events"),
                          stdin=step.get("demo_input", ""), files=step.get("demo_files"))
+
+    def can_watch_goal(self) -> bool:
+        return self.view == "step" and bool(self.steps[self.step_i].get("demo"))
 
     def check_wiring(self):
         if not self.parts or self.runner.running or self._busy:
@@ -1713,7 +1849,7 @@ class FreeBuildWorkspace(Workspace):
         if err is not None:
             d = self.app.engine.diagnose(err)
             self.editor.mark_error_line(d.line)
-            self.coach.diagnosis(d)
+            self.coach.diagnosis(d, self.app.student.help_level)
             self.coach.set_hints(d.hints, None)
         else:
             self.coach.message("ok", "It ran!", "No errors. Keep building, or try a new idea from the cheat sheet below.")

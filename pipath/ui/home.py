@@ -11,7 +11,7 @@ import tkinter as tk
 
 from .onboarding import Screen
 from .theme import C, TIER_COLOURS, blend
-from .widgets import CogButton, PButton, TitleBar, bevel, label
+from .widgets import CogButton, MenuBar, PButton, TitleBar, about_box, bevel, label
 
 CARD_MIN_WIDTH = 300
 PAD, GAP = 24, 14
@@ -40,6 +40,13 @@ class HomeScreen(Screen):
         bar = self.bar = TitleBar(self, app.settings["app_name"], height=56, logo=True, font="h2",
                                   sub=f"{s.first_name}   ·   {s.profile.get('school', '')}")
         bar.pack(fill="x")
+        MenuBar(self, [("File", lambda: [("Free Build", "", app.open_free_build, True), None,
+                                         ("Switch student", "", app.logout, True)]),
+                       ("View", lambda: [(("● " if self.filter == k else "   ") + t, "", lambda k=k: self.set_filter(k),
+                                          True) for k, t in (("all", "Everything"),
+                                                             ("hardware", "Hardware projects"))] +
+                                        [None, ("Settings...", "", app.open_settings, True)]),
+                       ("Help", lambda: [("About PiPath", "", lambda: about_box(app), True)])]).pack(fill="x")
         bar.add_right(PButton(bar, "Switch student", app.logout, kind="secondary", font="small_bold", pady=3))
         bar.add_right(CogButton(bar, lambda: app.open_settings()), pad=8)
         if app.teacher_mode:
@@ -58,7 +65,7 @@ class HomeScreen(Screen):
         chips.pack(fill="x")
         label(chips, "Show:", font="small_bold").pack(side="left", padx=(0, 8))
         self.chips: dict[str, tk.Label] = {}
-        for key, text, col in [("all", "Everything", C["purple"])] + [
+        for key, text, col in [("all", "Everything", C["purple"]), ("hardware", "▶ Hardware projects", C["err"])] + [
                 (t["id"], t["title"], TIER_COLOURS.get(t["id"], C["accent"])) for t in app.catalog.tiers]:
             c = tk.Label(chips, text=f" {text} ", font="small_bold", cursor="hand2", padx=6, pady=3, bd=2)
             c.colour = col
@@ -157,9 +164,11 @@ class HomeScreen(Screen):
         card_w = (width - 2 * PAD - (cols - 1) * GAP) / cols
         y = 14
         for tier in self.app.catalog.tiers:
-            if self.filter not in ("all", tier["id"]):
+            if self.filter not in ("all", "hardware", tier["id"]):
                 continue
             projects = self.app.catalog.projects_in(tier["id"])
+            if self.filter == "hardware":          # anything you build with real parts
+                projects = [p for p in projects if p.get("gpio") or p.get("camera")]
             if not projects:
                 continue
             col = TIER_COLOURS.get(tier["id"], C["accent"])
@@ -259,8 +268,7 @@ class HomeScreen(Screen):
             return
         text, primary = {"ready": ("Start  ▸", True), "in_progress": ("Continue  ▸", True),
                          "complete": ("Review", False)}[state]
-        fill, fg = (C["accent"], "#FFFFFF") if primary else (C["bg"], C["ink"])
-        hover = C["purple_light"] if primary else C["face_hi"]
+        fill, fg, hover = C["bg"], C["ink"], C["face_hi"]       # grey Windows buttons
         tag = f"btn_{p['id']}"
         t = cv.create_text(x + 14, y + h / 2, anchor="w", text=text, font="ui_bold", fill=fg, tags=(tag, card_tag))
         bx = cv.bbox(t)
@@ -313,15 +321,15 @@ class HomeScreen(Screen):
                                 tags=frame)
         cv.tag_lower("fb_frame", first)
         bt = cv.create_text(x1 - 30, (y + BAR + bottom) / 2, anchor="e", text="Open Free Build  ▸", font="ui_bold",
-                            fill="#FFFFFF", tags=(tag, "fb_btn"))
+                            fill=C["ink"], tags=(tag, "fb_btn"))
         bx = cv.bbox(bt)
         cv.create_rectangle(bx[0] - 15, bx[1] - 8, bx[2] + 15, bx[3] + 8, outline="#000000", tags=(tag, "fb_btn"))
-        bevel(cv, bx[0] - 14, bx[1] - 7, bx[2] + 14, bx[3] + 7, C["accent"], tags=(tag, "fb_btn", "fb_face"))
+        bevel(cv, bx[0] - 14, bx[1] - 7, bx[2] + 14, bx[3] + 7, C["bg"], tags=(tag, "fb_btn", "fb_face"))
         face = [i for i in cv.find_withtag("fb_face") if cv.type(i) == "rectangle"][0]
         cv.tag_raise(bt)
         cv.tag_bind(tag, "<ButtonRelease-1>", lambda e: self.app.open_free_build())
         cv.tag_bind(tag, "<Enter>", lambda e: cv.configure(cursor="hand2"))
         cv.tag_bind(tag, "<Leave>", lambda e: cv.configure(cursor=""))
-        cv.tag_bind("fb_btn", "<Enter>", lambda e: cv.itemconfigure(face, fill=C["purple_light"]))
-        cv.tag_bind("fb_btn", "<Leave>", lambda e: cv.itemconfigure(face, fill=C["accent"]))
+        cv.tag_bind("fb_btn", "<Enter>", lambda e: cv.itemconfigure(face, fill=C["face_hi"]))
+        cv.tag_bind("fb_btn", "<Leave>", lambda e: cv.itemconfigure(face, fill=C["bg"]))
         return bottom

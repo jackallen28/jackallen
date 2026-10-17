@@ -1,0 +1,771 @@
+# ELECTRONICS LAB 5: Parking Sensor, like the beeper in a real car's bumper.
+# See e1_lightswitch.toml for the GPIO lesson keys. kind = "distance" uses pins = [echo, trigger].
+# Pin plan: distance sensor TRIG 4 (pin 7), ECHO 26 (pin 37, through a 1kΩ / 2kΩ divider),
+# red LED 17, amber LED 27, green LED 22, buzzer 18, park button 23 (challenge only).
+# Step by step: test the sensor -> test the three lights -> sensor + lights = zones ->
+# test the buzzer -> sensor + buzzer = faster beeps -> everything together -> challenge: parking game.
+
+id = "e5_parking"
+title = "Parking Sensor"
+file_name = "parking_sensor.py"
+requires_gpio = true
+
+intro = """
+## Beep... beep... beep-beep-beep!
+
+Lots of cars have a **parking sensor** in the back bumper. As the car reverses towards a wall, it beeps faster and faster. When the car is really close, the beep turns into one long tone: **stop!**
+
+The sensor is an **ultrasonic distance sensor** (the HC-SR04). It sends out a squeak too high for people to hear, then times how long the echo takes to come back. A short echo means something is close.
+
+You'll build your own, one part at a time:
+- test the **sensor** on its own: measure distances in centimetres
+- test the **three lights** on their own
+- join them: **green**, **amber** and **red** zones
+- test the **buzzer** on its own
+- join it to the sensor: **beep faster** as you get closer
+- put it all together, then play a **parking game**
+
+**In the Simulator:** drag the slider under the sensor on the board. Left is closer, right is further away.
+
+**Safety:**
+- Take the **blue HAT off** before you change any wires, and put it back on after.
+- **Never turn the Pi off**, or you'll lose your progress.
+- The sensor's ECHO pin sends back **5V**, which is too much for a GPIO pin. It must go through the **two resistors** (see **Wiring + Safety**). Ask your teacher to check them before you put the blue HAT back on.
+"""
+
+outro = """
+## Parked perfectly!
+
+You built a real car gadget. You used a **sensor** that measures distance, **if / elif / else** to sort numbers into zones, a **variable** that remembers the last zone, and **timing** you control yourself with `sleep()`.
+
+**In the real world:** car parking sensors work just like yours. Ultrasonic sensors in the bumper measure the distance many times a second, and a little computer turns it into beeps and coloured bars on the dashboard. Robot vacuums, drones and automatic doors use the same idea.
+
+**Extension ideas:**
+- Keep a **closest ever** record, and use the button to reset it
+- Show the distance as a bar of `#` symbols that shrinks as you get closer: `print("#" * round(cm / 5))`
+- Make **two players** take turns at the parking game, and print the winner
+"""
+
+[[wiring]]
+part = "Distance sensor (HC-SR04)"
+kind = "distance"
+pins = [26, 4]
+connect = "VCC → 5V (pin 2). GND → GND (pin 6). TRIG → GPIO4 (pin 7). ECHO → 1kΩ resistor → GPIO26 (pin 37), plus a 2kΩ resistor from GPIO26 to GND. The two resistors turn the 5V echo into a safe 3.3V."
+
+[[wiring]]
+part = "Red LED"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Amber LED"
+kind = "led"
+pin = 27
+colour = "amber"
+connect = "GPIO27 (pin 13) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Green LED"
+kind = "led"
+pin = 22
+colour = "green"
+connect = "GPIO22 (pin 15) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Buzzer"
+kind = "buzzer"
+pin = 18
+connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → GND rail."
+
+[[wiring]]
+part = "Park button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Only needed for the challenge in step 7.)"
+
+[[wiring]]
+part = "Tip"
+connect = "Got a 3.3V sensor (HC-SR04P or RCWL-1601)? Power it from 3V3 (pin 1) instead, and you can leave out the two resistors. Point the sensor at an open space, and use a book or your hand as the wall."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Test the sensor"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import DistanceSensor
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+
+for i in range(10):
+    cm = sensor.distance * ___       # distance is in metres: change it to centimetres
+    print(round(cm), "cm")
+    sleep(0.5)
+'''
+text = """
+Every parking sensor starts with one part: the thing that measures distance. Build the sensor first (see **Wiring + Safety**).
+
+`DistanceSensor(echo=26, trigger=4)` is the sensor. **TRIG** on GPIO4 sends the squeak. **ECHO** on GPIO26 hears it come back.
+
+`sensor.distance` is how far away the nearest thing is, in **metres**, from 0 up to 1. There are 100 centimetres in a metre, so times 100 gives **centimetres**.
+
+**Your task:** fill in the blank so the program prints centimetres. Run it, and while it counts, move something closer and further away.
+
+*Simulator:* drag the slider under the sensor on the board. *Real Pi:* move a book or your hand in front of the sensor.
+"""
+hints = [
+  "How many centimetres are in one metre?",
+  "Replace `___` with `100`.",
+  "The line is `cm = sensor.distance * 100`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "Your Pi can measure distance. That's the heart of a parking sensor."
+demo = '''
+from gpiozero import DistanceSensor
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+
+for i in range(10):
+    cm = sensor.distance * 100       # distance is in metres: change it to centimetres
+    print(round(cm), "cm")
+    sleep(0.5)
+'''
+demo_events = ["0.5 distance 26 90", "2 distance 26 45", "3.5 distance 26 12", "4.8 distance 26 70"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''distance\s*\*\s*100\b'''
+label = "You change metres to centimetres"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''^\d+\s*cm\s*$'''
+label = "It prints the distance in cm"
+
+[[steps.checks]]
+type = "confirm"
+label = "The number got smaller when something came closer"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Test the three lights"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED
+from time import sleep
+
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+
+for light in [green, amber, ___]:
+    light.on()
+    sleep(1)
+    light.off()
+
+print("All three lights work!")
+'''
+text = """
+Next part: three lights, like the coloured bars on a car's dashboard. Build them (see **Wiring + Safety**). Your sensor code is safe in `backups/`.
+
+The `for` loop goes through a **list** of lights. Each time round, `light` is the next one in the list. It turns on for a second, then off.
+
+**Your task:** fill in the blank so the loop lights **green**, then **amber**, then **red**. Run it and watch the lights.
+
+Nothing happens on a Real Pi? Press **Check my wiring** in the Wiring + Safety card.
+"""
+hints = [
+  "Which light is missing from the list?",
+  "The last one is the red light. Its variable is called `red`.",
+  "The line is `for light in [green, amber, red]:`",
+]
+error_hints = { NameError = "Check the spelling: the variables are `red`, `amber` and `green`, all lower case." }
+success = "Green, amber, red. All three lights work!"
+demo = '''
+from gpiozero import LED
+from time import sleep
+
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+
+for light in [green, amber, red]:
+    light.on()
+    sleep(1)
+    light.off()
+
+print("All three lights work!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\[\s*green\s*,\s*amber\s*,\s*red\s*\]'''
+label = "The list has green, amber and red"
+
+[[steps.checks]]
+type = "output_contains"
+value = "All three lights work"
+label = "Your program gets to the end"
+
+[[steps.checks]]
+type = "confirm"
+label = "Green, then amber, then red lit up"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Green, amber, red zones"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import DistanceSensor, LED
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+
+print("Parking sensor on. Come closer!")
+while True:
+    cm = sensor.distance * 100
+    green.off()
+    amber.off()
+    red.off()
+    if cm > 60:
+        green.on()          # lots of room
+    elif ___:
+        amber.on()          # getting close
+    else:
+        ___                 # very close!
+    sleep(0.1)
+'''
+text = """
+Now join the sensor and the lights. A parking sensor sorts the distance into **zones**:
+
+- more than **60 cm**: green, lots of room
+- **20 to 60 cm**: amber, getting close
+- less than **20 cm**: red, very close!
+
+The `while True` loop measures the distance 10 times a second. Each time, it turns all the lights off, then `if / elif / else` turns the right one on.
+
+Python checks `if`, then `elif`, then `else`, **in order**, and stops at the first one that's true. So by the time it gets to `elif`, it already knows the distance isn't more than 60.
+
+**Your task:** fill in the two blanks: amber when the distance is **20 cm or more**, and red for everything else. Run it, move closer and further away, then press **Stop**.
+"""
+hints = [
+  "The `elif` needs a test, like the `if` above it. Amber is for 20 cm or more.",
+  "The test is `cm >= 20`. In the `else` part, turn the red light on.",
+  "The lines are `elif cm >= 20:` and `red.on()`",
+]
+error_hints = { SyntaxError = "Check the `elif` line ends with a colon: `elif cm >= 20:`" }
+success = "Green, amber, red: your lights follow the distance. Now for the sound."
+demo = '''
+from gpiozero import DistanceSensor, LED
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+
+print("Parking sensor on. Come closer!")
+while True:
+    cm = sensor.distance * 100
+    green.off()
+    amber.off()
+    red.off()
+    if cm > 60:
+        green.on()          # lots of room
+    elif cm >= 20:
+        amber.on()          # getting close
+    else:
+        red.on()            # very close!
+    sleep(0.1)
+'''
+demo_events = ["1 distance 26 40", "2.5 distance 26 10", "4 distance 26 90"]
+demo_seconds = 5.5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "elif"
+label = "You use elif for the middle zone"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''(<|>|<=|>=)\s*20\b'''
+label = "Amber starts at 20 cm"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''red\.on\(\)'''
+label = "Very close turns the red light on"
+
+[[steps.checks]]
+type = "confirm"
+label = "The lights went green, amber, red as something came closer"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Test the buzzer"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Buzzer
+from time import sleep
+
+buzzer = Buzzer(18)
+
+print("Slow beeps...")
+buzzer.beep(0.1, 0.5, n=4, background=False)
+
+print("Fast beeps...")
+buzzer.beep(0.1, ___, n=8, background=False)
+
+print("Stop! One long tone...")
+buzzer.on()
+sleep(1)
+buzzer.off()
+
+print("The buzzer works!")
+'''
+text = """
+The last part is the **buzzer**. Build it (see **Wiring + Safety**). Your zones code is safe in `backups/`.
+
+`buzzer.beep(0.1, 0.5, n=4, background=False)` beeps **4 times**. The first number is the **on time** (0.1 seconds of sound). The second is the **off time** (0.5 seconds of quiet). `background=False` means your program waits until the beeping is finished.
+
+A shorter off time means faster beeps. That's the trick a parking sensor uses!
+
+**Your task:** fill in the blank so the second lot of beeps is **faster**: give it a shorter off time than 0.5. Run it and listen.
+"""
+hints = [
+  "The blank is the off time: the quiet gap between beeps.",
+  "A smaller number means a shorter gap. Try `0.1`.",
+  "The line is `buzzer.beep(0.1, 0.1, n=8, background=False)`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "Slow, fast, stop! Every part works on its own. Time to join them up."
+demo = '''
+from gpiozero import Buzzer
+from time import sleep
+
+buzzer = Buzzer(18)
+
+print("Slow beeps...")
+buzzer.beep(0.1, 0.5, n=4, background=False)
+
+print("Fast beeps...")
+buzzer.beep(0.1, 0.1, n=8, background=False)
+
+print("Stop! One long tone...")
+buzzer.on()
+sleep(1)
+buzzer.off()
+
+print("The buzzer works!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''beep\([^,]+,\s*0?\.[0-4]\d*\s*,\s*n\s*=\s*8'''
+label = "The second beeps have a shorter gap"
+fail = "Give the second `beep()` an off time smaller than 0.5, like `0.1`."
+
+[[steps.checks]]
+type = "output_contains"
+value = "The buzzer works"
+label = "Your program gets to the end"
+
+[[steps.checks]]
+type = "confirm"
+label = "I heard slow beeps, fast beeps, then a long tone"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Beep faster as you get closer"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import DistanceSensor, Buzzer
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+buzzer = Buzzer(18)
+
+while True:
+    cm = sensor.distance * 100
+    print(round(cm), "cm")
+    if cm < ___:
+        buzzer.on()           # very close: one long tone
+        sleep(0.1)
+    else:
+        buzzer.on()           # a short beep...
+        sleep(0.05)
+        buzzer.off()
+        sleep(cm / ___)       # ...then a gap: further away = longer gap
+'''
+text = """
+Join the sensor and the buzzer. The closer you get, the **shorter the gap** between beeps.
+
+You might think: just call `buzzer.beep()` every time round the loop. But `beep()` runs in the **background** with its own timer. Calling it again restarts it before it has finished, so the beeps get muddled.
+
+So this time **your code** makes each beep, with `sleep()`:
+- `buzzer.on()`, a short `sleep(0.05)`, then `buzzer.off()`: one short beep
+- then a quiet gap of `sleep(cm / 100)`. At 100 cm that's 1 second. At 20 cm it's only 0.2 seconds!
+- closer than **10 cm**, the buzzer just stays on: one long tone means **stop!**
+
+**Your task:** fill in the two blanks: a long tone when the distance is **less than 10**, and a gap of **cm divided by 100**. Run it and move slowly closer. Get closer than 10 cm, then press **Stop**.
+"""
+hints = [
+  "The first blank is where the long tone starts. The second turns centimetres into seconds.",
+  "Long tone under 10 cm: `if cm < 10:`. The gap: `sleep(cm / 100)`.",
+  "The lines are `if cm < 10:` and `sleep(cm / 100)`",
+]
+error_hints = { ZeroDivisionError = "Did you divide by 0? The gap should be `cm / 100`." }
+success = "Beep... beep... beep-beep-beep! It sounds just like a real car."
+demo = '''
+from gpiozero import DistanceSensor, Buzzer
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+buzzer = Buzzer(18)
+
+while True:
+    cm = sensor.distance * 100
+    print(round(cm), "cm")
+    if cm < 10:
+        buzzer.on()           # very close: one long tone
+        sleep(0.1)
+    else:
+        buzzer.on()           # a short beep...
+        sleep(0.05)
+        buzzer.off()
+        sleep(cm / 100)       # ...then a gap: further away = longer gap
+'''
+demo_events = ["1 distance 26 50", "2.5 distance 26 20", "4 distance 26 6", "5.5 distance 26 90"]
+demo_seconds = 7
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''cm\s*<=?\s*10\b'''
+label = "A long tone when closer than 10 cm"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''sleep\([^)]*\bcm\b'''
+label = "The gap depends on the distance"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''^[2-9]\s*cm\s*$'''
+label = "You tested it closer than 10 cm"
+fail = "While it runs, come closer than 10 cm (Simulator: drag the slider right over to the left). Then press Stop."
+
+[[steps.checks]]
+type = "confirm"
+label = "The beeps got faster as something came closer"
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Lights and beeps together"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import DistanceSensor, LED, Buzzer
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+buzzer = Buzzer(18)
+last_zone = ""                # the zone last time round the loop
+
+while True:
+    cm = sensor.distance * 100
+
+    # the lights (from step 3), with a name for each zone
+    green.off()
+    amber.off()
+    red.off()
+    if cm > 60:
+        zone = "all clear"
+        green.on()
+    elif cm >= 20:
+        zone = "getting close"
+        amber.on()
+    elif cm >= 10:
+        zone = "very close"
+        red.on()
+    else:
+        zone = "STOP!"
+        red.on()
+
+    # only print when the zone changes
+    if zone != ___:
+        print(round(cm), "cm:", zone)
+        last_zone = ___
+
+    # the beeps (from step 5)
+    if cm < 10:
+        buzzer.on()
+        sleep(0.1)
+    else:
+        buzzer.on()
+        sleep(0.05)
+        buzzer.off()
+        sleep(cm / 100)
+'''
+text = """
+Time to put it all together! This program joins your lights from step 3 and your beeps from step 5. (Your step 5 code is safe in `backups/`.)
+
+Did you notice the Output filling up in step 5? A real dashboard doesn't shout the distance 10 times a second. Let's only print when something **changes**.
+
+Each zone now has a name, like `"getting close"`. The variable `last_zone` **remembers** the zone from last time round the loop:
+- if `zone` is **not the same** as `last_zone` (`!=` means "is not equal to"), something changed: print it
+- then set `last_zone` to the new zone, so it won't print again until the zone changes
+
+**Your task:** fill in the two blanks so it prints only when the zone changes. Run it, drive slowly up to the "wall" until it says `STOP!`, then back away. Press **Stop**.
+"""
+hints = [
+  "Compare the zone now with the zone last time round the loop.",
+  "The test is `if zone != last_zone:`. Then remember the new zone.",
+  "The lines are `if zone != last_zone:` and `last_zone = zone`",
+]
+error_hints = { NameError = "Is `last_zone = \"\"` near the top, before the loop?" }
+success = "Lights, beeps and a tidy Output. That's a real parking sensor!"
+demo = '''
+from gpiozero import DistanceSensor, LED, Buzzer
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+buzzer = Buzzer(18)
+last_zone = ""                # the zone last time round the loop
+
+while True:
+    cm = sensor.distance * 100
+
+    # the lights (from step 3), with a name for each zone
+    green.off()
+    amber.off()
+    red.off()
+    if cm > 60:
+        zone = "all clear"
+        green.on()
+    elif cm >= 20:
+        zone = "getting close"
+        amber.on()
+    elif cm >= 10:
+        zone = "very close"
+        red.on()
+    else:
+        zone = "STOP!"
+        red.on()
+
+    # only print when the zone changes
+    if zone != last_zone:
+        print(round(cm), "cm:", zone)
+        last_zone = zone
+
+    # the beeps (from step 5)
+    if cm < 10:
+        buzzer.on()
+        sleep(0.1)
+    else:
+        buzzer.on()
+        sleep(0.05)
+        buzzer.off()
+        sleep(cm / 100)
+'''
+demo_events = ["1.5 distance 26 40", "3 distance 26 15", "4.5 distance 26 6", "6 distance 26 90"]
+demo_seconds = 8
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''zone\s*!=\s*last_zone|last_zone\s*!=\s*zone'''
+label = "You compare the zone with the last zone"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''last_zone\s*=\s*zone\b'''
+label = "You remember the new zone"
+
+[[steps.checks]]
+type = "output_contains"
+value = "getting close"
+label = "It noticed you getting close"
+fail = "While it runs, move something closer than 60 cm (Simulator: drag the slider to the left)."
+
+[[steps.checks]]
+type = "output_contains"
+value = "STOP"
+label = "You came all the way in to STOP!"
+fail = "Keep going: come closer than 10 cm before you press Stop."
+
+[[steps.checks]]
+type = "confirm"
+label = "The lights and the beeps changed together"
+
+# ------------------------------------------------------------------ STEP 7
+[[steps]]
+title = "Challenge: the parking game"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Turn your parking sensor into a game! Drive up to the wall, stop where you think is perfect, and press the **park button**.
+
+**Goal:** when the button on GPIO23 is pressed, check the distance and print how you went:
+- closer than 10 cm: `Crash! Too close.`
+- 10 to 20 cm: `Perfect park!`, and add 1 to a **score**
+- further than 20 cm: `Too far from the wall.`
+
+Then print the score, like `Score: 2`.
+
+**Tips:**
+- Import `Button` too, and make `button = Button(23)` near the top
+- `score = 0` near the top. A function that changes it needs `global score` as its first line
+- Write `def park():` that measures `cm` itself, then uses `if / elif / else`
+- Connect it before the loop: `button.when_pressed = park` (no brackets!)
+
+**Bonus:** keep a **closest ever** record, or give a "Wow, centimetre perfect!" message for exactly 15 cm.
+"""
+hints = [
+  "Near the top: `button = Button(23)` and `score = 0`. Before `while True:`, add `button.when_pressed = park`.",
+  "Start of `park()`:\n```\ndef park():\n    global score\n    cm = sensor.distance * 100\n    if cm < 10:\n        print(\"Crash! Too close.\")\n```",
+  "Then `elif cm <= 20:` prints `Perfect park!` and does `score += 1`. `else:` prints `Too far from the wall.` Last line of `park()`: `print(\"Score:\", score)`.",
+]
+error_hints = { UnboundLocalError = "Is `global score` the first line inside `park()`?" }
+success = "Parked like a pro! You've built a real car gadget and turned it into a game. Brilliant work!"
+demo = '''
+from gpiozero import DistanceSensor, LED, Buzzer, Button
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+red = LED(17)
+amber = LED(27)
+green = LED(22)
+buzzer = Buzzer(18)
+button = Button(23)
+last_zone = ""
+score = 0
+
+def park():
+    global score
+    cm = sensor.distance * 100
+    if cm < 10:
+        print("Crash! Too close.")
+    elif cm <= 20:
+        print("Perfect park!")
+        score += 1
+    else:
+        print("Too far from the wall.")
+    print("Score:", score)
+
+button.when_pressed = park
+print("Drive up to the wall, then press the button to park.")
+
+while True:
+    cm = sensor.distance * 100
+
+    green.off()
+    amber.off()
+    red.off()
+    if cm > 60:
+        zone = "all clear"
+        green.on()
+    elif cm >= 20:
+        zone = "getting close"
+        amber.on()
+    elif cm >= 10:
+        zone = "very close"
+        red.on()
+    else:
+        zone = "STOP!"
+        red.on()
+
+    if zone != last_zone:
+        print(round(cm), "cm:", zone)
+        last_zone = zone
+
+    if cm < 10:
+        buzzer.on()
+        sleep(0.1)
+    else:
+        buzzer.on()
+        sleep(0.05)
+        buzzer.off()
+        sleep(cm / 100)
+'''
+demo_events = ["1 distance 26 40", "2.5 tap 23", "3.5 distance 26 15", "5 tap 23", "6 distance 26 5",
+               "7.5 tap 23", "8.5 distance 26 90"]
+demo_seconds = 10
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:Button"
+label = "You use a Button"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:when_pressed"
+label = "The button runs your park function"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''score\s*(\+=|=\s*score\s*\+)'''
+label = "A perfect park adds to the score"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Perfect park"
+label = "You made a perfect park"
+fail = "Stop between 10 and 20 cm, then press the button (Simulator: click the button on the board)."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''score:?\s*\d+'''
+ignore_case = true
+label = "It shows your score"
+
+[[steps.checks]]
+type = "confirm"
+label = "Parking too close, too far and just right each gave a different message"

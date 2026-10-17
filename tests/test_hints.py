@@ -68,7 +68,7 @@ class TestDiagnose(unittest.TestCase):
                 self.assertIsNotNone(err, stderr)
                 d = ENGINE.diagnose(err)
                 self.assertEqual(d.entry_id, expected, f"{err.type}: {err.message}")
-                self.assertNotIn("{", d.title + d.explain, "unfilled placeholder")
+                self.assertNotIn("{", d.title + d.explain + d.tech, "unfilled placeholder")
                 self.assertTrue(d.line, "line number found")
 
     def test_names_and_messages_are_filled_in(self):

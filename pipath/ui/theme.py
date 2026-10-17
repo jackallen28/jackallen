@@ -1,67 +1,78 @@
 """Colours and fonts. Change the look of the whole app here.
 
-The look is retro (Windows 95 / Mac OS 8: bevelled buttons, title bars with a gradient, a
-coloured "desktop") in the colours of the Banyule Nillumbik Tech School logo: teal, purple and
-lavender. The logo's pixel squares are LOGO_SQUARES, drawn by widgets.PixelMark.
+The look is classic Windows 95/98: a teal desktop, silver-grey windows with two-level bevels,
+white sunken fields, gradient title bars, an editor like Visual Basic 6 and an Output box like the
+MS-DOS Prompt. The title bars and accents use the Banyule Nillumbik Tech School logo's purple and
+teal, and its pixel squares are LOGO_SQUARES, drawn by widgets.PixelMark.
 """
 import tkinter.font as tkfont
 
 C = {
-    # desktop + windows
-    "desk": "#0E9DA4",          # the teal "desktop" behind windows
-    "desk_dark": "#0A7E84",
-    "bg": "#DCD6E6",            # window face: lavender grey (buttons, panels, bars)
-    "face_hi": "#EAE5F1",       # face, hovered
+    # desktop + windows (the Windows 95 palette)
+    "desk": "#008080",          # the teal desktop behind windows
+    "desk_dark": "#005A5A",
+    "bg": "#C0C0C0",            # window face: silver grey (buttons, panels, bars)
+    "face_hi": "#D4D0C8",       # face, hovered
+    "hi": "#FFFFFF",            # bevel highlight
+    "shadow": "#808080",        # bevel shadow
+    "dark": "#000000",          # bevel dark edge
     "panel": "#FFFFFF",         # sunken white wells: text, lists, checklists
-    "panel_alt": "#F4F1F8",
-    "line": "#9C93AE",          # dividers and outlines (retro lines are visible)
-    "ink": "#141414",
-    "muted": "#4F4963",
-    "faint": "#8A839C",
+    "panel_alt": "#F4F4F4",
+    "line": "#808080",          # dividers and outlines
+    "ink": "#000000",
+    "muted": "#3C3C3C",
+    "faint": "#7A7A7A",
+    "select": "#000080",        # selected text / list rows: Windows navy
     # logo colours
     "purple": "#704988",
-    "purple_light": "#7E5B95",
+    "purple_light": "#8A63A3",
     "lavender": "#CFC2E0",
     "teal": "#19C1CA",
     "teal_light": "#66D6DA",
-    "title_a": "#5B3A73",       # title bars: purple → teal
+    "title_a": "#4B2A66",       # title bars: purple → teal, like Windows 98's navy → blue
     "title_b": "#12A9B1",
+    "title_off_a": "#808080",   # an inactive window's title bar
+    "title_off_b": "#B5B5B5",
     # brand accent (purple) and "go" (teal)
     "accent": "#704988",
     "accent_dark": "#523468",
     "accent_soft": "#E8DFF2",
-    "go": "#0B8F96",
-    "go_dark": "#086F75",
+    "go": "#00807F",
+    "go_dark": "#005A5A",
     # states
-    "ok": "#17804E",
+    "ok": "#007A3D",
     "ok_soft": "#DDF3E6",
     "warn": "#8A5200",
-    "warn_soft": "#FFF0D4",
-    "err": "#B42318",
+    "warn_soft": "#FFFFE1",     # the yellow of a Windows tooltip
+    "err": "#B00000",
     "err_soft": "#FCE4E2",
-    "info": "#0A6F87",
-    "info_soft": "#DCF3F4",
-    "locked": "#A39CB0",
-    # editor (deep indigo, like an old Turbo editor) + console (terminal black)
-    "ed_bg": "#1C1736",
-    "ed_fg": "#F0EEF6",
-    "ed_gutter": "#14102A",
-    "ed_gutter_fg": "#7C7598",
-    "ed_sel": "#4A3D78",
-    "ed_cursor": "#66D6DA",
-    "ed_errline": "#5C1F33",
-    "con_bg": "#0C0A14",
-    "con_fg": "#E2F7E9",
-    "con_err": "#FF8F86",
-    "con_in": "#66D6DA",
-    "con_info": "#C3B2D6",
-    # syntax
-    "syn_kw": "#66D6DA",
-    "syn_str": "#F3D27A",
-    "syn_com": "#8E86A8",
-    "syn_num": "#FFB38A",
-    "syn_builtin": "#CFC2E0",
-    "syn_def": "#FFE680",
+    "info": "#000080",
+    "info_soft": "#E6EEFF",
+    "locked": "#A0A0A0",
+    "tooltip": "#FFFFE1",
+    # editor: white, like Visual Basic 6 / Notepad
+    "ed_bg": "#FFFFFF",
+    "ed_fg": "#000000",
+    "ed_gutter": "#E4E4E4",
+    "ed_gutter_fg": "#808080",
+    "ed_sel": "#000080",
+    "ed_sel_fg": "#FFFFFF",
+    "ed_cursor": "#000000",
+    "ed_errline": "#FFD9D9",
+    # Output: the MS-DOS Prompt
+    "con_bg": "#000000",
+    "con_fg": "#C0C0C0",
+    "con_err": "#FF5555",
+    "con_in": "#FFFFFF",
+    "con_info": "#55FFFF",
+    "con_warn": "#FFFF55",
+    # syntax (Visual Basic colours, with the logo's purple and teal)
+    "syn_kw": "#0000FF",
+    "syn_str": "#800080",
+    "syn_com": "#008000",
+    "syn_num": "#007F7F",
+    "syn_builtin": "#000080",
+    "syn_def": "#800000",
 }
 
 TIER_COLOURS = {"simple": "#0B8F96", "moderate": "#3F6FB5", "computer": "#A8521C", "advanced": "#704988", "lab": "#9A4F8F",

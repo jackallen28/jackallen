@@ -37,6 +37,7 @@ class Diagnosis:
     code_line: str = ""
     error_type: str = ""
     message: str = ""
+    tech: str = ""          # the deeper "why", for students who have used Python before
 
 
 @dataclass
@@ -199,6 +200,7 @@ class HintEngine:
             code_line=err.code_line,
             error_type=err.type,
             message=err.message,
+            tech=fill(chosen.get("tech", ""), values).strip(),
         )
 
 

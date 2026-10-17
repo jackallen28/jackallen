@@ -7,6 +7,8 @@
 # status = "planned" -> shown as "Coming soon"
 # try_first = [ids]  -> optional tip on the card: "Good to try first: ..." (hidden once those are done)
 # gpio = true        -> card says "needs GPIO kit"; camera = true -> "needs camera"
+# curriculum = [..]  -> Victorian Curriculum Digital Technologies Levels 9-10 links ("Strand: what students do")
+# stretch = [..]     -> "Level up" challenges for Year 9-10 students, done after the activity
 #
 # support describes the gradual release of responsibility across the lesson:
 #   guided     - starter code with blanks, hints available straight away
@@ -56,6 +58,15 @@ tier = "simple"
 title = "Hello, Pi!"
 subtitle = "Your first program, and your first bug hunt"
 concepts = ["print()", "text (strings)", "comments", "reading errors"]
+curriculum = [
+    "Creating Digital Solutions: a sequence of print() statements, and debugging syntax errors from clues",
+    "Creating Digital Solutions: validate a program by comparing what it prints with what you planned",
+]
+stretch = [
+    "Plan your text art in structured English first (\"line 1: the hat\"), then trace it line by line before you run it.",
+    "Store your picture in a list of strings and print it with a for loop. Add a named constant SCALE that repeats each character to make it bigger.",
+    "Write a function banner(text) that prints any message inside a box of * that fits its length. Test it with three different words.",
+]
 minutes = 15
 support = "guided"
 status = "ready"
@@ -66,6 +77,16 @@ tier = "simple"
 title = "Meet PiBot"
 subtitle = "A chatbot that asks questions and remembers answers"
 concepts = ["variables", "input()", "f-strings", "int()"]
+curriculum = [
+    "Creating Digital Solutions: a chatbot with variables, input(), f-strings and int() to change data types",
+    "Data and Information: text and numbers are different types of data, and input needs checking before you use it",
+    "Creating Digital Solutions: validate the program with test cases that find the input() + 1 bug",
+]
+stretch = [
+    "Validate the age with try/except so typing \"twelve\" asks again instead of crashing. Keep asking until it's a sensible number (5 to 120).",
+    "Put PiBot's questions in a list of dictionaries (question, key) and loop through it, saving every answer in one dictionary.",
+    "Move the age maths into a function next_year(age) and check it with assert next_year(13) == 14 before PiBot starts chatting.",
+]
 minutes = 20
 support = "guided → scaffolded"
 try_first = ["s1_hello"]
@@ -77,6 +98,15 @@ tier = "simple"
 title = "Guess My Number"
 subtitle = "A game with a secret, some clues and a loop"
 concepts = ["import random", "if / elif / else", "while loops", "counters"]
+curriculum = [
+    "Creating Digital Solutions: design an algorithm with selection (if / elif / else) and iteration (a while loop)",
+    "Creating Digital Solutions: validate the game by tracing it with test cases: too low, too high and correct",
+]
+stretch = [
+    "Write the game as structured English first, then trace it by hand with secret = 37 and guesses 50, 25, 37. Does a real run match your trace?",
+    "Validate each guess with try/except and a range check, so \"abc\" or 500 gets a friendly message and doesn't count as a try.",
+    "Write computer_guess(secret) that uses binary search to find any number from 1 to 100 in 7 tries or fewer. Prove it with assert for every secret.",
+]
 minutes = 30
 support = "scaffolded → brief"
 try_first = ["s2_pibot"]
@@ -124,6 +154,16 @@ tier = "computer"
 title = "Pi Health Lights"
 subtitle = "Three LEDs glow with the Pi's temperature, CPU load and memory"
 concepts = ["reading system files", "try / except", "while loops", "scaling numbers", "PWMLED", "CSV log"]
+curriculum = [
+    "Digital Systems: software reads the Pi's own hardware resources: CPU temperature, load and memory",
+    "Data and Information: acquire live data, scale it to LED brightness and log it to a CSV file",
+    "Creating Digital Solutions: handle errors with try / except when a system file can't be read",
+]
+stretch = [
+    "Write a second program that reads pi_health.csv and prints the average and maximum temperature, plus a text bar chart of each reading.",
+    "Swap the magic numbers (30, 50, 70, 80) for named constants and write scale(value, low, high) that returns 0 to 1. Test it: assert scale(55, 30, 80) == 0.5.",
+    "Make the temperature LED blink instead of glow when the Pi is over 70 °C, so the warning works even without a screen.",
+]
 minutes = 45
 support = "guided → brief"
 status = "ready"
@@ -136,6 +176,16 @@ tier = "computer"
 title = "Binary Clock"
 subtitle = "The Pi's clock ticking in binary on six LEDs"
 concepts = ["datetime", "binary numbers", "format()", "LEDBoard", "tuples", "modes with a button"]
+curriculum = [
+    "Data and Information: how digital systems represent whole numbers in binary: 6 bits hold 0 to 63",
+    "Digital Systems: software drives six GPIO outputs to show data from the Pi's clock",
+    "Creating Digital Solutions: an event-driven program where a button changes the mode (its state)",
+]
+stretch = [
+    "Write your own to_binary(n) using division by 2 and remainders (no format()). Check it with assert to_binary(n) == format(n, \"06b\") for every n in range(64).",
+    "Replace the if / elif mode chain with a list of modes and an index, so adding a new mode (like the day of the month) takes one new line.",
+    "Show hh:mm on the screen in BCD (binary-coded decimal): one column of ●/○ for each digit. How many bits does each digit need?",
+]
 minutes = 45
 support = "guided → brief"
 status = "ready"
@@ -148,6 +198,16 @@ tier = "computer"
 title = "Dice DJ"
 subtitle = "Roll an LED dice and the computer plays a sound, song or video"
 concepts = ["randint()", "LEDBarGraph", "lists and positions", "open_file()", "glob", "when_pressed"]
+curriculum = [
+    "Digital Systems: buttons (hardware inputs) control software on the computer: opening sounds and websites",
+    "Data and Information: store media files in a list from glob and look them up by position (roll - 1)",
+    "Creating Digital Solutions: test each part (button, bar graph) on its own, then join them into one program",
+]
+stretch = [
+    "Add a TEST_MODE constant that rolls 600 times with no sound and prints a text bar chart of each number. Is your dice fair?",
+    "Use a dictionary that maps each roll to a file and a label, like {1: (\"party/1.wav\", \"Drums\")}, and print the label as it plays.",
+    "Stop repeats: remember the last file and re-roll if the same one comes up twice in a row. Trace it first with a made-up list of rolls.",
+]
 minutes = 45
 support = "guided → brief"
 status = "ready"
@@ -160,6 +220,16 @@ tier = "computer"
 title = "Doorbell Cam"
 subtitle = "A visitor comes close: ring, snap their photo and show it on the screen"
 concepts = ["DistanceSensor", "events", "take_photo()", "return values", "cooldown timer", "CSV log"]
+curriculum = [
+    "Digital Systems: a distance sensor, a camera, an LED and a buzzer controlled by events in software",
+    "Data and Information: acquire photos and a visitor log, and plan for privacy when a camera films people",
+    "Creating Digital Solutions: a cooldown timer, validated with test cases, so one visitor only rings once",
+]
+stretch = [
+    "Write a privacy plan as comments (who sees the photos, how long you keep them). Then code it: keep only the newest 5 photos with glob, sorted() and os.remove().",
+    "Read visitors.csv back and print a report: total visitors, the busiest hour and a text bar chart of visitors per hour.",
+    "Make the distance and cooldown named constants, and add a \"do not disturb\" button on GPIO23 that silences the bell but still logs visitors.",
+]
 minutes = 55
 support = "guided → brief"
 try_first = ["c1_photobooth"]
@@ -197,6 +267,16 @@ tier = "advanced"
 title = "Traffic Lights"
 subtitle = "Three LEDs and a pedestrian button"
 concepts = ["gpiozero LED", "Button", "sleep()", "functions", "sequences", "testing each part"]
+curriculum = [
+    "Creating Digital Solutions: design a timed sequence as an algorithm, then reuse it as a cycle() function",
+    "Digital Systems: software controls actuators (LEDs, buzzer) and reads a button input through GPIO",
+    "Creating Digital Solutions: test each part on its own, then join them into a working pedestrian crossing",
+]
+stretch = [
+    "Write a TrafficLight class with a cycle() method, then make two of them (LEDs 4 to 6 on GPIO 5, 6, 13) run a four-way intersection.",
+    "Put every timing in named constants (WALK_SECONDS, GREEN_MIN), and keep the lights green for at least 5 seconds even if someone presses straight away.",
+    "Draw the crossing as a state diagram (green, amber, red, flashing) first, then rewrite the loop so a state variable decides what happens next.",
+]
 minutes = 55
 support = "guided → brief"
 try_first = ["s3_guess"]
@@ -210,6 +290,16 @@ tier = "advanced"
 title = "Reaction Timer"
 subtitle = "Who is fastest? A two-player button game"
 concepts = ["random delays", "time.monotonic()", "events", "high scores in a file"]
+curriculum = [
+    "Data and Information: acquire timing data with monotonic(), store it in a list and find the best result",
+    "Creating Digital Solutions: validate fair play with test cases for false starts, using timeouts",
+    "Data and Information: store a high score in a file and handle a missing file with try / except",
+]
+stretch = [
+    "Save every reaction time to reactions.csv with the player's name, then print each player's average, best time and a text bar chart.",
+    "Write load_high_score() that also catches ValueError if highscore.txt holds rubbish like \"fast\". Test it with assert and a made-up file.",
+    "Make a Player class (name, button, times) with an average() method, and run the two-player race from a list of players.",
+]
 minutes = 60
 support = "guided → brief"
 try_first = ["a1_traffic"]
@@ -223,6 +313,16 @@ tier = "advanced"
 title = "Motion Alarm & Logger"
 subtitle = "An ultrasonic alarm that arms, beeps and keeps a log"
 concepts = ["DistanceSensor (ultrasonic)", "when_in_range", "Buzzer", "states (armed / disarmed)", "CSV logging", "datetime"]
+curriculum = [
+    "Digital Systems: an ultrasonic sensor sends data to software that controls a buzzer and an LED",
+    "Creating Digital Solutions: a program with states (armed / disarmed) that change when events happen",
+    "Data and Information: log timestamped events to CSV, then analyse them into a report for each hour",
+]
+stretch = [
+    "Draw a state diagram (disarmed, arming, armed, alarm) and rewrite the program so one state variable holds the state instead of True / False.",
+    "Add an exit delay: after arming, wait EXIT_DELAY seconds (a named constant) with the LED blinking so you can walk away.",
+    "Turn report() into a text bar chart of intruders per hour, and test it with assert on a small made-up CSV file.",
+]
 minutes = 65
 support = "guided → brief"
 try_first = ["a1_traffic"]
@@ -238,6 +338,15 @@ tier = "lab"
 title = "Light Switch Lab"
 subtitle = "Buttons that switch, toggle and dim an LED"
 concepts = ["Button", "when_pressed", "toggle()", "PWMLED brightness", "pause()"]
+curriculum = [
+    "Digital Systems: a button input and an LED output, and how PWM lets a digital pin dim a light",
+    "Creating Digital Solutions: event-driven code with when_pressed, and a toggle that remembers its state",
+]
+stretch = [
+    "Make a smooth dimmer: hold the button (when_held) to fade up, and print a text bar like [#####     ] for the brightness.",
+    "Write a Lamp class with on(), off() and next_level() methods, so the main program is only three lines long.",
+    "Move the brightness levels into a named constant list, and use assert to test that pressing five times wraps back to the right level.",
+]
 minutes = 35
 support = "guided → brief"
 status = "ready"
@@ -251,6 +360,16 @@ tier = "lab"
 title = "RGB Mood Lamp"
 subtitle = "Mix any colour with one LED, then build a colour-changing lamp"
 concepts = ["RGBLED", "colour tuples", "lists + modulo %", "when_held", "random"]
+curriculum = [
+    "Data and Information: how a colour is stored as three numbers (red, green, blue) in a tuple",
+    "Creating Digital Solutions: lists, % and nested loops to step through colours without an IndexError",
+    "Digital Systems: PWM on three GPIO outputs mixes any colour in one RGB LED",
+]
+stretch = [
+    "Store your moods in a list of dictionaries (name, colour, speed). A short press goes to the next mood; a long press (when_held) picks a random one.",
+    "Write blend(a, b, t) that returns the colour part way between two tuples, then fade smoothly through your whole mood list.",
+    "Let users type a hex colour like #FF8800, convert it to a tuple from 0 to 1, and catch bad codes with try / except.",
+]
 minutes = 45
 support = "scaffolded → brief"
 status = "ready"
@@ -264,6 +383,16 @@ tier = "lab"
 title = "Simon Says"
 subtitle = "A memory game: repeat the light pattern as it gets longer"
 concepts = ["lists of LEDs and Buttons", "zip()", "functions that return", "game loop", "sequences"]
+curriculum = [
+    "Creating Digital Solutions: a modular program with functions that return values (get_press) in a game loop",
+    "Data and Information: store a growing pattern in a list and compare it with the player's presses",
+    "Digital Systems: pair GPIO inputs with outputs using zip() so each button matches its light",
+]
+stretch = [
+    "Write a SimonGame class (pattern, score, add_step(), check(press)) and test check() with assert before you play.",
+    "Make the flash time a named constant that shrinks every 3 rounds, and give each press a short beep on the buzzer (GPIO18).",
+    "Save the top 3 scores with names in scores.csv and print a leaderboard at the end of each game.",
+]
 minutes = 60
 support = "scaffolded → brief"
 status = "ready"
@@ -277,12 +406,89 @@ tier = "lab"
 title = "Bar Graph & Digital Dice"
 subtitle = "Six LEDs as a level meter, a counter and a dice you can shake"
 concepts = ["LEDBoard", "LEDBarGraph", "counters with limits", "animation loops", "tilt switch input"]
+curriculum = [
+    "Digital Systems: control six GPIO outputs as one device (LEDBoard, LEDBarGraph) and read a tilt switch",
+    "Creating Digital Solutions: a counter with limits, validated with test cases at 0 and 6",
+    "Data and Information: visualise a number as a bar of lights",
+]
+stretch = [
+    "Roll 600 times in a test mode and print a text bar chart of each number. Then try randint(1, 3) + randint(1, 3) and compare the charts.",
+    "Show real dice faces with a dictionary of LED patterns, like {1: (0, 0, 1, 1, 0, 0)}, instead of a bar.",
+    "Add a meter mode: the bar graph shows the Pi's CPU load from pipath_computer, updated every half second.",
+]
 minutes = 50
 support = "scaffolded → brief"
 status = "ready"
 gpio = true
 try_first = ["a1_traffic"]
 parts = ["6 LEDs + 6 x 330Ω resistors", "2 push buttons", "tilt switch (optional)", "breadboard + jumper wires"]
+
+[[project]]
+id = "e5_parking"
+tier = "lab"
+title = "Parking Sensor"
+subtitle = "A car reversing beeper: lights and beeps that speed up as you get closer"
+concepts = ["DistanceSensor", "if / elif zones", "timing with sleep()", "only print on a change", "a parking game"]
+curriculum = [
+    "Digital Systems: an ultrasonic sensor's readings control lights and a buzzer through GPIO",
+    "Creating Digital Solutions: design zones with if / elif and test the boundary values (10, 20 and 60 cm)",
+    "Creating Digital Solutions: improve the user experience by printing only when the zone changes",
+]
+stretch = [
+    "Write zone(cm) that returns the zone name, and test every boundary with assert (9.9, 10, 20, 60, 60.1) before you use it.",
+    "Keep the zones in a list of dictionaries (limit, name, light), so you can change the distances in one place.",
+    "Smooth out jumpy readings: average the last 5 distances in a list before choosing the zone. Are the lights steadier?",
+]
+minutes = 50
+support = "guided → brief"
+status = "ready"
+gpio = true
+parts = ["HC-SR04 ultrasonic distance sensor", "1kΩ + 2kΩ resistors (for ECHO)", "red, amber and green LEDs + 3 × 330Ω resistors", "active buzzer", "1 push button", "breadboard + jumper wires"]
+
+[[project]]
+id = "e6_whackamole"
+tier = "lab"
+title = "Whack-a-Mole"
+subtitle = "An arcade game: whack the mole that lights up before it hides"
+concepts = ["lists", "functions that return", "timeouts with monotonic()", "score", "speeding up", "high score file"]
+curriculum = [
+    "Creating Digital Solutions: a modular game with functions that return a value, or None when time runs out",
+    "Data and Information: keep a high score in a file and validate it with try / except",
+    "Digital Systems: read three buttons and drive three LEDs and a buzzer with accurate timing",
+]
+stretch = [
+    "Log each whack's reaction time to CSV, then print your average, your fastest and which mole you were slowest on.",
+    "Make the game configurable with named constants (START_TIME, SPEED_UP, LIVES) and add an easy / hard choice, validated with try / except.",
+    "Write a Mole class (led, button, pop(), hide()) and let two moles pop up at once in hard mode.",
+]
+minutes = 55
+support = "guided → brief"
+try_first = ["e3_simon"]
+status = "ready"
+gpio = true
+parts = ["3 LEDs + 3 × 330Ω resistors", "3 push buttons", "active buzzer", "breadboard + jumper wires"]
+
+[[project]]
+id = "e7_morse"
+tier = "lab"
+title = "Morse Code Messenger"
+subtitle = "Send secret messages with light and sound, and tap them in with a key"
+concepts = ["dictionaries", "reverse lookup", "timing presses", "nested loops", "decoding", "a quiz"]
+curriculum = [
+    "Data and Information: encode text with a dictionary; Morse gives common letters short codes, like compression",
+    "Digital Systems: time a button press to turn a human input into data (a dot or a dash)",
+    "Creating Digital Solutions: decompose the messenger into functions that return values (read_letter)",
+]
+stretch = [
+    "Write encode(text) and decode(code) functions and prove they match with assert decode(encode(\"HELLO\")) == \"HELLO\".",
+    "Make the dot / dash cut-off a named constant. Log your press lengths to CSV and use the averages to pick the best cut-off for you.",
+    "Count the symbols Morse needs for a sentence, then compare a code where every letter is 5 symbols long. Which is shorter, and why?",
+]
+minutes = 55
+support = "guided → brief"
+status = "ready"
+gpio = true
+parts = ["LED + 330Ω resistor", "active buzzer", "1 push button (the Morse key)", "breadboard + jumper wires"]
 
 # ---------------------------------------------------------------- CAMERA & AI (any order; Photo Booth first is easiest)
 # camera = true -> the card says "needs camera"; students pick Simulated / USB / Ribbon in the workspace
@@ -293,6 +499,16 @@ tier = "camera"
 title = "Photo Booth"
 subtitle = "Press the button, watch the 3-2-1 countdown, smile!"
 concepts = ["camera", "Button", "LED countdown", "functions", "datetime file names"]
+curriculum = [
+    "Digital Systems: a button, LEDs, a buzzer and a camera working together under software control",
+    "Creating Digital Solutions: decompose the booth into functions (countdown, photo_strip), testing each part",
+    "Data and Information: name photos with datetime so no data is overwritten, and get consent before taking them",
+]
+stretch = [
+    "Design the booth for a real event: write two user stories (\"As a guest, I want...\"), then change the countdown or messages to meet them.",
+    "Make COUNTDOWN_SECONDS and PHOTOS_PER_STRIP named constants, and log each strip to photos.csv. Print how many strips were taken today.",
+    "Hold the button (when_held) to delete the newest photo, so guests stay in control of their own pictures.",
+]
 minutes = 45
 support = "guided → brief"
 status = "ready"
@@ -307,6 +523,16 @@ tier = "camera"
 title = "Teachable Machine"
 subtitle = "Teach the Pi to tell two things apart: real machine learning"
 concepts = ["images are numbers", "training data", "nearest neighbour", "functions that return", "accuracy + bias"]
+curriculum = [
+    "Data and Information: images are numbers: acquire, label and store training data as JSON",
+    "Creating Digital Solutions: nearest neighbour built from functions that return values, tested for accuracy",
+    "Creating Digital Solutions: evaluate the solution for bias, and the risks when machine learning sorts people",
+]
+stretch = [
+    "Write classify() in structured English first, then trace it by hand with three tiny 2 × 2 examples. Does your answer match the code?",
+    "Make it k-nearest neighbours: let the 3 closest examples vote. Use your accuracy test to compare k = 3 with k = 1.",
+    "Save each test result to results.csv and print a confusion table (how often each thing was guessed as each thing). Which mistake happens most?",
+]
 minutes = 65
 support = "scaffolded → brief"
 status = "ready"

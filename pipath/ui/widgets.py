@@ -14,14 +14,14 @@ BRAND = Path(__file__).resolve().parent.parent.parent / "data" / "brand"
 
 BUTTON_KINDS = {
     #             face           text       hovered face    relief
-    "primary": (C["accent"], "#FFFFFF", C["purple_light"], "raised"),
-    "go": (C["go"], "#FFFFFF", "#0FA3AA", "raised"),
+    "primary": (C["bg"], C["ink"], C["face_hi"], "raised"),        # Windows: grey, with a black ring
+    "go": (C["bg"], C["go"], C["face_hi"], "raised"),
     "secondary": (C["bg"], C["ink"], C["face_hi"], "raised"),
     "ghost": (C["bg"], C["ink"], C["face_hi"], "flat"),      # flat until the mouse is on it
     "dark": (C["bg"], C["ink"], C["face_hi"], "raised"),
     "stop": (C["bg"], C["err"], C["face_hi"], "raised"),
 }
-DEFAULT_KINDS = ("primary", "go")      # drawn with a black outline, like a default button
+DEFAULT_KINDS = ("primary", "go")      # drawn with a black outline, like a Windows default button
 
 
 class PButton(tk.Label):
@@ -121,12 +121,15 @@ class PixelMark(tk.Canvas):
 
 
 def bevel(canvas, x0, y0, x1, y1, fill, sunken=False, tags=()):
-    """A Windows 95 bevelled box on a canvas: light on the top-left edges, dark on the bottom-right."""
-    dark = blend(fill, "#000000", .45)
-    hi, lo = ("#FFFFFF", dark) if not sunken else (dark, "#FFFFFF")
+    """A Windows 95 bevelled box on a canvas, with the classic two-level edge: white and light grey
+    on the top-left, black and grey on the bottom-right (swapped when sunken)."""
+    light, shadow = blend(fill, "#FFFFFF", .55), blend(fill, "#000000", .33)
+    outer = ("#FFFFFF", "#000000") if not sunken else (shadow, "#FFFFFF")
+    inner = (light, shadow) if not sunken else ("#000000", light)
     canvas.create_rectangle(x0, y0, x1, y1, fill=fill, outline="", tags=tags)
-    canvas.create_line(x0, y1 - 1, x0, y0, x1 - 1, y0, fill=hi, width=2, tags=tags)
-    canvas.create_line(x0, y1 - 1, x1 - 1, y1 - 1, x1 - 1, y0, fill=lo, width=2, tags=tags)
+    for (hi, lo), d in ((outer, 0), (inner, 1)):
+        canvas.create_line(x0 + d, y1 - 1 - d, x0 + d, y0 + d, x1 - 1 - d, y0 + d, fill=hi, tags=tags)
+        canvas.create_line(x0 + d, y1 - 1 - d, x1 - 1 - d, y1 - 1 - d, x1 - 1 - d, y0 + d, fill=lo, tags=tags)
 
 
 class TitleBar(tk.Canvas):
@@ -134,10 +137,11 @@ class TitleBar(tk.Canvas):
     plaque in the left corner, and widgets on the right (add_right)."""
 
     def __init__(self, master, text: str = "", height: int = 26, logo: bool = False, font: str = "title",
-                 colours: tuple[str, str] | None = None, sub: str = ""):
+                 colours: tuple[str, str] | None = None, sub: str = "", close=None):
         colours = colours or (C["title_a"], C["title_b"])
         super().__init__(master, height=height, highlightthickness=0, bd=0, bg=colours[0])
         self.colours = colours
+        self.close = close                      # a command: draws the ✕ box, like a Windows dialog
         self.text, self.sub, self.font, self.logo = text, sub, font, logo
         self._right: list[tuple[tk.Widget, int]] = []
         self._drawn_w = 0
@@ -160,6 +164,14 @@ class TitleBar(tk.Canvas):
     def _layout(self) -> None:
         x = self.winfo_width() - 6
         h = int(self.cget("height"))
+        if self.close is not None:
+            self.delete("xbox")
+            bw, bh = 18, min(16, h - 6)
+            y0 = (h - bh) // 2
+            bevel(self, x - bw, y0, x, y0 + bh, C["bg"], tags=("xbox",))
+            self.create_text(x - bw // 2, y0 + bh // 2, text="✕", font="small_bold", fill=C["ink"], tags=("xbox",))
+            self.tag_bind("xbox", "<ButtonRelease-1>", lambda e: self.close())
+            x -= bw + 6
         for i, (widget, pad) in enumerate(self._right, start=1):
             self.coords(f"w{i}", x, h // 2)
             x -= widget.winfo_reqwidth() + pad
@@ -183,6 +195,7 @@ class TitleBar(tk.Canvas):
 
     def _redraw(self, _e=None) -> None:
         w, h = self.winfo_width(), int(self.cget("height"))
+        self.configure(cursor="arrow")
         if w != self._drawn_w:
             self._drawn_w = w
             self.delete("grad")
@@ -290,6 +303,49 @@ def entry(master, width: int = 30, font: str = "big", **kw) -> tk.Entry:
                     highlightcolor=C["accent"], disabledbackground=C["panel_alt"], **kw)
 
 
+class MenuBar(tk.Frame):
+    """A Windows 95 menu bar (File  Edit  Run ...). Each title opens a PopupMenu; items(): a function
+    returning PopupMenu items, so they are worked out fresh (enabled or not) every time."""
+
+    def __init__(self, master, menus: list[tuple[str, callable]]):
+        super().__init__(master, bg=C["bg"], relief="raised", bd=1)
+        for title, items in menus:
+            lbl = tk.Label(self, text=title, font="small", bg=C["bg"], fg=C["ink"], padx=8, pady=2,
+                           underline=0, relief="flat", bd=1)
+            lbl.pack(side="left", padx=(2, 0), pady=1)
+            lbl.bind("<ButtonPress-1>", lambda e, l=lbl, f=items: self._open(l, f))
+            lbl.bind("<Enter>", lambda e, l=lbl: l.configure(relief="raised"))
+            lbl.bind("<Leave>", lambda e, l=lbl: l.configure(relief="flat"))
+
+    def _open(self, lbl: tk.Label, items) -> str:
+        lbl.configure(relief="sunken")
+        menu = PopupMenu.of(self)
+        self.after_idle(lambda: (menu.show(items(), lbl.winfo_rootx(), lbl.winfo_rooty() + lbl.winfo_height()),
+                                 lbl.configure(relief="flat")))
+        return "break"
+
+
+def about_box(app) -> None:
+    """Help > About PiPath: a little Windows 95 "About" window, drawn inside the main window."""
+    old = getattr(app, "_about", None)
+    if old is not None and old.winfo_exists():
+        old.destroy()
+    win, body = window(app, "About PiPath", padx=18, pady=14, close=lambda: win.destroy())
+    app._about = win
+    img = logo_image(app, "logo_full_200")
+    if img is not None:
+        tk.Label(body, image=img, bg="#FFFFFF", relief="sunken", bd=2, padx=8, pady=6).pack(anchor="w")
+    label(body, "PiPath", font="h2", fg=C["purple"]).pack(anchor="w", pady=(10, 0))
+    label(body, "A Python tutor for Raspberry Pi, made for the Banyule Nillumbik Tech School.",
+          font="small", wraplength=360).pack(anchor="w")
+    label(body, "Victorian Curriculum Digital Technologies, Levels 7 to 10.\n"
+                "No AI and no internet: every hint was written by a teacher, and your work stays on this Pi.",
+          font="small", fg=C["muted"], wraplength=360).pack(anchor="w", pady=(6, 10))
+    PButton(body, "OK", lambda: win.destroy(), kind="primary", padx=24).pack(anchor="e")
+    win.place(relx=.5, rely=.45, anchor="center")
+    win.lift()
+
+
 class PopupMenu(tk.Frame):
     """A right-click menu drawn inside the main window with place() (never a separate window,
     so it behaves the same on X11 and Wayland). One per window: PopupMenu.of(widget).show(...)."""
@@ -374,10 +430,12 @@ def card(master, bg=None, border=None, padx=16, pady=14, relief="sunken") -> tk.
     return tk.Frame(master, bg=bg or C["panel"], relief=relief, bd=2, padx=padx, pady=pady)
 
 
-def window(master, title: str, padx=18, pady=14, bg=None) -> tuple[tk.Frame, tk.Frame]:
-    """A retro window: a raised frame with a gradient title bar. Returns (window, body)."""
-    win = tk.Frame(master, bg=bg or C["bg"], relief="raised", bd=2)
-    TitleBar(win, title, height=24).pack(fill="x", padx=1, pady=(1, 0))
+def window(master, title: str, padx=18, pady=14, bg=None, close=None) -> tuple[tk.Frame, tk.Frame]:
+    """A Windows 95 window: a raised frame with a gradient title bar (and a ✕ box if close is given).
+    Returns (window, body)."""
+    win = tk.Frame(master, bg=C["bg"], relief="raised", bd=2, highlightthickness=1,
+                   highlightbackground=C["dark"], highlightcolor=C["dark"])
+    TitleBar(win, title, height=22, close=close).pack(fill="x", padx=2, pady=(2, 0))
     body = tk.Frame(win, bg=bg or C["bg"], padx=padx, pady=pady)
     body.pack(fill="both", expand=True)
     return win, body
@@ -407,9 +465,9 @@ class RichText(tk.Text):
         self.tag_configure("h", font="h3", spacing1=4, spacing3=6)
         self.tag_configure("b", font="ui_bold")
         self.tag_configure("i", font="ui_italic")
-        self.tag_configure("code", font="code_ui", background="#E8DFF2", foreground="#4F2C68")
+        self.tag_configure("code", font="code_ui", background="#FFFFFF", foreground=C["select"])
         # long code lines wrap (indented a little more), so nothing is cut off in a narrow panel
-        self.tag_configure("block", font="code_ui", background=C["ed_bg"], foreground=C["ed_fg"],
+        self.tag_configure("block", font="code_ui", background="#FFFFFF", foreground=C["ink"],
                            lmargin1=10, lmargin2=34, rmargin=6, spacing1=0, spacing3=0, wrap="word")
         self.tag_configure("bullet", lmargin1=6, lmargin2=22)
         self.configure(state="disabled")

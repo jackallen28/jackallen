@@ -21,9 +21,10 @@ TABS = [("help", "Help"), ("show", "Show"), ("students", "Students"), ("hardware
 
 class SettingsDialog(tk.Frame):
     def __init__(self, app, tab: str = "help"):
-        super().__init__(app, bg=C["bg"], relief="raised", bd=2)
+        super().__init__(app, bg=C["bg"], relief="raised", bd=2, highlightthickness=1,
+                         highlightbackground=C["dark"], highlightcolor=C["dark"])
         self.app = app
-        TitleBar(self, "Settings", height=24).pack(fill="x", padx=1, pady=(1, 0))
+        TitleBar(self, "Settings", height=22, close=self.close).pack(fill="x", padx=2, pady=(2, 0))
         tabs = tk.Frame(self, bg=C["bg"], padx=10)
         tabs.pack(fill="x", pady=(8, 0))
         self.tabs: dict[str, tk.Label] = {}

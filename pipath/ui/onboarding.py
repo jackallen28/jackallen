@@ -26,7 +26,8 @@ def desktop(screen: Screen) -> None:
 
 
 def show_options(catalog) -> list:
-    return [("all", "Everything", "Every activity")] + [
+    return [("all", "Everything", "Every activity"),
+            ("hardware", "Hardware projects", "Anything you build with real parts")] + [
         (t["id"], t["title"], t["tagline"]) for t in catalog.tiers]
 
 

@@ -1,0 +1,782 @@
+# ELECTRONICS LAB 7: Morse Code Messenger. See e1_lightswitch.toml for the GPIO lesson keys.
+# Pin plan: LED 17, active buzzer 18, button 23 (the Morse key).
+# Step by step: SOS on the LED -> a Morse dictionary on the screen -> send a word on the LED + buzzer
+# -> test the key on its own -> dot or dash -> decode letters -> challenge: a Morse quiz.
+
+id = "e7_morse"
+title = "Morse Code Messenger"
+file_name = "morse_messenger.py"
+requires_gpio = true
+
+intro = """
+## Talk in dots and dashes
+
+Before phones and the internet, people sent messages down long wires with **Morse code**. In the 1840s, Samuel Morse and Alfred Vail built the **telegraph**: an operator tapped a key, and a buzzer clicked at the other end, maybe hundreds of kilometres away. In 1872 the Overland Telegraph Line joined Adelaide to Darwin, and from there to the rest of the world.
+
+Every letter is a pattern of short beeps (**dots**) and long beeps (**dashes**). Ships used Morse by radio, and the most famous message of all is **SOS**: `... --- ...`. It means "help!". The *Titanic* sent it in 1912.
+
+You'll build a Morse messenger one part at a time:
+- flash SOS on the **LED**
+- store the whole alphabet in a **dictionary**
+- send any word on the LED and the **buzzer** together
+- test your **Morse key** (the button) on its own, then turn presses into dots and dashes
+- decode your taps into letters, then play a **Morse quiz**
+
+**Safety:** take the blue GPIO HAT off before you change any wires, and put it back on after. Never turn the Pi off, or you'll lose your progress.
+"""
+
+outro = """
+## Message received!
+
+You used dictionaries (both ways round), loops inside loops, functions that **return** a value, a stopwatch and timeouts. That's how real decoders work.
+
+**Extension ideas:**
+- Build a **two-way messenger**: type a word to send on the LED and buzzer, then tap a reply on the key and decode it
+- Add the numbers 0 to 9 to your dictionary (for example `"1": ".----"`), and a longer gap of 7 units between words
+- Make the quiz harder each round: start with easy letters like E, T and I, then add longer ones, and speed up the dots
+"""
+
+[[wiring]]
+part = "LED"
+kind = "led"
+pin = 17
+colour = "yellow"
+connect = "GPIO17 (pin 11) → 330Ω resistor → LED long leg (+). Short leg (−) → GND rail."
+
+[[wiring]]
+part = "Buzzer"
+kind = "buzzer"
+pin = 18
+connect = "Buzzer + (long leg) → GPIO18 (pin 12). Buzzer − → GND rail. (Needed from step 3.)"
+
+[[wiring]]
+part = "Morse key (button)"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 4.)"
+
+[[wiring]]
+part = "Tip"
+connect = "Put the button at the front edge of the breadboard so it's easy to tap, like a real Morse key."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Flash SOS"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED
+from time import sleep
+
+light = LED(17)
+
+# S is three dots: short flashes of 0.2 seconds
+light.blink(on_time=0.2, off_time=0.2, n=3, background=False)
+sleep(0.4)      # a gap between letters
+
+# O is three dashes: a dash is 3 times as long as a dot
+light.blink(on_time=___, off_time=0.2, n=3, background=False)
+sleep(0.4)
+
+# S again
+light.blink(on_time=0.2, off_time=0.2, n=3, background=False)
+print("SOS sent!")
+'''
+text = """
+Morse code is all about **timing**. A dot is a short flash. A dash is a long flash: **3 times** as long as a dot.
+
+`light.blink(on_time=0.2, off_time=0.2, n=3, background=False)` flashes the LED 3 times: on for 0.2 seconds, off for 0.2 seconds. `background=False` makes the program wait until the flashing is finished before it goes on.
+
+**Your task:** a dot lasts 0.2 seconds. Fill in the blank so each dash in the O lasts 3 times as long. Run it and watch the LED spell **SOS**: 3 short, 3 long, 3 short.
+
+*Simulator:* watch the LED on the board. *Real Pi:* watch your breadboard LED!
+"""
+hints = [
+  "A dot is 0.2 seconds. What is 3 times 0.2?",
+  "3 × 0.2 = 0.6, so the blank is `0.6`.",
+  "The line is `light.blink(on_time=0.6, off_time=0.2, n=3, background=False)`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "... --- ... You just sent the world's most famous message!"
+demo = '''
+from gpiozero import LED
+from time import sleep
+
+light = LED(17)
+
+# S is three dots: short flashes of 0.2 seconds
+light.blink(on_time=0.2, off_time=0.2, n=3, background=False)
+sleep(0.4)      # a gap between letters
+
+# O is three dashes: a dash is 3 times as long as a dot
+light.blink(on_time=0.6, off_time=0.2, n=3, background=False)
+sleep(0.4)
+
+# S again
+light.blink(on_time=0.2, off_time=0.2, n=3, background=False)
+print("SOS sent!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''on_time\s*=\s*0?\.6\b'''
+label = "Each dash lasts 0.6 seconds"
+fail = "A dash is 3 times as long as a dot. A dot is 0.2 seconds."
+
+[[steps.checks]]
+type = "output_contains"
+value = "SOS sent"
+label = "Your program gets to the end"
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw 3 short, 3 long, 3 short flashes"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "A Morse dictionary"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "___",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "___",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+word = "SOS"
+message = ""
+for letter in word:
+    code = morse[letter]           # look up the letter in the dictionary
+    print(letter, "is", code)
+    message = message + code + " "
+
+print(word, "in Morse:", message)
+'''
+text = """
+This step is on the screen only (your SOS code is safe in `backups/`).
+
+A **dictionary** stores pairs: a **key** and its **value**. Here each key is a letter, and its value is that letter's Morse code. `morse["A"]` looks up A and gives back `".-"`.
+
+The `for` loop goes through the word one letter at a time, looks up each letter, and adds its code to `message`.
+
+**Your task:** two codes are missing. Fill in **O** (three dashes) and **S** (three dots) inside the quotes. Run it. Then change `"SOS"` to your own name in CAPITALS and run it again.
+"""
+hints = [
+  "A dot is a full stop `.` and a dash is a minus sign `-`. Look back at step 1: S was 3 short, O was 3 long.",
+  "O is `---` and S is `...`",
+  "The lines are `\"O\": \"---\",` and `\"S\": \"...\",`",
+]
+error_hints = { KeyError = "That letter isn't in the dictionary. The keys are CAPITAL letters, so type your word in capitals, or use `word.upper()`." }
+success = "You can look up any letter. Next, make the Pi send it with light and sound."
+demo = '''
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "---",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "...",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+word = "SOS"
+message = ""
+for letter in word:
+    code = morse[letter]           # look up the letter in the dictionary
+    print(letter, "is", code)
+    message = message + code + " "
+
+print(word, "in Morse:", message)
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''"O"\s*:\s*"---"'''
+label = "O is three dashes"
+fail = "O is three long flashes: `---`"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''"S"\s*:\s*"\.\.\."'''
+label = "S is three dots"
+fail = "S is three short flashes: `...`"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''in Morse:\s*[.-]'''
+label = "Your word is printed in Morse"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Send a word with light and sound"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LED, Buzzer
+from time import sleep
+
+light = LED(17)
+buzzer = Buzzer(18)
+UNIT = 0.2          # one dot lasts 1 unit: 0.2 seconds
+
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "---",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "...",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+def signal(seconds):
+    """LED and buzzer on together, then a 1-unit gap."""
+    light.on()
+    buzzer.on()
+    sleep(seconds)
+    light.off()
+    buzzer.off()
+    sleep(UNIT)
+
+word = input("Type a word to send: ").upper()
+for letter in word:
+    if letter not in morse:
+        continue                   # skip spaces and anything else
+    code = morse[letter]
+    print(letter, code)
+    for symbol in code:
+        if symbol == ".":
+            signal(UNIT)           # a dot is 1 unit
+        else:
+            signal(___)            # a dash is 3 units
+    sleep(___)                     # 3 units between letters (signal already waited 1)
+
+print("Message sent!")
+'''
+text = """
+Now join the dictionary to the hardware. Wire up the **buzzer** on GPIO18 first (see the Wiring + Safety card). Your old code is safe in `backups/`.
+
+Real Morse code has strict timing, all measured in **units**:
+- a dot is **1 unit** long, a dash is **3 units**
+- the gap inside a letter is **1 unit** (the `signal()` function does that for you)
+- the gap between letters is **3 units**
+
+There is a loop **inside** a loop: the outer loop goes through the letters, and the inner loop goes through the dots and dashes of each letter.
+
+**Your task:** fill in the two blanks using `UNIT`. A dash is 3 units. After a letter, `signal()` has already waited 1 unit, so how many more do you need? Run it and type a short word, like `HI`.
+"""
+hints = [
+  "A dash is 3 dots long. You can multiply: `UNIT * 3`.",
+  "The gap between letters is 3 units, but 1 unit has already gone, so you need 2 more: `UNIT * 2`.",
+  "The lines are `signal(UNIT * 3)` and `sleep(UNIT * 2)`",
+]
+error_hints = { KeyError = "That letter isn't in the dictionary. Did you remove `.upper()` or the `if letter not in morse:` line?" }
+success = "Your Pi is a telegraph! Anyone who knows Morse could read your message."
+demo = '''
+from gpiozero import LED, Buzzer
+from time import sleep
+
+light = LED(17)
+buzzer = Buzzer(18)
+UNIT = 0.2          # one dot lasts 1 unit: 0.2 seconds
+
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "---",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "...",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+def signal(seconds):
+    """LED and buzzer on together, then a 1-unit gap."""
+    light.on()
+    buzzer.on()
+    sleep(seconds)
+    light.off()
+    buzzer.off()
+    sleep(UNIT)
+
+word = input("Type a word to send: ").upper()
+for letter in word:
+    if letter not in morse:
+        continue                   # skip spaces and anything else
+    code = morse[letter]
+    print(letter, code)
+    for symbol in code:
+        if symbol == ".":
+            signal(UNIT)           # a dot is 1 unit
+        else:
+            signal(UNIT * 3)       # a dash is 3 units
+    sleep(UNIT * 2)                # 3 units between letters (signal already waited 1)
+
+print("Message sent!")
+'''
+demo_input = "sos\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''signal\(\s*(UNIT\s*\*\s*3|3\s*\*\s*UNIT|0?\.6)\s*\)'''
+label = "A dash lasts 3 units"
+fail = "A dash is 3 units long: `signal(UNIT * 3)`"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''sleep\(\s*(UNIT\s*\*\s*2|2\s*\*\s*UNIT|0?\.4)\s*\)'''
+label = "There's a 3-unit gap between letters"
+fail = "1 unit has already gone after each letter, so wait 2 more: `sleep(UNIT * 2)`"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:input"
+label = "You ask for the word with input()"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Message sent"
+label = "Your message was sent to the end"
+fail = "Run it and type a word in the answer box, then press Enter."
+
+[[steps.checks]]
+type = "confirm"
+label = "The LED flashed and the buzzer beeped together"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Test the Morse key"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Button
+from time import monotonic
+
+key = Button(23)        # the Morse key is wired to GPIO23
+
+for i in range(3):
+    print("Press the key...")
+    key.wait_for_press()
+    start = monotonic()        # the stopwatch reading when you press
+    key.___()                  # wait here until you let go
+    held = monotonic() - ___
+    print(f"That press lasted {round(held, 2)} seconds")
+
+print("Your Morse key works!")
+'''
+text = """
+Time to **receive** messages too. First, wire the button on GPIO23 and test it **on its own**. Your sending code is safe in `backups/`.
+
+To tell a dot from a dash, the Pi has to know **how long** you held the key down. `monotonic()` is like a stopwatch that's always running. Take a reading when you press, and another when you let go. The difference is how long you held it.
+
+- `key.wait_for_press()` waits until the key goes down
+- `key.wait_for_release()` waits until you let go
+
+**Your task:** fill in the two blanks. The first one waits for you to let go. The second one is the stopwatch reading from when you pressed. Run it and press the key 3 times: quick, long, quick.
+
+*Simulator:* click and hold the button on the board. Nothing happens on a Real Pi? Press **Check my wiring** in the Wiring + Safety card.
+"""
+hints = [
+  "The first blank is the method that waits for the key to be *released*. The second blank is the variable you saved when you pressed.",
+  "The blanks are `wait_for_release` and `start`.",
+  "The lines are `key.wait_for_release()` and `held = monotonic() - start`",
+]
+success = "Your key works, and the Pi can time every press. That's all a Morse decoder needs."
+demo = '''
+from gpiozero import Button
+from time import monotonic
+
+key = Button(23)        # the Morse key is wired to GPIO23
+
+for i in range(3):
+    print("Press the key...")
+    key.wait_for_press()
+    start = monotonic()        # the stopwatch reading when you press
+    key.wait_for_release()     # wait here until you let go
+    held = monotonic() - start
+    print(f"That press lasted {round(held, 2)} seconds")
+
+print("Your Morse key works!")
+'''
+demo_events = ["1.5 press 23", "1.65 release 23", "2.4 press 23", "3.1 release 23", "3.8 press 23", "3.95 release 23"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:wait_for_release"
+label = "The program waits for you to let go"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''lasted \d'''
+label = "The stopwatch timed each press"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Morse key works"
+label = "You pressed the key 3 times"
+fail = "Run it again and press the key 3 times (Simulator: click and hold it on the board)."
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Dot or dash?"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import Button, Buzzer
+from time import monotonic
+
+key = Button(23)
+buzzer = Buzzer(18)
+
+print("Tap the key: short for a dot, long for a dash. Press Stop when you're done.")
+while True:
+    key.wait_for_press()
+    buzzer.on()                # beep while the key is down
+    start = monotonic()
+    key.wait_for_release()
+    buzzer.___()
+    held = monotonic() - start
+    # Your code: if held is less than 0.3 seconds, print ". (dot)"
+    #            otherwise, print "- (dash)"
+'''
+text = """
+Now join the key to the buzzer, so you **hear** your Morse as you tap, just like a real telegraph operator.
+
+The program turns the buzzer on when the key goes down, and off when you let go. Then it decides: was that a dot or a dash?
+
+- a **short** press (less than 0.3 seconds) is a dot `.`
+- a **long** press is a dash `-`
+
+**Your task:**
+1. Fill in the blank so the buzzer stops when you let go.
+2. Replace the comment with an `if` / `else` that prints `. (dot)` or `- (dash)`.
+3. Run it. Tap some short and some long presses, then press **Stop**.
+"""
+hints = [
+  "The opposite of `buzzer.on()` is `buzzer.off()`. For the decision, compare `held` with `0.3`.",
+  "Start with `if held < 0.3:` and put a `print` under it (indented). Then `else:` and another `print`.",
+  "```\n    if held < 0.3:\n        print(\". (dot)\")\n    else:\n        print(\"- (dash)\")\n```",
+]
+success = "The Pi can hear the difference between a dot and a dash. Now let's join them into letters."
+demo = '''
+from gpiozero import Button, Buzzer
+from time import monotonic
+
+key = Button(23)
+buzzer = Buzzer(18)
+
+print("Tap the key: short for a dot, long for a dash. Press Stop when you're done.")
+while True:
+    key.wait_for_press()
+    buzzer.on()                # beep while the key is down
+    start = monotonic()
+    key.wait_for_release()
+    buzzer.off()
+    held = monotonic() - start
+    if held < 0.3:
+        print(". (dot)")
+    else:
+        print("- (dash)")
+'''
+demo_events = ["1.5 press 23", "1.6 release 23", "2.3 press 23", "2.9 release 23", "3.5 press 23", "3.6 release 23"]
+demo_seconds = 5
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''buzzer\.off\(\)'''
+label = "The buzzer stops when you let go"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''held\s*<\s*0?\.3'''
+label = "You check if the press was shorter than 0.3 seconds"
+
+[[steps.checks]]
+type = "output_contains"
+value = "(dot)"
+label = "A short press printed a dot"
+fail = "Run it and give the key a quick tap."
+
+[[steps.checks]]
+type = "output_contains"
+value = "(dash)"
+label = "A long press printed a dash"
+fail = "Run it and hold the key down for about half a second."
+
+[[steps.checks]]
+type = "confirm"
+label = "The buzzer beeped while I held the key"
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Decode letters"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import Button, Buzzer
+from time import monotonic
+
+key = Button(23)
+buzzer = Buzzer(18)
+
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "---",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "...",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+# The same dictionary the other way round: "..." -> "S"
+letters = {}
+for letter, code in morse.items():
+    letters[___] = letter
+
+def read_symbol():
+    """Wait for one press of the key. Give back "." or "-"."""
+    key.wait_for_press()
+    buzzer.on()
+    start = monotonic()
+    key.wait_for_release()
+    buzzer.off()
+    if monotonic() - start < 0.3:
+        return "."
+    return "-"
+
+print("Tap a letter on the key. Wait a second when it's done.")
+while True:
+    code = read_symbol()                        # the first dot or dash
+    while key.wait_for_press(timeout=___):      # another press within 1 second?
+        code = code + read_symbol()
+    print(code, "=", letters.get(code, "?"))
+'''
+text = """
+A letter is a few dots and dashes in a row. How does the Pi know when a letter is finished? You **stop tapping** for a moment.
+
+`key.wait_for_press(timeout=1)` waits for the key, but gives up after 1 second. It gives back **True** if you pressed it, or **False** if you didn't. So the inner `while` loop keeps adding dots and dashes until you pause.
+
+To turn `"..."` back into `"S"`, we need the dictionary **the other way round**: the codes are the keys and the letters are the values. The `for` loop near the top builds it. `letters.get(code, "?")` looks up a code, and gives `"?"` if it isn't a real letter.
+
+**Your task:**
+1. Fill in the blanks: the new dictionary's key is the **code**, and the timeout is **1** second.
+2. Add a variable `message = ""` before the `while True` loop. After each letter, add the letter to it and print `Message so far:` and the message.
+3. Run it and tap **S** (3 quick taps), wait, then **O** (3 long ones). Press **Stop** when you're done.
+"""
+hints = [
+  "The blanks are `code` and `1`. For the message, `letters.get(code, \"?\")` gives you the letter.",
+  "Inside the `while True` loop, after the inner loop: `letter = letters.get(code, \"?\")`, then `message = message + letter`.",
+  "```\n    letter = letters.get(code, \"?\")\n    message = message + letter\n    print(code, \"=\", letter)\n    print(\"Message so far:\", message)\n```",
+]
+success = "Your Pi reads Morse code! That's what telegraph operators trained for months to do."
+demo = '''
+from gpiozero import Button, Buzzer
+from time import monotonic
+
+key = Button(23)
+buzzer = Buzzer(18)
+
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "---",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "...",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+# The same dictionary the other way round: "..." -> "S"
+letters = {}
+for letter, code in morse.items():
+    letters[code] = letter
+
+def read_symbol():
+    """Wait for one press of the key. Give back "." or "-"."""
+    key.wait_for_press()
+    buzzer.on()
+    start = monotonic()
+    key.wait_for_release()
+    buzzer.off()
+    if monotonic() - start < 0.3:
+        return "."
+    return "-"
+
+print("Tap a letter on the key. Wait a second when it's done.")
+message = ""
+while True:
+    code = read_symbol()                        # the first dot or dash
+    while key.wait_for_press(timeout=1):        # another press within 1 second?
+        code = code + read_symbol()
+    letter = letters.get(code, "?")
+    message = message + letter
+    print(code, "=", letter)
+    print("Message so far:", message)
+'''
+demo_events = [
+  "1.5 press 23", "1.6 release 23", "1.9 press 23", "2 release 23", "2.3 press 23", "2.4 release 23",
+  "4 press 23", "4.6 release 23", "4.9 press 23", "5.5 release 23", "5.8 press 23", "6.4 release 23",
+  "8 press 23", "8.1 release 23", "8.4 press 23", "8.5 release 23", "8.8 press 23", "8.9 release 23",
+]
+demo_seconds = 11
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''wait_for_press\(\s*timeout\s*=\s*1\b'''
+label = "A 1-second pause ends a letter"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:get"
+label = "You look up the code in the letters dictionary"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\.\.\.\s*=\s*S'''
+label = "You tapped S and the Pi read it"
+fail = "Tap 3 quick taps on the key, then wait a second."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Message so far:\s*\S'''
+label = "The letters build up into a message"
+fail = "Add `message = message + letter` and print `Message so far:` with the message."
+
+# ------------------------------------------------------------------ STEP 7
+[[steps]]
+title = "Challenge: Morse quiz"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** a **Morse quiz** game. The Pi shows a random letter and its code, the player taps it on the key, and the Pi keeps score over **5 rounds**.
+
+1. Put the "read a whole letter" part in a function `read_letter()` that **returns** the code (like `"..."`)
+2. Pick a random letter: `letter = random.choice(list(morse))` (remember `import random`)
+3. Print the letter and its code, like `Tap the letter S: ...`
+4. If the code the player tapped matches `morse[letter]`, print `Correct!`, add 1 to the score and flash the LED. If not, print the right code.
+5. After 5 rounds, print the score, like `Score: 4 out of 5`
+
+**Tip:** you don't need `while True` any more. Use `for round_number in range(5):`
+"""
+hints = [
+  "`read_letter()` is your old inner loop:\n```\ndef read_letter():\n    code = read_symbol()\n    while key.wait_for_press(timeout=1):\n        code = code + read_symbol()\n    return code\n```",
+  "In each round: `if read_letter() == morse[letter]:` then `score = score + 1`. The LED is `LED(17)`, so add `LED` to your import.",
+]
+success = "A Morse quiz that teaches you as you play. Challenge a friend: who can get 5 out of 5?"
+demo = '''
+from gpiozero import LED, Button, Buzzer
+from time import sleep, monotonic
+import random
+
+light = LED(17)
+key = Button(23)
+buzzer = Buzzer(18)
+
+morse = {
+    "A": ".-",   "B": "-...", "C": "-.-.", "D": "-..",
+    "E": ".",    "F": "..-.", "G": "--.",  "H": "....",
+    "I": "..",   "J": ".---", "K": "-.-",  "L": ".-..",
+    "M": "--",   "N": "-.",   "O": "---",  "P": ".--.",
+    "Q": "--.-", "R": ".-.",  "S": "...",  "T": "-",
+    "U": "..-",  "V": "...-", "W": ".--",  "X": "-..-",
+    "Y": "-.--", "Z": "--..",
+}
+
+def read_symbol():
+    key.wait_for_press()
+    buzzer.on()
+    start = monotonic()
+    key.wait_for_release()
+    buzzer.off()
+    if monotonic() - start < 0.3:
+        return "."
+    return "-"
+
+def read_letter():
+    code = read_symbol()
+    while key.wait_for_press(timeout=1):
+        code = code + read_symbol()
+    return code
+
+score = 0
+for round_number in range(5):
+    letter = random.choice(list(morse))
+    print(f"Round {round_number + 1}. Tap the letter {letter}: {morse[letter]}")
+    if read_letter() == morse[letter]:
+        print("Correct!")
+        score = score + 1
+        light.on()
+        sleep(0.5)
+        light.off()
+    else:
+        print(f"Not quite. {letter} is {morse[letter]}")
+        sleep(0.5)
+
+print(f"Score: {score} out of 5")
+'''
+demo_events = [
+  "2 press 23", "2.1 release 23", "2.35 press 23", "2.45 release 23", "2.7 press 23", "2.8 release 23",
+  "5 press 23", "5.1 release 23", "5.35 press 23", "5.45 release 23", "5.7 press 23", "5.8 release 23",
+  "8 press 23", "8.1 release 23", "8.35 press 23", "8.45 release 23", "8.7 press 23", "8.8 release 23",
+  "11 press 23", "11.1 release 23", "11.35 press 23", "11.45 release 23", "11.7 press 23", "11.8 release 23",
+  "14 press 23", "14.1 release 23", "14.35 press 23", "14.45 release 23", "14.7 press 23", "14.8 release 23",
+]
+demo_seconds = 20
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:choice"
+label = "The Pi picks a random letter"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "read_letter() returns the code you tapped"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "The quiz has more than one round"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''score:?\s*\d'''
+ignore_case = true
+label = "Your quiz shows the score at the end"
+fail = "Play all 5 rounds. At the end, print the score, like `Score: 4 out of 5`."

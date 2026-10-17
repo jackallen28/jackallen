@@ -66,7 +66,7 @@ class CodeEditor(tk.Frame):
         self.text = tk.Text(
             self, wrap="none", undo=True, maxundo=-1, autoseparators=True,
             font="code", bg=C["ed_bg"], fg=C["ed_fg"], insertbackground=C["ed_cursor"],
-            insertwidth=2, selectbackground=C["ed_sel"], selectforeground=C["ed_fg"],
+            insertwidth=2, selectbackground=C["ed_sel"], selectforeground=C["ed_sel_fg"],
             relief="flat", bd=0, highlightthickness=0, padx=10, pady=8, spacing1=2, spacing3=2,
         )
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self._yview, width=12)
@@ -85,12 +85,12 @@ class CodeEditor(tk.Frame):
         for tag, colour in TAGS.items():
             t.tag_configure(colour, foreground=C[colour])
         t.tag_configure("errline", background=C["ed_errline"])
-        t.tag_configure("blank", background="#5C4A12", foreground="#FFE08A")
-        t.tag_configure("found", background="#2F4A6E")
-        t.tag_configure("found_now", background="#C9962B", foreground="#1F232B")
-        t.tag_configure("bracket", background="#3D4A5E", foreground="#FFFFFF")
-        t.tag_configure("bracket_bad", background="#8C2A35", foreground="#FFFFFF")
-        t.tag_configure("goto", background="#34405A")
+        t.tag_configure("blank", background="#FFFF80", foreground="#000000")
+        t.tag_configure("found", background="#C6DCFF")
+        t.tag_configure("found_now", background="#FFC34D", foreground="#000000")
+        t.tag_configure("bracket", background="#C8C8FF", foreground="#000000")
+        t.tag_configure("bracket_bad", background="#FF9C9C", foreground="#000000")
+        t.tag_configure("goto", background="#E6E6FF")
         t.tag_raise("sel")
         self._set_tabs()
 
@@ -523,7 +523,7 @@ class FindBar(tk.Frame):
     """Find, replace and go to line, in a bar above the code (Ctrl+F, Ctrl+H, Ctrl+G).
     Searching ignores capitals unless you type a capital letter."""
 
-    BG = "#2A2F38"
+    BG = C["bg"]
 
     def __init__(self, editor: CodeEditor):
         super().__init__(editor, bg=self.BG, padx=8, pady=5)
@@ -536,26 +536,26 @@ class FindBar(tk.Frame):
 
         row = tk.Frame(self, bg=self.BG)
         row.pack(fill="x")
-        self.what = tk.Label(row, text="Find", font="small_bold", fg="#AEB5C1", bg=self.BG, width=9, anchor="w")
+        self.what = tk.Label(row, text="Find", font="small_bold", fg=C["ink"], bg=self.BG, width=9, anchor="w")
         self.what.pack(side="left")
         self.entry = self._entry(row)
         self.entry.pack(side="left", fill="x", expand=True, ipady=2)
-        self.prev_btn = PButton(row, "◂", self.prev, kind="dark", font="small_bold", padx=8, pady=1)
-        self.next_btn = PButton(row, "▸", self.next, kind="dark", font="small_bold", padx=8, pady=1)
+        self.prev_btn = PButton(row, "◂", self.prev, kind="secondary", font="small_bold", padx=8, pady=1)
+        self.next_btn = PButton(row, "▸", self.next, kind="secondary", font="small_bold", padx=8, pady=1)
         self.prev_btn.pack(side="left", padx=(6, 0))
         self.next_btn.pack(side="left", padx=(2, 0))
-        self.count = tk.Label(row, text="", font="small", fg="#AEB5C1", bg=self.BG, width=11)
+        self.count = tk.Label(row, text="", font="small", fg=C["muted"], bg=self.BG, width=11)
         self.count.pack(side="left", padx=(6, 0))
-        PButton(row, "✗", self.close, kind="dark", font="small_bold", padx=8, pady=1).pack(side="right")
+        PButton(row, "✗", self.close, kind="secondary", font="small_bold", padx=8, pady=1).pack(side="right")
 
         self.rep_row = tk.Frame(self, bg=self.BG)
-        tk.Label(self.rep_row, text="Replace with", font="small_bold", fg="#AEB5C1", bg=self.BG, width=9,
+        tk.Label(self.rep_row, text="Replace with", font="small_bold", fg=C["ink"], bg=self.BG, width=9,
                  anchor="w").pack(side="left")
         self.rep_entry = self._entry(self.rep_row)
         self.rep_entry.pack(side="left", fill="x", expand=True, ipady=2)
-        PButton(self.rep_row, "Replace", self.replace_one, kind="dark", font="small_bold", padx=8,
+        PButton(self.rep_row, "Replace", self.replace_one, kind="secondary", font="small_bold", padx=8,
                 pady=1).pack(side="left", padx=(6, 0))
-        PButton(self.rep_row, "Replace all", self.replace_all, kind="dark", font="small_bold", padx=8,
+        PButton(self.rep_row, "Replace all", self.replace_all, kind="secondary", font="small_bold", padx=8,
                 pady=1).pack(side="left", padx=(2, 0))
 
         self.entry.bind("<Return>", lambda e: (self.go(), "break")[1])
@@ -567,9 +567,9 @@ class FindBar(tk.Frame):
             w.bind("<Escape>", lambda e: (self.close(), "break")[1])
 
     def _entry(self, master) -> tk.Entry:
-        return tk.Entry(master, font="code_ui", bg="#1F232B", fg="#FFFFFF", insertbackground="#FFFFFF",
-                        relief="flat", highlightthickness=1, highlightbackground="#3A404C",
-                        highlightcolor=C["go"])
+        return tk.Entry(master, font="code_ui", bg="#FFFFFF", fg=C["ink"], insertbackground=C["ink"],
+                        relief="sunken", bd=2, highlightthickness=0, selectbackground=C["select"],
+                        selectforeground="#FFFFFF")
 
     # ---------------------------------------------------------------- open / close
     def open(self, mode: str = "find"):

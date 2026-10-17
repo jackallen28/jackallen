@@ -44,6 +44,10 @@ class PiPathApp(tk.Tk):
             except tk.TclError:
                 pass
         self.option_add("*Entry.relief", "flat")
+        for key, value in (("background", C["bg"]), ("troughColor", "#DFDFDF"), ("activeBackground", C["face_hi"]),
+                           ("relief", "raised"), ("borderWidth", 2), ("elementBorderWidth", 2),
+                           ("highlightThickness", 0), ("width", 16)):
+            self.option_add(f"*Scrollbar.{key}", value)    # chunky grey Windows 95 scrollbars
         self.bind_all("<Control-Shift-T>", lambda e: self.teacher_panel())
         self.bind_all("<Control-Shift-t>", lambda e: self.teacher_panel())
         self.protocol("WM_DELETE_WINDOW", self.quit_app)
@@ -184,7 +188,7 @@ class PiPathApp(tk.Tk):
         self._teacher_overlay = ov
         box = tk.Frame(ov, bg=C["bg"], relief="raised", bd=2)
         box.place(relx=.5, rely=.45, anchor="center")
-        TitleBar(box, "Teacher panel", height=24).pack(fill="x", padx=1, pady=(1, 0))
+        TitleBar(box, "Teacher panel", height=22, close=lambda: ov.destroy()).pack(fill="x", padx=2, pady=(2, 0))
         body = tk.Frame(box, bg=C["bg"], padx=24, pady=16)
         body.pack(fill="x")
 

@@ -36,6 +36,7 @@ type = "PiPathRunaway"
 message = "output"
 title = "Your program would not stop printing"
 explain = "PiPath stopped your program because it printed thousands of lines. That usually means a loop that never ends."
+tech = """This is an **infinite loop**: the loop condition never becomes `False`, so the loop body repeats forever. Make sure each pass changes the state the condition depends on, or use a `for` loop over a fixed `range()` when you know how many times to repeat."""
 hints = [
   "Find your `while` loop. What has to happen for it to stop?",
   "Inside the loop, something must change so the condition eventually becomes False. Is a variable being updated?",
@@ -48,6 +49,7 @@ type = "PiPathRunaway"
 message = "busy_gpio"
 title = "Your loop kept checking the button flat out"
 explain = "PiPath stopped your program because a `while True` loop was checking a button or sensor thousands of times a second. That makes the Pi hot and slow, and it never gets a rest."
+tech = """This is **busy-waiting** (polling): the loop spins at 100% CPU checking a value that only changes a few times a second. Event-driven code (`when_pressed` callbacks, or the blocking `wait_for_press()`) lets the OS sleep the process until the hardware changes; if you must poll, add a short `sleep()`."""
 hints = [
   "Find the `while True` loop that checks `is_pressed` (or another sensor).",
   "Add `sleep(0.01)` inside the loop, so the Pi rests for a moment each time around.",
@@ -74,6 +76,7 @@ type = "SyntaxError"
 message = '''invalid character '(?P<ch>[“”‘’])' '''
 title = "Fancy quote marks"
 explain = "Python only understands plain straight quotes (\" or '). Curly quotes like {ch} usually sneak in when code is copied from a document or website."
+tech = """Python source is read by a **tokeniser** that only accepts ASCII quote characters (U+0022 and U+0027) as string delimiters. Curly quotes like {ch} are different Unicode characters, so they count as invalid tokens. Word processors swap them in automatically, so write code in a code editor, not a document."""
 hints = [
   "Look closely at the quote marks on line {line}.",
   "Delete the curly quote {ch} and type a straight quote from your keyboard.",
@@ -86,6 +89,7 @@ type = "SyntaxError"
 message = "expected ':'"
 title = "Missing colon"
 explain = "Lines that start a block (`if`, `elif`, `else`, `while`, `for`, `def`) must end with a colon `:`. It tells Python \"the indented lines below belong to me\"."
+tech = """The colon marks the end of a **compound statement's header**; the indented lines after it are the *suite* (block). The parser needs it to know where the condition ends and the block begins."""
 hints = [
   "Look at the very end of line {line}.",
   "Lines that start with if, elif, else, while, for or def need a `:` at the end.",
@@ -98,6 +102,7 @@ type = "SyntaxError"
 message = "Missing parentheses in call to 'print'"
 title = "print needs brackets"
 explain = "In Python 3, `print` is a function, so whatever you want to print goes inside round brackets."
+tech = """In Python 2, `print` was a *statement*. In Python 3 it became a built-in **function**, so it must be called with `()` like any other function. That change lets you pass keyword arguments such as `sep=` and `end=`."""
 hints = [
   "Look at how `print` is written on line {line}.",
   "Put brackets around the thing you want to print.",
@@ -110,6 +115,7 @@ type = "SyntaxError"
 message = "Maybe you meant '==' or ':=' instead of '='"
 title = "One = or two?"
 explain = "In Python, a single `=` **stores** a value in a variable. A double `==` **compares** two values. Inside an `if` or `while` you almost always want `==`."
+tech = """`=` is an **assignment statement**, not an expression, so it can't appear where Python expects a value (like an `if` condition). `==` is the **equality operator** and returns a `bool`. (`:=`, the walrus operator, assigns *and* returns a value, but is rarely what you want here.)"""
 hints = [
   "Look at the comparison on line {line}.",
   "`=` means \"store\", `==` means \"is equal to?\". Which one do you need here?",
@@ -122,6 +128,7 @@ type = "SyntaxError"
 message = "cannot assign to .* Maybe you meant '=='"
 title = "One = or two?"
 explain = "In Python, a single `=` **stores** a value in a variable. A double `==` **compares** two values."
+tech = """The left side of `=` must be an **assignable target** (a variable name, `x[i]` or `obj.attr`). An expression like `a + b` or a literal can't be assigned to, so the parser rejects it. To compare, use the equality operator `==`."""
 hints = [
   "Look at the comparison on line {line}.",
   "`=` means \"store\", `==` means \"is equal to?\". Which one do you need here?",
@@ -134,6 +141,7 @@ type = "SyntaxError"
 message = '''(?P<br>[\(\[\{])' was never closed'''
 title = "A bracket was never closed"
 explain = "Every opening bracket `{br}` needs a matching closing bracket. Python got to the end without finding one."
+tech = """Brackets must be **balanced**: the parser keeps a stack of open brackets and every `{br}` must be popped by its closing partner. Because an open bracket lets an expression run over several lines, the error is often reported further down than the real mistake. Editors with bracket matching help prevent this."""
 hints = [
   "Count the opening and closing brackets on line {line}.",
   "Each `(` needs a `)`. Check the end of the line, especially after a `print(` or `input(`.",
@@ -146,6 +154,7 @@ type = "SyntaxError"
 message = '''unmatched '(?P<br>[\)\]\}])''''
 title = "An extra closing bracket"
 explain = "Python found a closing bracket `{br}` but there was no opening bracket to match it."
+tech = """The parser tracks open brackets on a **stack**. A closing `{br}` with nothing left on the stack can't match anything, so the code can't be parsed. Check the line above too: a bracket closed early there leaves this one spare."""
 hints = [
   "Count the brackets on line {line}. Are there more closing ones than opening ones?",
   "Delete the extra `{br}`.",
@@ -157,6 +166,7 @@ type = "SyntaxError"
 message = "closing parenthesis '(?P<close>.)' does not match opening parenthesis '(?P<open>.)'"
 title = "Brackets don't match"
 explain = "You opened with `{open}` but closed with `{close}`. They need to be the same kind of bracket."
+tech = """Brackets are matched like a **stack**: the most recently opened bracket must be the first one closed. `{open}` was still open when `{close}` arrived, so the nesting is wrong. Close the inner bracket before the outer one."""
 hints = [
   "Look at the brackets on line {line}.",
   "Round `( )`, square `[ ]` and curly `{{ }}` brackets must be closed with the same kind.",
@@ -168,6 +178,7 @@ type = "SyntaxError"
 message = "unterminated string literal"
 title = "Missing quote mark"
 explain = "Text (a *string*) must start AND end with a quote mark. Python found the start of some text on line {line} but not the end."
+tech = """A **string literal** must open and close with the same quote character on the same line. A missing closing quote, or an unescaped quote of the same kind inside the text, ends the literal in the wrong place. Use the other quote type inside (`"It's"`) or an escape sequence."""
 hints = [
   "Find the text on line {line}. Does it have a quote at both ends?",
   "Check that the opening and closing quotes match: both `\"` or both `'`.",
@@ -180,6 +191,7 @@ type = "SyntaxError"
 message = "unterminated triple-quoted string"
 title = "Long text never closed"
 explain = "You started some text with three quotes (`\"\"\"`) but never finished it with three more."
+tech = """A triple-quoted string can span many lines, so the tokeniser keeps reading until it finds the matching three quotes. If they never come, it reaches **end of file** inside the string. The error points at where the string *started*."""
 hints = [
   "Find the `\"\"\"` that starts on line {line}.",
   "Add a matching `\"\"\"` where the text should end.",
@@ -191,6 +203,7 @@ type = "SyntaxError"
 message = "Perhaps you forgot a comma"
 title = "Missing comma?"
 explain = "Python found two things side by side with nothing joining them. When you put text and a variable together you need a comma (or use an f-string)."
+tech = """Two expressions side by side with no operator between them aren't valid Python **syntax**. Arguments in a call and items in a list or tuple are separated by commas. For mixing text and values, an f-string is usually clearer than many comma-separated pieces."""
 hints = [
   "Look between the pieces inside the brackets on line {line}.",
   "Use a comma to separate things in `print`, e.g. `print(\"Hi\", name)`.",
@@ -203,6 +216,7 @@ type = "SyntaxError"
 code = '''^\s*(else|elif)\b'''
 title = "else or elif without an if"
 explain = "`else` and `elif` must line up exactly underneath their matching `if`, and come straight after its indented block."
+tech = """`else` and `elif` are **clauses** of an `if` statement, not statements of their own. Python links them to an `if` by **indentation level**, so a clause that doesn't line up with an `if` at the same level (or is separated from it) has nothing to attach to."""
 hints = [
   "Check the indentation of line {line}. Does it line up with an `if` above?",
   "`if`, `elif` and `else` should all start at the same distance from the left edge.",
@@ -215,6 +229,7 @@ type = "SyntaxError"
 code = '''^\s*(iff|esle|els|elfi|eif|whlie|wile|fro|dfe|retrun|improt|imprt)\b'''
 title = "A Python keyword is misspelled"
 explain = "Python keywords like `if`, `else`, `while`, `for`, `def`, `import` must be spelled exactly."
+tech = """**Keywords** are reserved words built into the grammar (`help("keywords")` lists them). A misspelt keyword is read as an ordinary name, so the line no longer fits any statement the parser knows. Syntax highlighting is a quick check: keywords change colour when spelt correctly."""
 hints = [
   "Look carefully at the first word on line {line}.",
   "Check spelling: `if`, `elif`, `else`, `while`, `for`, `def`, `import`, `return`.",
@@ -226,6 +241,7 @@ type = "IndentationError"
 message = '''expected an indented block after (?P<what>.+?) on line (?P<hdr>\d+)'''
 title = "Indent the lines inside the block"
 explain = "Line {hdr} ends with a colon, so Python expects the next line(s) to be **indented**. That's how Python knows they belong to the {what}."
+tech = """Python uses **significant whitespace**: a block is defined by indentation, not braces. After a header ending in `:` the parser needs at least one more-indented statement. If the block is deliberately empty for now, write `pass` as a placeholder."""
 hints = [
   "Look at the line(s) just under line {hdr}.",
   "Press Tab (or 4 spaces) at the start of each line that belongs inside the block.",
@@ -238,6 +254,7 @@ type = "IndentationError"
 message = "unexpected indent"
 title = "Unexpected indent"
 explain = "Line {line} is pushed in from the left but there's no `if`, `while`, `for` or `def` above that it belongs to."
+tech = """Indentation in Python is part of the **grammar**: a deeper indent opens a new block, and that is only allowed straight after a header ending in `:`. Stray spaces at the start of a line look like a new block that nothing opened."""
 hints = [
   "Look at the spaces at the start of line {line}.",
   "Only lines inside a block (after a line ending with `:`) should be indented.",
@@ -250,6 +267,7 @@ type = "IndentationError"
 message = "unindent does not match any outer indentation level"
 title = "Indents don't line up"
 explain = "Line {line} is indented by an amount that doesn't match the lines above it. Python is very fussy about lining things up."
+tech = """The tokeniser keeps a **stack of indentation levels**. When a line is dedented, its indent must exactly equal one of the levels already on the stack. PEP 8, Python's style guide, says to use 4 spaces per level so levels always line up."""
 hints = [
   "Compare the indentation of line {line} with the lines above it.",
   "Use exactly 4 spaces for each level of indent (the Tab key does this for you).",
@@ -261,6 +279,7 @@ id = "tab_error"
 type = "TabError"
 title = "Tabs and spaces are mixed"
 explain = "Some lines are indented with tabs and others with spaces. Python can't tell how they line up."
+tech = """A tab and a run of spaces can look the same on screen but are different characters, and Python 3 refuses to guess how wide a tab is. PEP 8 says to use **spaces only**; most editors (PiPath included) turn the Tab key into 4 spaces."""
 hints = [
   "Look at the indentation on line {line}.",
   "Delete the indentation on line {line} and retype it using the Tab key in PiPath (it inserts 4 spaces).",
@@ -271,6 +290,7 @@ id = "syntax_generic"
 type = "SyntaxError"
 title = "Python can't read this line"
 explain = "Something on line {line} isn't written the way Python expects. Python said: `{message}`"
+tech = """A **SyntaxError** is found by the parser *before* any code runs, so nothing in your program executes. The reported line is where parsing failed, which is often just after the real mistake, so check the line above as well."""
 hints = [
   "Read line {line} slowly, character by character.",
   "Check for missing or extra brackets, quotes, colons and commas. Sometimes the real problem is on the line **above**.",
@@ -282,6 +302,7 @@ id = "indent_generic"
 type = "IndentationError"
 title = "Indentation problem"
 explain = "The spaces at the start of line {line} aren't quite right. Python said: `{message}`"
+tech = """`IndentationError` is a kind of `SyntaxError`: Python's **block structure** comes from indentation, so the parser rejects the file before it runs. Use 4 spaces per level consistently and let the editor indent for you."""
 hints = [
   "Check how far line {line} is pushed in from the left.",
   "Lines inside an if/while/for block use 4 spaces. Other lines start at the left edge.",
@@ -306,6 +327,7 @@ type = "NameError"
 message = '''name '(?P<name>\w+)' is not defined. Did you mean: '(?P<suggest>\w+)'\?'''
 title = "Python doesn't know `{name}`"
 explain = "Python doesn't know anything called `{name}`. Python's best guess is that you meant `{suggest}`, but it could also be text that's missing its quote marks."
+tech = """A **NameError** means the name wasn't found in any **scope** Python searches (local, enclosing, global, built-in). Python compares it with the names it does know and suggests the closest match, `{suggest}`. Names are case-sensitive, so `Score` and `score` are different variables."""
 hints = [
   "Is `{name}` a spelling mistake, or was it meant to be words (text)?",
   "If it's a typo, check the spelling and capitals. Python suggests `{suggest}`.",
@@ -318,6 +340,7 @@ type = "NameError"
 message = '''name '(?P<name>\w+)' is not defined'''
 title = "Python doesn't know `{name}`"
 explain = "On line {line} you used `{name}`, but Python has never seen it before. It isn't a variable you've made, or a built-in Python word."
+tech = """Python looks names up at **run time**, searching the local, enclosing, global and built-in scopes in that order (the LEGB rule). `{name}` wasn't bound in any of them when line {line} ran: a typo, a variable assigned later (or only inside an `if` that didn't run), or text missing its quotes."""
 hints = [
   "Is `{name}` spelled exactly the same (including capital letters) everywhere you use it?",
   "If `{name}` is a variable, you need to give it a value *above* line {line}, e.g. `{name} = ...`",
@@ -330,6 +353,7 @@ type = "UnboundLocalError"
 message = '''local variable '(?P<name>\w+)''''
 title = "Variable used before it has a value"
 explain = "Inside a function you used `{name}` before giving it a value in that function."
+tech = """Assigning to a name anywhere in a function makes it **local** for the whole function (decided when the function is compiled), so reading `{name}` before the assignment fails. Pass the value in as a parameter and `return` the new one, use `global` sparingly, or keep the state in an object."""
 hints = [
   "Find where `{name}` first gets a value. Is it below line {line}?",
   "Pass the value into the function as a parameter, or set it at the start of the function.",
@@ -343,6 +367,7 @@ type = "TypeError"
 message = '''can only concatenate str \(not "(?P<t>\w+)"\) to str'''
 title = "Can't join text and a number with +"
 explain = "On line {line} you used `+` to join some text with a number ({t}). Python won't guess whether you want maths or joining text."
+tech = """`input()` always returns a `str`. `+` between a `str` and an `{t}` is not defined, so Python raises a TypeError instead of guessing. Convert at the boundary, `int(input(...))`, or format with an f-string."""
 hints = [
   "Which thing on line {line} is a number and which is text?",
   "Use a comma in `print` instead of `+`, e.g. `print(\"You are\", age)`.",
@@ -355,6 +380,7 @@ type = "TypeError"
 message = '''unsupported operand type\(s\) for (?P<op>.+?): 'str' and '(int|float)''''
 title = "Doing maths with text"
 explain = "On line {line} you tried to do `{op}` with text and a number. Remember: `input()` **always** gives you text, even if someone types a number."
+tech = """Python is **strongly typed**: the `{op}` operator isn't defined between a `str` and a number, and Python won't convert implicitly. `input()` returns a `str`, so convert it once where it enters the program, e.g. `int(input(...))`, and work with numbers from then on."""
 hints = [
   "Which variable on line {line} came from `input()`?",
   "Turn text into a whole number with `int()`.",
@@ -367,6 +393,7 @@ type = "TypeError"
 message = '''unsupported operand type\(s\) for (?P<op>.+?): '(int|float)' and 'str''''
 title = "Doing maths with text"
 explain = "On line {line} you tried to do `{op}` with a number and some text. Remember: `input()` **always** gives you text."
+tech = """Python is **strongly typed**: the `{op}` operator isn't defined between a number and a `str`, and Python won't convert implicitly. `input()` returns a `str`, so convert it once where it enters the program, e.g. `int(input(...))`."""
 hints = [
   "Which variable on line {line} came from `input()`?",
   "Turn text into a whole number with `int()`.",
@@ -379,6 +406,7 @@ type = "TypeError"
 message = '''not supported between instances of '(str|int)' and '(int|str)''''
 title = "Comparing text with a number"
 explain = "On line {line} you compared text with a number using `<` or `>`. Python can't tell which is bigger. Did one of them come from `input()`?"
+tech = """Python 3 removed ordering comparisons between unrelated types, because `"10" < 9` has no sensible answer (strings compare letter by letter, numbers by value). Convert the `str` from `input()` with `int()` or `float()` before comparing."""
 hints = [
   "Which variable on line {line} came from `input()`?",
   "Turn the answer into a number when you ask for it with `int()`.",
@@ -391,6 +419,7 @@ type = "TypeError"
 message = "'str' object cannot be interpreted as an integer"
 title = "Text used where a number is needed"
 explain = "Line {line} needs a whole number (for example in `range()`), but it got text, probably from `input()`."
+tech = """Functions like `range()` need an object that can act as an **integer index** (it implements `__index__`). A `str` doesn't, even if it contains digits. Convert with `int()` where the value is read in."""
 hints = [
   "Which value on line {line} came from `input()`?",
   "Wrap it in `int()` to turn the text into a number, e.g. `times = int(input(\"How many? \"))`.",
@@ -402,6 +431,7 @@ type = "TypeError"
 message = '''(?P<t>\w+)' object is not callable'''
 title = "Using brackets on something that isn't a function"
 explain = "On line {line}, Python saw round brackets after something that isn't a function. This often happens when a variable has the same name as a function (like `print = ...` or `input = ...`)."
+tech = """Calling `x()` asks Python to run the object's `__call__` method, and a `{t}` doesn't have one. Usually a name that held a function was **rebound** (e.g. `input = input()` replaces the built-in), or `2(3 + 4)` was written for multiplication. Avoid using built-in names as variables."""
 hints = [
   "Did you use a Python word like `print`, `input`, `str` or `int` as a variable name?",
   "If so, rename your variable (e.g. `user_input` instead of `input`).",
@@ -414,6 +444,7 @@ type = "TypeError"
 message = '''(?P<func>\w+)\(\) missing (?P<n>\d+) required positional argument'''
 title = "`{func}` needs more information"
 explain = "The function `{func}` expects you to give it {n} more value(s) inside the brackets."
+tech = """Each **parameter** in the `def {func}(...)` line without a default value must get an **argument** in every call. Python matches positional arguments to parameters left to right. Give the parameter a default (`def f(x, size=10):`) if it should be optional."""
 hints = [
   "Look at the `def {func}(...)` line. How many things go inside the brackets?",
   "Give `{func}` the same number of values when you call it on line {line}.",
@@ -425,6 +456,7 @@ type = "TypeError"
 message = '''(?P<func>\w+)\(\) takes (?P<a>\d+) positional arguments? but (?P<b>\d+) (were|was) given'''
 title = "`{func}` was given too many values"
 explain = "`{func}` takes {a} value(s), but on line {line} it was given {b}."
+tech = """Python binds positional arguments to parameters in order, and `{func}` only has {a}. If you defined a method in a class, remember that `self` counts as the first parameter. Use keyword arguments (`f(size=5)`) to make calls clearer."""
 hints = [
   "Compare the call on line {line} with the `def {func}(...)` line.",
   "Make the number of values match.",
@@ -435,6 +467,7 @@ id = "type_generic"
 type = "TypeError"
 title = "Mixing up types"
 explain = "Python got the wrong *type* of value on line {line} (for example text instead of a number). Python said: `{message}`"
+tech = """A **TypeError** means an operation was given an object of the wrong **type**. Python checks types at run time (dynamic typing) and doesn't silently convert between them. Use `type(x)` to check what you actually have, and convert at the point where data enters your program."""
 hints = [
   "Which values on line {line} are text and which are numbers?",
   "Remember `input()` always gives text. Use `int()` to turn it into a number.",
@@ -448,6 +481,7 @@ type = "ValueError"
 message = '''invalid literal for int\(\) with base 10: ''$'''
 title = "Nothing was typed in"
 explain = "Your program wanted a number, but the answer was empty. Probably Enter was pressed before typing anything."
+tech = """`int("")` raises a **ValueError**: the type (`str`) is right but the *value* can't be parsed. Real programs **validate input** in a loop with `try` / `except ValueError` and ask again instead of crashing."""
 hints = [
   "Run it again and type a number into the box under the Output before pressing Enter.",
   "Later you can learn to handle this with `try` / `except` so your program doesn't crash.",
@@ -459,6 +493,7 @@ type = "ValueError"
 message = '''invalid literal for int\(\) with base 10: '(?P<val>.*)''''
 title = "That's not a whole number"
 explain = "Your program used `int()` to turn `{val}` into a number, but `{val}` isn't a whole number. Your code is probably fine. The answer typed in wasn't a whole number."
+tech = """`int()` parses a string of decimal digits, so `{val}` raises a **ValueError** (right type, wrong value). Validate user input with `try` / `except ValueError` in a loop, or check `text.isdigit()` first."""
 hints = [
   "Run it again and type a whole number like `7` (digits, no words, no decimal point).",
   "If you need decimals like 2.5, use `float()` instead of `int()`.",
@@ -470,6 +505,7 @@ type = "ValueError"
 message = '''could not convert string to float: '(?P<val>.*)''''
 title = "That's not a number"
 explain = "`float()` couldn't turn `{val}` into a number."
+tech = """`float()` parses text like `2.5` or `1e3`, so `{val}` raises a **ValueError**. Wrap input conversion in `try` / `except ValueError` and ask again, so bad input never crashes the program."""
 hints = [
   "Run it again and type a number like `2.5`.",
 ]
@@ -479,6 +515,7 @@ id = "value_generic"
 type = "ValueError"
 title = "A value that doesn't fit"
 explain = "Something on line {line} got a value it couldn't use. Python said: `{message}`"
+tech = """A **ValueError** means the type was right but the value wasn't acceptable (e.g. `int("abc")`, or `randint(5, 1)`). Check values before using them, or catch the exception with `try` / `except ValueError` where bad data can come in."""
 hints = [
   "What value was being used on line {line}? Print it out to check.",
 ]
@@ -490,6 +527,7 @@ id = "zero_division"
 type = "ZeroDivisionError"
 title = "Dividing by zero"
 explain = "On line {line} your program tried to divide by 0, which is impossible (even for a computer!)."
+tech = """Division by zero is undefined in maths, so Python raises `ZeroDivisionError` rather than returning a made-up number. Guard with `if divisor != 0:`, or catch the exception with `try` / `except ZeroDivisionError` when the divisor comes from data."""
 hints = [
   "Which number on line {line} are you dividing by? Could it be 0?",
   "Use an `if` to check the number isn't 0 before dividing.",
@@ -501,6 +539,7 @@ type = "IndexError"
 message = "out of range"
 title = "That position isn't in the list"
 explain = "On line {line} you asked for a position that doesn't exist. Lists start counting at **0**, so a list of 3 things has positions 0, 1 and 2."
+tech = """Lists are **zero-indexed**, so valid indexes are 0 to `len(x) - 1`. Prefer `for item in x:` or `enumerate(x)` over manual indexes, or check `if i < len(x)`."""
 hints = [
   "How many items are in your list? What position did you ask for?",
   "The last item is at position `len(my_list) - 1`, or simply `my_list[-1]`.",
@@ -512,6 +551,7 @@ type = "KeyError"
 message = '''(?P<key>.+)'''
 title = "That key isn't in the dictionary"
 explain = "On line {line} you looked up {key}, but the dictionary doesn't have it."
+tech = """A dictionary is a **hash map**: looking up a key that was never stored raises `KeyError`. Use `key in d` to test first, `d.get(key, default)` for a fallback value, or `collections.defaultdict` when missing keys should start at a default."""
 hints = [
   "Check the spelling and capital letters of {key}.",
   "Print the dictionary's keys to see what is in it: `print(my_dict.keys())`.",
@@ -526,6 +566,7 @@ type = "AttributeError"
 message = '''partially initialized module '(?P<mod>\w+)''''
 title = "Your file has the same name as a module"
 explain = "Your program is called `{mod}.py`, the same as Python's `{mod}` module, so Python imports *your* file instead of the real one."
+tech = """`import` searches `sys.path` in order, and the first entry is your program's own folder. A file called `{mod}.py` there **shadows** the standard library module, so Python imports your file instead. Never name a file after a module you use."""
 hints = [
   "Rename your project so it isn't called `{mod}`.",
   "For example: `my_{mod}_game`.",
@@ -537,6 +578,7 @@ type = "AttributeError"
 message = '''has no attribute '(?P<attr>\w+)'. Did you mean: '(?P<suggest>\w+)'\?'''
 title = "Is `{attr}` a typo?"
 explain = "Python can't find `{attr}`. It thinks you meant `{suggest}`."
+tech = """**Attribute** lookup (`obj.name`) searches the object and its class. `{attr}` wasn't found, and Python suggests the closest existing name, `{suggest}`. Attribute names are case-sensitive; `dir(obj)` lists what is available."""
 hints = [
   "Check the spelling and capital letters of `{attr}` on line {line}.",
   "Try `{suggest}` instead.",
@@ -548,6 +590,7 @@ type = "AttributeError"
 message = '''module '(?P<mod>\w+)' has no attribute '(?P<attr>\w+)''''
 title = "`{mod}` doesn't have `{attr}`"
 explain = "The `{mod}` module doesn't contain anything called `{attr}`. It's probably a spelling or capital-letter mistake."
+tech = """A module is an object whose **attributes** are the names defined in it. `{mod}` has no `{attr}`: check the spelling and case, or run `dir({mod})` (or `help({mod})`) to see what it provides."""
 hints = [
   "Check the spelling of `{attr}` on line {line}. Capitals matter (`randint`, not `randInt`).",
   "Look at the example in the step instructions and compare.",
@@ -559,6 +602,7 @@ type = "AttributeError"
 message = '''(?P<t>\w+)' object has no attribute '(?P<attr>\w+)''''
 title = "A {t} can't do `.{attr}`"
 explain = "On line {line} you used `.{attr}` on a {t}, but {t} values don't have that."
+tech = """Each **type** defines its own **methods** and attributes, so `.{attr}` only works on objects whose class has it. A {t} doesn't. Often the variable holds a different type than you expect (e.g. `None` returned from a function); check with `type(x)`."""
 hints = [
   "Check the spelling of `{attr}`.",
   "Is the variable the type you think it is? Try `print(type(variable))` to check.",
@@ -570,6 +614,7 @@ type = "ModuleNotFoundError"
 message = "No module named '(gpiozero|RPi|lgpio)"
 title = "The GPIO library isn't installed"
 explain = "This program needs the GPIO library, which comes with Raspberry Pi OS but seems to be missing here."
+tech = """`ModuleNotFoundError` means the **package** isn't installed for this Python interpreter. On Raspberry Pi OS, system libraries like gpiozero are installed with `apt` (`python3-gpiozero`), not `pip`, so they stay matched to the system Python."""
 hints = [
   "Ask your teacher. They can install it with `sudo apt install python3-gpiozero`.",
 ]
@@ -580,6 +625,7 @@ type = "ModuleNotFoundError"
 message = '''No module named '(?P<mod>[\w\.]+)''''
 title = "Python can't find `{mod}`"
 explain = "There's no module called `{mod}`. Usually that's a spelling mistake in the `import` line."
+tech = """`import` searches the folders in `sys.path` for a module called `{mod}`. Not finding it means a typo (module names are case-sensitive and usually lowercase) or a third-party **package** that isn't installed."""
 hints = [
   "Check the spelling on line {line}. It's `import random`, `import time`, `from gpiozero import LED`.",
   "Module names are all lowercase.",
@@ -591,6 +637,7 @@ type = "ImportError"
 message = '''cannot import name '(?P<name>\w+)' from '(?P<mod>[\w\.]+)''''
 title = "`{mod}` doesn't have `{name}`"
 explain = "You tried to import `{name}` from `{mod}`, but it isn't there. Check spelling and capital letters."
+tech = """`from {mod} import {name}` loads the module and then looks up `{name}` as an attribute of it. Names are case-sensitive: by convention, **classes** use CapWords (`LED`, `Button`) and functions use lowercase (`sleep`)."""
 hints = [
   "gpiozero names start with capitals: `LED`, `Button`, `Buzzer`, `MotionSensor`.",
   "Compare line {line} with the example in the instructions.",
@@ -604,6 +651,7 @@ type = "GPIOPinInUse"
 message = '''pin (?P<pin>\w+)'''
 title = "{pin} is already being used"
 explain = "Two things in your code are trying to use the same GPIO pin ({pin})."
+tech = """gpiozero gives each GPIO **device** exclusive ownership of its pin, so creating a second device on {pin} raises `GPIOPinInUse` rather than letting two objects fight over the hardware. Keep one object per pin and reuse it, or call `.close()` on the old one first."""
 hints = [
   "Look for two `LED(...)`, `Button(...)` etc. using the same pin number.",
   "Each part needs its own pin. Check your wiring diagram for the right numbers.",
@@ -614,6 +662,7 @@ id = "bad_event_handler"
 type = "BadEventHandler"
 title = "That isn't something gpiozero can run later"
 explain = "Events like `when_pressed` need the **name of a function** (or `None`). On line {line} it was given something else, often because of brackets: `light.on()` runs straight away and hands over its result instead of the function."
+tech = """`when_pressed` expects a **callback**: a reference to a function (a *callable*) that gpiozero calls later when the event happens. `light.on()` *calls* the method now and assigns its return value (`None`), whereas `light.on` passes the function object itself. To pass arguments, use a `lambda` or `functools.partial`."""
 hints = [
   "Look at the right-hand side of the `=` on line {line}.",
   "Remove the brackets: write `light.on`, not `light.on()`.",
@@ -626,6 +675,7 @@ type = "error"
 message = '''GPIO busy'''
 title = "Another program has that pin"
 explain = "On the real Pi, a GPIO pin can only belong to one program at a time. Another program (maybe one still running in Thonny or a terminal, or an earlier run that didn't stop) is using one of your pins."
+tech = """The Linux kernel gives a GPIO line to one **process** at a time (through `/dev/gpiochip`), so a second program can't claim it until the first releases it. Programs release pins when they exit cleanly or call `.close()`, which is why `try` / `finally` cleanup matters."""
 hints = [
   "Close any other program that uses the GPIO pins (Thonny, a terminal running Python), then press **Run** again.",
   "Still stuck? Save your work and log out and back in, or ask your teacher. Don't turn the Pi off.",
@@ -647,6 +697,7 @@ id = "gpio_no_factory"
 type = "BadPinFactory"
 title = "Can't talk to the GPIO pins"
 explain = "gpiozero couldn't connect to the GPIO pins. This happens when the code isn't running on a Raspberry Pi, or the pin library is missing."
+tech = """gpiozero talks to the hardware through a **pin factory** (a back-end such as `lgpio`). If none can load (no Pi hardware, or the library is missing) it raises `BadPinFactory`. Tests and the Simulator use the **mock** pin factory, which fakes the pins in software."""
 hints = [
   "Are you on a Raspberry Pi? If not, choose **Simulator** next to the Run button.",
   "Ask your teacher to check that `python3-lgpio` is installed.",
@@ -657,6 +708,7 @@ id = "gpio_pwm_unsupported"
 type = "PinPWMUnsupported"
 title = "This pin can't dim"
 explain = "`PWMLED` and `RGBLED` need a pin that supports dimming (PWM). On a real Pi every GPIO pin can do this, and so can the PiPath Simulator."
+tech = """**PWM** (pulse-width modulation) dims an LED by switching it on and off very fast and changing the fraction of time it is on (the *duty cycle*). Some pin factories, like the plain mock one, don't support it, so gpiozero raises `PinPWMUnsupported`."""
 hints = [
   "Are you running your file outside PiPath? Try it in PiPath with **Simulator** or **Real Pi** chosen.",
   "If you only need on/off, use `LED` instead of `PWMLED`.",
@@ -667,6 +719,7 @@ id = "gpio_invalid_pin"
 type = "PinInvalidPin"
 title = "That isn't a valid GPIO pin"
 explain = "The pin number on line {line} doesn't exist. gpiozero uses **GPIO numbers** (like 17), not the physical pin position on the board."
+tech = """gpiozero uses **BCM (Broadcom) GPIO numbers** by default, not physical **board** pin positions. You can write `"BOARD11"` for a physical pin, but BCM numbers (like 17) are the convention in most code and documentation."""
 hints = [
   "Check the wiring diagram. Use the GPIO number, e.g. `LED(17)`.",
   "Valid GPIO numbers on a Pi 3B are 2 to 27.",
@@ -703,6 +756,7 @@ type = "FileNotFoundError"
 message = '''No such file or directory: '(?P<file>.+)''''
 title = "Can't find the file `{file}`"
 explain = "Your program tried to open `{file}`, but it doesn't exist (yet)."
+tech = """Relative paths like `{file}` are resolved from the **current working directory**, not necessarily the folder you expect. Opening with mode `"r"` needs the file to exist; `"w"` and `"a"` create it. Check with `os.path.exists()` or catch `FileNotFoundError`."""
 hints = [
   "Check the file name spelling.",
   "If you're reading a file, it has to be created first. Open it with `\"a\"` or `\"w\"` mode to create it.",
@@ -713,6 +767,7 @@ id = "recursion"
 type = "RecursionError"
 title = "A function that never stops calling itself"
 explain = "A function kept calling itself over and over until Python gave up."
+tech = """Each function call adds a **frame** to the call stack, and Python limits the depth (about 1000) to avoid running out of memory. Recursion needs a **base case** that returns without calling itself, and each call must move closer to it. Often a loop is simpler."""
 hints = [
   "Find the function that calls itself. When should it stop?",
 ]
@@ -722,6 +777,7 @@ id = "eof"
 type = "EOFError"
 title = "No answer was given"
 explain = "Your program asked a question with `input()` but the program was stopped before an answer arrived."
+tech = """`input()` reads from **standard input** (stdin). When stdin is closed before a line arrives, there is nothing left to read, so Python raises `EOFError`. Programs that read input can catch it to finish cleanly."""
 hints = [
   "Run it again and type into the box under the Output.",
 ]
