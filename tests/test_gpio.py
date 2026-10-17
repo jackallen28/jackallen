@@ -290,6 +290,12 @@ class TestLint(unittest.TestCase):
         self.assertTrue(any("while True" in w for w in gpio_lint(busy)))
         self.assertEqual(gpio_lint(calm), [])
 
+    def test_press_loop_without_release(self):
+        held = "from gpiozero import Button\nb = Button(23)\nfor i in range(3):\n    b.wait_for_press()\n    print(i)\n"
+        fixed = held + "    b.wait_for_release()\n"
+        self.assertTrue(any("wait_for_release" in w for w in gpio_lint(held)))
+        self.assertEqual(gpio_lint(fixed), [])
+
     def test_pins(self):
         w = gpio_lint("from gpiozero import LED, Button\na = LED(17)\nb = Button(17)\nc = LED(40)\nd = LED(2)\n")
         self.assertEqual(len(w), 3, w)

@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pipath.content import DATA_DIR, Catalog  # noqa: E402
-from pipath.hints import evaluate_checks, precheck  # noqa: E402
+from pipath.hints import gpio_lint, evaluate_checks, precheck  # noqa: E402
 from pipath.levels import has_goal  # noqa: E402
 from shimrun import HAVE_GPIOZERO, run_shim  # noqa: E402
 
@@ -75,6 +75,8 @@ class TestLessonFiles(unittest.TestCase):
                             re.compile(c["value"])
                     if "demo" in step:
                         self.assertNotIn("___", step["demo"], f"step {i + 1} demo has blanks")
+                        self.assertEqual(gpio_lint(step["demo"]), [], f"step {i + 1}: a model answer "
+                                         "shouldn't get a Coach tip")
                     for rel in step.get("demo_files", []):
                         self.assertTrue((DATA_DIR / "demo_files" / rel).exists(), rel)
                 for rel in lesson.get("files", []):

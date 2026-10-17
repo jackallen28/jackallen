@@ -386,11 +386,12 @@ for i in range(3):
     print("Press the button...")
     button.___()
     print("Got it!")
+    button.wait_for_release()      # let go before the next press counts
 '''
 text = """
 One more part: a **button** to switch between seconds, minutes and hours. Wire it up (see **Wiring + Safety**). Your clock is safe in `backups/` and comes back in the next step.
 
-`button.wait_for_press()` stops the program until the button is pressed.
+`button.wait_for_press()` stops the program until the button is pressed. `button.wait_for_release()` waits until you let go, so one press only counts once.
 
 **Your task:** fill in the blank and run it. Press the button three times.
 """
@@ -409,6 +410,7 @@ for i in range(3):
     print("Press the button...")
     button.wait_for_press()
     print("Got it!")
+    button.wait_for_release()      # let go before the next press counts
 '''
 demo_events = ["1 tap 23", "2 tap 23", "3 tap 23"]
 

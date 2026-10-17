@@ -284,6 +284,20 @@ def _pin_args(call: ast.Call) -> list[int]:
     return [v.value for v in vals if isinstance(v, ast.Constant) and type(v.value) is int]
 
 
+def _repeats_while_held(loop: ast.AST, user_funcs: set) -> bool:
+    """A loop that waits for a press but never for the release (or anything else): one long press
+    counts again and again, as fast as the Pi can go."""
+    calls = {(n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
+             for n in ast.walk(loop) if isinstance(n, ast.Call)}
+    return "wait_for_press" in calls and not calls & ({"wait_for_release", "sleep", "beep", "blink",
+                                                       "take_photo", "input"} | user_funcs)
+
+
+def _HELD_TIP(line: int) -> tuple[int, str]:
+    return (line, "this loop waits for a press but not for the button to be let go, so holding it down "
+                  "counts again and again. Add `button.wait_for_release()` inside the loop.")
+
+
 def gpio_lint(code: str) -> list[str]:
     """Friendly warnings for common GPIO slip-ups. Each starts with the line number."""
     try:
@@ -315,6 +329,10 @@ def gpio_lint(code: str) -> list[str]:
             if not calls & (WAITING_CALLS | user_funcs):
                 warnings.append((node.lineno, "this `while True` loop never waits, so it runs flat out and keeps "
                                               "the Pi busy. Add `sleep(0.01)` inside it, or use `when_pressed`."))
+            elif _repeats_while_held(node, user_funcs):
+                warnings.append(_HELD_TIP(node.lineno))
+        elif isinstance(node, ast.For) and _repeats_while_held(node, user_funcs):
+            warnings.append(_HELD_TIP(node.lineno))
         # 3 + 4. pin numbers
         elif isinstance(node, ast.Call):
             for pin in _pin_args(node):
