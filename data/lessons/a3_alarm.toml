@@ -1,7 +1,9 @@
-# ADVANCED 3: Motion Alarm & Logger. See e1_lightswitch.toml for the GPIO lesson keys.
-# Pin plan: PIR OUT 4 (VCC 5V pin 2, GND pin 6), LED 17, button 23, buzzer 18.
-# Step by step: test the light + buzzer -> test the sensor -> sensor + alarm together ->
-# the arm button -> logging -> challenge.
+# ADVANCED 3: Motion Alarm & Logger, with an HC-SR04 ultrasonic distance sensor.
+# See e1_lightswitch.toml for the GPIO lesson keys. kind = "distance" uses pins = [echo, trigger].
+# Pin plan: distance sensor TRIG 4 (pin 7), ECHO 26 (pin 37, through a 1kΩ / 2kΩ divider),
+# LED 17, buzzer 18, arm button 23.
+# Step by step: test the light + buzzer -> measure the distance -> "something's close" events ->
+# sensor + alarm together -> the arm button -> logging -> challenge.
 
 id = "a3_alarm"
 title = "Motion Alarm & Logger"
@@ -11,37 +13,39 @@ requires_gpio = true
 intro = """
 ## Build a security system
 
-A **PIR** sensor (passive infrared) notices the heat from a moving person or animal. Shops, schools and homes use them to switch on lights and sound alarms.
+An **ultrasonic distance sensor** (the HC-SR04, or one like it) works like a bat. It sends out a squeak too high for people to hear, then times how long the echo takes to come back. A short echo means something is **close**. Car parking sensors and robot vacuums use the same idea.
 
-You'll build it one part at a time:
+You'll build an alarm that goes off when someone comes too close, one part at a time:
 - test the **light** and **buzzer** on their own
-- test the **sensor** on its own: react to **motion** with events
+- test the **sensor** on its own: measure distances in centimetres
+- react with **events** when something comes close, and when it goes away
 - put them together to sound an **alarm**
 - use a **state** variable so the alarm can be **armed** and **disarmed**
 - keep a **log** of every event in a CSV file, then read it back to make a **report**
 
-**About the sensor:** a real PIR needs **30 to 60 seconds to warm up** after the Pi turns on. It may trigger by itself while it settles. In the Simulator, click the sensor on the board to "wave" at it.
+**In the Simulator:** drag the slider under the sensor on the board to move something closer (left) or further away (right).
 
-**Safety:** the PIR's power pin goes to **5V**, but its OUT pin only sends **3.3V**, which is safe for a GPIO pin. Never connect anything that *outputs* 5V straight to a GPIO pin.
+**Safety:** the sensor runs on **5V**, and its ECHO pin sends back **5V**, which is too much for a GPIO pin. That's why ECHO goes through **two resistors** (a voltage divider) that turn it into a safe 3.3V. Ask your teacher to check them before you put the blue HAT back on.
 """
 
 outro = """
 ## Your alarm is armed and logging!
 
-You used a sensor, events, a **state** variable, a **cooldown** timer, and files for **logging** and **reporting**. Real security systems are built from exactly these ideas.
+You used an ultrasonic sensor, events, a **state** variable, a **cooldown** timer, and files for **logging** and **reporting**. Real security systems are built from exactly these ideas.
 
 **Extension ideas:**
+- Make the alarm beep faster the closer someone gets (like a car's parking sensor)
 - Only sound the alarm at night: check `datetime.now().hour`
 - Arm with a **secret code**: a pattern of short and long presses
 - Make a bar chart of events per hour with `print("#" * count)`
-- Combine it with the **Photo Booth**: take a photo when motion is detected!
+- Combine it with the **Photo Booth**: take a photo when someone comes close!
 """
 
 [[wiring]]
-part = "PIR motion sensor"
-kind = "pir"
-pin = 4
-connect = "VCC → 5V (pin 2). OUT → GPIO4 (pin 7). GND → GND (pin 6). Check the labels on your sensor: some put the pins in a different order."
+part = "Distance sensor (HC-SR04)"
+kind = "distance"
+pins = [26, 4]
+connect = "VCC → 5V (pin 2). GND → GND (pin 6). TRIG → GPIO4 (pin 7). ECHO → 1kΩ resistor → GPIO26 (pin 37), plus a 2kΩ resistor from GPIO26 to GND. The two resistors turn the 5V echo into a safe 3.3V."
 
 [[wiring]]
 part = "LED"
@@ -60,11 +64,11 @@ connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → G
 part = "Arm button"
 kind = "button"
 pin = 23
-connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 4.)"
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail. (Needed from step 5.)"
 
 [[wiring]]
 part = "Tip"
-connect = "The PIR has two small orange dials. Turn the 'time' dial fully anticlockwise for the shortest hold time, and leave 'sensitivity' in the middle."
+connect = "Got a 3.3V sensor (HC-SR04P or RCWL-1601)? Power it from 3V3 (pin 1) instead, and you can leave out the two resistors. Point the sensor at an open space: walls and desks close by give echoes too."
 
 # ------------------------------------------------------------------ STEP 1
 [[steps]]
@@ -140,133 +144,198 @@ label = "The LED lit up, then the buzzer beeped 3 times"
 
 # ------------------------------------------------------------------ STEP 2
 [[steps]]
-title = "Something moved!"
+title = "How far away?"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import DistanceSensor
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+
+for i in range(10):
+    cm = sensor.distance * ___       # distance is in metres: change it to centimetres
+    print(round(cm), "cm")
+    sleep(0.5)
+'''
+text = """
+Now test the **sensor** on its own.
+
+`DistanceSensor(echo=26, trigger=4)` is the sensor: **TRIG** on GPIO4 sends the squeak, **ECHO** on GPIO26 hears it come back.
+
+`sensor.distance` is how far away the nearest thing is, in **metres**, from 0 up to 1. There are 100 centimetres in a metre, so times 100 gives **centimetres**.
+
+**Your task:** fill in the blank so the program prints centimetres. Run it, and while it counts, move something closer and further away.
+
+*Simulator:* drag the slider under the sensor on the board. *Real Pi:* move your hand in front of the sensor.
+"""
+hints = [
+  "How many centimetres are in one metre?",
+  "Replace `___` with `100`.",
+  "The line is `cm = sensor.distance * 100`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "Your Pi can measure distance. That's the heart of the alarm. Next, make it react."
+demo = '''
+from gpiozero import DistanceSensor
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+
+for i in range(10):
+    cm = sensor.distance * 100       # distance is in metres: change it to centimetres
+    print(round(cm), "cm")
+    sleep(0.5)
+'''
+demo_events = ["0.5 distance 26 90", "2 distance 26 45", "3.5 distance 26 12", "4.8 distance 26 70"]
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''distance\s*\*\s*100\b'''
+label = "You change metres to centimetres"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''^\d+\s*cm\s*$'''
+label = "It prints the distance in cm"
+
+[[steps.checks]]
+type = "confirm"
+label = "The number got smaller when something came closer"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Something's close!"
 support = "scaffolded"
 starter_mode = "replace"
 run_mode = "until_stopped"
 starter = '''
-from gpiozero import MotionSensor
+from gpiozero import DistanceSensor
 from signal import pause
 
-pir = MotionSensor(4)
+sensor = DistanceSensor(echo=26, trigger=4, threshold_distance=0.3)    # close = nearer than 30 cm
 
-def motion():
-    print("Motion!")
+def close():
+    print("Something's close!")
 
-def no_motion():
-    print("All quiet")
+def clear():
+    print("All clear")
 
-pir.when_motion = motion
-pir.when_no_motion = ___
+sensor.when_in_range = close
+sensor.when_out_of_range = ___
 
-print("Watching... (a real sensor needs about a minute to warm up)")
+print("Watching...")
 pause()
 '''
 text = """
-Now test the **sensor** on its own. `MotionSensor(4)` is the PIR on **GPIO4**. Like a button, it has **events**:
+An alarm shouldn't print numbers all day. It should **react** when something comes close. Like a button, the sensor has **events**:
 
-- `pir.when_motion` runs a function when something moves
-- `pir.when_no_motion` runs a function when things go still again
+- `sensor.when_in_range` runs a function when something comes nearer than `threshold_distance` (here 0.3 m = 30 cm)
+- `sensor.when_out_of_range` runs a function when it moves away again
 
 Remember: no brackets after the function name. We're telling gpiozero *which* function to run later.
 
-**Your task:** fill in the blank so the program prints `All quiet` when the motion stops. Run it, wave your hand in front of the sensor (Simulator: click the sensor on the board), wait for it to go quiet, then press **Stop**.
+**Your task:** fill in the blank so the program prints `All clear` when the thing moves away. Run it, move something close, then away again, then press **Stop**.
 """
 hints = [
-  "Which function prints `All quiet`?",
-  "Use the function's name, with no brackets: `no_motion`",
-  "The line is `pir.when_no_motion = no_motion`",
+  "Which function prints `All clear`?",
+  "Use the function's name, with no brackets: `clear`",
+  "The line is `sensor.when_out_of_range = clear`",
 ]
-error_hints = { BadEventHandler = "Did you add brackets? Write `no_motion`, not `no_motion()`." }
-success = "Your Pi can feel movement. That's the heart of every alarm. Now let's join the parts up."
+error_hints = { BadEventHandler = "Did you add brackets? Write `clear`, not `clear()`." }
+success = "Your sensor reacts by itself. Now let's join the parts up."
 demo = '''
-from gpiozero import MotionSensor
+from gpiozero import DistanceSensor
 from signal import pause
 
-pir = MotionSensor(4)
+sensor = DistanceSensor(echo=26, trigger=4, threshold_distance=0.3)    # close = nearer than 30 cm
 
-def motion():
-    print("Motion!")
+def close():
+    print("Something's close!")
 
-def no_motion():
-    print("All quiet")
+def clear():
+    print("All clear")
 
-pir.when_motion = motion
-pir.when_no_motion = no_motion
+sensor.when_in_range = close
+sensor.when_out_of_range = clear
 
-print("Watching... (a real sensor needs about a minute to warm up)")
+print("Watching...")
 pause()
 '''
-demo_events = ["1.5 press 4", "4 release 4"]
+demo_events = ["1.5 distance 26 15", "3.5 distance 26 90"]
 demo_seconds = 5.5
 
 [[steps.checks]]
 type = "code_regex"
-value = '''when_no_motion\s*=\s*no_motion\s*$'''
-label = "Quiet runs the no_motion function"
+value = '''when_out_of_range\s*=\s*clear\s*$'''
+label = "Moving away runs the clear function"
 
 [[steps.checks]]
 type = "output_contains"
-value = "Motion!"
-label = "The sensor saw you move"
-fail = "While it's running, wave in front of the sensor (Simulator: click the sensor on the board). Then press Stop."
+value = "Something's close"
+label = "The sensor saw something come close"
+fail = "While it's running, move something closer than 30 cm (Simulator: drag the slider to the left). Then press Stop."
 
 [[steps.checks]]
 type = "output_contains"
-value = "All quiet"
-label = "It noticed when things went quiet"
-fail = "After waving, keep still for a few seconds before pressing Stop."
+value = "All clear"
+label = "It noticed when the thing moved away"
+fail = "After coming close, move it away again (slider to the right) before pressing Stop."
 
-# ------------------------------------------------------------------ STEP 3
+# ------------------------------------------------------------------ STEP 4
 [[steps]]
 title = "Sound the alarm"
 support = "scaffolded"
 starter_mode = "keep"
 run_mode = "until_stopped"
 text = """
-Printing `Motion!` won't scare anyone away. Put the parts together: the sensor from step 2, with the light and buzzer you tested in step 1.
+Printing `Something's close!` won't scare anyone away. Put the parts together: the sensor from step 3, with the light and buzzer you tested in step 1.
 
 `buzzer.beep(0.1, 0.1, n=5)` beeps 5 times **in the background**, so the sensor keeps watching while it beeps.
 
 **Your task:**
-1. Import `LED` and `Buzzer` too: `from gpiozero import MotionSensor, LED, Buzzer`
+1. Import `LED` and `Buzzer` too: `from gpiozero import DistanceSensor, LED, Buzzer`
 2. Make `light = LED(17)` and `buzzer = Buzzer(18)`
-3. In `motion()`, turn the light on and beep 5 times
-4. In `no_motion()`, turn the light off
+3. In `close()`, turn the light on and beep 5 times
+4. In `clear()`, turn the light off
 
 Test it, then press **Stop**.
 """
 hints = [
-  "Inside `motion()` (indented): `light.on()` then `buzzer.beep(0.1, 0.1, n=5)`.",
-  "Inside `no_motion()` (indented): `light.off()`.",
+  "Inside `close()` (indented): `light.on()` then `buzzer.beep(0.1, 0.1, n=5)`.",
+  "Inside `clear()` (indented): `light.off()`.",
 ]
 error_hints = { NameError = "Did you import `LED` and `Buzzer`, and make `light` and `buzzer` near the top?" }
 success = "An alarm that beeps and flashes. Intruders beware!"
 demo = '''
-from gpiozero import MotionSensor, LED, Buzzer
+from gpiozero import DistanceSensor, LED, Buzzer
 from signal import pause
 
-pir = MotionSensor(4)
+sensor = DistanceSensor(echo=26, trigger=4, threshold_distance=0.3)
 light = LED(17)
 buzzer = Buzzer(18)
 
-def motion():
-    print("Motion!")
+def close():
+    print("Something's close!")
     light.on()
     buzzer.beep(0.1, 0.1, n=5)
 
-def no_motion():
-    print("All quiet")
+def clear():
+    print("All clear")
     light.off()
 
-pir.when_motion = motion
-pir.when_no_motion = no_motion
+sensor.when_in_range = close
+sensor.when_out_of_range = clear
 
 print("Watching...")
 pause()
 '''
-demo_events = ["1.5 press 4", "4.5 release 4"]
-demo_seconds = 6
+demo_events = ["1.5 distance 26 15", "4 distance 26 90"]
+demo_seconds = 5.5
 
 [[steps.checks]]
 type = "code_uses"
@@ -285,15 +354,15 @@ label = "You use an LED"
 
 [[steps.checks]]
 type = "output_contains"
-value = "Motion"
-label = "You tested it with some movement"
-fail = "Wave in front of the sensor (Simulator: click it) before pressing Stop."
+value = "close"
+label = "You tested it by coming close"
+fail = "Move something closer than 30 cm (Simulator: drag the slider left) before pressing Stop."
 
 [[steps.checks]]
 type = "confirm"
-label = "The LED and buzzer went off when something moved"
+label = "The LED and buzzer went off when something came close"
 
-# ------------------------------------------------------------------ STEP 4
+# ------------------------------------------------------------------ STEP 5
 [[steps]]
 title = "Arm and disarm"
 support = "scaffolded"
@@ -319,22 +388,22 @@ def toggle_armed():
 **Your task:**
 1. Add a button on GPIO23 (import `Button` too), and `armed = False` near the top
 2. Add the `toggle_armed()` function, and connect it: `button.when_pressed = toggle_armed`
-3. The LED now shows the state (on = armed), so take `light.on()` out of `motion()`
-4. In `motion()`, only beep `if armed:`. You won't need `no_motion()` any more.
+3. The LED now shows the state (on = armed), so take `light.on()` out of `close()`
+4. In `close()`, only beep `if armed:`. You won't need `clear()` any more.
 
-Test it: move while it's disarmed, then arm it and move again.
+Test it: come close while it's disarmed, then arm it and come close again.
 """
 hints = [
   "Near the top: `button = Button(23)` and `armed = False`. Copy `toggle_armed()` from the instructions.",
-  "In `motion()`, put the beep inside `if armed:` (indented under it).",
-  "At the bottom, next to `pir.when_motion = motion`: `button.when_pressed = toggle_armed`.",
+  "In `close()`, put the beep inside `if armed:` (indented under it).",
+  "At the bottom, next to `sensor.when_in_range = close`: `button.when_pressed = toggle_armed`.",
 ]
 success = "Your alarm has a memory: its state. Lots of programs work like this."
 demo = '''
-from gpiozero import MotionSensor, LED, Buzzer, Button
+from gpiozero import DistanceSensor, LED, Buzzer, Button
 from signal import pause
 
-pir = MotionSensor(4)
+sensor = DistanceSensor(echo=26, trigger=4, threshold_distance=0.3)
 light = LED(17)          # on = armed
 buzzer = Buzzer(18)
 button = Button(23)
@@ -350,20 +419,20 @@ def toggle_armed():
         light.off()
         print("Disarmed")
 
-def motion():
+def close():
     if armed:
         print("Intruder alert!")
         buzzer.beep(0.1, 0.1, n=5)
     else:
-        print("Motion, but the alarm is off")
+        print("Something's close, but the alarm is off")
 
 button.when_pressed = toggle_armed
-pir.when_motion = motion
+sensor.when_in_range = close
 print("Press the button to arm the alarm")
 pause()
 '''
-demo_events = ["1 press 4", "2.5 release 4", "3.5 tap 23", "4.5 press 4", "6.5 release 4"]
-demo_seconds = 8
+demo_events = ["1 distance 26 15", "2.2 distance 26 90", "3.2 tap 23", "4.2 distance 26 15", "6 distance 26 90"]
+demo_seconds = 7.5
 
 [[steps.checks]]
 type = "code_regex"
@@ -391,7 +460,7 @@ fail = "Press the button while it's running. Does it print `Armed`?"
 type = "confirm"
 label = "The alarm only goes off when it's armed"
 
-# ------------------------------------------------------------------ STEP 5
+# ------------------------------------------------------------------ STEP 6
 [[steps]]
 title = "Keep a log"
 support = "brief"
@@ -400,10 +469,10 @@ run_mode = "until_stopped"
 text = """
 Security systems keep a **log**: a record of every event and when it happened. We'll save ours as a **CSV** file (comma-separated values), which any spreadsheet can open.
 
-**Goal:** every time the alarm is armed, disarmed or set off, add one line to `motion_log.csv`, like this:
+**Goal:** every time the alarm is armed, disarmed or set off, add one line to `alarm_log.csv`, like this:
 
 ```
-2026-10-16T09:41:07,motion
+2026-10-16T09:41:07,intruder
 ```
 
 **Tips:**
@@ -412,35 +481,35 @@ Security systems keep a **log**: a record of every event and when it happened. W
 from datetime import datetime
 
 def log(event):
-    with open("motion_log.csv", "a") as f:
+    with open("alarm_log.csv", "a") as f:
         f.write(f"{datetime.now().isoformat(timespec='seconds')},{event}\\n")
 ```
 
 - `"a"` means **append**: add to the end of the file instead of starting again
 - `\\n` starts a new line
-- Call `log("motion")`, `log("armed")` and `log("disarmed")` in the right places
+- Call `log("intruder")`, `log("armed")` and `log("disarmed")` in the right places
 
 Find the file in your PiPath folder afterwards and open it in a spreadsheet!
 """
 hints = [
   "Copy the `log` function from the tips, and put `from datetime import datetime` at the top.",
-  "Call `log(\"motion\")` inside the `if armed:` part of `motion()`. Call `log(\"armed\")` / `log(\"disarmed\")` in `toggle_armed()`.",
+  "Call `log(\"intruder\")` inside the `if armed:` part of `close()`. Call `log(\"armed\")` / `log(\"disarmed\")` in `toggle_armed()`.",
 ]
 error_hints = { NameError = "Did you add `from datetime import datetime` at the top?" }
 success = "Your alarm keeps records. That's called data logging."
 demo = '''
-from gpiozero import MotionSensor, LED, Buzzer, Button
+from gpiozero import DistanceSensor, LED, Buzzer, Button
 from signal import pause
 from datetime import datetime
 
-pir = MotionSensor(4)
+sensor = DistanceSensor(echo=26, trigger=4, threshold_distance=0.3)
 light = LED(17)
 buzzer = Buzzer(18)
 button = Button(23)
 armed = False
 
 def log(event):
-    with open("motion_log.csv", "a") as f:
+    with open("alarm_log.csv", "a") as f:
         f.write(f"{datetime.now().isoformat(timespec='seconds')},{event}\n")
     print("Logged:", event)
 
@@ -454,19 +523,19 @@ def toggle_armed():
         light.off()
         log("disarmed")
 
-def motion():
+def close():
     if armed:
         print("Intruder alert!")
-        log("motion")
+        log("intruder")
         buzzer.beep(0.1, 0.1, n=5)
 
 button.when_pressed = toggle_armed
-pir.when_motion = motion
+sensor.when_in_range = close
 print("Press the button to arm the alarm")
 pause()
 '''
-demo_events = ["1 tap 23", "2 press 4", "4 release 4"]
-demo_seconds = 6
+demo_events = ["1 tap 23", "2 distance 26 15", "3.5 distance 26 90"]
+demo_seconds = 5.5
 
 [[steps.checks]]
 type = "code_uses"
@@ -480,12 +549,12 @@ label = "You open the log in append mode (\"a\")"
 
 [[steps.checks]]
 type = "file_contains"
-file = "motion_log.csv"
+file = "*.csv"
 value = '''\d{4}-\d\d-\d\dT\d\d:\d\d'''
-label = "Your run added a dated line to motion_log.csv"
-fail = "Run it, arm the alarm and set it off. Does a line appear in motion_log.csv?"
+label = "Your run added a dated line to your log file"
+fail = "Run it, arm the alarm and set it off. Does a line appear in alarm_log.csv?"
 
-# ------------------------------------------------------------------ STEP 6
+# ------------------------------------------------------------------ STEP 7
 [[steps]]
 title = "Challenge: cooldown and report"
 support = "brief"
@@ -494,31 +563,31 @@ run_mode = "until_stopped"
 text = """
 Two problems with real alarms: they can go off again and again for the same person, and nobody reads the log.
 
-**Goal 1: a 10-second cooldown.** After the alarm goes off, ignore motion for 10 seconds.
-- Keep the time of the last alarm: `last_alarm = 0` at the start
-- In `motion()`: if `monotonic() - last_alarm < 10`, do nothing (`return`)
+**Goal 1: a 10-second cooldown.** After the alarm goes off, ignore the sensor for 10 seconds.
+- Keep the time of the last alarm: `last_alarm = -100` at the start
+- In `close()`: if `monotonic() - last_alarm < 10`, do nothing (`return`)
 - Otherwise set `last_alarm = monotonic()` and sound the alarm
 
-**Goal 2: a report.** Write `report()`, which reads `motion_log.csv` and prints how many **motion** events happened in each hour, like `09:00  3 events`. Call it after each alarm.
+**Goal 2: a report.** Write `report()`, which reads `alarm_log.csv` and prints how many **intruder** events happened in each hour, like `09:00  3 events`. Call it after each alarm.
 
 **Tips:**
-- `with open("motion_log.csv") as f:` then `for line in f:` reads one line at a time
+- `with open("alarm_log.csv") as f:` then `for line in f:` reads one line at a time
 - `when, event = line.strip().split(",")` splits a line at the comma
 - `when[11:13]` is the hour, e.g. `"09"`
 - Count with a **dictionary**: `counts[hour] = counts.get(hour, 0) + 1`
 """
 hints = [
-  "Don't forget `from time import monotonic` and `global last_alarm` inside `motion()`.",
-  "Report:\n```\ndef report():\n    counts = {}\n    with open(\"motion_log.csv\") as f:\n        for line in f:\n            when, event = line.strip().split(\",\")\n            if event == \"motion\":\n                counts[when[11:13]] = counts.get(when[11:13], 0) + 1\n    for hour, n in counts.items():\n        print(f\"{hour}:00  {n} events\")\n```",
+  "Don't forget `from time import monotonic` and `global last_alarm` inside `close()`.",
+  "Report:\n```\ndef report():\n    counts = {}\n    with open(\"alarm_log.csv\") as f:\n        for line in f:\n            when, event = line.strip().split(\",\")\n            if event == \"intruder\":\n                counts[when[11:13]] = counts.get(when[11:13], 0) + 1\n    for hour, n in counts.items():\n        print(f\"{hour}:00  {n} events\")\n```",
 ]
 success = "Cooldowns, logs and reports: you've built a real security system. Brilliant work!"
 demo = '''
-from gpiozero import MotionSensor, LED, Buzzer, Button
+from gpiozero import DistanceSensor, LED, Buzzer, Button
 from signal import pause
 from datetime import datetime
 from time import monotonic
 
-pir = MotionSensor(4)
+sensor = DistanceSensor(echo=26, trigger=4, threshold_distance=0.3)
 light = LED(17)
 buzzer = Buzzer(18)
 button = Button(23)
@@ -526,15 +595,15 @@ armed = False
 last_alarm = -100
 
 def log(event):
-    with open("motion_log.csv", "a") as f:
+    with open("alarm_log.csv", "a") as f:
         f.write(f"{datetime.now().isoformat(timespec='seconds')},{event}\n")
 
 def report():
     counts = {}
-    with open("motion_log.csv") as f:
+    with open("alarm_log.csv") as f:
         for line in f:
             when, event = line.strip().split(",")
-            if event == "motion":
+            if event == "intruder":
                 hour = when[11:13]
                 counts[hour] = counts.get(hour, 0) + 1
     for hour, n in counts.items():
@@ -552,7 +621,7 @@ def toggle_armed():
         print("Disarmed")
         log("disarmed")
 
-def motion():
+def close():
     global last_alarm
     if not armed:
         return
@@ -561,17 +630,18 @@ def motion():
         return
     last_alarm = monotonic()
     print("Intruder alert!")
-    log("motion")
+    log("intruder")
     buzzer.beep(0.1, 0.1, n=5)
     report()
 
 button.when_pressed = toggle_armed
-pir.when_motion = motion
+sensor.when_in_range = close
 print("Press the button to arm the alarm")
 pause()
 '''
-demo_events = ["1 tap 23", "2 press 4", "3.5 release 4", "5 press 4", "6 release 4", "13 press 4", "14 release 4"]
-demo_seconds = 15
+demo_events = ["1 tap 23", "2 distance 26 15", "3.5 distance 26 90", "5 distance 26 15", "6.2 distance 26 90",
+               "13 distance 26 15", "14.2 distance 26 90"]
+demo_seconds = 15.5
 
 [[steps.checks]]
 type = "code_regex"
@@ -598,4 +668,4 @@ fail = "Arm the alarm and set it off. Does your report print something like `09:
 
 [[steps.checks]]
 type = "confirm"
-label = "Moving twice quickly only sets the alarm off once"
+label = "Coming close twice quickly only sets the alarm off once"

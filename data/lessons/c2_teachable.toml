@@ -45,7 +45,7 @@ Your Pi learned from examples and made predictions. That idea is called a **near
 
 [[wiring]]
 part = "Camera"
-connect = "**USB webcam:** plug it into any USB port. **Ribbon camera:** turn the Pi OFF, lift the clip on the CAMERA connector, slide the ribbon in with the blue side facing the USB ports, then push the clip down."
+connect = "**USB webcam:** plug it into any USB port. **Ribbon camera:** ask your teacher to fit it (it must go in while the Pi is off, so it's set up before class). Don't turn the Pi off yourself: you'd lose your progress."
 
 [[wiring]]
 part = "Green LED (thing 1)"

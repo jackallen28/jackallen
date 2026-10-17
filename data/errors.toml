@@ -659,7 +659,7 @@ title = "PiPath can't find the camera"
 explain = "Your code is fine. The camera isn't answering. PiPath said: *{message}*"
 hints = [
   "Look at the camera panel on the board. Does it say your kind of camera, **USB** or **Ribbon**? Click its title to change.",
-  "USB: unplug the camera and plug it back in. Ribbon: turn the Pi **off** first, then check the cable is pushed in firmly.",
+  "USB: unplug the camera and plug it back in. Ribbon: ask your teacher to check the cable. Don't turn the Pi off yourself: you'd lose your progress.",
   "No camera today? Switch the camera panel to **Simulated** and use the pretend camera.",
 ]
 

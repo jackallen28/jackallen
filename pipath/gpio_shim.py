@@ -18,8 +18,10 @@ Messages to the app are JSON lines on the fd named in PIPATH_STATE_FD:
     {"t": "devices", "devices": [{"kind": "LED", "pins": [17]}, ...]}
     {"t": "pins", "pins": {"17": 1.0, "23": 0}}     (outputs: brightness 0-1, inputs: 1 = active)
     {"t": "photo", "path": "/full/path/photo.png"}      (sent by pipath_camera)
+    {"t": "input"}                                      (the program is waiting in input())
 Commands from the app are text lines on the fd named in PIPATH_CMD_FD:
     press 23 / release 23   (activate / deactivate an input, Simulator only)
+    distance 26 15          (the distance sensor with echo on GPIO26 sees something 15 cm away, Simulator only)
     show circle             (what the simulated camera can see)
 
 Tracebacks are trimmed so they start in the student's file, and a Stop (SIGTERM)
@@ -27,6 +29,7 @@ exits cleanly, so gpiozero switches real LEDs and buzzers off.
 """
 from __future__ import annotations
 
+import builtins
 import importlib
 import importlib.abc
 import importlib.machinery
@@ -38,6 +41,7 @@ import sys
 import threading
 import time
 import traceback
+import warnings
 import weakref
 from pathlib import Path
 
@@ -52,6 +56,7 @@ _devices: list = []          # weakrefs to gpiozero devices, in the order they w
 _groups: list = []           # weakrefs to RGBLEDs (three pins shown as one light)
 camera_view = {"object": os.environ.get("PIPATH_CAMERA_OBJECT", "face")}   # what the simulated camera sees
 _gz = None                    # the gpiozero module, once the student imports it
+_sim_distance: dict[int, float] = {}   # Simulator: echo pin -> what the distance sensor "sees", in metres
 MOCK_PIN_CLASSES = {"mockpin": "MockPin", "mockpwmpin": "MockPWMPin"}
 
 
@@ -93,6 +98,17 @@ def _patch_gpiozero(gz) -> None:
         _groups.append(weakref.ref(self))
 
     gz.RGBLED.__init__ = rgb_init
+
+    # Simulator: mock pins can't send an ultrasonic echo, so the distance comes from the board
+    orig_read = gz.DistanceSensor._read
+
+    def distance_read(self):
+        from gpiozero.pins.mock import MockFactory
+        if not isinstance(self.pin_factory, MockFactory):
+            return orig_read(self)
+        return min(1.0, _sim_distance.get(_bcm(self.pin), 1.0) / self._max_distance)
+
+    gz.DistanceSensor._read = distance_read
     if _student:              # imported by the student's program (a warm start does this in _run)
         _apply_factory(gz)
 
@@ -133,8 +149,30 @@ class _GpiozeroHook(importlib.abc.MetaPathFinder):
         return spec
 
 
+def _distance_value(d):
+    """A distance sensor's latest reading in metres, without waiting (None until it has one)."""
+    q = list(d._queue.queue)
+    if not q:
+        return None
+    q.sort()
+    return q[len(q) // 2] * d.max_distance
+
+
 def _snapshot():
     devs, pins, in_group = [], {}, set()
+    triggers = set()
+    for ref in list(_devices):
+        d = ref()
+        if d is not None and not d.closed and isinstance(d, _gz.DistanceSensor) and d._trigger is not None:
+            echo, trig = _bcm(d.pin), _bcm(d._trigger.pin)
+            if echo is None or trig is None:
+                continue
+            triggers.add(trig)
+            in_group.add(echo)
+            devs.append({"kind": "DistanceSensor", "pins": [echo, trig]})
+            value = _distance_value(d)
+            if value is not None:
+                pins[str(echo)] = round(value, 3)
     for ref in list(_groups):
         g = ref()
         if g is None or g.closed:
@@ -148,8 +186,8 @@ def _snapshot():
         if d is None or d.closed:
             continue
         p = _bcm(d.pin)
-        if p is None:
-            continue
+        if p is None or isinstance(d, _gz.DistanceSensor) or (p in triggers and type(d) is _gz.GPIODevice):
+            continue          # distance sensors were reported above (reading is_active would wait)
         try:
             # outputs: how bright / on (honours active_high); inputs: pressed / motion seen
             state = d.value if isinstance(d, _gz.OutputDevice) else d.is_active
@@ -206,6 +244,13 @@ def _command(words: list[str]) -> None:
     if len(words) == 2 and words[0] == "show":
         camera_view["object"] = words[1]
         return
+    if len(words) == 3 and words[0] == "distance" and words[1].isdigit():
+        if os.environ.get("GPIOZERO_PIN_FACTORY") == "mock":
+            try:
+                _sim_distance[int(words[1])] = max(0.02, float(words[2]) / 100)
+            except ValueError:
+                pass
+        return
     if len(words) != 2 or words[0] not in ("press", "release") or not words[1].isdigit():
         return
     if os.environ.get("GPIOZERO_PIN_FACTORY") != "mock":
@@ -249,8 +294,20 @@ def _print_student_traceback(exc: BaseException, student: str) -> None:
     sys.stderr.flush()
 
 
+def _input(prompt=""):
+    """input(), but the app is told first, so it can put the cursor in the answer box."""
+    send({"t": "input"})
+    return _real_input(prompt)
+
+
+_real_input = builtins.input
+
+
 def _setup() -> None:
     """Hooks every run needs. Done before a warm process waits, too."""
+    builtins.input = _input
+    # gpiozero suggests pigpio for every distance sensor; lgpio is what Pi OS uses, so don't worry students
+    warnings.filterwarnings("ignore", message="For more accurate readings")
     sys.path.append(str(HERE / "student_lib"))
     sys.meta_path.insert(0, _GpiozeroHook())
     signal.signal(signal.SIGTERM, _stop)

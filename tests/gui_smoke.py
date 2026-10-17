@@ -38,14 +38,36 @@ def scenes(app):
     def profile():
         app.show("profile")
         type_into(app.screen.entries["first_name"], "Sam")
+        app.screen._add_name("Alex")
         type_into(app.screen.entries["school"], "Bayside Secondary College")
 
     def submit():
-        app.screen.submit()
+        app.screen.submit()           # -> step 2: help level + what to show
+
+    def setup_choose():
+        app.screen.level.set("moderate")
+
+    def setup_finish():
+        app.screen.finish()
+
+    def settings(tab):
+        def go():
+            app.open_settings(tab)
+        return go
+
+    def close_settings():
+        app.close_settings()
+
+    def slide_distance(cm):
+        def go():
+            app.screen._board_distance(26, cm)
+            app.screen.board.set_distance(26, cm)
+        return go
 
     def duplicate():
         app.show("profile")
         type_into(app.screen.entries["first_name"], "sam")
+        app.screen._add_name("alex")
         type_into(app.screen.entries["school"], "bayside secondary college")
         app.screen.submit()
 
@@ -125,11 +147,17 @@ def scenes(app):
     return [
         ("01_welcome_first_run", lambda: None),
         ("02_profile", profile),
-        ("03_activities", submit),
+        ("03_setup", submit),
+        ("03b_setup_moderate", setup_choose),
+        ("03c_activities", setup_finish),
         ("04_profile_duplicate", duplicate),
         ("05_welcome_back", welcome_back),
         ("06_activities_returning", login_again),
         ("07_filter_advanced", filter_advanced),
+        ("07b_settings_help", settings("help")),
+        ("07c_settings_students", settings("students")),
+        ("07d_settings_hardware", lambda: (close_settings(), settings("hardware")())),
+        ("07e_settings_closed", close_settings),
         ("08_s1_intro", open_lesson("s1_hello")),
         ("09_s1_tour_offer", start_lesson),
         ("10_s1_run", press_run),
@@ -152,11 +180,12 @@ def scenes(app):
         ("24_a1_step1", lambda: (open_lesson("a1_traffic")(), start_lesson())),
         ("25_a1_header_map", lambda: app.screen.guide.canvas.yview_moveto(0.33)),
         ("26_a1_step2_goal", lambda: (to_step(1)(), goal()), 4200),
-        ("27_a3_pir", lambda: (stop(), open_lesson("a3_alarm")(), start_lesson(), to_step(1)(),
-                               app.screen.editor.set_code(app.screen.steps[1]["starter"].replace("___", "no_motion")),
-                               press_run()), 1200),
-        ("28_a3_motion", press(4), 1200),
-        ("29_a3_checked", lambda: (stop()), 2500),
+        ("27_a3_ultrasonic", lambda: (stop(), open_lesson("a3_alarm")(), start_lesson(), to_step(2)(),
+                                      app.screen.editor.set_code(app.screen.steps[2]["starter"].replace("___", "clear")),
+                                      press_run()), 1500),
+        ("28_a3_close", slide_distance(15), 1200),
+        ("28b_a3_cog_in_lesson", settings("help")),
+        ("29_a3_checked", lambda: (close_settings(), slide_distance(90)(), stop()), 2500),
         ("30_camera_activities", lambda: (app.show("home"), app.screen.set_filter("camera"))),
         ("31_c1_photo", lambda: (open_lesson("c1_photobooth")(), start_lesson(), app.screen.editor.set_code(
             app.screen.steps[0]["starter"].replace("___", "me")), press_run()), 2500),

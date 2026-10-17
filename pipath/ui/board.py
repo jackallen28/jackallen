@@ -1,8 +1,10 @@
 """The on-screen board: LEDs, buttons, buzzers and sensors drawn on a Canvas.
 
-Simulator mode: it *is* the hardware. Click (and hold) a button to press it.
-Real Pi mode: it mirrors what the program is telling the real pins to do, so students
-can compare "what my code says" with "what my breadboard does".
+Simulator mode: it *is* the hardware. Click (and hold) a button to press it; drag the distance
+sensor's slider to move something closer or further away.
+Real Pi mode: it mirrors, live, what the program is telling the real pins to do (and what the
+real buttons and sensors report), so students can compare "what my code says" with "what my
+breadboard does".
 """
 from __future__ import annotations
 
@@ -34,28 +36,33 @@ def _mix(c1: str, c2: str, t: float) -> str:
 
 
 class VirtualBoard(tk.Frame):
-    def __init__(self, master, on_press=None, on_release=None, on_goal=None, on_object=None, on_camera=None):
-        super().__init__(master, bg=BG)
+    def __init__(self, master, on_press=None, on_release=None, on_goal=None, on_object=None, on_camera=None,
+                 on_distance=None):
+        super().__init__(master, bg=C["bg"], relief="sunken", bd=2)
         self.on_press, self.on_release, self.on_goal, self.on_object = on_press, on_release, on_goal, on_object
+        self.on_distance = on_distance    # the Simulator's distance slider moved: (echo pin, cm)
+        self.sim_distance: dict[int, float] = {}   # echo pin -> cm, set with the slider (Simulator)
+        self.live = False
         self.on_camera = on_camera        # click the camera panel's title to switch camera
         self.camera: dict | None = None    # {"kind", "object", "caption"} once there's a camera
         self._photo = None                 # the PhotoImage on show (Tk needs us to keep it)
         self._cam_ids: dict = {}           # canvas items of the camera panel, for quick updates
         self.mode = "sim"
         self.parts: list[dict] = []        # from the lesson's [[wiring]] rows
-        self.live: list[dict] = []         # devices the running program actually made
+        self.live_parts: list[dict] = []   # devices the running program actually made
         self.values: dict[int, float] = {}
         self.items: list[tuple[dict, dict]] = []
         self.held: set[int] = set()
         self._pir_jobs: dict[int, str] = {}
         self._redraw_job = None
 
-        head = tk.Frame(self, bg="#1B1F26")
+        head = tk.Frame(self, bg=C["bg"], relief="raised", bd=1)
         head.pack(fill="x")
-        tk.Label(head, text="BOARD", font="small_bold", fg="#8B93A1", bg="#1B1F26", padx=12, pady=5).pack(side="left")
-        self.mode_lbl = tk.Label(head, text="", font="small_bold", fg="#FFFFFF", padx=6)
+        tk.Label(head, text="BOARD", font="small_bold", fg=C["ink"], bg=C["bg"], padx=10, pady=3).pack(side="left")
+        self.mode_lbl = tk.Label(head, text="", font="small_bold", fg="#FFFFFF", padx=6, relief="raised", bd=1)
         self.mode_lbl.pack(side="left")
-        self.goal_btn = PButton(head, "Watch the goal  ▶", self._goal, kind="dark", font="small_bold", padx=10, pady=2)
+        self.goal_btn = PButton(head, "Watch the goal  ▶", self._goal, kind="secondary", font="small_bold", padx=10,
+                                pady=1)
         self._status_text = ""
         self._status_id = None
         self.canvas = tk.Canvas(self, bg=BG, highlightthickness=0, bd=0, height=150)
@@ -74,13 +81,21 @@ class VirtualBoard(tk.Frame):
     # ---------------------------------------------------------------- public
     def set_mode(self, mode: str) -> None:
         self.mode = mode
-        if mode == "sim":
-            self.mode_lbl.configure(text=" SIMULATOR ", bg=C["go"])
-            self.set_status("Click a button to press it")
-        else:
-            self.mode_lbl.configure(text=" REAL PI ", bg=C["info"])
-            self.set_status("Shows what your code is doing")
+        self._paint_mode()
+        self.set_status("Click a button to press it" if mode == "sim" else "Shows what the real pins are doing")
         self._schedule_redraw()
+
+    def set_live(self, on: bool) -> None:
+        """A program is driving the real pins right now."""
+        self.live = on
+        self._paint_mode()
+
+    def _paint_mode(self) -> None:
+        if self.mode == "sim":
+            self.mode_lbl.configure(text=" SIMULATOR ", bg=C["go"])
+        else:
+            self.mode_lbl.configure(text=" REAL PI  ● LIVE " if self.live else " REAL PI ",
+                                    bg="#C0392B" if self.live else C["purple"])
 
     def set_status(self, text: str) -> None:
         """A short hint in the corner of the board."""
@@ -100,8 +115,8 @@ class VirtualBoard(tk.Frame):
 
     def set_devices(self, devices: list[dict]) -> None:
         live = [{"kind": BOARD_KIND.get(d["kind"], "led"), "pins": d["pins"], "class": d["kind"]} for d in devices]
-        if live != self.live:
-            self.live = live
+        if live != self.live_parts:
+            self.live_parts = live
             self._schedule_redraw()
 
     def set_values(self, values: dict) -> None:
@@ -113,7 +128,7 @@ class VirtualBoard(tk.Frame):
     def reset(self) -> None:
         """Program finished or a new run is starting: everything off, keep the lesson's layout."""
         self.values = {}
-        self.live = []
+        self.live_parts = []
         self.held.clear()
         for job in self._pir_jobs.values():
             self.after_cancel(job)
@@ -121,7 +136,7 @@ class VirtualBoard(tk.Frame):
         self._schedule_redraw()
 
     def has_devices(self) -> bool:
-        return bool(self.parts or self.live or self.camera)
+        return bool(self.parts or self.live_parts or self.camera)
 
     # ---------------------------------------------------------------- camera
     def enable_camera(self, kind: str, obj: str = "face") -> None:
@@ -178,7 +193,7 @@ class VirtualBoard(tk.Frame):
         """Lesson parts first (in wiring order), then anything else the program made."""
         out = [dict(p) for p in self.parts]
         by_pin = {p["pins"][0]: p for p in out}
-        for d in self.live:
+        for d in self.live_parts:
             p = by_pin.get(d["pins"][0])
             if p is not None:
                 if p["kind"] != d["kind"] and not (p["kind"] == "switch" and d["kind"] == "button"):
@@ -307,6 +322,27 @@ class VirtualBoard(tk.Frame):
                                 outline="#0B120E", width=2, tags=tag)
             ids["dome"] = cv.create_oval(cx - r, cy - r * 1.1, cx + r, cy + r * .7, fill="#F2F2EE",
                                          outline="#B8B8B0", width=2, tags=tag)
+        elif k == "distance":
+            # an HC-SR04: a blue board with two silver "eyes", the distance above it
+            w2 = r * 2.4
+            cv.create_rectangle(cx - w2, cy - r * 1.05, cx + w2, cy + r * 1.05, fill="#1F5FA8", outline="#0B120E",
+                                width=2)
+            for dx in (-1.25, 1.25):
+                cv.create_oval(cx + dx * r - r * .85, cy - r * .85, cx + dx * r + r * .85, cy + r * .85,
+                               fill="#C9CCD1", outline="#6B7078", width=2)
+                cv.create_oval(cx + dx * r - r * .45, cy - r * .45, cx + dx * r + r * .45, cy + r * .45,
+                               fill="#3A3F46", outline="")
+            ids["reading"] = cv.create_text(cx, cy - r * 1.75, text="", fill="#FFE680", font="small_bold")
+            # Simulator: a slider to move something closer (left) or further away (right)
+            x0, x1, ty = cx - w2, cx + w2, cy + r * 1.75
+            dtag = f"dist{p['pins'][0]}"
+            ids["track"] = cv.create_line(x0, ty, x1, ty, fill="#5D7A68", width=5, tags=dtag)
+            ids["knob"] = cv.create_rectangle(0, 0, 0, 0, fill=C["teal"], outline="#FFFFFF", tags=dtag)
+            ids["track_x"], ids["track_y"] = (x0, x1), ty
+            cv.tag_bind(dtag, "<ButtonPress-1>", lambda e, pp=p, ii=ids: self._slide(pp, ii, e.x))
+            cv.tag_bind(dtag, "<B1-Motion>", lambda e, pp=p, ii=ids: self._slide(pp, ii, e.x))
+            cv.tag_bind(dtag, "<Enter>", lambda e: self.canvas.configure(cursor="sb_h_double_arrow"))
+            cv.tag_bind(dtag, "<Leave>", lambda e: self.canvas.configure(cursor=""))
         name = p.get("label", k).split(" (")[0]
         fit = max(4, int(s / 8.5))
         if len(name) > fit:
@@ -326,7 +362,8 @@ class VirtualBoard(tk.Frame):
         cv = self.canvas
         for p, ids in self.items:
             k, pins = p["kind"], p["pins"]
-            state = (tuple(self.values.get(x, 0.0) for x in pins), pins[0] in self.held)
+            state = (tuple(self.values.get(x, 0.0) for x in pins), pins[0] in self.held,
+                     self.sim_distance.get(pins[0]), self.mode)
             if ids.get("state") == state:
                 continue
             ids["state"] = state
@@ -353,6 +390,20 @@ class VirtualBoard(tk.Frame):
             elif k == "pir":
                 on = self.values.get(pins[0], 0.0) > 0 or pins[0] in self.held
                 cv.itemconfigure(ids["ring"], outline="#FFB000" if on else "")
+            elif k == "distance":
+                sim_cm = self.sim_distance.get(pins[0], 100)
+                if pins[0] in self.values:          # what the program measured (live on a real Pi)
+                    cm = round(self.values[pins[0]] * 100)
+                    text = f"{cm} cm" + ("+" if cm >= 100 else "")
+                else:
+                    text = f"{round(sim_cm)} cm" if self.mode == "sim" else "-- cm"
+                cv.itemconfigure(ids["reading"], text=text)
+                show = "normal" if self.mode == "sim" else "hidden"
+                cv.itemconfigure(ids["track"], state=show)
+                cv.itemconfigure(ids["knob"], state=show)
+                (x0, x1), ty = ids["track_x"], ids["track_y"]
+                kx = x0 + (x1 - x0) * (min(150, sim_cm) - 2) / 148
+                cv.coords(ids["knob"], kx - 5, ty - 8, kx + 5, ty + 8)
 
     # ---------------------------------------------------------------- input
     def _press(self, p: dict) -> None:
@@ -369,6 +420,25 @@ class VirtualBoard(tk.Frame):
         if p["kind"] == "pir":      # a wave: motion for a few seconds, then quiet again
             self.held.discard(pin)
             self._pir_jobs[pin] = self.after(PIR_HOLD_MS, lambda: self._pir_end(pin))
+
+    def _slide(self, p: dict, ids: dict, x: float) -> None:
+        pin = p["pins"][0]
+        if self.mode != "sim":
+            self.set_status("Real Pi mode: move your hand in front of the real sensor!")
+            return
+        x0, x1 = ids["track_x"]
+        cm = round(2 + 148 * max(0.0, min(1.0, (x - x0) / (x1 - x0))))
+        if cm == self.sim_distance.get(pin):
+            return
+        self.sim_distance[pin] = cm
+        self._paint()
+        if self.on_distance:
+            self.on_distance(pin, cm)
+
+    def set_distance(self, pin: int, cm: float) -> None:
+        """Move the Simulator's slider (Watch the goal does this)."""
+        self.sim_distance[pin] = cm
+        self._paint()
 
     def _pir_end(self, pin: int) -> None:
         self._pir_jobs.pop(pin, None)

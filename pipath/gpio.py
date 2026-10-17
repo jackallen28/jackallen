@@ -12,7 +12,7 @@ SIM_ENV = {"GPIOZERO_PIN_FACTORY": "mock", "GPIOZERO_MOCK_PIN_CLASS": "mockpwmpi
 BOARD_KIND = {
     "LED": "led", "PWMLED": "led", "OutputDevice": "led", "DigitalOutputDevice": "led",
     "PWMOutputDevice": "led", "Buzzer": "buzzer", "TonalBuzzer": "buzzer",
-    "Button": "button", "MotionSensor": "pir", "RGBLED": "rgbled",
+    "Button": "button", "MotionSensor": "pir", "RGBLED": "rgbled", "DistanceSensor": "distance",
     "LineSensor": "switch", "LightSensor": "switch", "DigitalInputDevice": "switch", "InputDevice": "switch",
 }
 INPUT_KINDS = {"button", "switch", "pir"}
@@ -26,12 +26,14 @@ HEADER = {
 }
 
 SAFETY = [
-    "Turn the Pi **off** before you change any wires.",
+    "Take the **blue HAT** off the GPIO pins before you change any wires. Put it back on when you're done.",
+    "**Don't turn the Pi off** to change wires: you'd lose your progress.",
     "Always put a **330Ω resistor** in series with an LED.",
-    "**Never** connect a 5V pin to a GPIO pin.",
+    "**Never** connect a 5V pin to a GPIO pin. The distance sensor's ECHO wire goes through its two resistors.",
     "No motors straight from the GPIO pins.",
-    "Not sure? Ask your teacher to check your circuit before you switch on.",
+    "Not sure? Ask your teacher to check your circuit before you put the HAT back on.",
 ]
+HAT_FIX = "Take the blue HAT off, fix the wiring, put the HAT back on, then try again."
 
 
 def on_real_pi() -> bool:
@@ -66,11 +68,14 @@ def expand_events(events: list | None) -> list[tuple[float, str]]:
     "1.5 press 23" / "1.8 release 23"     one command at 1.5 s / 1.8 s
     "2 tap 23"                            press, then release 0.2 s later
     "1 tap 23 every 0.8 until 30"         keep tapping (for games with random waits)
+    "1.5 distance 26 15"                  the distance sensor on echo GPIO26 sees something 15 cm away
     """
     out: list[tuple[float, str]] = []
     for ev in events or []:
         w = str(ev).split()
-        t, action, pin = float(w[0]), w[1], w[2]
+        t, action = float(w[0]), w[1]
+        args = w[2:w.index("every")] if "every" in w else w[2:]       # "distance 26 15": a pin and a value
+        pin = args[0]
         every = float(w[w.index("every") + 1]) if "every" in w else None
         until = float(w[w.index("until") + 1]) if "until" in w else t
         times = [t] if not every else [t + i * every for i in range(int((until - t) / every) + 1)]
@@ -78,7 +83,7 @@ def expand_events(events: list | None) -> list[tuple[float, str]]:
             if action == "tap":
                 out += [(x, f"press {pin}"), (x + 0.2, f"release {pin}")]
             else:
-                out.append((x, f"{action} {pin}"))
+                out.append((x, " ".join([action, *args])))
     return sorted(out)
 
 
@@ -97,7 +102,7 @@ def wiring_parts(lesson: dict) -> list[dict]:
 def wiring_check_program(parts: list[dict]) -> str:
     """A tiny program that tests each part in turn and prints ✓ / ✗ lines the app can read."""
     lines = [
-        "from gpiozero import LED, Button, Buzzer, MotionSensor, RGBLED",
+        "from gpiozero import LED, Button, Buzzer, MotionSensor, RGBLED, DistanceSensor",
         "from time import sleep",
         "",
         'print("Checking your wiring, one part at a time.")',
@@ -129,5 +134,20 @@ def wiring_check_program(parts: list[dict]) -> str:
                       "ok = d.wait_for_motion(timeout=20)", "d.close()",
                       f'print("✓ {name} (GPIO{pin}) works!" if ok else '
                       f'"✗ No motion from the {name} (GPIO{pin}). Give it a minute to warm up, then check VCC, OUT and GND.")']
+        elif k == "distance":
+            echo, trig = pins[0], pins[1]
+            lines += [f"d = DistanceSensor(echo={echo}, trigger={trig})",
+                      f'print("Hold your hand about 10 cm in front of the {name} (GPIO{echo})...")',
+                      "seen, ok = 1.0, False",
+                      "for _ in range(100):          # up to 20 seconds",
+                      "    seen = d.distance",
+                      "    if seen < 0.2:",
+                      "        ok = True",
+                      "        break",
+                      "    sleep(0.2)",
+                      "d.close()",
+                      f'print(f"✓ {name} (GPIO{echo}) works! It saw your hand {{round(seen * 100)}} cm away." if ok else '
+                      f'"✗ The {name} (GPIO{echo}) didn\'t see your hand. Check TRIG goes to GPIO{trig}, ECHO goes '
+                      f'through the resistors to GPIO{echo}, and VCC is on 5V.")']
     lines.append('print("Wiring check finished.")')
     return "\n".join(lines) + "\n"

@@ -5,7 +5,8 @@ Everything lives in plain files under ~/PiPath (or $PIPATH_HOME):
     ~/PiPath/
         app.json                      last student used, etc.
         students/<slug>/
-            profile.json              first name, school, help_level, tour_done (older profiles may have class_code)
+            profile.json              first_name (all the names, joined), names, school, help_level, show,
+                                      tour_done (older profiles may have class_code, and no names / show)
             progress.json             per-lesson status, step, hints used
             lessons/<file>.py         code for each lesson
             lessons/backups/          code saved before a step replaces it
@@ -71,6 +72,36 @@ def slugify(text: str) -> str:
 # ---------------------------------------------------------------- validation
 
 NAME_RE = re.compile(r"^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' \-]{0,29}$")
+MAX_NAMES = 4                     # students can share a Pi (pair or group work)
+SHOW_CHOICES = ["all", "simple", "moderate", "advanced", "lab", "camera"]
+
+
+def join_names(names: list[str]) -> str:
+    """["Sam"] -> "Sam", ["Sam", "Alex"] -> "Sam & Alex", three or more -> "Sam, Alex & Priya"."""
+    names = [n.strip() for n in names if n and n.strip()]
+    if len(names) <= 1:
+        return names[0] if names else ""
+    return ", ".join(names[:-1]) + " & " + names[-1]
+
+
+def validate_names(names: list[str], school: str) -> dict:
+    """Errors keyed by "name0", "name1"... and "school". Blank extra name boxes are ignored."""
+    errors: dict[str, str] = {}
+    filled = [(i, n.strip()) for i, n in enumerate(names) if n.strip()]
+    if not filled:
+        errors["name0"] = "Please type your first name."
+    for i, n in filled:
+        if not NAME_RE.match(n):
+            errors[f"name{i}"] = "Use letters only (up to 30)."
+    seen = set()
+    for i, n in filled:
+        if n.lower() in seen:
+            errors[f"name{i}"] = "That name is already in the list."
+        seen.add(n.lower())
+    school_err = validate_profile("x", school).get("school")
+    if school_err:
+        errors["school"] = school_err
+    return errors
 
 
 def validate_profile(first_name: str, school: str, class_code: str = "") -> dict[str, str]:
@@ -140,6 +171,27 @@ class Student:
     def set_help_level(self, level: str) -> None:
         self.profile["help_level"] = normalise_level(level)
         self.save_profile()
+
+    @property
+    def show(self) -> str:
+        """Which tier the activity picker shows ("all" = everything)."""
+        value = self.profile.get("show", "all")
+        return value if value in SHOW_CHOICES else "all"
+
+    def set_show(self, value: str) -> None:
+        self.profile["show"] = value if value in SHOW_CHOICES else "all"
+        self.save_profile()
+
+    @property
+    def names(self) -> list[str]:
+        return list(self.profile.get("names") or [self.first_name])
+
+    def set_names(self, names: list[str]) -> None:
+        names = [n.strip() for n in names if n.strip()][:MAX_NAMES]
+        if names:
+            self.profile["names"] = names
+            self.profile["first_name"] = join_names(names)
+            self.save_profile()
 
     # -- identity
     @property
@@ -232,17 +284,28 @@ def list_students() -> list[Student]:
     return sorted(out, key=lambda s: s.profile.get("last_seen", ""), reverse=True)
 
 
-def find_student(first_name: str, school: str) -> Student | None:
-    """An existing student with the same first name and school (ignoring capitals and spaces)."""
-    key = (first_name.strip().lower(), " ".join(school.lower().split()))
+def _names_key(names) -> tuple:
+    if isinstance(names, str):
+        names = [names]
+    return tuple(sorted(n.strip().lower() for n in names if n.strip()))
+
+
+def find_student(names, school: str) -> Student | None:
+    """An existing profile with the same name(s) and school (ignoring capitals, spaces and order)."""
+    key = (_names_key(names), " ".join(school.lower().split()))
     for s in list_students():
-        if (s.first_name.strip().lower(), " ".join(s.profile.get("school", "").lower().split())) == key:
+        if (_names_key(s.names), " ".join(s.profile.get("school", "").lower().split())) == key:
             return s
     return None
 
 
-def create_student(first_name: str, school: str, class_code: str = "") -> Student:
-    base = slugify(f"{first_name}-{class_code}" if class_code.strip() else first_name)
+def create_student(names, school: str, class_code: str = "", help_level: str | None = None,
+                   show: str = "all") -> Student:
+    """names: one first name, or a list of first names for students sharing a Pi."""
+    names = [names] if isinstance(names, str) else list(names)
+    names = [n.strip() for n in names if n.strip()][:MAX_NAMES]
+    first_name = join_names(names)
+    base = slugify("-".join(names) + (f"-{class_code}" if class_code.strip() else ""))
     folder = STUDENTS / base
     n = 2
     while folder.exists():
@@ -251,13 +314,15 @@ def create_student(first_name: str, school: str, class_code: str = "") -> Studen
     folder.mkdir(parents=True)
     s = Student(folder)
     s.profile = {
-        "first_name": first_name.strip(),
+        "first_name": first_name,
+        "names": names,
         "school": school.strip(),
         "class_code": class_code.strip(),
         "created": _now(),
         "last_seen": _now(),
         "tour_done": False,
-        "help_level": DEFAULT_LEVEL,
+        "help_level": normalise_level(help_level or DEFAULT_LEVEL),
+        "show": show if show in SHOW_CHOICES else "all",
     }
     s.save_profile()
     s.save_progress()

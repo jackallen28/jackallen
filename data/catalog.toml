@@ -141,14 +141,14 @@ parts = ["1 LED + 330Ω resistor", "2 push buttons", "breadboard + jumper wires"
 id = "a3_alarm"
 tier = "advanced"
 title = "Motion Alarm & Logger"
-subtitle = "A sensor alarm that arms, beeps and keeps a log"
-concepts = ["MotionSensor", "Buzzer", "states (armed / disarmed)", "CSV logging", "datetime"]
+subtitle = "An ultrasonic alarm that arms, beeps and keeps a log"
+concepts = ["DistanceSensor (ultrasonic)", "when_in_range", "Buzzer", "states (armed / disarmed)", "CSV logging", "datetime"]
 minutes = 65
 support = "guided → brief"
 try_first = ["a1_traffic"]
 status = "ready"
 gpio = true
-parts = ["PIR motion sensor (HC-SR501)", "active buzzer", "LED + 330Ω resistor", "1 push button", "breadboard + jumper wires"]
+parts = ["HC-SR04 ultrasonic distance sensor", "1kΩ + 2kΩ resistors (for ECHO)", "active buzzer", "LED + 330Ω resistor", "1 push button", "breadboard + jumper wires"]
 
 # ---------------------------------------------------------------- ELECTRONICS LAB (optional, any order)
 

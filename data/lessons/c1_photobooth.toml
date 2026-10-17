@@ -54,7 +54,7 @@ cam.capture_file("me.jpg")
 
 [[wiring]]
 part = "Camera"
-connect = "**USB webcam:** plug it into any USB port. **Ribbon camera:** turn the Pi OFF, gently lift the clip on the CAMERA connector, slide the ribbon in with the blue side facing the USB ports, then push the clip down."
+connect = "**USB webcam:** plug it into any USB port. **Ribbon camera:** ask your teacher to fit it (it must go in while the Pi is off, so it's set up before class). Don't turn the Pi off yourself: you'd lose your progress."
 
 [[wiring]]
 part = "Red LED (3)"

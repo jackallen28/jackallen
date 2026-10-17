@@ -358,7 +358,7 @@ class Camera:
         elif self.kind == "ribbon":
             self._picam = self._start_picamera2(usb=False)
             if self._picam is None and not (shutil.which("rpicam-still") or shutil.which("libcamera-still")):
-                raise CameraNotFound("No ribbon camera found. Turn the Pi off, check the ribbon cable "
+                raise CameraNotFound("No ribbon camera found. Ask your teacher to check the ribbon cable "
                                      "(blue side facing the right way), then try again.")
 
     @staticmethod

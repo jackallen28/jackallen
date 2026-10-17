@@ -5,11 +5,12 @@ import shutil
 import tempfile
 import time
 import tkinter as tk
+import tkinter.font as tkfont
 from pathlib import Path
 
 from .. import storage
 from ..content import DATA_DIR
-from ..gpio import (CAMERA_KINDS, SHIM, SIM_ENV, expand_events, guess_camera, mode_env, on_real_pi,
+from ..gpio import (CAMERA_KINDS, HAT_FIX, SHIM, SIM_ENV, expand_events, guess_camera, mode_env, on_real_pi,
                     wiring_check_program, wiring_parts)
 from ..hints import (CheckResult, Diagnosis, ErrorInfo, code_features, evaluate_checks, gpio_lint,
                      parse_traceback, precheck)
@@ -22,7 +23,7 @@ from .home import stars_for
 from .onboarding import Screen
 from .theme import C, TIER_COLOURS
 from .tour import Tour
-from .widgets import PButton, RichText, ScrollFrame, card, chip, label
+from .widgets import CogButton, PButton, RichText, ScrollFrame, TitleBar, card, chip, label, window
 from .wiring import WiringCard
 
 DEMO_FILES = DATA_DIR / "demo_files"
@@ -52,9 +53,9 @@ class CoachCard(tk.Frame):
     """Shows what happened on the last run, plus tiered hints."""
 
     def __init__(self, master, on_hint=None):
-        super().__init__(master, bg=C["panel_alt"], highlightthickness=1, highlightbackground=C["line"])
+        super().__init__(master, bg=C["panel_alt"], relief="raised", bd=2)
         self.on_hint = on_hint
-        self.bar = tk.Frame(self, bg=C["muted"], width=5)
+        self.bar = tk.Frame(self, bg=C["muted"], width=6)
         self.bar.pack(side="left", fill="y")
         self.inner = tk.Frame(self, bg=C["panel_alt"], padx=14, pady=12)
         self.inner.pack(side="left", fill="both", expand=True)
@@ -83,7 +84,6 @@ class CoachCard(tk.Frame):
                 w.configure(bg=bg)
             except tk.TclError:
                 pass
-        self.configure(highlightbackground=fg if kind != "idle" else C["line"])
         self.bar.configure(bg=fg)
         self.kicker.configure(text=kicker, fg=fg)
 
@@ -110,8 +110,8 @@ class CoachCard(tk.Frame):
             self.where.configure(bg=bg)
             label(self.where, f"Line {d.line}", font="small_bold", fg=C["err"], bg=bg).pack(side="left")
             if d.code_line:
-                tk.Label(self.where, text=f"  {d.code_line[:60]}  ", font="code_ui", bg="#262A33",
-                         fg="#FFD7D3", padx=4).pack(side="left", padx=8)
+                tk.Label(self.where, text=f"  {d.code_line[:60]}  ", font="code_ui", bg=C["ed_bg"],
+                         fg="#FFD7D3", padx=4, relief="sunken", bd=2).pack(side="left", padx=8)
             self.where.pack(anchor="w", fill="x", pady=(8, 0), before=self.hint_box)
 
     # ---- hints
@@ -128,7 +128,8 @@ class CoachCard(tk.Frame):
         bg = self.inner.cget("bg")
         row = tk.Frame(self.hint_box, bg=bg)
         row.pack(fill="x", pady=(4, 0))
-        tk.Label(row, text=f"Hint {i + 1}", font="small_bold", fg="#FFFFFF", bg=C["warn"], padx=6).pack(side="left", anchor="n")
+        tk.Label(row, text=f"Hint {i + 1}", font="small_bold", fg="#FFFFFF", bg=C["purple"], padx=6,
+                 relief="raised", bd=2).pack(side="left", anchor="n")
         rt = RichText(row, bg=bg)
         rt.pack(side="left", fill="x", expand=True, padx=(8, 0))
         rt.render(self.hints[i])
@@ -187,6 +188,7 @@ class Workspace(Screen):
         self._demo_input: list[str] = []      # answers "Watch the goal" types in, one at a time
         self._type_job = None
         self._typed = 0
+        self._echo_tip = False
         self._out_tail = "\n"                 # last character the program printed
         self._last_out = 0.0
         self._warm_job = None
@@ -200,55 +202,51 @@ class Workspace(Screen):
         self.sim_object = "face"
         self.mode_box: tk.Frame | None = None
 
-        # ---- top bar
-        bar = self.topbar = tk.Frame(self, bg=C["panel"], highlightthickness=1, highlightbackground=C["line"],
-                                     padx=12, pady=8)
+        # ---- top bar: a retro title bar, the school logo in the corner
+        bar = self.topbar = TitleBar(self, title, height=56, logo=True, font="h3", sub=subtitle)
         bar.pack(fill="x")
-        self.home_btn = PButton(bar, "◂ Activities", self.go_home, kind="ghost", font="small_bold")
-        self.home_btn.pack(side="left")
-        tk.Frame(bar, bg=C["line"], width=1, height=28).pack(side="left", padx=10)
-        # the buttons on the right are packed before the title, so on a small screen only the subtitle is cut
-        self.help_btn = PButton(bar, "? Tour", self.start_tour, kind="ghost", font="small_bold")
-        self.help_btn.pack(side="right")
-        label(bar, app.student.first_name, font="small_bold", fg=C["muted"], bg=C["panel"]).pack(side="right", padx=12)
-        self.title_lbl = label(bar, title, font="h3", bg=C["panel"])
-        self.title_lbl.pack(side="left")
-        self.sub_lbl = label(bar, f"   {subtitle}", font="small", fg=C["muted"], bg=C["panel"])
-        self.sub_lbl.pack(side="left")
+        self.home_btn = bar.add_right(PButton(bar, "◂ Activities", self.go_home, kind="secondary",
+                                              font="small_bold", pady=3))
+        self.cog_btn = bar.add_right(CogButton(bar, lambda: app.open_settings()), pad=8)
+        self.help_btn = bar.add_right(PButton(bar, "? Tour", self.start_tour, kind="secondary", font="small_bold",
+                                              pady=3), pad=8)
+        self.names_lbl = bar.add_right(tk.Label(bar, text=app.student.first_name, font="small_bold", fg="#FFFFFF",
+                                                bg=C["title_b"]), pad=12)
 
         # ---- body
-        self.pane = tk.PanedWindow(self, orient="horizontal", sashwidth=6, bg=C["line"], bd=0, sashrelief="flat")
+        self.pane = tk.PanedWindow(self, orient="horizontal", sashwidth=7, bg=C["bg"], bd=0, sashrelief="raised")
         self.pane.pack(fill="both", expand=True)
         self.left = tk.Frame(self.pane, bg=C["bg"])
-        right = tk.Frame(self.pane, bg=C["ed_bg"])
+        right = tk.Frame(self.pane, bg=C["bg"])
         self.pane.add(self.left, minsize=320, width=self.left_width)
         self.pane.add(right, minsize=420)
 
         # toolbar above the editor
-        tb = self.toolbar = tk.Frame(right, bg="#2A2F38", padx=10, pady=7)
+        tb = self.toolbar = tk.Frame(right, bg=C["bg"], padx=8, pady=5, relief="raised", bd=2)
         tb.pack(fill="x")
         self.run_btn = PButton(tb, "▶  Run", self.run, kind="go", font="ui_bold", padx=18)
         self.run_btn.pack(side="left")
         self.stop_btn = PButton(tb, "■  Stop", self.stop, kind="stop", font="small_bold")
         self.stop_btn.pack(side="left", padx=8)
         self.stop_btn.set_enabled(False)
-        label(tb, "F5", font="small", fg="#7D8696", bg="#2A2F38").pack(side="left")
-        self.file_lbl = label(tb, "", font="code_ui", fg="#AEB5C1", bg="#2A2F38")
-        self.file_lbl.pack(side="left", padx=18)
-        PButton(tb, "A+", lambda: self.editor.zoom(1), kind="dark", font="small_bold", padx=8, pady=3).pack(side="right")
-        PButton(tb, "A−", lambda: self.editor.zoom(-1), kind="dark", font="small_bold", padx=8, pady=3).pack(side="right", padx=4)
-        self.save_lbl = label(tb, "", font="small", fg="#7D8696", bg="#2A2F38")
+        label(tb, "F5", font="small", fg=C["muted"]).pack(side="left")
+        self.file_lbl = tk.Label(tb, text="", font="code_ui", fg=C["ink"], bg="#FFFFFF", relief="sunken", bd=2,
+                                 padx=6)
+        self.file_lbl.pack(side="left", padx=12)
+        PButton(tb, "A+", lambda: self.zoom_code(1), kind="dark", font="small_bold", padx=8, pady=2).pack(side="right")
+        PButton(tb, "A−", lambda: self.zoom_code(-1), kind="dark", font="small_bold", padx=8, pady=2).pack(side="right", padx=4)
+        self.save_lbl = label(tb, "", font="small", fg=C["muted"])
         self.save_lbl.pack(side="right", padx=12)
 
-        vpane = self.vpane = tk.PanedWindow(right, orient="vertical", sashwidth=6, bg="#2A2F38", bd=0,
-                                            sashrelief="flat")
+        vpane = self.vpane = tk.PanedWindow(right, orient="vertical", sashwidth=7, bg=C["bg"], bd=0,
+                                            sashrelief="raised")
         vpane.pack(fill="both", expand=True)
         self.editor = CodeEditor(vpane, on_change=self._changed)
         vpane.add(self.editor, minsize=160, stretch="always")
         self.board: VirtualBoard | None = None       # made the first time an activity needs it
         self.board_shown = False
-        self.bottom = tk.PanedWindow(vpane, orient="horizontal", sashwidth=6, bg="#2A2F38", bd=0, sashrelief="flat")
-        self.console = Console(self.bottom, on_send=self.runner.send_input)
+        self.bottom = tk.PanedWindow(vpane, orient="horizontal", sashwidth=7, bg=C["bg"], bd=0, sashrelief="raised")
+        self.console = Console(self.bottom, on_send=self._send_input)
         self.bottom.add(self.console, minsize=220, stretch="always")
         self._bottom_h = 230
         vpane.add(self.bottom, minsize=150, height=self._bottom_h, stretch="never")
@@ -264,7 +262,7 @@ class Workspace(Screen):
             if self.board is None:
                 self.board = VirtualBoard(self.bottom, on_press=self._board_press, on_release=self._board_release,
                                           on_goal=self.watch_goal, on_object=self._pick_object,
-                                          on_camera=self.next_camera)
+                                          on_camera=self.next_camera, on_distance=self._board_distance)
             self.board.reset()
             self.board.set_mode(self.mode)
             if camera:
@@ -281,6 +279,39 @@ class Workspace(Screen):
         if height != self._bottom_h:
             self._bottom_h = height
             self.vpane.paneconfigure(self.bottom, height=height)
+
+    # ---------------------------------------------------------------- settings (the cog)
+    def zoom_code(self, step: int) -> None:
+        self.editor.zoom(step)
+        self.app.student.profile["code_size"] = tkfont.nametofont("code").cget("size")
+        self.app.student.save_profile()
+
+    def settings_changed(self, what: str) -> None:
+        """Settings changed something: names, hardware (Simulator / Real Pi, camera) or text size."""
+        if what == "names":
+            self.names_lbl.configure(text=self.app.student.first_name)
+            self.topbar._layout()
+        elif what == "hardware":
+            state = storage.app_state()
+            mode = state.get("gpio_mode", "real")
+            mode = mode if self.real_pi and mode in ("sim", "real") else "sim"
+            if mode != self.mode:
+                self.stop()
+                self.mode = mode
+                if self.mode_box is not None:
+                    self._paint_mode()
+                if self.board:
+                    self.board.set_mode(mode)
+            cam = state.get("camera")
+            if cam in CAMERA_KINDS and cam != self.camera:
+                self.stop()
+                self.camera = cam
+                if self.board:
+                    self.board.set_camera_kind(cam)
+                self._schedule_warm()
+        elif what == "text":
+            self.editor._set_tabs()
+            self.editor._draw_gutter()
 
     # ---------------------------------------------------------------- showing, hiding, leaving
     def on_show(self) -> None:
@@ -318,6 +349,7 @@ class Workspace(Screen):
         self.console.set_input_enabled(False)
         if self.board:
             self.board.reset()
+            self.board.set_live(False)
 
     def _unbind_keys(self) -> None:
         if self._keys_bound:
@@ -375,8 +407,13 @@ class Workspace(Screen):
             self.console.write("This program keeps running. Test it, then press ■ Stop to check your work.\n", "info")
         self._launch(code, self.code_path(), self.extra_env())
 
+    def _send_input(self, text: str) -> None:
+        self.runner.send_input(text)
+        if self.runner.running:
+            self.console.set_status("running…", C["go"])
+
     def _launch(self, code: str, path: Path, env: dict, status: str = "running…"):
-        self.console.set_status(status, C["con_in"])
+        self.console.set_status(status, C["go"])
         self.run_btn.set_enabled(False)
         self.stop_btn.set_enabled(True)
         self.console.set_input_enabled(True)
@@ -385,9 +422,17 @@ class Workspace(Screen):
         self._run_code = code
         self._run_started = time.time()
         self._out_tail, self._last_out = "\n", time.monotonic()
+        self._echo_tip = False
         if self.board:
             self.board.reset()
-        self.runner.start(path, path.parent, env, shim=SHIM if self.gpio else None)
+        # every program runs through the shim: it reports pins, photos and input() to the app
+        self.runner.start(path, path.parent, env, shim=SHIM)
+        if self.board and self.gpio:
+            if env.get("GPIOZERO_PIN_FACTORY") == "mock":
+                for pin, cm in self.board.sim_distance.items():     # where the slider is now
+                    self.runner.send_command(f"distance {pin} {cm}")
+            else:
+                self.board.set_live(True)
         self._poll()
 
     def extra_env(self) -> dict:
@@ -404,6 +449,8 @@ class Workspace(Screen):
     # ---------------------------------------------------------------- warm start
     def preload(self) -> list[str]:
         """Modules the spare runner loads before it's needed (slow to import on a Pi 3B)."""
+        if not self.gpio:
+            return []
         mods = ["gpiozero", "gpiozero.pins.mock"]
         if self.real_pi:
             mods.append("gpiozero.pins.lgpio")
@@ -414,13 +461,13 @@ class Workspace(Screen):
         return mods
 
     def _schedule_warm(self, delay: int = 400):
-        if self.gpio and self._warm_job is None:
+        if self._warm_job is None:
             self._warm_job = self.after(delay, self.warm_up)
 
     def warm_up(self):
         """Have a spare runner waiting with gpiozero loaded, so the next Run starts straight away."""
         self._warm_job = None
-        if self.gpio and not self.runner.running:
+        if not self.runner.running:
             self.runner.warm_up(SHIM, self.preload())
 
     # ---------------------------------------------------------------- camera
@@ -433,6 +480,7 @@ class Workspace(Screen):
         if self.board:
             self.board.set_camera_kind(self.camera)
         self._schedule_warm()
+        self.app.settings_changed("hardware")
         self.console.write(f"Camera: {CAMERA_KINDS[self.camera]}. " + {
             "sim": "Pretend pictures. Pick what the camera sees on the board.\n",
             "usb": "Plug a USB webcam into the Pi.\n",
@@ -457,9 +505,9 @@ class Workspace(Screen):
 
     # ---------------------------------------------------------------- Simulator / Real Pi
     def _mode_switch(self, tb):
-        box = self.mode_box = tk.Frame(tb, bg="#2A2F38")
+        box = self.mode_box = tk.Frame(tb, bg=C["bg"])
         box.pack(side="left", padx=(6, 0), after=self.stop_btn)   # before the file name, so it never gets squeezed out
-        label(box, "Run on:", font="small", fg="#7D8696", bg="#2A2F38").pack(side="left", padx=(0, 6))
+        label(box, "Run on:", font="small", fg=C["muted"]).pack(side="left", padx=(0, 6))
         self.sim_btn = PButton(box, "Simulator", lambda: self.set_mode("sim"), kind="dark", font="small_bold", padx=10, pady=3)
         self.sim_btn.pack(side="left")
         self.real_btn = PButton(box, "Real Pi", lambda: self.set_mode("real"), kind="dark", font="small_bold", padx=10, pady=3)
@@ -467,8 +515,9 @@ class Workspace(Screen):
         self._paint_mode()
 
     def _paint_mode(self):
-        self.sim_btn.set_kind("secondary" if self.mode == "sim" else "dark")
-        self.real_btn.set_kind("secondary" if self.mode == "real" else "dark")
+        """The chosen one looks pressed in (sunken), like a Windows 95 toggle."""
+        for btn, key in ((self.sim_btn, "sim"), (self.real_btn, "real")):
+            btn.set_kind("primary" if self.mode == key else "dark")
         self.real_btn.set_enabled(self.real_pi)
 
     def set_mode(self, mode: str):
@@ -481,7 +530,9 @@ class Workspace(Screen):
         if self.board:
             self.board.set_mode(mode)
         self.console.write("Switched to " + ("the Simulator: the board on screen is your hardware.\n" if mode == "sim"
-                                             else "the Real Pi: your program will use the real GPIO pins.\n"), "info")
+                                             else "the Real Pi: your program drives the real GPIO pins, live, "
+                                                  "and the board shows what they're doing.\n"), "info")
+        self.app.settings_changed("hardware")        # the other kept screens follow
 
     def show_board(self):
         if self.board is None:
@@ -508,6 +559,10 @@ class Workspace(Screen):
 
     def _board_release(self, pin: int):
         self.runner.send_command(f"release {pin}")
+
+    def _board_distance(self, pin: int, cm: float):
+        if self.runner.running:
+            self.runner.send_command(f"distance {pin} {cm}")
 
     def _on_gpio(self, msg: dict):
         t = msg.get("t")
@@ -551,6 +606,7 @@ class Workspace(Screen):
         self._launch(code, path, env, status="playing the goal…" if kind == "demo" else "checking wiring…")
         self._demo_input = stdin.splitlines()
         self._typed = 0
+        self._echo_tip = False
         for when, command in expand_events(events):
             self._special_jobs.append(self.after(int(when * 1000), lambda c=command: self._demo_command(c)))
         if seconds:
@@ -558,8 +614,11 @@ class Workspace(Screen):
 
     def _demo_command(self, command: str):
         self.runner.send_command(command)
-        if command.startswith("show ") and self.board:
-            self.board.set_camera_object(command.split()[1])   # the picker follows the demo
+        words = command.split()
+        if words[0] == "show" and self.board:
+            self.board.set_camera_object(words[1])   # the picker follows the demo
+        elif words[0] == "distance" and self.board and len(words) == 3:
+            self.board.set_distance(int(words[1]), float(words[2]))      # so does the slider
 
     def _maybe_type_demo(self):
         """Watch the goal: type the next answer when the program is waiting at a prompt."""
@@ -607,14 +666,19 @@ class Workspace(Screen):
             self.runner.stop("user")
 
     def _poll(self):
-        out, pins = [], None
+        out, errs, pins = [], [], None
         for ev in self.runner.poll():
             kind = ev[0]
             if kind == "out":
                 out.append(ev[1])
+            elif kind == "err":
+                errs.append(ev[1])
             elif kind == "gpio":
-                if ev[1].get("t") == "pins":
+                t = ev[1].get("t")
+                if t == "pins":
                     pins = ev[1]          # only the newest pin states need drawing
+                elif t == "input":
+                    self._asked_input()
                 elif self.board:
                     self._on_gpio(ev[1])
             elif kind == "closed":
@@ -625,6 +689,8 @@ class Workspace(Screen):
             text = "".join(out)
             self.console.write(text)
             self._out_tail, self._last_out = text[-1], time.monotonic()
+        if errs:
+            self._show_stderr("".join(errs))
         if pins is not None and self.board:
             self._on_gpio(pins)
         if self._demo_input:
@@ -634,8 +700,28 @@ class Workspace(Screen):
         else:
             self._poll_job = self.after(40, self._poll)
 
+    def _show_stderr(self, text: str) -> None:
+        """Errors and warnings show as they happen, in red (like Thonny), without long folder names."""
+        folder = (self._special_dir + "/") if self._special and self._special_dir else str(self.code_path().parent) + "/"
+        self.console.write(text.replace(folder, ""), "err")
+        self._out_tail, self._last_out = "\n", time.monotonic()
+        if "DistanceSensorNoEcho" in text and not self._echo_tip:
+            self._echo_tip = True
+            self.console.write("⚠ Coach tip: the distance sensor didn't answer. Check TRIG, ECHO (through its two "
+                               "resistors), 5V and GND. " + HAT_FIX + "\n", "warn")
+
+    def _asked_input(self) -> None:
+        """The program is waiting in input()."""
+        if self._special == "demo":
+            if self._demo_input and self._type_job is None:
+                self._type_job = self.after(350 if self._typed < 5 else 60, self._type_demo)
+        else:
+            self.console.waiting_for_answer()
+
     def _finished(self):
         self._schedule_warm()
+        if self.board:
+            self.board.set_live(False)
         self.run_btn.set_enabled(True)
         self.stop_btn.set_enabled(False)
         self.console.set_input_enabled(False)
@@ -648,8 +734,6 @@ class Workspace(Screen):
             self._cancel_special_jobs()
             if self.board:
                 self.board.set_mode(self.mode)
-            if stderr.strip() and rc not in (0, None) and reason is None:
-                self.console.write("\n" + stderr, "err")
             self.console.set_status("")
             self.special_finished(kind, self.runner.stdout, stderr)
             self._clean_special_dir()
@@ -672,16 +756,14 @@ class Workspace(Screen):
             err = ErrorInfo("PiPathRunaway", msg)
             self.console.write("\n■ PiPath stopped your program: it looked like a never-ending loop.\n", "err")
         elif rc != 0:
-            if stderr.strip():
-                self.console.write("\n" + stderr.replace(folder, ""), "err")
             err = parse_traceback(stderr, str(self.code_path()), code) or ErrorInfo(
                 "Crash", f"exit code {rc}", None)
         crashed = err is not None
         if crashed:
-            self.console.set_status("error", C["con_err"])
+            self.console.set_status("error", C["err"])
         else:
             self.console.write("\n✓ Program finished.\n", "info")
-            self.console.set_status("finished", C["con_in"])
+            self.console.set_status("finished", C["go"])
         self.after_run(code, err, crashed, self.runner.stdout)
 
     def after_run(self, code: str, err: ErrorInfo | None, crashed: bool, stdout: str):
@@ -712,8 +794,6 @@ class LessonWorkspace(Workspace):
     def __init__(self, app, lesson_id: str, tour: bool = False):
         self.lesson = None
         super().__init__(app)
-        self.level_btn = PButton(self.topbar, "", self.cycle_level, kind="ghost", font="small_bold")
-        self.level_btn.pack(side="right", padx=(0, 4), after=self.help_btn)
         # non-GPIO activities have no board to put it on, so Watch the goal goes in the toolbar
         self.goal_btn = PButton(self.toolbar, "Watch the goal  ▶", self.watch_goal, kind="dark",
                                 font="small_bold", padx=10, pady=3)
@@ -733,11 +813,9 @@ class LessonWorkspace(Workspace):
         tier = next(t for t in app.catalog.tiers if t["id"] == self.project["tier"])
         self.tier_title = tier["title"]
         self.tier_colour = TIER_COLOURS.get(self.project["tier"], C["accent"])
-        self.title_lbl.configure(text=self.lesson["title"])
-        self.sub_lbl.configure(text=f"   {tier['title']} activity  ·  {self.project['subtitle']}")
+        self.topbar.set_text(self.lesson["title"], f"{tier['title']} activity  ·  {self.project['subtitle']}")
         self.file_lbl.configure(text=self.lesson["file_name"])
         self.level = app.student.help_level
-        self._paint_level()
 
         # per-step state
         self.view = None
@@ -803,17 +881,20 @@ class LessonWorkspace(Workspace):
         return self.view == "step" and self.steps[self.step_i].get("run_mode") == "until_stopped"
 
     # ---------------------------------------------------------------- help level
-    def _paint_level(self):
-        self.level_btn.configure(text=f"Help: {LEVEL_INFO[self.level][0]}  ▸")
-
     def cycle_level(self):
-        """Beginner → Moderate → Advanced. Saved for this student."""
-        self.level = LEVELS[(LEVELS.index(self.level) + 1) % len(LEVELS)]
-        self.app.student.set_help_level(self.level)
-        self._paint_level()
-        if self.view == "step":
-            self._render_step(keep_coach=True)
-            self.coach.message("info", f"Help: {LEVEL_INFO[self.level][0]}", LEVEL_INFO[self.level][1])
+        """Beginner → Moderate → Advanced. Saved for this student (Settings does this too)."""
+        self.app.student.set_help_level(LEVELS[(LEVELS.index(self.level) + 1) % len(LEVELS)])
+        self.settings_changed("help")
+
+    def settings_changed(self, what: str) -> None:
+        super().settings_changed(what)
+        if what == "help" and self.lesson is not None:
+            new = self.app.student.help_level
+            if new != self.level:
+                self.level = new
+                if self.view == "step":
+                    self._render_step(keep_coach=True)
+                    self.coach.message("info", f"Help: {LEVEL_INFO[self.level][0]}", LEVEL_INFO[self.level][1])
 
     # ---------------------------------------------------------------- left panel
     def _build_left(self):
@@ -822,15 +903,14 @@ class LessonWorkspace(Workspace):
         self.g = tk.Frame(self.guide.body, bg=C["bg"], padx=18, pady=14)
         self.g.pack(fill="both", expand=True)
 
-        self.foot = tk.Frame(self.left, bg=C["panel"], highlightthickness=1, highlightbackground=C["line"],
-                             padx=14, pady=10)
+        self.foot = tk.Frame(self.left, bg=C["bg"], relief="raised", bd=2, padx=12, pady=8)
         self.foot.pack(fill="x", side="bottom")
-        self.back_btn = PButton(self.foot, "◂ Back", self.prev_step, kind="ghost", font="small_bold")
+        self.back_btn = PButton(self.foot, "◂ Back", self.prev_step, kind="secondary", font="small_bold")
         self.back_btn.pack(side="left")
         self.next_btn = PButton(self.foot, "Next step  ▸", self.next_step, kind="secondary")
         self.next_btn.pack(side="right")
-        self.skip_btn = PButton(self.foot, "Skip  ▸", self.skip_step, kind="ghost", font="small_bold")
-        self.foot_note = label(self.foot, "", font="small", fg=C["muted"], bg=C["panel"])
+        self.skip_btn = PButton(self.foot, "Skip  ▸", self.skip_step, kind="secondary", font="small_bold")
+        self.foot_note = label(self.foot, "", font="small", fg=C["muted"])
         self.foot_note.pack(side="right", padx=10)
         self._build_step_view()
 
@@ -972,19 +1052,18 @@ class LessonWorkspace(Workspace):
             self.board.show_goal_button(False)
         self._show_toolbar_goal(False)
         st = stars_for(self.app, self.lp.get("hints_used", 0))
-        box = tk.Frame(v, bg=C["ink"], padx=20, pady=20)
-        box.pack(fill="x")
-        label(box, "ACTIVITY COMPLETE", font="small_bold", fg=C["syn_def"], bg=C["ink"]).pack(anchor="w")
-        label(box, self.lesson["title"], font="h1", fg="#FFFFFF", bg=C["ink"]).pack(anchor="w", pady=(4, 6))
-        label(box, "★" * st + "☆" * (3 - st), font="glyph", fg="#F5B800", bg=C["ink"]).pack(anchor="w")
+        win, box = window(v, "Activity complete!", padx=18, pady=14, bg="#FFFFFF")
+        win.pack(fill="x")
+        label(box, self.lesson["title"], font="h1", fg=C["purple"], bg="#FFFFFF").pack(anchor="w", pady=(0, 4))
+        label(box, "★" * st + "☆" * (3 - st), font="glyph", fg="#E0A000", bg="#FFFFFF").pack(anchor="w")
         msg = {3: "Independence stars: you barely needed any hints!",
                2: "Independence stars: you used a few hints and got there.",
                1: "You finished! Next time, try one more run before opening a hint."}[st]
-        label(box, msg, fg="#C9CED6", bg=C["ink"], wraplength=340).pack(anchor="w", pady=(4, 0))
+        label(box, msg, fg=C["ink"], bg="#FFFFFF", wraplength=340).pack(anchor="w", pady=(4, 0))
         hints = self.lp.get("hints_used", 0)
         label(box, f"{self.lp.get('runs', 0)} runs  ·  {self.lp.get('errors', 0)} bugs found  ·  "
-                   f"{hints} hint{'' if hints == 1 else 's'}", font="small", fg="#8F97A5",
-              bg=C["ink"]).pack(anchor="w", pady=(8, 0))
+                   f"{hints} hint{'' if hints == 1 else 's'}", font="small", fg=C["muted"],
+              bg="#FFFFFF").pack(anchor="w", pady=(8, 0))
         rt = RichText(v)
         rt.pack(fill="x", pady=(16, 0))
         rt.render(self.lesson["outro"])
@@ -1057,12 +1136,12 @@ class LessonWorkspace(Workspace):
         if (getattr(self, "_touring", False) or self.app.student.profile.get("tour_done")
                 or not self.winfo_ismapped()):
             return
-        ov = self._tour_offer = card(self, padx=22, pady=18, border=C["accent"])
+        ov, body = window(self, "First time here?", padx=20, pady=14)
+        self._tour_offer = ov
         ov.place(relx=.5, rely=.42, anchor="center")
-        label(ov, "First time here?", font="h2", bg=C["panel"]).pack(anchor="w")
-        label(ov, "Want a quick look around the workspace? It takes about 30 seconds.",
-              fg=C["muted"], bg=C["panel"], wraplength=340).pack(anchor="w", pady=(4, 14))
-        row = tk.Frame(ov, bg=C["panel"])
+        label(body, "Want a quick look around the workspace? It takes about 30 seconds.",
+              wraplength=340).pack(anchor="w", pady=(0, 14))
+        row = tk.Frame(body, bg=C["bg"])
         row.pack(fill="x")
 
         def skip():
@@ -1073,7 +1152,7 @@ class LessonWorkspace(Workspace):
             ov.destroy()
             self.start_tour()
 
-        PButton(row, "No thanks, I'll explore", skip, kind="ghost", font="small_bold").pack(side="left")
+        PButton(row, "No thanks, I'll explore", skip, kind="secondary", font="small_bold").pack(side="left")
         PButton(row, "Show me around  ▸", go, kind="primary").pack(side="right", padx=(16, 0))
 
     def _render_step(self, keep_coach: bool = False):
@@ -1284,7 +1363,7 @@ class LessonWorkspace(Workspace):
                      "Press **Next step** when you're ready.")
         self.coach.message("ok", "Step complete!", step.get("success", "Well done!") + after)
         self.coach.set_hints([], None)
-        self.console.set_status("✓ step complete", C["con_in"])
+        self.console.set_status("✓ step complete", C["ok"])
 
     def _show_results(self, results: list[CheckResult]):
         for (icon, _txt), r in zip(self.check_rows, results):
@@ -1346,7 +1425,7 @@ class LessonWorkspace(Workspace):
             bad = [l for l in stdout.splitlines() if l.startswith("✗")]
             if bad:
                 text = ("Some parts didn't respond:\n\n" + "\n".join(f"- {l[2:]}" for l in bad) +
-                        "\n\nTurn the Pi off, fix the wiring, and try **Check my wiring** again.")
+                        "\n\n" + HAT_FIX.replace("try again", "press **Check my wiring** again"))
                 self.console.write("\n⚠ Some parts didn't respond. Check those wires.\n", "warn")
                 if self.view == "step":
                     self.coach.message("warn", "Check those wires", text)
@@ -1385,8 +1464,8 @@ class LessonWorkspace(Workspace):
         ] if self.gpio else []) + [
             {"widget": self.coach, "side": "right", "title": "The Coach",
              "text": "If your code breaks, the Coach explains why in plain English and shows which line. Hints start small. Try one at a time."},
-            {"widget": self.level_btn, "side": "bottom", "title": "How much help?",
-             "text": "**Beginner** gets hints any time. **Moderate** gives less help as you go. **Advanced** just shows the goal and lets you skip steps. Click to change it whenever you like."},
+            {"widget": self.cog_btn, "side": "bottom", "title": "Settings",
+             "text": "Change things any time: how much help you get (**Beginner**, **Moderate** or **Advanced**), what the activity picker shows, your names, **Simulator** or **Real Pi**, and the code text size."},
             {"widget": self.home_btn, "side": "bottom", "title": "Saving",
              "text": "Your code **saves automatically**. Use **Activities** to pick something else anytime. Press **? Tour** to see this again."},
         ]

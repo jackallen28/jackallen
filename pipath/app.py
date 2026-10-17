@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import tkinter as tk
+import tkinter.font as tkfont
 
 from . import storage
 from .content import Catalog, load_config
 from .hints import HintEngine
 from .ui.home import HomeScreen
-from .ui.onboarding import ProfileScreen, WelcomeScreen
+from .ui.onboarding import ProfileScreen, SetupScreen, WelcomeScreen
+from .ui.settings import SettingsDialog
 from .ui.theme import C, setup_fonts
-from .ui.widgets import PButton, card, label
+from .ui.widgets import PButton, TitleBar, entry, label
 from .ui.workspace import FreeBuildWorkspace, LessonWorkspace
 
 
@@ -22,6 +24,8 @@ class PiPathApp(tk.Tk):
         self.student: storage.Student | None = None
         self.teacher_mode = False
         self.screen: tk.Frame | None = None
+        self.pending_profile: dict | None = None     # a new profile between "New student(s)" and "Set up"
+        self._settings: SettingsDialog | None = None
         # Kept between visits, because building them is the slowest thing on a Pi 3B:
         self._home: HomeScreen | None = None
         self._lesson_ws: LessonWorkspace | None = None     # re-used for every activity
@@ -84,20 +88,46 @@ class PiPathApp(tk.Tk):
                 self._home.refresh()
             self._swap(self._home)
             return
-        screens = {"welcome": WelcomeScreen, "profile": ProfileScreen}
+        screens = {"welcome": WelcomeScreen, "profile": ProfileScreen, "setup": SetupScreen}
         self._swap(screens[name](self))
 
     def login(self, s: storage.Student) -> None:
         self.forget_screens()
+        self.pending_profile = None
         self.student = s
         storage.touch_student(s)
+        size = s.profile.get("code_size")
+        if isinstance(size, int) and 9 <= size <= 26:
+            tkfont.nametofont("code").configure(size=size)
         self.show("home")
 
     def logout(self) -> None:
+        self.close_settings()
         self.forget_screens()
         self.student = None
         self.teacher_mode = False
         self.show("welcome")
+
+    # ------------------------------------------------------------------ settings (the cog)
+    def open_settings(self, tab: str = "help") -> None:
+        if self.student is None:
+            return
+        if self._settings is not None and self._settings.winfo_exists():
+            self._settings.show_tab(tab)
+            self._settings.lift()
+            return
+        self._settings = SettingsDialog(self, tab)
+
+    def close_settings(self) -> None:
+        if self._settings is not None and self._settings.winfo_exists():
+            self._settings.close()
+        self._settings = None
+
+    def settings_changed(self, what: str) -> None:
+        """A setting changed: every kept screen updates itself (help, show, names, hardware, text)."""
+        for screen in dict.fromkeys(self._kept() + ([self.screen] if self.screen is not None else [])):
+            if hasattr(screen, "settings_changed") and screen.winfo_exists():
+                screen.settings_changed(what)
 
     def open_lesson(self, lesson_id: str, tour: bool = False) -> None:
         if self._lesson_ws is None:
@@ -132,14 +162,14 @@ class PiPathApp(tk.Tk):
     def teacher_panel(self) -> None:
         if getattr(self, "_teacher_overlay", None) and self._teacher_overlay.winfo_exists():
             return
-        ov = tk.Frame(self, bg="#0E1116")
+        ov = tk.Frame(self, bg=C["desk"])          # the teal desktop, covering the student's screen
         ov.place(relx=0, rely=0, relwidth=1, relheight=1)
         self._teacher_overlay = ov
-        box = card(ov, padx=26, pady=22)
+        box = tk.Frame(ov, bg=C["bg"], relief="raised", bd=2)
         box.place(relx=.5, rely=.45, anchor="center")
-        label(box, "Teacher panel", font="h2", bg=C["panel"]).pack(anchor="w")
-        body = tk.Frame(box, bg=C["panel"])
-        body.pack(fill="x", pady=(10, 0))
+        TitleBar(box, "Teacher panel", height=24).pack(fill="x", padx=1, pady=(1, 0))
+        body = tk.Frame(box, bg=C["bg"], padx=24, pady=16)
+        body.pack(fill="x")
 
         def close():
             ov.destroy()
@@ -148,16 +178,16 @@ class PiPathApp(tk.Tk):
             for w in body.winfo_children():
                 w.destroy()
             label(body, "Teacher mode lets you skip ahead: Next step is always enabled, for this session only.",
-                  fg=C["muted"], bg=C["panel"], wraplength=380).pack(anchor="w")
+                  fg=C["muted"], wraplength=400).pack(anchor="w")
             PButton(body, "Teacher mode: " + ("ON (turn off)" if self.teacher_mode else "OFF (turn on)"),
                     toggle, kind="primary").pack(anchor="w", pady=(6, 14))
-            label(body, "Export every student's progress on this Pi to a CSV file.", fg=C["muted"],
-                  bg=C["panel"]).pack(anchor="w")
-            msg = label(body, "", font="small", fg=C["ok"], bg=C["panel"], wraplength=380)
+            label(body, "Export every student's progress on this Pi to a CSV file.", fg=C["muted"]).pack(anchor="w")
+            msg = label(body, "", font="small", fg=C["ok"], wraplength=400)
             PButton(body, "Export progress CSV", lambda: msg.configure(
-                text=f"Saved to {storage.export_progress_csv(self.catalog.projects)}"), kind="secondary").pack(anchor="w", pady=(6, 4))
+                text=f"Saved to {storage.export_progress_csv(self.catalog.projects)}"), kind="secondary").pack(
+                anchor="w", pady=(6, 4))
             msg.pack(anchor="w")
-            PButton(body, "Close", close, kind="ghost").pack(anchor="e", pady=(14, 0))
+            PButton(body, "Close", close, kind="secondary").pack(anchor="e", pady=(14, 0))
 
         def toggle():
             self.teacher_mode = not self.teacher_mode
@@ -166,11 +196,10 @@ class PiPathApp(tk.Tk):
                 self.forget_screens()
                 self.show("home")
 
-        label(body, "Enter the teacher PIN (set in data/config.toml)", fg=C["muted"], bg=C["panel"]).pack(anchor="w")
-        pin = tk.Entry(body, show="●", font="h3", width=10, bg=C["panel_alt"], highlightthickness=2,
-                       highlightbackground=C["line"], highlightcolor=C["accent"])
-        pin.pack(anchor="w", pady=8, ipady=4)
-        err = label(body, "", font="small", fg=C["err"], bg=C["panel"])
+        label(body, "Enter the teacher PIN (set in data/config.toml)", fg=C["muted"]).pack(anchor="w")
+        pin = entry(body, width=10, font="h3", show="●")
+        pin.pack(anchor="w", pady=8, ipady=2)
+        err = label(body, "", font="small", fg=C["err"])
         err.pack(anchor="w")
 
         def check(_e=None):
@@ -182,8 +211,8 @@ class PiPathApp(tk.Tk):
 
         pin.bind("<Return>", check)
         pin.bind("<Escape>", lambda e: close())
-        row = tk.Frame(body, bg=C["panel"])
+        row = tk.Frame(body, bg=C["bg"])
         row.pack(fill="x", pady=(10, 0))
-        PButton(row, "Cancel", close, kind="ghost").pack(side="left")
-        PButton(row, "Unlock", check, kind="primary").pack(side="right")
+        PButton(row, "Cancel", close, kind="secondary").pack(side="left")
+        PButton(row, "Unlock", check, kind="primary").pack(side="right", padx=(40, 0))
         pin.focus_set()
