@@ -233,7 +233,16 @@ def scenes(app):
                                          setattr(app.screen.adapter, "history",
                                                  [{"first_try": True, "failed": 0, "hints": 0, "secs": 40}] * 2),
                                          set_code(app.screen.steps[2]["demo"])(), press_run()), 2500),
-        ("58_done", lambda: (stop(), app.show("home"))),
+        ("59_free_play_first_box", lambda: (stop(), app.show("home"), app.screen.set_filter("all"))),
+        ("60_free_play", lambda: free_build()),
+        ("61_add_led", lambda: app.screen.add_part(next(p for p in app.screen.library["parts"] if p["id"] == "led"))),
+        ("62_add_button", lambda: app.screen.add_part(next(p for p in app.screen.library["parts"] if p["id"] == "button"))),
+        ("63_wiring", lambda: app.screen.guide.scroll_to(app.screen.wiring_box)),
+        ("64_free_error", lambda: (set_code("from gpiozero import LED\nled = LED(17)\nled.on(\n")(), press_run()), 1500),
+        ("65_free_nudge", press_run, 1500),
+        ("66_idea", lambda: app.screen.start_idea(next(i for i in app.screen.library["ideas"] if i["id"] == "disco"))),
+        ("67_idea_run", press_run, 2500),
+        ("68_done", lambda: (stop(), app.show("home"))),
     ]
 
 

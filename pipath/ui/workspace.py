@@ -1,4 +1,4 @@
-"""The coding workspace: guide panel + editor + output, for lessons and Free Build."""
+"""The coding workspace: guide panel + editor + output, for lessons and Free Play."""
 from __future__ import annotations
 
 import shutil
@@ -16,6 +16,8 @@ from ..hints import (CheckResult, Diagnosis, ErrorInfo, code_features, evaluate_
                      parse_traceback, precheck)
 from ..levels import INFO as LEVEL_INFO, LEVELS, can_skip, goal_text, hint_rules, offer_tour
 from ..adapt import Adapter
+from ..freeplay import add_part as freeplay_add, load as freeplay_load, parts_from_code as freeplay_parts
+from ..freeplay import pin_warnings as freeplay_warnings, wiring_rows as freeplay_rows
 from ..review import review
 from ..runner import Runner
 from .board import VirtualBoard
@@ -25,8 +27,8 @@ from .home import stars_for
 from .onboarding import Screen
 from .theme import C, TIER_COLOURS
 from .tour import Tour
-from .widgets import (CogButton, MenuBar, PButton, RichText, ScrollFrame, TitleBar, about_box, card, chip,
-                      label, window)
+from .widgets import (ChoiceList, CogButton, MenuBar, PButton, RichText, ScrollFrame, TitleBar, about_box, card,
+                      chip, entry, label, window)
 from .wiring import WiringCard
 
 DEMO_FILES = DATA_DIR / "demo_files"
@@ -380,7 +382,7 @@ class Workspace(Screen):
             self.console.write(f"Your work is saved in: {folder}\n", "info")
 
     def set_gpio(self, on: bool, camera: bool = False) -> None:
-        """GPIO / camera activities (and Free Build) get the Simulator / Real Pi switch and the board."""
+        """GPIO / camera activities (and Free Play) get the Simulator / Real Pi switch and the board."""
         self.gpio = on
         if on:
             if self.mode_box is None:
@@ -1808,7 +1810,7 @@ class LessonWorkspace(Workspace):
                                    "Read the step, then press the green **Run** button and see what happens.")
 
 
-# ====================================================================== Free Build
+# ====================================================================== Free Play
 
 CHEATSHEET = """
 ## Python cheat sheet
@@ -1839,41 +1841,96 @@ sleep(1)                # wait 1s
 """
 
 
-class FreeBuildWorkspace(Workspace):
-    left_width = 360
+class FreePlayWorkspace(Workspace):
+    """Free Play: the sandbox. No steps or checklists. Two kinds of help, the student's choice:
+    "Guide me" (the Coach explains errors, nudges when stuck, suggests ideas to level up, and helps
+    wire up the hardware the code uses) or "On my own" (errors are explained, nothing else).
+    The left panel: help mode, the Coach, Add a part, My wiring, projects, starter ideas, cheat sheet."""
+    left_width = 380
 
     def __init__(self, app):
-        super().__init__(app, "Free Build", "Your own projects. No steps, just you (and the Coach).")
+        name = app.settings.get("free_play_name", "Free Play")
+        super().__init__(app, name, "Your sandbox: build anything you like, with code and hardware.")
         self.set_gpio(True)       # the board appears as soon as a program makes an LED, Button...
         self.student = app.student
         self.current: Path | None = None
         self.view = "free"
+        self.library = freeplay_load()
+        self.parts: list[dict] = []
+        self._parts_sig = None
+        self._wiring_job = None
+        self._tips_shown: set = set()
+        self.wiring_card: WiringCard | None = None
+        profile = app.student.profile
+        self.help_mode = profile.get("free_play_mode", "guided")
+        self.adapter = Adapter(app.student.help_level, None, enabled=self.help_mode == "guided", context="free")
 
-        sf = ScrollFrame(self.left, bg=C["bg"])
+        sf = self.guide = ScrollFrame(self.left, bg=C["bg"])
         sf.pack(fill="both", expand=True)
         g = tk.Frame(sf.body, bg=C["bg"], padx=16, pady=14)
         g.pack(fill="both", expand=True)
 
-        label(g, "My projects", font="h2").pack(anchor="w")
+        label(g, "How much help do you want here?", font="small_bold").pack(anchor="w")
+        self.mode_choice = ChoiceList(g, [("guided", "Guide me", "Tips, nudges and wiring help as I build"),
+                                          ("solo", "On my own", "Only explain errors when my code breaks")],
+                                      self.help_mode, on_change=self.set_help_mode, wrap=300)
+        self.mode_choice.pack(anchor="w", pady=(2, 8))
+
+        self.coach = CoachCard(g)
+        self.coach.pack(fill="x", pady=(4, 0))
+
+        # ---- the parts library
+        label(g, "Add a part", font="h3").pack(anchor="w", pady=(14, 2))
+        label(g, "Puts working code where your cursor is, with pins from the pin plan.", font="small",
+              fg=C["muted"], wraplength=330).pack(anchor="w")
+        for title, kinds, cols in (("Hardware", ("led", "button", "buzzer", "distance", "rgbled", "bar", "camera"), 3),
+                                   ("Code", ("software",), 2)):
+            label(g, title.upper(), font="small_bold", fg=C["muted"]).pack(anchor="w", pady=(6, 2))
+            box = tk.Frame(g, bg=C["bg"])
+            box.pack(anchor="w")
+            items = [p for p in self.library["parts"] if p.get("kind") in kinds]
+            for i, part in enumerate(items):
+                PButton(box, part["title"], lambda pt=part: self.add_part(pt), kind="secondary", font="small_bold",
+                        padx=8, pady=2).grid(row=i // cols, column=i % cols, sticky="we", padx=(0, 4), pady=2)
+
+        # ---- wiring for whatever the code uses
+        label(g, "My wiring", font="h3").pack(anchor="w", pady=(14, 2))
+        self.wiring_note = label(g, "", font="small", fg=C["muted"], wraplength=330)
+        self.wiring_note.pack(anchor="w")
+        self.wiring_box = tk.Frame(g, bg=C["bg"])
+        self.wiring_box.pack(fill="x", pady=(4, 0))
+
+        # ---- projects
+        label(g, "My projects", font="h3").pack(anchor="w", pady=(14, 0))
         new = card(g, padx=12, pady=10)
-        new.pack(fill="x", pady=(8, 0))
+        new.pack(fill="x", pady=(6, 0))
         label(new, "New project name", font="small_bold", bg=C["panel"]).pack(anchor="w")
         row = tk.Frame(new, bg=C["panel"])
         row.pack(fill="x", pady=(4, 0))
-        self.new_entry = tk.Entry(row, font="ui", relief="flat", bg=C["panel_alt"], highlightthickness=2,
-                                  highlightbackground=C["line"], highlightcolor=C["accent"])
-        self.new_entry.pack(side="left", fill="x", expand=True, ipady=4)
+        self.new_entry = entry(row, width=20, font="ui")
+        self.new_entry.pack(side="left", fill="x", expand=True, ipady=2)
         self.new_entry.bind("<Return>", lambda e: self.new_project())
-        PButton(row, "Create", self.new_project, kind="primary", font="small_bold", pady=4).pack(side="left", padx=(6, 0))
+        PButton(row, "Create", self.new_project, kind="primary", font="small_bold", pady=3).pack(side="left", padx=(6, 0))
         self.new_msg = label(new, "", font="small", fg=C["err"], bg=C["panel"])
         self.new_msg.pack(anchor="w")
-
         self.list_frame = tk.Frame(g, bg=C["bg"])
-        self.list_frame.pack(fill="x", pady=(10, 0))
+        self.list_frame.pack(fill="x", pady=(8, 0))
 
-        self.coach = CoachCard(g)
-        self.coach.pack(fill="x", pady=(14, 0))
-        self.coach.idle("No checklist here. Build whatever you like! If your code crashes, I'll still explain what went wrong.")
+        # ---- starter ideas
+        label(g, "Need an idea?", font="h3").pack(anchor="w", pady=(14, 2))
+        ideas = card(g, padx=8, pady=6)
+        ideas.pack(fill="x")
+        for idea in self.library["ideas"]:
+            r = tk.Frame(ideas, bg=C["panel"], cursor="hand2", pady=3)
+            r.pack(fill="x")
+            t = label(r, idea["title"] + ("   ▶ needs parts" if idea.get("hardware") else ""), font="small_bold",
+                      bg=C["panel"], fg=C["select"])
+            t.pack(anchor="w")
+            b = label(r, idea["blurb"], font="small", fg=C["muted"], bg=C["panel"], wraplength=320)
+            b.pack(anchor="w")
+            for w in (r, t, b):
+                w.bind("<Button-1>", lambda e, i=idea: self.start_idea(i))
+
         rt = RichText(g)
         rt.pack(fill="x", pady=(16, 0))
         rt.render(CHEATSHEET)
@@ -1884,6 +1941,7 @@ class FreeBuildWorkspace(Workspace):
         else:
             self._create("my first project")
 
+    # ---------------------------------------------------------------- basics
     def code_path(self) -> Path:
         return self.current
 
@@ -1894,21 +1952,127 @@ class FreeBuildWorkspace(Workspace):
         """Back again (the screen was kept): the same project, a clear Output."""
         self.console.clear()
         self.console.set_status("")
-        self.hide_board()
         self._refresh_list()
+        self._update_wiring(force=True)
 
+    def _welcome(self) -> None:
+        if self.help_mode == "guided":
+            self.coach.idle("Build anything! Add a part from the list below, start from an idea, or just type. "
+                            "When something breaks I'll explain it, and if you get stuck I'll give you a nudge.")
+        else:
+            self.coach.idle("You're on your own here. If your code crashes, I'll still explain what went wrong.")
+
+    def set_help_mode(self, mode: str) -> None:
+        self.help_mode = mode
+        self.student.profile["free_play_mode"] = mode
+        self.student.save_profile()
+        self.adapter.enabled = mode == "guided"
+        self._welcome()
+
+    def settings_changed(self, what: str) -> None:
+        super().settings_changed(what)
+        if what == "help":
+            self.adapter.level = self.app.student.help_level
+
+    def _changed(self):
+        super()._changed()
+        if self._wiring_job is not None:
+            self.after_cancel(self._wiring_job)
+        self._wiring_job = self.after(1500, self._update_wiring)     # after typing stops
+
+    # ---------------------------------------------------------------- parts and wiring
+    def add_part(self, part: dict) -> None:
+        t = self.editor.text
+        code = self.editor.get_code()
+        pos = len(t.get("1.0", "insert"))
+        new, tip, cursor = freeplay_add(code, part, pos)
+        t.edit_separator()                 # one Ctrl+Z takes the whole part out again
+        t.delete("1.0", "end")
+        t.insert("1.0", new)
+        t.edit_separator()
+        self.editor.highlight()
+        t.mark_set("insert", f"1.0+{cursor}c")
+        t.see("insert")
+        self.editor.focus()
+        self._changed()
+        self._update_wiring()
+        warns = freeplay_warnings(self.parts)
+        self.coach.message("info", f"Added: {part['title']}",
+                           tip + ("\n\n⚠ " + "\n\n⚠ ".join(warns) if warns else "") +
+                           "\n\nPress **Run** to try it" + (" in the Simulator first." if self.gpio and part.get("kind") != "software"
+                                                            else "."))
+        self.guide.scroll_to(self.coach)
+
+    def _update_wiring(self, force: bool = False) -> None:
+        """Show how to wire what the code uses (only re-built when the parts change)."""
+        self._wiring_job = None
+        if self.current is None:
+            return
+        code = self.editor.get_code()
+        try:
+            compile(code, "<free play>", "exec", dont_inherit=True)
+            parts = freeplay_parts(code)
+        except (SyntaxError, ValueError):
+            if not force:
+                return                 # half-typed code: keep the wiring as it was until it parses again
+            parts = []
+        sig = repr(parts)
+        if sig == self._parts_sig and not force:
+            return
+        self._parts_sig = sig
+        self.parts = parts
+        was_open = self.wiring_card.is_open if self.wiring_card is not None else True
+        if self.wiring_card is not None:
+            self.wiring_card.destroy()
+            self.wiring_card = None
+        if not parts:
+            self.wiring_note.configure(text="Your code doesn't use any GPIO parts yet. Add an LED or a button above, "
+                                            "or write gpiozero code, and the wiring shows up here.")
+            return
+        self.wiring_note.configure(text="Made from your code. Take the blue HAT off before you change wires!")
+        lesson = {"wiring": freeplay_rows(parts)}
+        self.wiring_card = WiringCard(self.wiring_box, lesson, {"parts": []}, parts, open_=was_open,
+                                      on_check=self.check_wiring)
+        self.wiring_card.pack(fill="x")
+        if self.board:
+            self.board.set_parts(parts)
+            if not self.board_shown:
+                self.show_board()
+
+    def check_wiring(self):
+        if not self.parts or self.runner.running or self._busy:
+            return
+        where = "on the Simulator board" if self.mode == "sim" else "on your breadboard"
+        self.run_special("wiring", wiring_check_program(self.parts), self.extra_env(),
+                         f"▶ Checking your wiring {where}. Follow the instructions below.")
+
+    def special_finished(self, kind: str, stdout: str, stderr: str):
+        if kind != "wiring":
+            return
+        if self.wiring_card:
+            self.wiring_card.mark_from_output(stdout)
+        bad = [l for l in stdout.splitlines() if l.startswith("✗")]
+        if bad:
+            self.coach.message("warn", "Check those wires", "Some parts didn't respond:\n\n" +
+                               "\n".join(f"- {l[2:]}" for l in bad) + "\n\n" +
+                               HAT_FIX.replace("try again", "press **Check my wiring** again"))
+        elif stdout.strip():
+            self.coach.message("info", "Wiring check finished",
+                               "Every button and sensor answered. Did each LED blink and the buzzer beep?")
+
+    # ---------------------------------------------------------------- projects and ideas
     def _refresh_list(self):
         for w in self.list_frame.winfo_children():
             w.destroy()
         for p in self.student.list_projects():
             active = p == self.current
-            row = tk.Frame(self.list_frame, bg=C["accent_soft"] if active else C["panel"], padx=10, pady=6,
-                           highlightthickness=1, highlightbackground=C["accent"] if active else C["line"], cursor="hand2")
-            row.pack(fill="x", pady=2)
-            lb = label(row, p.stem.replace("_", " "), font="ui_bold" if active else "ui",
-                       bg=row.cget("bg"))
+            row = tk.Frame(self.list_frame, bg=C["select"] if active else C["panel"], padx=10, pady=4,
+                           relief="sunken" if active else "flat", bd=1, cursor="hand2")
+            row.pack(fill="x", pady=1)
+            fg = "#FFFFFF" if active else C["ink"]
+            lb = label(row, p.stem.replace("_", " "), font="ui_bold" if active else "ui", bg=row.cget("bg"), fg=fg)
             lb.pack(side="left")
-            label(row, p.name, font="code_ui", fg=C["muted"], bg=row.cget("bg")).pack(side="right")
+            label(row, p.name, font="code_ui", fg=fg if active else C["muted"], bg=row.cget("bg")).pack(side="right")
             for w in (row, lb):
                 w.bind("<Button-1>", lambda e, path=p: self.open_project(path))
 
@@ -1923,8 +2087,12 @@ class FreeBuildWorkspace(Workspace):
         self.file_lbl.configure(text=path.name)
         self.save_lbl.configure(text="Saved ✓")
         self.console.clear()
-        self.coach.idle("No checklist here. Build whatever you like! If your code crashes, I'll still explain what went wrong.")
+        self.console.set_status("")
+        self._welcome()
+        self._tips_shown = set()
+        self.adapter.start_step(time.monotonic())
         self._refresh_list()
+        self._update_wiring(force=True)
 
     def new_project(self):
         name = self.new_entry.get()
@@ -1937,27 +2105,77 @@ class FreeBuildWorkspace(Workspace):
         self.new_entry.delete(0, "end")
         self._create(name)
 
-    def _create(self, name: str):
+    def _create(self, name: str, code: str | None = None):
         path = self.student.project_path(name)
-        storage.write_text(path, f"# {name}\n# by {self.student.first_name}\n\nprint(\"Let's build something!\")\n")
+        storage.write_text(path, code if code is not None else
+                           f"# {name}\n# by {self.student.first_name}\n\nprint(\"Let's build something!\")\n")
         self.open_project(path)
 
+    def start_idea(self, idea: dict) -> None:
+        """A new project from a starter idea (never over the top of an existing one)."""
+        base, n = idea["title"].lower().replace("-", " "), 1
+        name = base
+        while self.student.project_path(name).exists():
+            n += 1
+            name = f"{base} {n}"
+        self._create(name, f"# {idea['title']}: {idea['blurb']}\n" + idea["code"].lstrip("\n"))
+        self.coach.message("info", f"Starter: {idea['title']}",
+                           "Here's a working starter. Press **Run** to try it, then make it your own: change the "
+                           "words, the timings, add a part." +
+                           ("\n\nIt uses hardware: see **My wiring** below for how to hook it up, and try it in the "
+                            "**Simulator** first." if idea.get("hardware") else ""))
+
+    # ---------------------------------------------------------------- after a run: the guide
     def after_run(self, code, err, crashed, stdout):
+        now = time.monotonic()
+        self._update_wiring()
+        guided = self.help_mode == "guided"
         if err is not None:
             d = self.app.engine.diagnose(err)
             self.editor.mark_error_line(d.line)
             self.coach.diagnosis(d, self.app.student.help_level)
             self.coach.set_hints(d.hints, None)
-        else:
-            self.coach.message("ok", "It ran!", "No errors. Keep building, or try a new idea from the cheat sheet below.")
+            if guided:
+                offer = self.adapter.after_run(now, False, d.entry_id)
+                if offer is not None:
+                    self.coach.offer(offer, self._offer_action)
+            self.guide.scroll_to(self.coach)
+            return
+        self.adapter.after_run(now, True)
+        self.adapter.start_step(now)       # it works again: a fresh start for the "stuck" counters
+        if not guided:
+            self.coach.message("ok", "It ran!", "No errors.")
             self.coach.set_hints([], None)
+            return
+        notes = ["No errors."]
+        warns = freeplay_warnings(self.parts)
+        if warns:
+            notes += [f"⚠ {w}" for w in warns]
+        elif self.parts and self.mode == "sim":
+            notes.append(f"Your program uses {len(self.parts)} GPIO part{'s' if len(self.parts) != 1 else ''}. "
+                         "When it works on the Simulator, wire it up (see **My wiring**) and switch to **Real Pi**.")
+        tips = [t for t in review(code, max_tips=3) if t.title not in self._tips_shown]
+        if tips:
+            t = tips[0]
+            self._tips_shown.add(t.title)
+            notes.append(f"**Idea to level up: {t.title}** ({t.idea}). {t.text}")
+        self.coach.message("ok", "It ran!", "\n\n".join(notes))
+        self.coach.set_hints([], None)
+
+    def _offer_action(self, action: str) -> None:
+        self.coach.clear_offer()
+        if action == "hint" and self.coach.hints and self.coach.shown < len(self.coach.hints):
+            self.coach._hint()
 
     def tour_steps(self):
         return [
-            {"widget": self.list_frame, "side": "right", "title": "Your projects",
-             "text": "Make as many projects as you like. Click one to open it. Everything saves automatically."},
+            {"widget": self.mode_choice, "side": "right", "title": "Your sandbox",
+             "text": "No steps here. Choose **Guide me** for tips and nudges, or **On my own**."},
             {"widget": self.editor, "side": "inside", "title": "Build anything",
-             "text": "There are no steps or checklists here. Use the cheat sheet on the left if you forget something."},
+             "text": "Type your own code, add a part from the list on the left, or start from an idea."},
             {"widget": self.coach, "side": "right", "title": "The Coach is still here",
-             "text": "If your code crashes, the Coach still explains the error and offers hints."},
+             "text": "If your code crashes, the Coach explains the error and offers hints."},
         ]
+
+
+FreeBuildWorkspace = FreePlayWorkspace        # the old name

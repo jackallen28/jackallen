@@ -20,6 +20,8 @@ switch to **Real Pi** and run the same code on their breadboard. In Real Pi mode
 | ![Hardware projects](docs/screenshots/03_hardware_filter.png) | ![Motion Alarm with the Simulator](docs/screenshots/04_a3_close.png) |
 | ![Edit menu](docs/screenshots/06_menu_edit.png) | ![Advanced: Python's own error and a technical explanation](docs/screenshots/08_advanced_error.png) |
 | ![Code review coach](docs/screenshots/09_code_review.png) | ![About PiPath](docs/screenshots/11_about.png) |
+| ![Free Play, the first box](docs/screenshots/12_free_play_first_box.png) | ![Free Play: Add a part](docs/screenshots/13_free_play_add_part.png) |
+| ![Free Play: wiring made from the code](docs/screenshots/14_free_play_wiring.png) | ![Free Play: a nudge from the Coach](docs/screenshots/15_free_play_nudge.png) |
 
 ## Quick start (on the Pi)
 
@@ -69,8 +71,13 @@ with Python 3.11+ and Tkinter, in Simulator mode (`pip install gpiozero` for GPI
    - "I saw it happen" boxes in the checklist, ticked by the student after a run
    - for camera activities, a **camera panel**: click its title to switch
      **Simulated / USB / Ribbon** (remembered on that Pi)
-6. **Free Build** is always open for their own projects. The board appears as soon as their
-   code makes an LED or a Button.
+6. **Free Play** (the first box on the activity picker) is the sandbox, open any time. Students
+   build anything, with **Guide me** (the Coach explains errors, nudges when they're stuck and
+   suggests ideas to level up) or **On my own**. **Add a part** puts working code for an LED,
+   button, buzzer, distance sensor, RGB LED, LED bar or the camera where the cursor is, with pins
+   from the pin plan, and **My wiring** shows how to hook up whatever their code uses (with the pin
+   map and Check my wiring). Starter ideas: Magic 8-Ball, Secret password, Disco lights, a reaction
+   game, a "too close!" alarm and a selfie button.
 
 ## Help that adapts
 

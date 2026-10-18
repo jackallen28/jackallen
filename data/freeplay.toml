@@ -1,0 +1,278 @@
+# Free Play: the parts library ("Add a part") and the starter ideas.
+#
+# [[part]]  one button in the "Add a part" box. Clicking it puts `code` in the editor where the
+#           cursor is, and adds any missing `imports` at the top.
+#   kind  = led | button | buzzer | distance | rgbled | bar | camera | software
+#           (hardware kinds get free pins from the standard pin plan and show up in My wiring)
+#   code  : {name} is a new variable name (led, led2 ...); {pin} the next free GPIO pin for that
+#           kind; {pins} a list of free pins (bar, rgbled)
+#   tip   : what the Coach says after adding it (markdown); {pin} and {name} work here too
+#
+# [[idea]]  a starter project: a new project with this code. hardware = true shows "needs parts".
+
+# ------------------------------------------------------------------ hardware parts
+[[part]]
+id = "led"
+title = "LED"
+kind = "led"
+imports = ["from gpiozero import LED", "from time import sleep"]
+code = '''
+{name} = LED({pin})
+{name}.on()
+sleep(1)
+{name}.off()
+'''
+tip = "Added an LED called `{name}` on **GPIO{pin}**. Wire it: GPIO{pin} → 330Ω resistor → the LED's long leg; short leg → GND. The pin map is in **My wiring**."
+
+[[part]]
+id = "button"
+title = "Button"
+kind = "button"
+imports = ["from gpiozero import Button"]
+code = '''
+{name} = Button({pin})
+print("Press the button...")
+{name}.wait_for_press()
+print("Pressed!")
+{name}.wait_for_release()
+'''
+tip = "Added a button called `{name}` on **GPIO{pin}**. Wire it: one leg → GPIO{pin}, the leg across the gap → GND. No resistor needed: the Pi has one built in."
+
+[[part]]
+id = "buzzer"
+title = "Buzzer"
+kind = "buzzer"
+imports = ["from gpiozero import Buzzer"]
+code = '''
+{name} = Buzzer({pin})
+{name}.beep(0.1, 0.1, n=3, background=False)
+'''
+tip = "Added a buzzer called `{name}` on **GPIO{pin}**. Wire it: + (long leg) → GPIO{pin}, − → GND. Use an *active* buzzer (it beeps by itself)."
+
+[[part]]
+id = "distance"
+title = "Distance sensor"
+kind = "distance"
+imports = ["from gpiozero import DistanceSensor"]
+code = '''
+{name} = DistanceSensor(echo=26, trigger=4)
+print(round({name}.distance * 100), "cm")
+'''
+tip = "Added an ultrasonic distance sensor (HC-SR04) called `{name}`. Wire it: VCC → 5V (pin 2), GND → GND (pin 6), TRIG → GPIO4 (pin 7), ECHO → **1kΩ resistor** → GPIO26 (pin 37), plus a **2kΩ resistor** from GPIO26 to GND. The resistors keep the 5V echo safe."
+
+[[part]]
+id = "rgbled"
+title = "RGB LED"
+kind = "rgbled"
+imports = ["from gpiozero import RGBLED", "from time import sleep"]
+code = '''
+{name} = RGBLED({pins})
+{name}.color = (1, 0, 1)     # red + blue = purple
+sleep(1)
+{name}.off()
+'''
+tip = "Added an RGB LED called `{name}` on **GPIO {pins}** (red, green, blue). Wire each colour leg through its own 330Ω resistor; the longest leg goes to GND (common cathode)."
+
+[[part]]
+id = "bar"
+title = "6 LED bar"
+kind = "bar"
+imports = ["from gpiozero import LEDBarGraph", "from time import sleep"]
+code = '''
+{name} = LEDBarGraph({pins})
+{name}.value = 0.5            # half the LEDs on
+sleep(1)
+{name}.off()
+'''
+tip = "Added a bar of six LEDs called `{name}` on **GPIO {pins}**. Each LED needs its own 330Ω resistor. `{name}.value = 1` lights them all, `0.5` half."
+
+[[part]]
+id = "camera"
+title = "Camera"
+kind = "camera"
+imports = ["from pipath_camera import Camera"]
+code = '''
+{name} = Camera()
+photo = {name}.take_photo("photo.jpg")
+print("Saved", photo)
+'''
+tip = "Added the camera. Click the camera panel's title on the board to choose **Simulated**, **USB** or **Ribbon**. Photos are saved in your folder (File > Open my folder)."
+
+[[part]]
+id = "pinumbers"
+title = "Pi's numbers"
+kind = "software"
+imports = ["from pipath_computer import cpu_temp, cpu_load, ram_used"]
+code = '''
+print("Temperature:", cpu_temp(), "°C")
+print("CPU busy:", cpu_load(), "%")
+print("RAM used:", ram_used(), "%")
+'''
+tip = "These functions read the Pi's own numbers. Try showing one on an LED: `led.value = cpu_load() / 100` with a PWMLED."
+
+# ------------------------------------------------------------------ code snippets
+[[part]]
+id = "ask"
+title = "Ask a question"
+kind = "software"
+imports = []
+code = '''
+answer = input("What's your favourite colour? ")
+print("Nice!", answer, "is a great colour.")
+'''
+tip = "`input()` waits for an answer in the Output box. It always gives back text: use `int(input(...))` for a number."
+
+[[part]]
+id = "random"
+title = "Random number"
+kind = "software"
+imports = ["import random"]
+code = '''
+roll = random.randint(1, 6)
+print("You rolled", roll)
+'''
+tip = "`random.randint(1, 6)` picks a whole number from 1 to 6, like a dice."
+
+[[part]]
+id = "forever"
+title = "Repeat forever"
+kind = "software"
+imports = ["from time import sleep"]
+code = '''
+while True:
+    print("Still going...")
+    sleep(1)        # always wait a little, so the Pi can rest
+'''
+tip = "A `while True` loop runs until you press **Stop**. Always put a `sleep()` inside so the Pi doesn't run flat out."
+
+[[part]]
+id = "function"
+title = "Function"
+kind = "software"
+imports = []
+code = '''
+def greet(name):
+    return "Hello, " + name + "!"
+
+print(greet("Pi"))
+'''
+tip = "A function is a named piece of code you can use again. `return` sends a value back to whoever called it."
+
+# ------------------------------------------------------------------ starter ideas
+[[idea]]
+id = "magic8"
+title = "Magic 8-Ball"
+blurb = "Ask a yes-or-no question and the Pi answers."
+hardware = false
+code = '''
+import random
+
+answers = ["Yes!", "No way.", "Ask again later.", "Definitely.", "I doubt it.", "Without a doubt!"]
+
+while True:
+    question = input("Ask me a yes-or-no question (or type bye): ")
+    if question.lower() == "bye":
+        print("See you next time!")
+        break
+    print(random.choice(answers))
+'''
+
+[[idea]]
+id = "password"
+title = "Secret password"
+blurb = "Keep asking until someone types the right password."
+hardware = false
+code = '''
+password = "pineapple"
+tries = 0
+
+guess = input("Password: ")
+while guess != password:
+    tries = tries + 1
+    print("Nope! Try again.")
+    guess = input("Password: ")
+
+print("Access granted after", tries + 1, "tries!")
+'''
+
+[[idea]]
+id = "disco"
+title = "Disco lights"
+blurb = "Three LEDs flash in a random party pattern."
+hardware = true
+code = '''
+from gpiozero import LED
+from time import sleep
+import random
+
+lights = [LED(17), LED(27), LED(22)]
+
+while True:
+    light = random.choice(lights)
+    light.toggle()
+    sleep(0.2)
+'''
+
+[[idea]]
+id = "reaction"
+title = "Quick-draw reaction game"
+blurb = "Wait for the light, then press as fast as you can."
+hardware = true
+code = '''
+from gpiozero import LED, Button
+from time import sleep, monotonic
+import random
+
+light = LED(17)
+button = Button(23)
+
+print("Get ready...")
+sleep(random.uniform(2, 5))
+light.on()
+start = monotonic()
+button.wait_for_press()
+light.off()
+print("Your reaction time:", round(monotonic() - start, 3), "seconds")
+'''
+
+[[idea]]
+id = "tooclose"
+title = "Too close! alarm"
+blurb = "The buzzer beeps when something comes near the distance sensor."
+hardware = true
+code = '''
+from gpiozero import DistanceSensor, Buzzer
+from time import sleep
+
+sensor = DistanceSensor(echo=26, trigger=4)
+buzzer = Buzzer(18)
+
+while True:
+    cm = round(sensor.distance * 100)
+    print(cm, "cm")
+    if cm < 20:
+        buzzer.beep(0.05, 0.05, n=2, background=False)
+    sleep(0.3)
+'''
+
+[[idea]]
+id = "selfie"
+title = "Selfie button"
+blurb = "Press the button to take a photo."
+hardware = true
+code = '''
+from gpiozero import Button
+from pipath_camera import Camera
+
+button = Button(23)
+cam = Camera()
+count = 0
+
+while True:
+    print("Press the button for a selfie!")
+    button.wait_for_press()
+    count = count + 1
+    photo = cam.take_photo(f"selfie_{count}.jpg")
+    print("Saved", photo)
+    button.wait_for_release()
+'''

@@ -10,7 +10,7 @@ Everything lives in plain files under ~/PiPath (or $PIPATH_HOME):
             progress.json             per-lesson status, step, hints used
             lessons/<file>.py         code for each lesson
             lessons/backups/          code saved before a step replaces it
-            projects/<name>.py        Free Build projects
+            projects/<name>.py        Free Play projects
         exports/                      teacher CSV exports
 """
 from __future__ import annotations

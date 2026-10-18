@@ -20,7 +20,7 @@ tutor sitting beside them:
    as they like, in any order. Tiers (Simple, Moderate, Pi & Computer, Advanced, Electronics Lab,
    Camera & AI)
    are a **guide**: a colour badge, a filter chip, and optional "Good to try first" tips.
-   Nothing is locked, and **Free Build** is always open.
+   Nothing is locked, and **Free Play** (the sandbox, the first box on the picker) is always open.
 3. **Help level, chosen by the student:** **Beginner** (full explanations, hints any time),
    **Moderate** (each activity's own gradual release) or **Advanced** (Year 9-10, "tutorial
    off": goal-first instructions, fewer hints, no tour, steps can be skipped). See §6.
@@ -95,7 +95,7 @@ Technologies (general-purpose programming, algorithms, data, digital systems).
 Performance budget on a Pi 3B: app start < 4 s; screen switch < 400 ms; Run
 button to first output < 1 s; idle CPU ~0%. **Read `docs/perf.md` before touching the UI.**
 In short: Tk widgets are the cost on a Pi, so screens are kept and re-used (the activity
-picker, one activity workspace for every activity, Free Build), the step panel and checklist
+picker, one activity workspace for every activity, Free Play), the step panel and checklist
 rows are re-used from step to step, all `RichText` heights are measured in one shared layout
 pass, and GPIO programs start in a spare runner process that already has gpiozero loaded.
 Never re-highlight or re-render the whole UI on every keystroke (the editor debounces
@@ -152,7 +152,8 @@ repo root
 ├── docs/pi-test-checklist.md  hardware test plan for a real Pi + breadboard + camera
 ├── docs/perf.md             what keeps PiPath quick on a Pi 3B, before/after timings, how to measure
 ├── data/
-│   ├── config.toml          app name, teacher PIN, runaway limits, star thresholds
+│   ├── config.toml          app name, Free Play's name, teacher PIN, runaway limits, star thresholds
+│   ├── freeplay.toml        Free Play's "Add a part" library and starter ideas
 │   ├── catalog.toml         tiers + all activities (status ready | planned, try_first, gpio, camera)
 │   ├── errors.toml          the Coach's knowledge (63 entries incl. GPIO + camera)
 │   ├── demo_files/c2/examples.json   sample training data for Teachable Machine demos
@@ -176,6 +177,8 @@ repo root
 │   ├── hints.py             Coach engine: precheck, gpio_lint, traceback parsing, matching, checks
 │   ├── review.py            code review coach (ast): tips on how code is written, for Years 9-10
 │   ├── adapt.py             adaptive scaffolding: nudges when stuck, level suggestions
+│   ├── freeplay.py          Free Play logic: parts used by the code → wiring rows, pin clashes,
+│   │                        "Add a part" (free pins, fresh names, imports at the top)
 │   ├── runner.py            runs student code: live output, stdin, runaway detection, shim pipes,
 │   │                        warm start (a spare shim process with gpiozero already imported)
 │   ├── gpio.py              app-side GPIO: Pi detection, Simulator env, wiring parts, header map,
@@ -201,7 +204,7 @@ repo root
 │       ├── board.py         VirtualBoard: LEDs, RGB LEDs, buttons, buzzers, PIR, distance sensor
 │       │                    (slider), camera panel, ● LIVE badge in Real Pi mode
 │       ├── wiring.py        Wiring + Safety card with 40-pin header map and "Check my wiring"
-│       └── workspace.py     LessonWorkspace (one, re-used for every activity) and FreeBuildWorkspace
+│       └── workspace.py     LessonWorkspace (one, re-used for every activity) and FreePlayWorkspace (the sandbox)
 └── tests/
     ├── test_hints.py        real broken programs → Coach entry; blanks precheck
     ├── test_storage.py      profiles: names + school, duplicates, old profiles, help level, show; levels
@@ -212,6 +215,7 @@ repo root
     ├── test_editor.py       editor behaviour (needs Tk + a display; skipped otherwise)
     ├── test_review.py       the code review coach
     ├── test_adapt.py        adaptive scaffolding: nudges, level suggestions, no nagging
+    ├── test_freeplay.py     Free Play: parts from code, wiring rows, adding parts, ideas run
     ├── test_activities.py   every step's demo passes its checks (all activities); lesson lint
     ├── shimrun.py           helper: run code through the shim with timed presses
     ├── gui_smoke.py         drives the real app under Xvfb and saves screenshots (not unittest)
@@ -284,7 +288,7 @@ Run pressed
 ~/PiPath/students/<slug>/lessons/*.py    lesson code (one file per activity, built up step by step)
 ~/PiPath/students/<slug>/lessons/*.jpg|csv|json   photos, logs, examples.json written by programs
 ~/PiPath/students/<slug>/lessons/backups/  code saved before a "replace" step overwrote it
-~/PiPath/students/<slug>/projects/*.py   Free Build projects
+~/PiPath/students/<slug>/projects/*.py   Free Play projects
 ~/PiPath/exports/progress_<date>.csv     teacher export
 ```
 
@@ -510,10 +514,18 @@ Camera activities use the students' helper `from pipath_camera import Camera`
 face, ball, box or nothing (picked on the board); a nearest-neighbour classifier gets
 about 90% on its ball/box pictures.
 
-### Free Build
-Always open. Projects list, new project (names that shadow modules like `random.py` are
-refused), cheat sheet, Coach without checklists. Runs through the shim, so the Simulator
-board (and camera panel) appears as soon as a program makes an LED, Button or photo.
+### Free Play (the sandbox)
+The first box on the activity picker, always open (its name is `free_play_name` in config.toml).
+No steps or checklists. The student picks **Guide me** (the Coach explains errors, nudges when
+stuck with the adaptive coach in "free" context, and after a working run adds one "Idea to level
+up" from the code review) or **On my own** (errors are explained, nothing else); saved as
+`free_play_mode` in the profile. The left panel has:
+- **Add a part** (`data/freeplay.toml`): LED, button, buzzer, distance sensor, RGB LED, 6-LED bar,
+  camera, the Pi's numbers, and code snippets. Inserted at the cursor (one Ctrl+Z removes it), with
+  free pins from the standard plan, a fresh name and imports at the top; the Coach says how to wire it.
+- **My wiring**: built from the code (`freeplay.parts_from_code`): a Wiring card with connections,
+  the header map and **Check my wiring**; pin clashes are flagged; the Simulator board shows the parts.
+- My projects (names that shadow modules are refused), **Need an idea?** starter projects, cheat sheet.
 
 ---
 
@@ -530,7 +542,7 @@ board (and camera panel) appears as soon as a program makes an LED, Button or ph
   `demo_events`; the student's code isn't touched and the run isn't counted. `demo_input`
   answers are typed in one at a time, each time the program shows a prompt (and echoed in the
   Output, as if a student typed them).
-- **Warm start** (`Workspace.preload`, `Runner.warm_up`): GPIO/camera workspaces and Free Build
+- **Warm start** (`Workspace.preload`, `Runner.warm_up`): GPIO/camera workspaces and Free Play
   keep one spare shim process waiting with the slow modules imported. It's dropped when the
   workspace is hidden and re-made after each run and when the camera kind changes. The spare
   never touches the pins: the pin factory is only made once it's given a program.

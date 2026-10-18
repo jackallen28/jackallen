@@ -12,7 +12,7 @@ from .ui.onboarding import ProfileScreen, SetupScreen, WelcomeScreen
 from .ui.settings import SettingsDialog
 from .ui.theme import C, setup_fonts, CODE_SIZE
 from .ui.widgets import PButton, TitleBar, entry, label
-from .ui.workspace import FreeBuildWorkspace, LessonWorkspace
+from .ui.workspace import FreePlayWorkspace, LessonWorkspace
 
 
 class PiPathApp(tk.Tk):
@@ -29,7 +29,7 @@ class PiPathApp(tk.Tk):
         # Kept between visits, because building them is the slowest thing on a Pi 3B:
         self._home: HomeScreen | None = None
         self._lesson_ws: LessonWorkspace | None = None     # re-used for every activity
-        self._free_ws: FreeBuildWorkspace | None = None
+        self._free_ws: FreePlayWorkspace | None = None
 
         self.title(self.settings["app_name"])
         self.configure(bg=C["bg"])
@@ -155,12 +155,14 @@ class PiPathApp(tk.Tk):
             self._lesson_ws.load(lesson_id, tour=tour)
         self._swap(self._lesson_ws)
 
-    def open_free_build(self) -> None:
+    def open_free_play(self) -> None:
         if self._free_ws is None:
-            self._free_ws = FreeBuildWorkspace(self)
+            self._free_ws = FreePlayWorkspace(self)
         else:
             self._free_ws.reopen()
         self._swap(self._free_ws)
+
+    open_free_build = open_free_play        # the old name
 
     def quit_app(self) -> None:
         screens = self._kept() + ([self.screen] if self.screen is not None else [])

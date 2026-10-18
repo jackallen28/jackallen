@@ -1,5 +1,6 @@
 # PiPath settings. Teachers can edit this file.
 
+free_play_name = "Free Play"   # the sandbox's name on the activity picker and its title bar
 app_name = "PiPath"
 tagline = "Learn Python one step at a time, right here on your Raspberry Pi."
 

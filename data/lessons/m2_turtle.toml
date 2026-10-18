@@ -26,7 +26,7 @@ outro = """
 
 You used `forward()` and `left()`, repeated them with a `for` loop, wrapped them in a **function** with parameters, and picked colours from a list with `%`. Those are the same tools real programmers use every day.
 
-**Extension ideas** (try these in Free Build):
+**Extension ideas** (try these in Free Play):
 - Draw a **spiral**: make the turtle walk a little further each time round the loop (`t.forward(i * 2)`)
 - Draw a **street of houses**: write `def house(x, y):` that uses `t.penup()`, `t.goto(x, y)` and `t.pendown()`, then call it in a loop
 - Fill your shapes with colour using `t.begin_fill()` and `t.end_fill()`
@@ -441,7 +441,7 @@ hints = [
   "Move without drawing: `t.penup()`, `t.goto(0, -150)`, `t.pendown()`. Use this to draw a stem or start in a new spot.",
 ]
 error_hints = { Terminator = "The turtle window was closed before it finished drawing. Press **Run** again and let it finish." }
-success = "Beautiful! You coded your own artwork from nothing. Save a copy in Free Build so you can keep improving it."
+success = "Beautiful! You coded your own artwork from nothing. Save a copy in Free Play so you can keep improving it."
 demo = '''
 import turtle
 

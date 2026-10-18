@@ -20,7 +20,7 @@ outro = """
 
 You used `print()` to show text, wrote comments with `#`, and fixed real bugs using the Coach.
 
-**Extension ideas** (try these in Free Build later):
+**Extension ideas** (try these in Free Play later):
 - Print a poem or a joke with a punchline line
 - Use `print()` with nothing in the brackets to add an empty line
 - Print a big ASCII-art picture of an animal

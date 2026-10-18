@@ -55,9 +55,9 @@ class Console(tk.Frame):
         self.entry = tk.Entry(self.in_row, font="code", bg="#FFFFFF", fg=C["ink"], insertbackground=C["ink"],
                               relief="sunken", bd=2, highlightthickness=1, highlightbackground=C["bg"],
                               highlightcolor=C["go"], disabledbackground=C["panel_alt"])
-        self.entry.pack(side="left", fill="x", expand=True, ipady=3)
         self.send_btn = PButton(self.in_row, "Send", self._send, kind="secondary", pady=2)
-        self.send_btn.pack(side="left", padx=(8, 0))
+        self.send_btn.pack(side="right", padx=(8, 0))         # packed first, so it always has room
+        self.entry.pack(side="left", fill="x", expand=True, ipady=3)
         self.entry.bind("<Return>", self._send)
         self.entry.bind("<KP_Enter>", self._send)
         self.entry.bind("<Up>", lambda e: self._recall(-1))

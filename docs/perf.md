@@ -28,7 +28,7 @@ feel quick on a Pi.
 | Start step 1 | 92 ms | 24 ms | |
 | Next step | 65 ms | 8.5 ms | |
 | Back to activities | 160–185 ms | 13–17 ms | |
-| Open Free Build (again) | 88 ms | 12 ms | |
+| Open Free Play (again) | 88 ms | 12 ms | |
 | Run pressed → first output (GPIO program) | 121 ms | 5 ms | |
 
 The first activity of a session still builds the whole workspace once. Every activity after

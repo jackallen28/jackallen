@@ -77,7 +77,7 @@ Take the blue HAT off, wire the standard pin plan, put the HAT back on. Choose *
 - [ ] Run a GPIO program in Thonny (leave it running), then run one in PiPath on Real Pi: the
       Coach says "Another program has that pin". Stop the Thonny one and try again.
 - [ ] Light Switch Lab step 5 (dimmer): the real LED gets brighter with each press.
-- [ ] In Free Build, a loop with no `sleep` is stopped after about 8 seconds and the Coach
+- [ ] In Free Play, a loop with no `sleep` is stopped after about 8 seconds and the Coach
       suggests `sleep(0.01)`. Try `while True:` then `if button.is_pressed: print("hi")`, and
       don't press the button.
 - [ ] Idle CPU with PiPath open and nothing running is near 0% (`top`).

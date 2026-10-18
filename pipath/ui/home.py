@@ -40,7 +40,8 @@ class HomeScreen(Screen):
         bar = self.bar = TitleBar(self, app.settings["app_name"], height=56, logo=True, font="h2",
                                   sub=f"{s.first_name}   ·   {s.profile.get('school', '')}")
         bar.pack(fill="x")
-        MenuBar(self, [("File", lambda: [("Free Build", "", app.open_free_build, True), None,
+        MenuBar(self, [("File", lambda: [(app.settings.get("free_play_name", "Free Play"), "", app.open_free_play,
+                                          True), None,
                                          ("Switch student", "", app.logout, True)]),
                        ("View", lambda: [(("● " if self.filter == k else "   ") + t, "", lambda k=k: self.set_filter(k),
                                           True) for k, t in (("all", "Everything"),
@@ -162,7 +163,11 @@ class HomeScreen(Screen):
         width = max(cv.winfo_width(), 400)
         cols = max(1, min(3, (width - 2 * PAD) // CARD_MIN_WIDTH))
         card_w = (width - 2 * PAD - (cols - 1) * GAP) / cols
-        y = 14
+        y = self._free_play(14, width) + 18
+        for dx, colour in ((2, C["desk_dark"]), (0, "#FFFFFF")):
+            cv.create_text(PAD + dx, y + 10 + dx, anchor="w", font="h3", fill=colour,
+                           text="...or pick one of these tutorials for step-by-step help:")
+        y += 34
         for tier in self.app.catalog.tiers:
             if self.filter not in ("all", "hardware", tier["id"]):
                 continue
@@ -185,7 +190,6 @@ class HomeScreen(Screen):
                 row = projects[start:start + cols]
                 y = self._card_row(row, y, card_w, col) + GAP
             y += 10
-        y = self._free_build(y + 4, width)
         cv.configure(scrollregion=(0, 0, width, y + 24))
 
     # ------------------------------------------------------------------ cards
@@ -295,15 +299,21 @@ class HomeScreen(Screen):
         return "Good to try first: " + " or ".join(f"“{q['title']}”" for q in todo)
 
     # ------------------------------------------------------------------ free build
-    def _free_build(self, y: float, width: float) -> float:
+    def _free_play(self, y: float, width: float) -> float:
+        """The first box: Free Play, the sandbox (always open)."""
         cv = self.canvas
         x0, x1 = PAD, width - PAD
         tag = "freebuild"
-        first = cv.create_text(x0 + 14, y + 3 + BAR / 2, anchor="w", text="Free Build", font="ui_bold",
-                               fill="#FFFFFF", tags=(tag,))
-        msg = cv.create_text(x0 + 16, y + BAR + 14, anchor="nw", width=max(200, x1 - x0 - 260), fill=C["ink"],
-                             font="ui", text="Your own space to make anything, with the Simulator, the real "
-                                             "pins and the Coach. No steps. It's all you.", tags=(tag,))
+        name = self.app.settings.get("free_play_name", "Free Play")
+        first = cv.create_text(x0 + 14, y + 3 + BAR / 2, anchor="w", text=f"{name}  -  your sandbox",
+                               font="ui_bold", fill="#FFFFFF", tags=(tag,))
+        big = cv.create_text(x0 + 16, y + BAR + 12, anchor="nw", fill=C["purple"], font="h2", tags=(tag,),
+                             text=f"{name}: build anything you like!")
+        msg = cv.create_text(x0 + 16, cv.bbox(big)[3] + 4, anchor="nw", width=max(200, x1 - x0 - 280),
+                             fill=C["ink"], font="ui", tags=(tag,),
+                             text="Your own code, your own circuits. Add LEDs, buttons, sensors or the camera, and "
+                                  "the Coach helps you wire them up and fix any errors. Choose a guide that nudges "
+                                  "you along, or go it alone.")
         yy = cv.bbox(msg)[3] + 4
         n = len(self.app.student.list_projects())
         if n:
@@ -320,14 +330,14 @@ class HomeScreen(Screen):
                                 y + 3 + BAR, fill=blend(C["title_a"], C["title_b"], k / (steps - 1)), outline="",
                                 tags=frame)
         cv.tag_lower("fb_frame", first)
-        bt = cv.create_text(x1 - 30, (y + BAR + bottom) / 2, anchor="e", text="Open Free Build  ▸", font="ui_bold",
+        bt = cv.create_text(x1 - 30, (y + BAR + bottom) / 2, anchor="e", text=f"Start {name}  ▸", font="h3",
                             fill=C["ink"], tags=(tag, "fb_btn"))
         bx = cv.bbox(bt)
         cv.create_rectangle(bx[0] - 15, bx[1] - 8, bx[2] + 15, bx[3] + 8, outline="#000000", tags=(tag, "fb_btn"))
         bevel(cv, bx[0] - 14, bx[1] - 7, bx[2] + 14, bx[3] + 7, C["bg"], tags=(tag, "fb_btn", "fb_face"))
         face = [i for i in cv.find_withtag("fb_face") if cv.type(i) == "rectangle"][0]
         cv.tag_raise(bt)
-        cv.tag_bind(tag, "<ButtonRelease-1>", lambda e: self.app.open_free_build())
+        cv.tag_bind(tag, "<ButtonRelease-1>", lambda e: self.app.open_free_play())
         cv.tag_bind(tag, "<Enter>", lambda e: cv.configure(cursor="hand2"))
         cv.tag_bind(tag, "<Leave>", lambda e: cv.configure(cursor=""))
         cv.tag_bind("fb_btn", "<Enter>", lambda e: cv.itemconfigure(face, fill=C["face_hi"]))

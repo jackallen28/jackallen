@@ -52,9 +52,10 @@ class _Step:
 
 
 class Adapter:
-    def __init__(self, level: str, saved: dict | None = None, enabled: bool = True):
+    def __init__(self, level: str, saved: dict | None = None, enabled: bool = True, context: str = "lesson"):
         self.level = level if level in LEVELS else LEVELS[0]
         self.enabled = enabled
+        self.free = context == "free"        # Free Play: no goal to watch, no checklist
         saved = saved or {}
         self.history: list[dict] = list(saved.get("history", []))[-HISTORY:]
         self.cooldown: int = int(saved.get("cooldown", 0))
@@ -101,6 +102,13 @@ class Adapter:
                 "and read it out loud, character by character. Brackets, quotes, colons and spelling "
                 "are the usual suspects.",
                 [("Show me a hint", "hint"), ("I've got it", "dismiss")]))
+        if s.failed >= 4 and self.free:
+            return self._once("many_fails", Offer(
+                "nudge", "Find the broken part",
+                "Lots of clues in a row! Programmers find bugs by testing a smaller piece. Select the second "
+                "half of your code and press **Ctrl+/** to turn it into comments, then Run. Works now? The bug "
+                "is in the half you hid. Press Ctrl+/ again to bring it back.",
+                [("Show me a hint", "hint"), ("Keep trying", "dismiss")]))
         if s.failed >= 4:
             return self._once("many_fails", Offer(
                 "nudge", "Want to see it working?",
@@ -121,6 +129,14 @@ class Adapter:
         if s is None or s.done or not self.enabled:
             return None
         on_step = now - s.started
+        if self.free:                         # Free Play: only when stuck on errors, not while designing
+            if s.failed and now - s.last_progress >= IDLE_SECONDS:
+                return self._once("idle", Offer(
+                    "nudge", "Need a hand?",
+                    "That error is a tricky one. Open a hint, look at the cheat sheet on the left, or start "
+                    "again from one of the ideas. Asking the person next to you works too!",
+                    [("Show me a hint", "hint"), ("I'm OK", "dismiss")]))
+            return None
         if s.runs == 0 and on_step >= NO_RUN_SECONDS:
             return self._once("no_run", Offer(
                 "nudge", "Give it a run!",
