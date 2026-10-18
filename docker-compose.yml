@@ -1,0 +1,21 @@
+# docker compose up -d   →   http://localhost:3000
+# Settings come from .env (copy .env.example first). Bookings are stored in the "bookings-data" volume.
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "3000"
+      DATA_DIR: /data
+    volumes:
+      - bookings-data:/data
+      # Uncomment to edit the rules without rebuilding the image (restart after editing):
+      # - ./config/catalog.yaml:/app/config/catalog.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  bookings-data:
