@@ -3,6 +3,7 @@
 import { loadConfig, configWarnings } from './config.js';
 import { createContext } from './context.js';
 import { createApp } from './app.js';
+import { seedDemo } from './seed.js';
 
 let ctx;
 try {
@@ -16,6 +17,12 @@ try {
 
 const { config } = ctx;
 for (const warning of configWarnings(config)) console.warn(`⚠  ${warning}`);
+
+// First start in demo mode: load example bookings so there is something to look at.
+if (config.demoMode && ctx.store.countBookings() === 0) {
+  const { created } = seedDemo(ctx);
+  console.log(`Demo mode: loaded ${created.length} example bookings (reset any time from /admin).`);
+}
 
 const app = createApp(ctx);
 const server = app.listen(config.port, () => {
