@@ -50,9 +50,6 @@ class HomeScreen(Screen):
                        ("Help", lambda: [("About PiPath", "", lambda: about_box(app), True)])]).pack(fill="x")
         bar.add_right(PButton(bar, "Switch student", app.logout, kind="secondary", font="small_bold", pady=3))
         bar.add_right(CogButton(bar, lambda: app.open_settings()), pad=8)
-        if app.teacher_mode:
-            bar.add_right(tk.Label(bar, text=" TEACHER MODE ", font="small_bold", fg="#FFFFFF", bg=C["info"],
-                                   relief="raised", bd=2), pad=8)
 
         # ---- greeting and "show" buttons (a handful of real widgets)
         head = tk.Frame(self, bg=C["bg"], padx=PAD, pady=10, relief="raised", bd=2)

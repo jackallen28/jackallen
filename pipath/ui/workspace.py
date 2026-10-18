@@ -1177,7 +1177,7 @@ class LessonWorkspace(Workspace):
                 return
 
     def _dot_clicked(self, j: int):
-        if j in self.lp["steps_done"] or j in self.lp["steps_started"] or self.app.teacher_mode:
+        if j in self.lp["steps_done"] or j in self.lp["steps_started"]:
             self.enter_step(j)
 
     def _paint_dots(self):
@@ -1495,7 +1495,7 @@ class LessonWorkspace(Workspace):
         self.next_btn.command = self.next_step
         self.next_btn.configure(text="Finish activity  ★" if last else "Next step  ▸")
         self.next_btn.set_kind("primary" if done else "secondary")
-        self.next_btn.set_enabled(done or self.app.teacher_mode)
+        self.next_btn.set_enabled(done)
         skip = can_skip(self.level) and not done and not last
         if skip:
             self.skip_btn.pack(side="right", before=self.next_btn, padx=(0, 6))
@@ -1548,7 +1548,7 @@ class LessonWorkspace(Workspace):
                 hints = hints[:max_err]          # never the near-answer
             left = unlock_after - self.attempts
             locked = None
-            if left > 0 and not self.app.teacher_mode and not self._unlocked and not self.adapter.hints_early(
+            if left > 0 and not self._unlocked and not self.adapter.hints_early(
                     time.monotonic()):
                 locked = ("Have a go first: hints unlock after you press Run." if left == 1 and self.attempts == 0
                           else f"Hints unlock after {left} more tr{'y' if left == 1 else 'ies'}. You can do this!")
@@ -1953,7 +1953,7 @@ class FreePlayWorkspace(Workspace):
         self.console.clear()
         self.console.set_status("")
         self._refresh_list()
-        self._update_wiring(force=True)
+        self._update_wiring()                  # only rebuilt if the parts changed
 
     def _welcome(self) -> None:
         if self.help_mode == "guided":
@@ -1995,8 +1995,10 @@ class FreePlayWorkspace(Workspace):
         t.see("insert")
         self.editor.focus()
         self._changed()
-        self._update_wiring()
-        warns = freeplay_warnings(self.parts)
+        if self._wiring_job is not None:       # the code shows first; the wiring card follows a moment later
+            self.after_cancel(self._wiring_job)
+        self._wiring_job = self.after(60, self._update_wiring)
+        warns = freeplay_warnings(freeplay_parts(new))
         self.coach.message("info", f"Added: {part['title']}",
                            tip + ("\n\n⚠ " + "\n\n⚠ ".join(warns) if warns else "") +
                            "\n\nPress **Run** to try it" + (" in the Simulator first." if self.gpio and part.get("kind") != "software"

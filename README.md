@@ -193,28 +193,26 @@ The Wiring + Safety card in each activity repeats this, and "Check my wiring" fa
 ## Before your first class (checklist)
 
 1. On one Pi: `git clone` (see Quick start), then `./install.sh`. Open PiPath from the menu.
-2. **Change the teacher PIN** in `data/config.toml` (`teacher_pin`); the default is in this public repo.
-3. Make a test profile, open **Traffic Lights**, choose **Real Pi** (or Settings > Hardware) and press
+2. Make a test profile, open **Traffic Lights**, choose **Real Pi** (or Settings > Hardware) and press
    **Check my wiring** with a breadboard built from the pin plan below.
-4. Plug in the USB webcam and try **Photo Booth** step 1 (click the camera panel's title to choose USB).
-5. Wipe the test profile (teacher panel > **Wipe all student data**), then clone the SD card for the class set.
-6. In class: students take the **blue HAT** off before changing wires, and never turn the Pi off.
-   Press **Ctrl+Shift+T** for the teacher panel (skip ahead, export progress to CSV, wipe the Pi).
+3. Plug in the USB webcam and try **Photo Booth** step 1 (click the camera panel's title to choose USB).
+4. Wipe the test profile (Settings > **Save data** > **Wipe session**), then clone the SD card for the class set.
+5. In class: students take the **blue HAT** off before changing wires, and never turn the Pi off.
 
 ## For teachers
 
-- **Teacher panel:** press **Ctrl+Shift+T** and enter the PIN (default `2468`, **change it** in
-  `data/config.toml`). Teacher mode lets you skip steps for the session, and you can export
-  everyone's progress (including each student's help level) to CSV.
+- **No teacher setup needed.** Students choose what to do, and how much help they want.
 - **Help levels** are the student's choice and can change any time. Independence stars still
   count the hints they open, at every level.
 - **Student work** is saved in `~/PiPath/students/<name>/` (code, photos, logs), so students pick
   up where they left off next time they choose their name. Updating PiPath never touches it.
-- **A new school or group:** teacher panel > **Wipe all student data**. It shows how many profiles
-  (and which schools) will go, offers **Save a backup first** (a zip, saved on a plugged-in USB stick
-  or in `~/PiPath-backups`), and asks you to type `WIPE`. It deletes every profile, all progress,
-  code, photos and Free Play projects, and (ticked by default) the exported CSVs. The Pi's own
-  settings (Simulator / Real Pi, camera) stay. Do it on every Pi in the class set.
+- **Save data** (Settings > Save data, or the **Save data** button on the welcome screen):
+  - **Save a copy** puts a zip of everyone's work in the Pi's **Downloads** folder
+    (`~/Downloads/PiPath_save_<date>.zip`), with a `progress.csv` you can open in a spreadsheet
+    (each student's activities, hints, runs and help level).
+  - **Wipe session** (type `WIPE` to confirm) deletes every profile on the Pi, with all progress,
+    code, photos and Free Play projects, ready for the next school or group. The Pi's own settings
+    (Simulator / Real Pi, camera) stay. Do it on every Pi in the class set.
 - **Edit content** without coding:
   - `data/lessons/*.toml`: steps, starter code, checklists, hints, wiring, and `demo` (the model
     answer that **Watch the goal** plays, with `demo_events` for simulated button presses and
@@ -224,7 +222,7 @@ The Wiring + Safety card in each activity repeats this, and "Check my wiring" fa
   - `data/catalog.toml`: which activities appear, their tier, and "Good to try first" tips
   - `data/demo_files/`: sample files a lesson copies into the student's folder (`files = [...]`,
     e.g. the Dice DJ sounds; `python3 tools/make_party_sounds.py` remakes them)
-  - `data/config.toml`: PIN, runaway-loop limits, star thresholds
+  - `data/config.toml`: Free Play's name, runaway-loop limits, star thresholds
 - **Class set:** set up one Pi, then clone its SD card with *SD Card Copier*.
 - **Speed on a Pi 3B:** `docs/perf.md` explains what keeps PiPath quick, and how to measure it
   on your Pis (`python3 tests/perf_probe.py`).

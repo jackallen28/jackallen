@@ -4,8 +4,6 @@ free_play_name = "Free Play"   # the sandbox's name on the activity picker and i
 app_name = "PiPath"
 tagline = "Learn Python one step at a time, right here on your Raspberry Pi."
 
-# PIN for the teacher panel (press Ctrl+Shift+T anywhere). CHANGE THIS before class.
-teacher_pin = "2468"
 
 # Runaway-program protection
 busy_loop_seconds = 8       # stop a program that keeps the CPU busy this long with no output

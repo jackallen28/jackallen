@@ -118,7 +118,7 @@ only when they change. `tests/perf_probe.py` times the main interactions.
    sarcastic. Errors are "clues", not "failures".
 5. **No emoji in Tk widgets.** Tk 8.6 on Pi OS can't render colour emoji. Use BMP symbols
    that DejaVu Sans has: ✓ ✗ ○ ● ▶ ■ ◂ ▸ ▾ ★ ☆ ⚠ •
-6. **No floating windows for UI.** Overlays (tour, tour offer, teacher panel) are frames
+6. **No floating windows for UI.** Overlays (tour, tour offer, Settings) are frames
    drawn with `place()` inside the main window, so they behave the same on X11 and Wayland.
 7. **Student code always runs in a separate process** (`pipath/runner.py`, always through
    `pipath/gpio_shim.py`, which reports pins, photos and `input()` waits), never `exec()`
@@ -152,7 +152,7 @@ repo root
 ├── docs/pi-test-checklist.md  hardware test plan for a real Pi + breadboard + camera
 ├── docs/perf.md             what keeps PiPath quick on a Pi 3B, before/after timings, how to measure
 ├── data/
-│   ├── config.toml          app name, Free Play's name, teacher PIN, runaway limits, star thresholds
+│   ├── config.toml          app name, Free Play's name, runaway limits, star thresholds
 │   ├── freeplay.toml        Free Play's "Add a part" library and starter ideas
 │   ├── catalog.toml         tiers + all activities (status ready | planned, try_first, gpio, camera)
 │   ├── errors.toml          the Coach's knowledge (63 entries incl. GPIO + camera)
@@ -170,7 +170,7 @@ repo root
 │   └── brand/               the school logo: original + corner / full sizes (RGBA PNG)
 ├── tools/make_logo_assets.py, make_party_sounds.py   remake the brand images / Dice DJ sounds
 ├── pipath/
-│   ├── app.py               main window, routing, activity states, teacher panel
+│   ├── app.py               main window, routing, activity states, wipe session
 │   ├── content.py           loads config / catalogue / lessons / errors
 │   ├── storage.py           profiles, progress, code files, app state, CSV export (atomic writes)
 │   ├── levels.py            help levels (Beginner / Moderate / Advanced): hint rules, goal text, skip
@@ -194,7 +194,8 @@ repo root
 │       ├── theme.py         logo colours, named fonts (DejaVu fallbacks), tier colours, LOGO_SQUARES
 │       ├── widgets.py       PButton, TitleBar, CogButton, ChoiceList, window, bevel, RichText
 │       │                    (mini-markdown), ScrollFrame, PopupMenu, card, chip
-│       ├── settings.py      Settings dialog (cog): Help · Show · Students · Hardware · Text size
+│       ├── settings.py      Settings dialog (cog): Help · Show · Students · Hardware · Text size ·
+│       │                    Save data (save a copy to Downloads, wipe session)
 │       ├── editor.py        code editor (undo groups, find/replace, go to line, brackets, smart paste)
 │       ├── console.py       Output box + "type your answer" row (history, \r, live stderr)
 │       ├── tour.py          coach-mark tour (place()-based overlay)
@@ -289,7 +290,8 @@ Run pressed
 ~/PiPath/students/<slug>/lessons/*.jpg|csv|json   photos, logs, examples.json written by programs
 ~/PiPath/students/<slug>/lessons/backups/  code saved before a "replace" step overwrote it
 ~/PiPath/students/<slug>/projects/*.py   Free Play projects
-~/PiPath/exports/progress_<date>.csv     teacher export
+~/PiPath/exports/progress_<date>.csv     (older versions' exports; now in the Save a copy zip)
+~/Downloads/PiPath_save_<date>.zip       Save a copy: everyone's work + progress.csv
 ```
 
 ---
@@ -451,7 +453,7 @@ saved in `profile.json` (`help_level`) and goes on top of each step's `support`:
 - **Skip** (Advanced only) records the step in `steps_skipped` (a faint dot), saves the
   student's code in `backups/` and, if the next step builds on this one, puts the skipped
   step's `demo` in the editor so the next step has what it needs.
-- Stars still count hints at every level. Teacher mode still enables Next step for everyone.
+- Stars still count hints at every level. 
 
 ---
 
@@ -565,23 +567,21 @@ up" from the code review) or **On my own** (errors are explained, nothing else);
 
 ---
 
-## 9. Teacher features
+## 9. Save data (no teacher panel)
 
-Present now: Ctrl+Shift+T → PIN (config.toml `teacher_pin`) → teacher mode (Next step
-always enabled for this session), **Export progress CSV** (includes each student's help level) and
-**Wipe all student data** for the next school or group (`storage.wipe_all`): a summary (profiles,
-schools, files), an optional **Save a backup first** zip (`storage.backup_zip`, to a USB stick from
-`storage.usb_drives()` or `~/PiPath-backups`), type `WIPE` to confirm. It removes `students/` (and
-`exports/` unless unticked) by moving them aside first, drops `last_student`, and keeps the Pi's
-settings (`gpio_mode`, `camera`).
+There is no teacher panel or PIN: the students run PiPath. **Settings > Save data** (also the
+**Save data** button on the welcome desktop, which opens Settings with only that tab when nobody is
+logged in):
+- **Save a copy** (`storage.save_copy`): a zip of `students/` (and any old `exports/`) plus a
+  `progress.csv` summary, in `~/Downloads` (`PIPATH_DOWNLOADS` overrides; made if missing). Photos
+  and sounds are stored, not re-compressed (quick on a Pi).
+- **Wipe session** (`App.wipe_session` → `storage.wipe_all`): type `WIPE` to enable the button.
+  Logs out (stops any program), removes `students/` and `exports/` by moving them aside first,
+  drops `last_student`, keeps the Pi's settings (`gpio_mode`, `camera`), shows the welcome screen.
 
-To build:
-- Change the PIN from the panel (store a hash in `~/PiPath/app.json`, not in plain text).
-- Per-class view: table of students × activities (status, stars, runs, errors, hints).
-- Reset a student's activity; delete one student (with confirm).
-- Import lessons from a USB stick (`/media/*/PiPath-lessons/*.toml`) after validating them.
-- "Lesson lint" command: `python3 -m pipath.lint data/lessons/x.toml` (the checks in
-  `tests/test_activities.py::TestLessonFiles` are a starting point).
+Ideas for later: reset one activity; delete one student (with confirm); import lessons from a USB
+stick (`/media/*/PiPath-lessons/*.toml`) after validating them; a lesson lint command
+(`python3 -m pipath.lint`, from `tests/test_activities.py::TestLessonFiles`).
 
 ---
 
@@ -615,7 +615,7 @@ speed work (`docs/perf.md`). Still to do, roughly in this order:
 3. **Phase 1 polish**: undo/redo buttons, "Reset step code", underline the exact word from
    the `^^^^` markers, `--scale` per student, high-contrast theme, 80+ errors.toml entries,
    a hidden log of entry ids hit per student.
-4. **Teacher tools** (§9).
+4. **Save data extras** (§9).
 5. **Classroom trial**: export CSVs; rewrite the steps with the most runs, errors and hints.
 
 ---

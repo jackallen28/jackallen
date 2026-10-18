@@ -28,11 +28,19 @@ feel quick on a Pi.
 | Start step 1 | 92 ms | 24 ms | |
 | Next step | 65 ms | 8.5 ms | |
 | Back to activities | 160–185 ms | 13–17 ms | |
-| Open Free Play (again) | 88 ms | 12 ms | |
+| Open Free Play (again) | 88 ms | 17 ms | |
+| Free Play: add a part (wiring card follows 60 ms later) | | 12 ms | |
+| Free Play: rebuild the wiring card | | 16–20 ms | |
+| Settings > Save data tab | | 14 ms | |
 | Run pressed → first output (GPIO program) | 121 ms | 5 ms | |
+| Idle CPU (activities, an activity, Free Play) | | 0.1–0.2 % | |
+| Memory: app + spare runner, after 5 screens | | 35 + 20 MB | |
 
 The first activity of a session still builds the whole workspace once. Every activity after
-that re-uses it.
+that re-uses it. Free Play's wiring card is only rebuilt when the parts in the code change (checked
+1.5 s after typing stops, with `compile` + `ast`: about 0.3 ms), not when the screen is reopened,
+and half-typed code that doesn't parse leaves it alone. The probe also measures idle CPU (the app
+should use none while nobody touches it).
 
 ## What made it slow, and what changed
 

@@ -19,9 +19,9 @@ class Screen(tk.Frame):
 
 
 def desktop(screen: Screen) -> None:
-    """The teal desktop: the logo's squares in the corner and the teacher hint."""
+    """The teal desktop: the logo's squares in the corner, and Save data (save a copy, wipe the session)."""
     PixelMark(screen, cell=10, bg=C["desk"]).place(x=18, y=16)
-    label(screen, "Teachers: press Ctrl+Shift+T", font="small", fg="#D6F4F5", bg=C["desk"]).place(
+    CogButton(screen, lambda: screen.app.open_settings("data"), text="Save data").place(
         relx=1.0, rely=1.0, anchor="se", x=-14, y=-10)
 
 

@@ -138,7 +138,7 @@ class TestLevels(unittest.TestCase):
 
 
 class TestWipe(unittest.TestCase):
-    """The teacher can wipe the Pi for the next school: every student goes, the Pi's settings stay."""
+    """Settings > Save data: wipe the session for the next group (the Pi's settings stay), save a copy."""
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -195,18 +195,29 @@ class TestWipe(unittest.TestCase):
         self.st.wipe_all()
         self.assertEqual(self.st.list_students(), [])
 
-    def test_backup_zip_has_everyones_work(self):
+    def test_save_a_copy_to_downloads(self):
         import zipfile
-        self._fill()
-        with tempfile.TemporaryDirectory() as usb:
-            out = self.st.backup_zip(Path(usb) / "PiPath-backups")
-            names = zipfile.ZipFile(out).namelist()
+        a = self._fill()
+        (a.folder / "lessons" / "photo.jpg").write_bytes(b"\xff\xd8 pretend photo")
+        with tempfile.TemporaryDirectory() as home:
+            os.environ["PIPATH_DOWNLOADS"] = str(Path(home) / "Downloads")
+            try:
+                out = self.st.save_copy([{"id": "s1_hello"}])
+            finally:
+                del os.environ["PIPATH_DOWNLOADS"]
+            self.assertEqual(out.parent, Path(home) / "Downloads")      # made if it wasn't there
+            z = zipfile.ZipFile(out)
+            names = z.namelist()
             self.assertTrue(any(n.endswith("lessons/hello.py") for n in names))
             self.assertTrue(any(n.endswith("projects/game.py") for n in names))
-            self.assertTrue(any(n.startswith("exports/") for n in names))
             self.assertTrue(any(n.endswith("profile.json") for n in names))
+            self.assertIn("PiPath/progress.csv", names)
+            self.assertIn("Sam & Alex", z.read("PiPath/progress.csv").decode())
+            photo = next(i for i in z.infolist() if i.filename.endswith("photo.jpg"))
+            self.assertEqual(photo.compress_type, zipfile.ZIP_STORED)
+            self.assertEqual(list(Path(home, "Downloads").glob("*.part")), [])
             self.st.wipe_all()
-            self.assertTrue(out.exists())          # the backup lives outside PiPath's folder
+            self.assertTrue(out.exists())          # the copy lives outside PiPath's folder
 
 
 if __name__ == "__main__":

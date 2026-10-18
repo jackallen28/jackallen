@@ -43,6 +43,16 @@ def measure(name, fn, app=None, repeat=1):
     ROWS.append((name, ms, CALLS["update_idletasks"] // repeat))
 
 
+def idle_cpu(name, app, seconds=5.0):
+    """CPU time the app uses while nobody touches it (timers, polling), as a % of one core."""
+    app.update()
+    t0, c0 = time.perf_counter(), time.process_time()
+    app.after(int(seconds * 1000), app.quit)
+    app.mainloop()
+    pct = 100 * (time.process_time() - c0) / (time.perf_counter() - t0)
+    ROWS.append((name + "  [% CPU]", pct, 0))
+
+
 def run_to_output():
     """Run pressed -> first line of output, for a GPIO program: a fresh process vs the spare one."""
     from pipath.gpio import SHIM, SIM_ENV
@@ -101,11 +111,22 @@ def main():
     measure("editor: highlight 150 lines", lambda: (ws.editor.set_code("x = 1  # comment\nprint('hi', x)\n" * 75),
                                                    ws.editor.highlight()), app)
     measure("back to activities", lambda: app.show("home"), app)
-    measure("open Free Build", lambda: app.open_free_build(), app)
+    measure("open Free Play (first time)", lambda: app.open_free_play(), app)
+    fp = app.screen
+    led = next(p for p in fp.library["parts"] if p["id"] == "led")
+    measure("Free Play: add a part", lambda: fp.add_part(led), app)
+    measure("Free Play: wiring from the code", lambda: fp._update_wiring(force=True), app, repeat=5)
+    measure("Free Play: wiring check (no change)", lambda: fp._update_wiring(), app, repeat=20)
+    idle_cpu("idle CPU, Free Play (5 s)", app)
     measure("open Photo Booth (camera)", lambda: app.open_lesson("c1_photobooth"), app)
     measure("back to activities (again)", lambda: app.show("home"), app)
     measure("open Hello, Pi! (no GPIO)", lambda: app.open_lesson("s1_hello"), app)
-    measure("open Free Build (again)", lambda: app.open_free_build(), app)
+    measure("open Free Play (again)", lambda: app.open_free_play(), app)
+    measure("Settings: Save data tab", lambda: (app.open_settings("data"), app.close_settings()), app)
+    app.show("home")
+    idle_cpu("idle CPU, activities (5 s)", app)
+    app.open_lesson("a1_traffic")
+    idle_cpu("idle CPU, an activity (5 s)", app)
     app.quit_app()
     run_to_output()
 

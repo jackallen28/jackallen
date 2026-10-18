@@ -1,8 +1,9 @@
 """The Settings window, opened with the cog on any screen: a Windows 95 style tabbed dialog.
 
 Tabs: Help (how much help), Show (which activities the picker shows), Students (the names),
-Hardware (Simulator or Real Pi, camera), Text size. Changes apply straight away; the app tells
-every kept screen (app.settings_changed).
+Hardware (Simulator or Real Pi, camera), Text size, Save data (save a copy to Downloads, wipe the
+session). Changes apply straight away; the app tells every kept screen (app.settings_changed).
+Before anyone has logged in (the welcome screen) only Save data is shown.
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ from .theme import C
 from .widgets import ChoiceList, PButton, TitleBar, entry, label
 
 TABS = [("help", "Help"), ("show", "Show"), ("students", "Students"), ("hardware", "Hardware"),
-        ("text", "Text size")]
+        ("text", "Text size"), ("data", "Save data")]
 
 
 class SettingsDialog(tk.Frame):
@@ -28,7 +29,7 @@ class SettingsDialog(tk.Frame):
         tabs = tk.Frame(self, bg=C["bg"], padx=10)
         tabs.pack(fill="x", pady=(8, 0))
         self.tabs: dict[str, tk.Label] = {}
-        for key, text in TABS:
+        for key, text in TABS if app.student is not None else [t for t in TABS if t[0] == "data"]:
             t = tk.Label(tabs, text=f"  {text}  ", font="small_bold", bg=C["bg"], fg=C["ink"], relief="raised",
                          bd=2, padx=4, pady=3, cursor="hand2")
             t.pack(side="left")
@@ -60,6 +61,8 @@ class SettingsDialog(tk.Frame):
 
     # ---------------------------------------------------------------- tabs
     def show_tab(self, key: str) -> None:
+        if key not in self.tabs:
+            key = next(iter(self.tabs))
         for k, t in self.tabs.items():
             on = k == key
             t.configure(relief="sunken" if on else "raised", bg="#FFFFFF" if on else C["bg"],
@@ -185,3 +188,47 @@ class SettingsDialog(tk.Frame):
 
     def _show_size(self) -> None:
         self.size_lbl.configure(text=f"{tkfont.nametofont('code').cget('size')} point")
+
+    def _tab_data(self, page) -> None:
+        info = storage.wipe_summary()
+        label(page, "Save data", font="h3").pack(anchor="w")
+        n = info["students"]
+        label(page, "Your work saves by itself. Pick your name next time to carry on where you left off. "
+                    f"This Pi has {n} profile{'s' if n != 1 else ''} saved ({info['files']} files).",
+              font="small", fg=C["muted"], wraplength=500).pack(anchor="w", pady=(0, 8))
+
+        label(page, "Save a copy", font="ui_bold").pack(anchor="w")
+        row = tk.Frame(page, bg=C["bg"])
+        row.pack(anchor="w", fill="x", pady=(2, 0))
+        PButton(row, "Save a copy", self._save_copy, kind="secondary", font="small_bold", pady=3).pack(side="left")
+        self.copy_msg = label(row, f"A zip of everyone's work, in {storage.downloads_folder()}", font="small",
+                              fg=C["muted"], wraplength=370)
+        self.copy_msg.pack(side="left", padx=(10, 0))
+
+        label(page, "Wipe session", font="ui_bold", fg=C["err"]).pack(anchor="w", pady=(16, 0))
+        label(page, "For a new group: deletes every profile on this Pi, with all progress, code, photos and "
+                    "projects. It can't be undone, so save a copy first if you want to keep it. The Pi's "
+                    "settings (Simulator / Real Pi, camera) stay.", font="small", wraplength=500).pack(anchor="w")
+        row = tk.Frame(page, bg=C["bg"])
+        row.pack(anchor="w", pady=(6, 0))
+        label(row, "Type WIPE to confirm:", font="small").pack(side="left")
+        self.wipe_word = tk.StringVar()
+        self.wipe_entry = entry(row, width=8, font="ui", textvariable=self.wipe_word)
+        self.wipe_entry.pack(side="left", padx=6, ipady=1)
+        self.wipe_btn = PButton(row, "Wipe session", self.app.wipe_session, kind="stop", font="small_bold", pady=3)
+        self.wipe_btn.pack(side="left", padx=(6, 0))
+        self.wipe_btn.set_enabled(False)
+        self.wipe_word.trace_add("write", lambda *_: self.wipe_btn.set_enabled(
+            self.wipe_word.get().strip().upper() == "WIPE"))
+        if not n and not info["exports"]:
+            self.wipe_entry.configure(state="disabled")
+
+    def _save_copy(self) -> None:
+        self.copy_msg.configure(text="Saving...", fg=C["muted"])
+        self.copy_msg.update_idletasks()
+        try:
+            out = storage.save_copy(self.app.catalog.projects)
+        except OSError as e:
+            self.copy_msg.configure(text=f"⚠ Couldn't save the copy: {e.strerror or e}", fg=C["err"])
+            return
+        self.copy_msg.configure(text=f"✓ Saved {out}", fg=C["ok"])

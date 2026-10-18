@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 os.environ["PIPATH_HOME"] = tempfile.mkdtemp(prefix="pipath_smoke_")
 os.environ.setdefault("PIPATH_FORCE_SIM", "1")
+os.environ["PIPATH_DOWNLOADS"] = tempfile.mkdtemp(prefix="pipath_downloads_")
 
 from pipath import storage  # noqa: E402
 from pipath.app import PiPathApp
@@ -51,6 +52,10 @@ def click(widget, text):
     button = find(widget, PButton, text)
     assert button is not None and button.enabled, f"no enabled button {text!r}"
     button.command()
+
+
+def check_copy():
+    assert list(Path(os.environ["PIPATH_DOWNLOADS"]).glob("PiPath_save_*.zip")), "no copy in Downloads"
 
 
 def check_wiped():
@@ -266,13 +271,12 @@ def scenes(app):
         ("66_idea", lambda: app.screen.start_idea(next(i for i in app.screen.library["ideas"] if i["id"] == "disco"))),
         ("67_idea_run", press_run, 2500),
         ("68_done", lambda: (stop(), app.show("home"))),
-        ("69_teacher_panel", lambda: (app.teacher_panel(), type_into(find(app._teacher_overlay, tk.Entry), "2468"),
-                                      click(app._teacher_overlay, "Unlock"))),
-        ("70_wipe_confirm", lambda: click(app._teacher_overlay, "Wipe all student data...")),
-        ("71_wipe_typed", lambda: (type_into(find(app._teacher_overlay, tk.Entry), "wipe"),
-                                   find(app._teacher_overlay, tk.Entry).event_generate("<KeyRelease>"))),
-        ("72_wiped", lambda: click(app._teacher_overlay, "Wipe now"), 1500),
-        ("73_welcome_after_wipe", lambda: (click(app._teacher_overlay, "Close"), check_wiped())),
+        ("69_save_data", lambda: app.open_settings("data")),
+        ("70_save_copy", lambda: (click(app._settings, "Save a copy"), check_copy())),
+        ("71_wipe_typed", lambda: type_into(find(app._settings, tk.Entry), "wipe")),
+        ("72_wiped_welcome", lambda: (click(app._settings, "Wipe session"), check_wiped()), 1500),
+        ("73_welcome_save_data", lambda: app.open_settings()),
+        ("74_closed", lambda: app.close_settings()),
     ]
 
 
