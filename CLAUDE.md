@@ -568,12 +568,17 @@ up" from the code review) or **On my own** (errors are explained, nothing else);
 ## 9. Teacher features
 
 Present now: Ctrl+Shift+T → PIN (config.toml `teacher_pin`) → teacher mode (Next step
-always enabled for this session) and **Export progress CSV** (includes each student's help level).
+always enabled for this session), **Export progress CSV** (includes each student's help level) and
+**Wipe all student data** for the next school or group (`storage.wipe_all`): a summary (profiles,
+schools, files), an optional **Save a backup first** zip (`storage.backup_zip`, to a USB stick from
+`storage.usb_drives()` or `~/PiPath-backups`), type `WIPE` to confirm. It removes `students/` (and
+`exports/` unless unticked) by moving them aside first, drops `last_student`, and keeps the Pi's
+settings (`gpio_mode`, `camera`).
 
 To build:
 - Change the PIN from the panel (store a hash in `~/PiPath/app.json`, not in plain text).
 - Per-class view: table of students × activities (status, stars, runs, errors, hints).
-- Reset a student's activity; delete a student (with confirm); "end of term" archive to a zip.
+- Reset a student's activity; delete one student (with confirm).
 - Import lessons from a USB stick (`/media/*/PiPath-lessons/*.toml`) after validating them.
 - "Lesson lint" command: `python3 -m pipath.lint data/lessons/x.toml` (the checks in
   `tests/test_activities.py::TestLessonFiles` are a starting point).

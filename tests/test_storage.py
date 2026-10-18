@@ -137,5 +137,77 @@ class TestLevels(unittest.TestCase):
         self.assertEqual([lv for lv in LEVELS if not offer_tour(lv)], ["advanced"])
 
 
+class TestWipe(unittest.TestCase):
+    """The teacher can wipe the Pi for the next school: every student goes, the Pi's settings stay."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        os.environ["PIPATH_HOME"] = self.tmp.name
+        import pipath.storage
+        self.st = importlib.reload(pipath.storage)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _fill(self):
+        st = self.st
+        a = st.create_student(["Sam", "Alex"], "Bayside SC")
+        st.create_student("Jo", "Hilltop College")
+        st.write_text(a.lesson_code_path("hello.py"), "print('hi')\n")
+        st.write_text(a.project_path("game"), "print('game')\n")
+        st.touch_student(a)
+        st.set_app_state(gpio_mode="sim", camera="usb")
+        st.export_progress_csv([{"id": "s1_hello"}])
+        return a
+
+    def test_summary(self):
+        self._fill()
+        info = self.st.wipe_summary()
+        self.assertEqual(info["students"], 2)
+        self.assertEqual(info["schools"], ["Bayside SC", "Hilltop College"])
+        self.assertGreaterEqual(info["files"], 4)
+        self.assertEqual(info["exports"], 1)
+
+    def test_wipe_removes_every_student_and_keeps_pi_settings(self):
+        self._fill()
+        self.st.wipe_all()
+        self.assertEqual(self.st.list_students(), [])
+        home = Path(self.tmp.name)
+        self.assertFalse((home / "students").exists())
+        self.assertFalse((home / "exports").exists())
+        self.assertEqual(list(home.glob(".wiping_*")), [])
+        state = self.st.app_state()
+        self.assertNotIn("last_student", state)
+        self.assertEqual((state["gpio_mode"], state["camera"]), ("sim", "usb"))
+        # a new group starts cleanly, even with the same name
+        s = self.st.create_student("Sam", "Bayside SC")
+        self.assertEqual(s.slug, "sam")
+        self.assertEqual([x.first_name for x in self.st.list_students()], ["Sam"])
+
+    def test_keep_exports(self):
+        self._fill()
+        self.st.wipe_all(keep_exports=True)
+        self.assertEqual(self.st.list_students(), [])
+        self.assertEqual(len(list((Path(self.tmp.name) / "exports").glob("*.csv"))), 1)
+
+    def test_wipe_when_empty(self):
+        self.assertEqual(self.st.wipe_summary()["students"], 0)
+        self.st.wipe_all()
+        self.assertEqual(self.st.list_students(), [])
+
+    def test_backup_zip_has_everyones_work(self):
+        import zipfile
+        self._fill()
+        with tempfile.TemporaryDirectory() as usb:
+            out = self.st.backup_zip(Path(usb) / "PiPath-backups")
+            names = zipfile.ZipFile(out).namelist()
+            self.assertTrue(any(n.endswith("lessons/hello.py") for n in names))
+            self.assertTrue(any(n.endswith("projects/game.py") for n in names))
+            self.assertTrue(any(n.startswith("exports/") for n in names))
+            self.assertTrue(any(n.endswith("profile.json") for n in names))
+            self.st.wipe_all()
+            self.assertTrue(out.exists())          # the backup lives outside PiPath's folder
+
+
 if __name__ == "__main__":
     unittest.main()

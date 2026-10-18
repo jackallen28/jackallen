@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from pathlib import Path
 import tkinter.font as tkfont
 
 from . import storage
@@ -210,7 +211,75 @@ class PiPathApp(tk.Tk):
                 text=f"Saved to {storage.export_progress_csv(self.catalog.projects)}"), kind="secondary").pack(
                 anchor="w", pady=(6, 4))
             msg.pack(anchor="w")
+            label(body, "New school or group? Wipe every student's profile and work from this Pi.",
+                  fg=C["muted"], wraplength=400).pack(anchor="w", pady=(14, 0))
+            PButton(body, "Wipe all student data...", wipe_view, kind="stop").pack(anchor="w", pady=(6, 4))
             PButton(body, "Close", close, kind="secondary").pack(anchor="e", pady=(14, 0))
+
+        def wipe_view():
+            for w in body.winfo_children():
+                w.destroy()
+            info = storage.wipe_summary()
+            label(body, "⚠ Wipe all student data", font="h3", fg=C["err"]).pack(anchor="w")
+            if not info["students"] and not info["exports"]:
+                label(body, "There's no student data on this Pi. It's ready for a new group.",
+                      wraplength=420).pack(anchor="w", pady=(6, 0))
+                PButton(body, "Back", unlocked, kind="secondary").pack(anchor="e", pady=(14, 0))
+                return
+            who = f"{info['students']} student profile{'s' if info['students'] != 1 else ''}"
+            if info["schools"]:
+                who += " (" + ", ".join(info["schools"][:3]) + ("..." if len(info["schools"]) > 3 else "") + ")"
+            label(body, f"This deletes {who}: their progress, code, photos and Free Play projects "
+                        f"({info['files']} files). Students will start again from the welcome screen. "
+                        "The Pi's settings (Simulator / Real Pi, camera) stay. This can't be undone.",
+                  wraplength=420).pack(anchor="w", pady=(6, 8))
+            exports = tk.BooleanVar(value=True)
+            if info["exports"]:
+                tk.Checkbutton(body, text=f"Also delete the exported progress files ({info['exports']})",
+                               variable=exports, font="small", bg=C["bg"], activebackground=C["bg"],
+                               selectcolor="#FFFFFF", anchor="w").pack(anchor="w")
+            drives = storage.usb_drives()
+            dest = (drives[0] if drives else Path.home()) / "PiPath-backups"
+            saved = label(body, "", font="small", fg=C["ok"], wraplength=420)
+
+            def backup():
+                try:
+                    saved.configure(text=f"✓ Backup saved: {storage.backup_zip(dest)}", fg=C["ok"])
+                except OSError as e:
+                    saved.configure(text=f"Couldn't save the backup: {e}", fg=C["err"])
+
+            PButton(body, "Save a backup first" + (" (to the USB stick)" if drives else ""), backup,
+                    kind="secondary", font="small_bold").pack(anchor="w", pady=(8, 2))
+            saved.configure(text=f"Optional. It goes in {dest}" + ("" if drives else
+                            " (plug in a USB stick first to save it there)."), fg=C["muted"])
+            saved.pack(anchor="w")
+            label(body, "To confirm, type WIPE in the box:", fg=C["muted"]).pack(anchor="w", pady=(12, 0))
+            typed = entry(body, width=10, font="h3")
+            typed.pack(anchor="w", pady=4, ipady=2)
+            row = tk.Frame(body, bg=C["bg"])
+            row.pack(fill="x", pady=(10, 0))
+            PButton(row, "Cancel", unlocked, kind="secondary").pack(side="left")
+            go = PButton(row, "Wipe now", lambda: wipe(exports.get()), kind="stop")
+            go.pack(side="right", padx=(40, 0))
+            go.set_enabled(False)
+            typed.bind("<KeyRelease>", lambda e: go.set_enabled(typed.get().strip().upper() == "WIPE"))
+            typed.bind("<Escape>", lambda e: unlocked())
+            typed.focus_set()
+
+        def wipe(delete_exports: bool):
+            if self.student is not None:
+                self.logout()                  # stops any running program and drops the kept screens
+            storage.wipe_all(keep_exports=not delete_exports)
+            self.teacher_mode = False
+            self.pending_profile = None
+            self.show("welcome")               # without the old names on it
+            ov.lift()
+            for w in body.winfo_children():
+                w.destroy()
+            label(body, "✓ All student data has been wiped.", font="h3", fg=C["ok"]).pack(anchor="w")
+            label(body, "PiPath is ready for a new group. Students make a new profile on the welcome screen.",
+                  wraplength=420).pack(anchor="w", pady=(6, 0))
+            PButton(body, "Close", close, kind="primary").pack(anchor="e", pady=(14, 0))
 
         def toggle():
             self.teacher_mode = not self.teacher_mode

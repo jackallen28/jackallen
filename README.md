@@ -197,9 +197,9 @@ The Wiring + Safety card in each activity repeats this, and "Check my wiring" fa
 3. Make a test profile, open **Traffic Lights**, choose **Real Pi** (or Settings > Hardware) and press
    **Check my wiring** with a breadboard built from the pin plan below.
 4. Plug in the USB webcam and try **Photo Booth** step 1 (click the camera panel's title to choose USB).
-5. Delete the test profile folder in `~/PiPath/students/`, then clone the SD card for the class set.
+5. Wipe the test profile (teacher panel > **Wipe all student data**), then clone the SD card for the class set.
 6. In class: students take the **blue HAT** off before changing wires, and never turn the Pi off.
-   Press **Ctrl+Shift+T** for the teacher panel (skip ahead, export progress to CSV).
+   Press **Ctrl+Shift+T** for the teacher panel (skip ahead, export progress to CSV, wipe the Pi).
 
 ## For teachers
 
@@ -208,8 +208,13 @@ The Wiring + Safety card in each activity repeats this, and "Check my wiring" fa
   everyone's progress (including each student's help level) to CSV.
 - **Help levels** are the student's choice and can change any time. Independence stars still
   count the hints they open, at every level.
-- **Student work** is saved in `~/PiPath/students/<name>/` (code, photos, logs). Updating PiPath
-  never touches it.
+- **Student work** is saved in `~/PiPath/students/<name>/` (code, photos, logs), so students pick
+  up where they left off next time they choose their name. Updating PiPath never touches it.
+- **A new school or group:** teacher panel > **Wipe all student data**. It shows how many profiles
+  (and which schools) will go, offers **Save a backup first** (a zip, saved on a plugged-in USB stick
+  or in `~/PiPath-backups`), and asks you to type `WIPE`. It deletes every profile, all progress,
+  code, photos and Free Play projects, and (ticked by default) the exported CSVs. The Pi's own
+  settings (Simulator / Real Pi, camera) stay. Do it on every Pi in the class set.
 - **Edit content** without coding:
   - `data/lessons/*.toml`: steps, starter code, checklists, hints, wiring, and `demo` (the model
     answer that **Watch the goal** plays, with `demo_events` for simulated button presses and

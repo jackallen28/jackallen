@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import tkinter as tk
 import traceback
 from pathlib import Path
 
@@ -23,7 +24,7 @@ os.environ.setdefault("PIPATH_FORCE_SIM", "1")
 
 from pipath import storage  # noqa: E402
 from pipath.app import PiPathApp
-from pipath.ui.widgets import PopupMenu, about_box  # noqa: E402
+from pipath.ui.widgets import PButton, PopupMenu, about_box  # noqa: E402
 
 OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "shots")
 OUT.mkdir(parents=True, exist_ok=True)
@@ -33,6 +34,28 @@ SETTLE_MS = 900
 def type_into(entry, text):
     entry.delete(0, "end")
     entry.insert(0, text)
+
+
+def find(widget, cls, text=None):
+    """The first widget of a class (and with this text) inside widget."""
+    for w in widget.winfo_children():
+        if isinstance(w, cls) and (text is None or str(w.cget("text")) == text):
+            return w
+        found = find(w, cls, text)
+        if found is not None:
+            return found
+    return None
+
+
+def click(widget, text):
+    button = find(widget, PButton, text)
+    assert button is not None and button.enabled, f"no enabled button {text!r}"
+    button.command()
+
+
+def check_wiped():
+    assert storage.list_students() == [], "students left after the wipe"
+    assert not (storage.APP_HOME / "students").exists()
 
 
 def scenes(app):
@@ -243,6 +266,13 @@ def scenes(app):
         ("66_idea", lambda: app.screen.start_idea(next(i for i in app.screen.library["ideas"] if i["id"] == "disco"))),
         ("67_idea_run", press_run, 2500),
         ("68_done", lambda: (stop(), app.show("home"))),
+        ("69_teacher_panel", lambda: (app.teacher_panel(), type_into(find(app._teacher_overlay, tk.Entry), "2468"),
+                                      click(app._teacher_overlay, "Unlock"))),
+        ("70_wipe_confirm", lambda: click(app._teacher_overlay, "Wipe all student data...")),
+        ("71_wipe_typed", lambda: (type_into(find(app._teacher_overlay, tk.Entry), "wipe"),
+                                   find(app._teacher_overlay, tk.Entry).event_generate("<KeyRelease>"))),
+        ("72_wiped", lambda: click(app._teacher_overlay, "Wipe now"), 1500),
+        ("73_welcome_after_wipe", lambda: (click(app._teacher_overlay, "Close"), check_wiped())),
     ]
 
 

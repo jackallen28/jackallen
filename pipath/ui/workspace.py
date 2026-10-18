@@ -2003,6 +2003,12 @@ class FreePlayWorkspace(Workspace):
                                                             else "."))
         self.guide.scroll_to(self.coach)
 
+    def park(self) -> None:
+        super().park()
+        if self._wiring_job is not None:
+            self.after_cancel(self._wiring_job)
+            self._wiring_job = None
+
     def _update_wiring(self, force: bool = False) -> None:
         """Show how to wire what the code uses (only re-built when the parts change)."""
         self._wiring_job = None

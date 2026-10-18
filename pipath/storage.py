@@ -19,8 +19,10 @@ import csv
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
@@ -371,3 +373,67 @@ def export_progress_csv(catalog_projects: list[dict]) -> Path:
                 row += [lp.get("status", "new"), lp.get("hints_used", 0), lp.get("runs", 0)]
             w.writerow(row)
     return out
+
+
+# ---------------------------------------------------------------- wiping the Pi for the next group
+
+def wipe_summary() -> dict:
+    """What a wipe would delete: student profiles, their saved files, and teacher exports."""
+    students = list_students()
+    files = sum(1 for p in STUDENTS.rglob("*") if p.is_file()) if STUDENTS.exists() else 0
+    exports = APP_HOME / "exports"
+    return {"students": len(students), "files": files,
+            "schools": sorted({s.profile.get("school", "") for s in students} - {""}),
+            "exports": sum(1 for p in exports.rglob("*") if p.is_file()) if exports.exists() else 0}
+
+
+def usb_drives() -> list[Path]:
+    """Plugged-in USB sticks that can be written to (Pi OS mounts them at /media/<user>/<name>)."""
+    out = []
+    for base in (Path("/media"), Path("/run/media")):
+        try:
+            for d in sorted(base.glob("*/*")) + sorted(base.glob("*")):
+                if d.is_dir() and os.path.ismount(d) and os.access(d, os.W_OK) and d not in out:
+                    out.append(d)
+        except OSError:
+            continue
+    return out
+
+
+def backup_zip(dest: Path) -> Path:
+    """Zip every student's work and the exports into dest (a USB stick, say) before a wipe."""
+    dest.mkdir(parents=True, exist_ok=True)
+    out = dest / f"PiPath_backup_{datetime.now():%Y-%m-%d_%H%M}.zip"
+    tmp = out.with_suffix(".zip.part")
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+        for folder in (STUDENTS, APP_HOME / "exports"):
+            if folder.exists():
+                for f in sorted(folder.rglob("*")):
+                    if f.is_file() and f.resolve() != tmp.resolve():
+                        z.write(f, f.relative_to(APP_HOME))
+    os.replace(tmp, out)
+    return out
+
+
+def _remove(folder: Path) -> None:
+    """Move the folder aside first, so a power cut mid-delete never leaves half a profile behind."""
+    if not folder.exists():
+        return
+    aside = folder.with_name(f".wiping_{folder.name}_{datetime.now():%Y%m%d%H%M%S%f}")
+    os.replace(folder, aside)
+    shutil.rmtree(aside, ignore_errors=True)
+
+
+def wipe_all(keep_exports: bool = False) -> dict:
+    """Delete every student profile, their progress, code, photos and projects (and the teacher
+    exports unless keep_exports). The Pi's own settings (Simulator / Real Pi, camera) stay."""
+    done = wipe_summary()
+    _remove(STUDENTS)
+    if not keep_exports:
+        _remove(APP_HOME / "exports")
+    for left in APP_HOME.glob(".wiping_*"):          # anything an earlier, interrupted wipe left
+        shutil.rmtree(left, ignore_errors=True)
+    state = app_state()
+    if state.pop("last_student", None) is not None:
+        write_json(APP_HOME / "app.json", state)
+    return done
