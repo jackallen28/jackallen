@@ -1,0 +1,38 @@
+{
+  "name": "program-booking-system",
+  "version": "0.1.0",
+  "description": "Booking website for tech-school programs with room, equipment, staff and combination clash rules, plus Microsoft Bookings sync.",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "catalog:check": "node scripts/catalog-check.js",
+    "demo": "node scripts/demo.js",
+    "backup": "node scripts/backup.js",
+    "graph:check": "node scripts/graph-check.js",
+    "graph:mock": "node scripts/graph-mock.js"
+  },
+  "dependencies": {
+    "@azure/msal-node": "7.0.1",
+    "better-sqlite3": "13.0.3",
+    "express": "5.2.1",
+    "fullcalendar": "6.1.21",
+    "nodemailer": "10.0.14",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "supertest": "7.3.0",
+    "vitest": "4.1.11"
+  },
+  "overrides": {
+    "vite": "7.3.6"
+  }
+}
