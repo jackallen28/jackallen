@@ -9,6 +9,9 @@ Do them in order — each level works without the next one.
 | [2. Email invites](#level-2--email-invites-sync_modeemail-no-it-admin-needed) | A mailbox that can send via SMTP | 15 min |
 | [3. Full Microsoft Bookings sync](#level-3--full-microsoft-bookings-sync-sync_modegraph) | IT to create an app registration | 30 min with IT |
 
+> **IT won't create an app registration?** Use Power Automate instead — see
+> **[POWER-AUTOMATE-SETUP.md](POWER-AUTOMATE-SETUP.md)**.
+
 > **Before you start:** put the site online (see README → Deploying) and set `PUBLIC_URL`, e.g.
 > `PUBLIC_URL=https://bookings.bnts.vic.edu.au`. Outlook fetches feeds from Microsoft's servers, so a site that
 > only runs on your laptop (`localhost`) can't be subscribed to.

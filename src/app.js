@@ -7,6 +7,7 @@ import { ROOT_DIR } from './config.js';
 import { apiRoutes } from './routes/api.js';
 import { adminRoutes } from './routes/admin.js';
 import { calendarRoutes } from './routes/calendar.js';
+import { integrationRoutes } from './routes/integrations.js';
 
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
@@ -22,6 +23,7 @@ export function createApp(ctx) {
     res.json({ ok: true });
   });
 
+  app.use(integrationRoutes(ctx));
   app.use('/api', apiRoutes(ctx));
   app.use(adminRoutes(ctx));
   app.use(calendarRoutes(ctx));

@@ -14,6 +14,7 @@
 import path from 'node:path';
 import { createEmailAdapter } from './email.js';
 import { createGraphAdapter } from './graph.js';
+import { createWebhookAdapter } from './webhook.js';
 import { addDays, slotWindow, overlaps, toMinutes } from '../engine/dates.js';
 
 export const RETRY_MINUTES = 15;
@@ -33,6 +34,7 @@ export function createAdapter({ config, catalog }, options = {}) {
     return createEmailAdapter({ config, catalog, outboxDir: path.join(config.dataDir, 'outbox'), ...options });
   }
   if (config.syncMode === 'graph') return createGraphAdapter({ config, catalog, ...options });
+  if (config.syncMode === 'webhook') return createWebhookAdapter({ config, catalog, ...options });
   return noneAdapter;
 }
 
@@ -150,6 +152,9 @@ export function createSyncService({ config, catalog, store, adapter, today, logg
     syncBooking,
     runOnce,
     importBusy,
+    // Rooms an appointment reported by Power Automate holds (other imported blocks that day count too).
+    placeBlock: (block) =>
+      placeBlock(block, store.externalBusyOn(block.date).filter((x) => x.externalId !== String(block.externalId))),
     status: () => ({ ...state }),
     start() {
       if (!enabled || timer) return;

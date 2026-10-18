@@ -339,7 +339,10 @@ async function renderSync() {
     none: 'Off — bookings stay in this system. Outlook calendar feeds (below) still work.',
     email: 'Email invites — each booking is sent as a calendar invite to the addresses below.',
     graph: 'Microsoft Bookings (Graph API) — bookings are created as Bookings appointments, and appointments made in Bookings are imported.',
+    webhook: 'Power Automate — each booking and cancellation is sent to your flow, which updates the Outlook / Bookings calendars.',
   }[d.mode];
+  const pa = d.powerAutomate;
+  const last = pa.lastInbound;
   view.innerHTML = `
     <h1>Calendar &amp; Microsoft 365 sync</h1>
     <div class="two-col">
@@ -368,6 +371,29 @@ async function renderSync() {
         }
       </div>
     </div>
+    <div class="card" style="margin-top:16px">
+      <h2>Power Automate</h2>
+      <div class="two-col">
+        <div>
+          <h3>Website → Microsoft 365</h3>
+          <p>${pa.outboundUrlSet ? '✔ Flow URL is set.' : '✖ <span class="code">POWER_AUTOMATE_WEBHOOK_URL</span> is not set.'}
+            ${d.mode === 'webhook' ? 'Bookings are sent automatically.' : 'Set <span class="code">SYNC_MODE=webhook</span> to send every booking.'}</p>
+          <p style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="button secondary small" id="test-webhook" ${pa.outboundUrlSet ? '' : 'disabled'}>Send test to flow</button>
+            <a class="button secondary small" href="/admin/api/sync/sample-payload" target="_blank" rel="noopener">Sample JSON ↗</a>
+          </p>
+        </div>
+        <div>
+          <h3>Microsoft Bookings → website</h3>
+          ${pa.inboundEnabled
+            ? `<p>Flows POST to:<br><span class="code">${esc(pa.inboundUrl)}</span><br><span class="small muted">with header <span class="code">Authorization: Bearer &lt;INBOUND_WEBHOOK_SECRET&gt;</span></span></p>
+               <p><strong>Appointments held from Bookings:</strong> ${pa.importedCount}<br>
+               <strong>Last received:</strong> ${last ? `${esc(new Date(last.at).toLocaleString('en-AU'))} — ${esc(last.action)} <details><summary class="small">what the flow sent</summary><pre class="code" style="white-space:pre-wrap">${esc(JSON.stringify(last.body, null, 2))}</pre></details>` : 'nothing yet'}</p>`
+            : '<p>Off — set <span class="code">INBOUND_WEBHOOK_SECRET</span> to a long random value to turn it on.</p>'}
+        </div>
+      </div>
+      <p class="small muted">Setup steps: <span class="code">docs/POWER-AUTOMATE-SETUP.md</span></p>
+    </div>
     ${me.demoMode ? `<div class="card" style="margin-top:16px"><h2>Demo controls</h2><p>Delete all bookings and load the example bookings for the next four weeks. ${d.mode !== 'none' ? '<strong>Bookings already sent to Outlook/Microsoft Bookings are not removed there.</strong>' : ''}</p><button class="button danger small" id="reset-demo">Reset demo data</button></div>` : ''}
     <h2 class="section-title">Needing sync <span class="count">${d.needingSync.length}</span></h2>
     ${d.needingSync.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Ref</th><th>Date</th><th>Program</th><th>Status</th><th>Sync</th><th>Error</th><th></th></tr></thead><tbody>
@@ -389,6 +415,14 @@ async function renderSync() {
     renderSync();
   });
   view.querySelectorAll('[data-retry]').forEach((b) => b.addEventListener('click', () => retrySync(b.dataset.retry, renderSync)));
+  view.querySelector('#test-webhook')?.addEventListener('click', async () => {
+    try {
+      await api('/admin/api/sync/test-webhook', { method: 'POST' });
+      announce(message, 'Test sent — check the flow’s run history in Power Automate.', 'success');
+    } catch (err) {
+      announce(message, esc(err.message), 'error');
+    }
+  });
   view.querySelector('#reset-demo')?.addEventListener('click', resetDemo);
 }
 

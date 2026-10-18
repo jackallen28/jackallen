@@ -208,6 +208,34 @@ export function createStore(db) {
       })();
     },
 
+    /** Adds or updates one imported block (used when a Power Automate flow reports an appointment). */
+    upsertExternalBusy(source, b) {
+      db.prepare(
+        `INSERT INTO external_busy
+           (source, external_id, date, start_time, end_time, resource_ids, program_id, staff, label, imported_at)
+         VALUES (@source, @externalId, @date, @start, @end, @resourceIds, @programId, @staff, @label, @importedAt)
+         ON CONFLICT(source, external_id) DO UPDATE SET
+           date = excluded.date, start_time = excluded.start_time, end_time = excluded.end_time,
+           resource_ids = excluded.resource_ids, program_id = excluded.program_id, staff = excluded.staff,
+           label = excluded.label, imported_at = excluded.imported_at`,
+      ).run({
+        source,
+        externalId: String(b.externalId),
+        date: b.date,
+        start: b.start,
+        end: b.end,
+        resourceIds: JSON.stringify(b.resourceIds || []),
+        programId: b.programId || null,
+        staff: b.staff || 0,
+        label: b.label || '',
+        importedAt: now(),
+      });
+    },
+
+    deleteExternalBusy(source, externalId) {
+      return db.prepare('DELETE FROM external_busy WHERE source = ? AND external_id = ?').run(source, String(externalId)).changes;
+    },
+
     // ---- audit log and settings ------------------------------------------------------
     audit(action, bookingId = null, detail = null) {
       db.prepare('INSERT INTO audit_log (at, action, booking_id, detail) VALUES (?, ?, ?, ?)').run(

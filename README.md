@@ -131,14 +131,16 @@ may share rooms. To hide a program without deleting it, add `active: false`.
 
 ## Microsoft Bookings / Outlook
 
-There are three levels — start with the first two (no IT admin needed) and move to the third when IT can
-create an app registration. Full step-by-step instructions: **[docs/M365-BOOKINGS-SETUP.md](docs/M365-BOOKINGS-SETUP.md)**.
+Choose what suits your school. Step-by-step instructions:
+**[docs/M365-BOOKINGS-SETUP.md](docs/M365-BOOKINGS-SETUP.md)** (feeds, email, Graph) and
+**[docs/POWER-AUTOMATE-SETUP.md](docs/POWER-AUTOMATE-SETUP.md)** (Power Automate).
 
 | Level | Setting | Needs IT? | What happens |
 |---|---|---|---|
 | 1. Calendar feeds | always on | No | Staff subscribe in Outlook (*Add calendar → Subscribe from web*) to all bookings or one calendar per room. |
 | 2. Email invites | `SYNC_MODE=email` | No (just an SMTP mailbox) | Each booking is emailed as a meeting invite to the Bookings calendar mailbox and/or staff; cancellations remove it. |
-| 3. Full Bookings sync | `SYNC_MODE=graph` | Yes (app registration) | Bookings are created as real Microsoft Bookings appointments, and appointments made directly in Bookings block rooms/staff here. |
+| 3. Power Automate | `SYNC_MODE=webhook` + `INBOUND_WEBHOOK_SECRET` | No (but flows need a Power Automate **Premium** licence) | Your flow puts each booking on the staff/Bookings calendars as a busy event; another flow sends appointments made in Bookings to the site, which blocks rooms/staff for them. |
+| 4. Full Bookings sync | `SYNC_MODE=graph` | Yes (app registration) | Bookings are created as real Microsoft Bookings appointments, and appointments made directly in Bookings block rooms/staff here. |
 
 Sync never blocks or undoes a booking. If Microsoft 365 can't be reached, the booking is marked
 *sync failed*, shown in the admin area, and retried automatically every 15 minutes.
@@ -188,7 +190,7 @@ src/engine/             the clash rules (pure functions, heavily tested)
 src/catalog/            loads + validates catalog.yaml
 src/db/                 SQLite tables and queries
 src/routes/             public API, admin API, calendar feeds
-src/sync/               Microsoft 365: email invites, Graph/Bookings, mock Graph server
+src/sync/               Microsoft 365: email invites, Power Automate webhook, Graph/Bookings, mock Graph server
 src/seed.js             demo bookings
 scripts/                catalog:check, demo, backup, graph:check, graph:mock
 test/                   automated tests

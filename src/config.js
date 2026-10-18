@@ -29,8 +29,8 @@ function list(value) {
 export function loadConfig(env = process.env) {
   const dataDir = path.resolve(ROOT_DIR, env.DATA_DIR || './data');
   const syncMode = (env.SYNC_MODE || 'none').toLowerCase();
-  if (!['none', 'email', 'graph'].includes(syncMode)) {
-    throw new Error(`SYNC_MODE must be none, email or graph (got "${env.SYNC_MODE}")`);
+  if (!['none', 'email', 'graph', 'webhook'].includes(syncMode)) {
+    throw new Error(`SYNC_MODE must be none, email, graph or webhook (got "${env.SYNC_MODE}")`);
   }
 
   return {
@@ -60,6 +60,13 @@ export function loadConfig(env = process.env) {
       clientSecret: env.GRAPH_CLIENT_SECRET || '',
       businessId: env.BOOKINGS_BUSINESS_ID || '',
       baseUrl: (env.GRAPH_BASE_URL || 'https://graph.microsoft.com/v1.0').replace(/\/$/, ''),
+    },
+    // Power Automate (or any automation tool) — see docs/POWER-AUTOMATE-SETUP.md
+    webhook: {
+      // SYNC_MODE=webhook: each booking/cancellation is POSTed here (the flow's "When an HTTP request is received" URL)
+      url: env.POWER_AUTOMATE_WEBHOOK_URL || '',
+      // Flows that report Microsoft Bookings appointments back to the site must send this secret
+      inboundSecret: env.INBOUND_WEBHOOK_SECRET || '',
     },
   };
 }

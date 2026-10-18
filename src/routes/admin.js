@@ -14,6 +14,8 @@ import {
   programRooms,
 } from '../catalog/describe.js';
 import { seedDemo } from '../seed.js';
+import { createWebhookAdapter, webhookPayload } from '../sync/webhook.js';
+import { SOURCE as PA_SOURCE } from './integrations.js';
 
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 const ADMIN_PAGES = ['', 'bookings', 'rules', 'catalog', 'sync'];
@@ -252,6 +254,13 @@ export function adminRoutes(ctx) {
       unmappedPrograms: catalog.programs.filter((p) => !p.bookings_service_id).map((p) => p.name),
       email: { inviteAddresses: config.email.inviteAddresses, smtp: Boolean(config.email.host) },
       graph: { businessId: config.graph.businessId, configured: Boolean(config.graph.clientId && config.graph.tenantId) },
+      powerAutomate: {
+        outboundUrlSet: Boolean(config.webhook.url),
+        inboundEnabled: Boolean(config.webhook.inboundSecret),
+        inboundUrl: `${base}/api/integrations/power-automate`,
+        lastInbound: JSON.parse(store.getMeta('powerAutomate.lastInbound') || 'null'),
+        importedCount: store.db.prepare('SELECT COUNT(*) FROM external_busy WHERE source = ?').pluck().get(PA_SOURCE),
+      },
       audit: store.recentAudit(30),
     });
   });
@@ -260,6 +269,33 @@ export function adminRoutes(ctx) {
     if (!ctx.sync?.enabled) return res.status(400).json({ error: 'Sync is turned off (SYNC_MODE=none)' });
     const result = await ctx.sync.runOnce();
     res.json(result);
+  });
+
+  // Sends a sample booking to the Power Automate flow (works in any SYNC_MODE once the URL is set).
+  function sampleBooking() {
+    const latest = store.listBookings({ status: 'confirmed', limit: 1 })[0];
+    if (latest) return latest;
+    const program = catalog.programs[0];
+    return {
+      id: 0, uid: 'sample@program-bookings', programId: program.id, date: ctx.today(), slotId: catalog.settings.slots[0].id,
+      classes: 1, students: catalog.settings.class_size, assignedResources: program.requires.map((alts) => alts[0]),
+      school: 'Sample School', contactName: 'Sample Teacher', email: 'teacher@example.com', phone: '03 9000 0000',
+      yearLevel: 'Year 8', notes: '', status: 'confirmed', manageToken: 'sample', sequence: 0,
+    };
+  }
+
+  api.get('/sync/sample-payload', (req, res) => {
+    res.json(webhookPayload({ catalog, config }, sampleBooking(), 'booking.created'));
+  });
+
+  api.post('/sync/test-webhook', async (req, res) => {
+    if (!config.webhook.url) return res.status(400).json({ error: 'Set POWER_AUTOMATE_WEBHOOK_URL first' });
+    try {
+      await createWebhookAdapter({ config, catalog }).sendTest(sampleBooking());
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(502).json({ error: err.message });
+    }
   });
 
   // ---- demo controls -------------------------------------------------------------------
