@@ -29,7 +29,9 @@ const server = app.listen(config.port, () => {
   console.log(`Program booking system running at http://localhost:${config.port}`);
   console.log(`  catalog: ${ctx.catalog.file} (${ctx.catalog.programs.length} programs)`);
   console.log(`  data:    ${config.dataDir}`);
+  console.log(`  sync:    ${config.syncMode}${ctx.sync.enabled ? ` (retries every 15 minutes)` : ''}`);
 });
+ctx.sync.start();
 
 function shutdown() {
   server.close(() => {

@@ -6,6 +6,7 @@ import express from 'express';
 import { ROOT_DIR } from './config.js';
 import { apiRoutes } from './routes/api.js';
 import { adminRoutes } from './routes/admin.js';
+import { calendarRoutes } from './routes/calendar.js';
 
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
@@ -23,6 +24,7 @@ export function createApp(ctx) {
 
   app.use('/api', apiRoutes(ctx));
   app.use(adminRoutes(ctx));
+  app.use(calendarRoutes(ctx));
 
   // Unknown API paths → JSON 404 (pages get the normal 404).
   app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));

@@ -348,7 +348,7 @@ async function renderSync() {
         <p>${esc(modeText)}</p>
         ${d.mode === 'email' ? `<p><strong>Invites go to:</strong> ${esc(d.email.inviteAddresses.join(', ') || '(none set — INVITE_ADDRESSES)')}<br><strong>Delivery:</strong> ${d.email.smtp ? 'SMTP' : 'written to data/outbox/*.eml (no SMTP_HOST set)'}</p>` : ''}
         ${d.mode === 'graph' ? `<p><strong>Bookings business:</strong> <span class="code">${esc(d.graph.businessId || '(BOOKINGS_BUSINESS_ID not set)')}</span><br>
-          <strong>Programs not linked to a Bookings service:</strong> ${d.unmappedPrograms.length} ${d.unmappedPrograms.length ? `<span class="small muted">(run <span class="code">npm run graph:check</span>)</span>` : ''}</p>` : ''}
+          <strong>Programs without a <span class="code">bookings_service_id</span>:</strong> ${d.unmappedPrograms.length}<br><span class="small muted">These link to a Bookings service with exactly the same name, if one exists. Run <span class="code">npm run graph:check</span> to see how every program is linked.</span></p>` : ''}
         ${d.mode !== 'none' ? `<dl class="kv">
           <dt>Last sync run</dt><dd>${esc(st.lastRunAt ? new Date(st.lastRunAt).toLocaleString('en-AU') : 'not yet')}</dd>
           ${d.mode === 'graph' ? `<dt>Last import</dt><dd>${esc(st.lastImportAt ? new Date(st.lastImportAt).toLocaleString('en-AU') : 'not yet')} ${st.lastImportCount != null ? `(${st.lastImportCount} appointments)` : ''}</dd>` : ''}
