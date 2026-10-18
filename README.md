@@ -26,13 +26,13 @@ switch to **Real Pi** and run the same code on their breadboard. In Real Pi mode
 ## Quick start (on the Pi)
 
 ```
-git clone --depth 1 -b claude/gallant-ride-1ublon https://github.com/jackallen28/BNTS_PiPath.git ~/pipath
+git clone --depth 1 -b BNTS_PiPath https://github.com/jackallen28/jackallen.git ~/pipath
 cd ~/pipath
 python3 main.py              # add --scale 1.25 for larger text
 ```
 
 No internet on the Pi? Download
-`https://github.com/jackallen28/BNTS_PiPath/archive/refs/heads/claude/gallant-ride-1ublon.zip`
+`https://github.com/jackallen28/jackallen/archive/refs/heads/BNTS_PiPath.zip`
 on another computer, copy it over on a USB stick and unzip it.
 
 Install a menu entry and desktop icon:
