@@ -61,3 +61,6 @@ table.data tr.cancelled td.actions, table.data tr.cancelled td .badge { text-dec
 .checklist li { margin-bottom: 6px; }
 
 @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+
+/* viewer accounts can't change anything — hide the buttons (the server refuses anyway) */
+body.viewer [data-cancel], body.viewer [data-retry], body.viewer #run-sync, body.viewer #reset-demo, body.viewer #test-webhook { display: none !important; }

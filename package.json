@@ -17,7 +17,9 @@
     "demo": "node scripts/demo.js",
     "backup": "node scripts/backup.js",
     "graph:check": "node scripts/graph-check.js",
-    "graph:mock": "node scripts/graph-mock.js"
+    "graph:mock": "node scripts/graph-mock.js",
+    "users": "node scripts/users.js",
+    "bookings": "node scripts/bookings.js"
   },
   "dependencies": {
     "@azure/msal-node": "7.0.1",

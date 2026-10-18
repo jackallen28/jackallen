@@ -2,7 +2,9 @@
 
 **Before the demo**
 - `npm run demo` (or *Reset demo data* in `/admin`) — loads example bookings starting next Monday.
-- Open two tabs: the public site `/` and the admin site `/admin` (logged in).
+- Open two tabs: the public site `/` and the admin site `/admin`, logged in with your staff account (create it
+  once with `npm run users -- add you@school.vic.edu.au --role manager`). For a quick throwaway demo you can
+  instead set `ADMIN_ACCESS=password`, which is only allowed with `DEMO_MODE=true`.
 - The demo bookings use the week starting next Monday. Below, **Mon/Tue/Wed/Thu/Fri** mean that week.
   (`npm run demo` prints the exact dates.)
 - Optional for step 6: an Outlook calendar already subscribed to the feed (see `docs/M365-BOOKINGS-SETUP.md`).

@@ -236,13 +236,71 @@ export function createStore(db) {
       return db.prepare('DELETE FROM external_busy WHERE source = ? AND external_id = ?').run(source, String(externalId)).changes;
     },
 
+    // ---- staff accounts and sessions -----------------------------------------------
+    insertUser({ email, name, role, passwordHash, totpSecret }) {
+      const info = db
+        .prepare(
+          `INSERT INTO users (email, name, role, password_hash, totp_secret, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        )
+        .run(email.trim().toLowerCase(), name || '', role, passwordHash, totpSecret, now());
+      return store.getUserById(Number(info.lastInsertRowid));
+    },
+    getUserById(id) {
+      return db.prepare('SELECT * FROM users WHERE id = ?').get(id) || null;
+    },
+    getUserByEmail(email) {
+      return db.prepare('SELECT * FROM users WHERE email = ?').get(String(email || '').trim().toLowerCase()) || null;
+    },
+    listUsers() {
+      return db.prepare('SELECT id, email, name, role, disabled, locked_until, created_at, last_login_at FROM users ORDER BY email').all();
+    },
+    countActiveUsers() {
+      return db.prepare('SELECT COUNT(*) FROM users WHERE disabled = 0').pluck().get();
+    },
+    updateUser(id, fields) {
+      const columns = Object.keys(fields);
+      if (!columns.length) return;
+      db.prepare(`UPDATE users SET ${columns.map((c) => `${c} = @${c}`).join(', ')} WHERE id = @id`).run({ ...fields, id });
+    },
+    deleteUser(id) {
+      db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    },
+
+    insertSession(s) {
+      db.prepare(
+        `INSERT INTO sessions (token_hash, user_id, created_at, last_seen_at, expires_at, ip, user_agent)
+         VALUES (@tokenHash, @userId, @createdAt, @createdAt, @expiresAt, @ip, @userAgent)`,
+      ).run({ ...s, createdAt: now() });
+    },
+    getSession(tokenHash) {
+      return db.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(tokenHash) || null;
+    },
+    touchSession(tokenHash) {
+      db.prepare('UPDATE sessions SET last_seen_at = ? WHERE token_hash = ?').run(now(), tokenHash);
+    },
+    deleteSession(tokenHash) {
+      db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
+    },
+    deleteSessionsForUser(userId) {
+      return db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId).changes;
+    },
+    deleteAllSessions() {
+      return db.prepare('DELETE FROM sessions').run().changes;
+    },
+    deleteExpiredSessions() {
+      db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(now());
+    },
+
     // ---- audit log and settings ------------------------------------------------------
-    audit(action, bookingId = null, detail = null) {
-      db.prepare('INSERT INTO audit_log (at, action, booking_id, detail) VALUES (?, ?, ?, ?)').run(
+    /** Records an action. `actor` = who did it (staff email, "school", "system"…). */
+    audit(action, bookingId = null, detail = null, actor = null) {
+      db.prepare('INSERT INTO audit_log (at, action, booking_id, detail, actor) VALUES (?, ?, ?, ?, ?)').run(
         now(),
         action,
         bookingId,
         detail == null ? null : typeof detail === 'string' ? detail : JSON.stringify(detail),
+        actor,
       );
     },
 
@@ -261,11 +319,11 @@ export function createStore(db) {
       );
     },
 
-    /** Deletes all bookings, imported blocks and the audit log (used by the demo reset). */
+    /** Deletes all bookings and imported blocks (used by the demo reset). Staff accounts and the audit log are kept. */
     resetAll() {
       db.transaction(() => {
-        db.exec(`DELETE FROM bookings; DELETE FROM external_busy; DELETE FROM audit_log;
-                 DELETE FROM sqlite_sequence WHERE name IN ('bookings', 'external_busy', 'audit_log');`);
+        db.exec(`DELETE FROM bookings; DELETE FROM external_busy;
+                 DELETE FROM sqlite_sequence WHERE name IN ('bookings', 'external_busy');`);
       })();
     },
   };

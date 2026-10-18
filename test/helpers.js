@@ -7,6 +7,9 @@ import YAML from 'yaml';
 import { loadConfig } from '../src/config.js';
 import { buildCatalog } from '../src/catalog/load.js';
 import { createContext } from '../src/context.js';
+import request from 'supertest';
+import { createUser } from '../src/security/users.js';
+import { codeAt, currentCounter } from '../src/security/totp.js';
 
 export const S2_TUESDAY = '2027-08-03';
 export const S2_WEDNESDAY = '2027-08-04';
@@ -64,4 +67,24 @@ export function bookingForm(overrides = {}) {
     notes: 'Two Year 6 classes',
     ...overrides,
   };
+}
+
+// ---- staff accounts ----------------------------------------------------------------
+
+let userCount = 0;
+export const TEST_PASSWORD = 'correct horse battery staple';
+
+/** Creates a staff account and returns its details (including the authenticator secret). */
+export async function testUser(ctx, role = 'manager') {
+  const email = `staff${++userCount}@example.org`;
+  const { totpSecret } = await createUser(ctx.store, { email, name: `Staff ${userCount}`, role, password: TEST_PASSWORD });
+  return { email, password: TEST_PASSWORD, secret: totpSecret, code: () => codeAt(totpSecret, currentCounter()) };
+}
+
+/** A supertest agent logged in as a new staff member. */
+export async function loginAs(app, ctx, role = 'manager') {
+  const user = await testUser(ctx, role);
+  const agent = request.agent(app);
+  await agent.post('/admin/api/login').send({ email: user.email, password: user.password, code: user.code() }).expect(200);
+  return agent;
 }

@@ -3,7 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import { createApp } from '../src/app.js';
 import { toLocal } from '../src/routes/integrations.js';
-import { testContext, bookingForm, S2_TUESDAY } from './helpers.js';
+import { testContext, bookingForm, loginAs, S2_TUESDAY } from './helpers.js';
 
 const quiet = { warn() {}, log() {} };
 const open = [];
@@ -82,8 +82,7 @@ describe('Power Automate: website → flow (SYNC_MODE=webhook)', () => {
     const flow = await fakeFlow();
     const ctx = testContext({ env: { POWER_AUTOMATE_WEBHOOK_URL: flow.url } });
     open.push(ctx);
-    const agent = request.agent(createApp(ctx));
-    await agent.post('/admin/api/login').send({ password: 'test-password' }).expect(200);
+    const agent = await loginAs(createApp(ctx), ctx);
     await agent.post('/admin/api/sync/test-webhook').send({}).expect(200);
     expect(flow.received[0].event).toBe('booking.test');
     const sample = await agent.get('/admin/api/sync/sample-payload').expect(200);

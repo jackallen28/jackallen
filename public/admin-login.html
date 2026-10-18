@@ -15,32 +15,34 @@
       <a class="brand" href="/"><span class="brand-logo" aria-hidden="true"></span><span data-site-name>Program Bookings</span></a>
     </div>
   </header>
-  <main id="main" style="max-width:420px">
+  <main id="main" style="max-width:440px">
     <div class="card">
       <h1>Staff login</h1>
       <div id="message" role="alert" hidden></div>
-      <form id="login">
+      <div id="no-accounts" class="notice warn" hidden>
+        <p><strong>No staff accounts yet.</strong> Accounts can only be created on the server, not on this website.
+          On the server run:</p>
+        <p><code>npm run users -- add you@school.vic.edu.au --role manager</code></p>
+      </div>
+      <form id="login" hidden>
+        <div class="field" data-for="accounts">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username">
+        </div>
         <div class="field">
           <label for="password">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="field" data-for="accounts">
+          <label for="code">6-digit code from your authenticator app</label>
+          <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7">
         </div>
         <button class="button" type="submit">Log in</button>
+        <p class="small muted" data-for="accounts" style="margin-top:14px">Forgotten your password or lost your phone?
+          Ask the system administrator — for security, accounts can't be recovered from this page.</p>
       </form>
     </div>
   </main>
-  <script type="module">
-    import { api, setupPage, announce, esc } from '/js/common.js';
-    setupPage();
-    document.getElementById('login').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        await api('/admin/api/login', { method: 'POST', body: { password: e.target.password.value } });
-        location.reload();
-      } catch (err) {
-        announce(document.getElementById('message'), esc(err.message), 'error');
-        e.target.password.select();
-      }
-    });
-  </script>
+  <script type="module" src="/js/admin-login.js"></script>
 </body>
 </html>

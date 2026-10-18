@@ -8,6 +8,8 @@ import { apiRoutes } from './routes/api.js';
 import { adminRoutes } from './routes/admin.js';
 import { calendarRoutes } from './routes/calendar.js';
 import { integrationRoutes } from './routes/integrations.js';
+import { securityHeaders } from './security/headers.js';
+import { createLimiter, limitByIp } from './security/rate-limit.js';
 
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
@@ -16,7 +18,15 @@ export function createApp(ctx) {
   app.disable('x-powered-by');
   app.set('trust proxy', 1); // most hosts put the app behind one proxy (needed for secure cookies)
 
+  app.use(securityHeaders);
   app.use(express.json({ limit: '50kb' }));
+
+  // Rate limits per IP address. Generous, because many schools can share one network address.
+  const minutes = (n) => n * 60 * 1000;
+  app.post('/api/bookings', limitByIp(createLimiter({ windowMs: minutes(60), max: 60 })));
+  app.use('/api/manage', limitByIp(createLimiter({ windowMs: minutes(15), max: 120 })));
+  app.use('/api/integrations', limitByIp(createLimiter({ windowMs: minutes(1), max: 60 })));
+  app.use('/calendar', limitByIp(createLimiter({ windowMs: minutes(15), max: 300 })));
 
   // Health check used by hosting platforms (Render, Azure, Docker) to see the app is alive.
   app.get('/healthz', (req, res) => {

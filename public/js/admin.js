@@ -400,8 +400,8 @@ async function renderSync() {
       ${d.needingSync.map((b) => `<tr><td>${esc(b.reference)}</td><td>${esc(b.date)}</td><td>${esc(b.programName)}</td><td>${esc(b.status)}</td><td>${syncBadge(b.syncStatus)}</td><td class="small">${esc(b.syncError || '')}</td><td><button class="button secondary small" data-retry="${b.id}">Retry</button></td></tr>`).join('')}
     </tbody></table></div>` : '<p class="muted">Nothing waiting.</p>'}
     <h2 class="section-title">Recent activity</h2>
-    <div class="table-wrap"><table class="data"><thead><tr><th>When</th><th>Action</th><th>Booking</th><th>Detail</th></tr></thead><tbody>
-      ${d.audit.map((a) => `<tr><td class="nowrap small">${esc(new Date(a.at).toLocaleString('en-AU'))}</td><td>${esc(a.action)}</td><td>${a.booking_id ?? ''}</td><td class="small">${esc(a.detail || '')}</td></tr>`).join('')}
+    <div class="table-wrap"><table class="data"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Booking</th><th>Detail</th></tr></thead><tbody>
+      ${d.audit.map((a) => `<tr><td class="nowrap small">${esc(new Date(a.at).toLocaleString('en-AU'))}</td><td class="small">${esc(a.actor || '')}</td><td>${esc(a.action)}</td><td>${a.booking_id ?? ''}</td><td class="small">${esc(a.detail || '')}</td></tr>`).join('')}
     </tbody></table></div>`;
 
   view.querySelector('#run-sync')?.addEventListener('click', async (e) => {
@@ -445,6 +445,9 @@ document.getElementById('logout').addEventListener('click', async () => {
 
 try {
   me = await api('/admin/api/me');
+  document.getElementById('who').textContent = me.user?.name || me.user?.email || '';
+  // Viewers can look but not change: hide every change button (the server enforces this too).
+  if (me.user?.role !== 'manager') document.body.classList.add('viewer');
   setupPage({ demoMode: me.demoMode });
   const navHref = section === 'board' ? '/admin' : `/admin/${section}`;
   document.querySelector(`.site-nav a[href="${navHref}"]`)?.setAttribute('aria-current', 'page');

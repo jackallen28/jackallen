@@ -3,7 +3,7 @@
 import path from 'node:path';
 import express from 'express';
 import { ROOT_DIR } from '../config.js';
-import { checkPassword, isLoggedIn, setLoginCookie, clearLoginCookie, requireAdmin } from '../auth.js';
+import { createAuth } from '../auth.js';
 import { bookingReference } from '../bookings.js';
 import { addDays, isValidDate, weekday, slotWindow, overlaps, toMinutes } from '../engine/dates.js';
 import {
@@ -47,33 +47,45 @@ export function adminRoutes(ctx) {
   const router = express.Router();
   const api = express.Router();
 
+  // ADMIN_ACCESS=off: no admin website at all — every /admin URL is a plain 404.
+  if (config.adminAccess === 'off') return router;
+
+  const auth = createAuth({ config, store });
+  const manager = auth.requireManager;
+  const actor = (req) => req.admin?.email || 'admin';
+
   // ---- pages -----------------------------------------------------------------------
   for (const name of ADMIN_PAGES) {
-    router.get(`/admin${name ? `/${name}` : ''}`, (req, res) => {
+    router.get(`/admin${name ? `/${name}` : ''}`, (req, res, next) => {
+      if (!auth.ipAllowed(req)) return next(); // outside the allow-list → normal 404
       res.set('Cache-Control', 'no-store');
-      res.sendFile(path.join(PUBLIC_DIR, isLoggedIn(config, req) ? 'admin.html' : 'admin-login.html'));
+      res.sendFile(path.join(PUBLIC_DIR, auth.currentUser(req) ? 'admin.html' : 'admin-login.html'));
     });
   }
 
   // ---- login (no session needed) ---------------------------------------------------
-  router.post('/admin/api/login', express.json(), (req, res) => {
-    if (!checkPassword(config, req.body?.password)) {
-      store.audit('admin.login_failed', null, { ip: req.ip });
-      return res.status(401).json({ error: 'Wrong password' });
-    }
-    setLoginCookie(config, req, res);
+  router.get('/admin/api/login-options', (req, res, next) => {
+    if (!auth.ipAllowed(req)) return next();
+    res.json({ mode: config.adminAccess, hasAccounts: config.adminAccess !== 'accounts' || store.countActiveUsers() > 0 });
+  });
+  router.post('/admin/api/login', async (req, res, next) => {
+    if (!auth.ipAllowed(req)) return next();
+    const result = await auth.login(req, res);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
     res.json({ ok: true });
   });
   router.post('/admin/api/logout', (req, res) => {
-    clearLoginCookie(res);
+    auth.logout(req, res);
     res.json({ ok: true });
   });
 
   // Everything below needs a valid admin session.
-  router.use('/admin/api', requireAdmin(config), api);
+  router.use('/admin/api', auth.requireAdmin, api);
 
   api.get('/me', (req, res) => {
     res.json({
+      user: req.admin,
+      adminAccess: config.adminAccess,
       demoMode: config.demoMode,
       syncMode: config.syncMode,
       today: ctx.today(),
@@ -191,13 +203,13 @@ export function adminRoutes(ctx) {
       .send('﻿' + [columns.map(([h]) => h).join(','), ...rows].join('\r\n'));
   });
 
-  api.post('/bookings/:id/cancel', (req, res) => {
-    const outcome = bookings.cancel(Number(req.params.id), { by: 'admin' });
+  api.post('/bookings/:id/cancel', manager, (req, res) => {
+    const outcome = bookings.cancel(Number(req.params.id), { by: actor(req) });
     if (!outcome.ok) return res.status(404).json({ error: 'Booking not found' });
     res.json({ booking: adminBookingView(catalog, outcome.booking) });
   });
 
-  api.post('/bookings/:id/retry-sync', async (req, res) => {
+  api.post('/bookings/:id/retry-sync', manager, async (req, res) => {
     const booking = store.getBooking(Number(req.params.id));
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     if (!ctx.sync?.enabled) return res.status(400).json({ error: 'Sync is turned off (SYNC_MODE=none)' });
@@ -261,11 +273,11 @@ export function adminRoutes(ctx) {
         lastInbound: JSON.parse(store.getMeta('powerAutomate.lastInbound') || 'null'),
         importedCount: store.db.prepare('SELECT COUNT(*) FROM external_busy WHERE source = ?').pluck().get(PA_SOURCE),
       },
-      audit: store.recentAudit(30),
+      audit: store.recentAudit(40),
     });
   });
 
-  api.post('/sync/run', async (req, res) => {
+  api.post('/sync/run', manager, async (req, res) => {
     if (!ctx.sync?.enabled) return res.status(400).json({ error: 'Sync is turned off (SYNC_MODE=none)' });
     const result = await ctx.sync.runOnce();
     res.json(result);
@@ -288,7 +300,7 @@ export function adminRoutes(ctx) {
     res.json(webhookPayload({ catalog, config }, sampleBooking(), 'booking.created'));
   });
 
-  api.post('/sync/test-webhook', async (req, res) => {
+  api.post('/sync/test-webhook', manager, async (req, res) => {
     if (!config.webhook.url) return res.status(400).json({ error: 'Set POWER_AUTOMATE_WEBHOOK_URL first' });
     try {
       await createWebhookAdapter({ config, catalog }).sendTest(sampleBooking());
@@ -299,9 +311,10 @@ export function adminRoutes(ctx) {
   });
 
   // ---- demo controls -------------------------------------------------------------------
-  api.post('/demo/reset', (req, res) => {
+  api.post('/demo/reset', manager, (req, res) => {
     if (!config.demoMode) return res.status(403).json({ error: 'Demo mode is off' });
     const result = seedDemo(ctx);
+    store.audit('demo.reset_by', null, null, actor(req));
     res.json({ created: result.created.length, skipped: result.skipped });
   });
 

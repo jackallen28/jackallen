@@ -66,6 +66,37 @@ const MIGRATIONS = [
     value TEXT
   );
   `,
+
+  // 2 — individual staff accounts with two-factor codes, and server-side login sessions
+  `
+  CREATE TABLE users (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    email             TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    name              TEXT NOT NULL DEFAULT '',
+    role              TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('viewer', 'manager')),
+    password_hash     TEXT NOT NULL,
+    totp_secret       TEXT NOT NULL,
+    totp_last_counter INTEGER NOT NULL DEFAULT -1,   -- stops a code being used twice
+    failed_attempts   INTEGER NOT NULL DEFAULT 0,
+    locked_until      TEXT,
+    disabled          INTEGER NOT NULL DEFAULT 0,
+    created_at        TEXT NOT NULL,
+    last_login_at     TEXT
+  );
+
+  CREATE TABLE sessions (
+    token_hash   TEXT PRIMARY KEY,                    -- only a hash of the cookie is stored
+    user_id      INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    created_at   TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    expires_at   TEXT NOT NULL,
+    ip           TEXT,
+    user_agent   TEXT
+  );
+  CREATE INDEX sessions_by_user ON sessions (user_id);
+
+  ALTER TABLE audit_log ADD COLUMN actor TEXT;
+  `,
 ];
 
 /**

@@ -96,7 +96,7 @@ export function createBookingService({ store, catalog, sync, today }) {
         classes: booking.classes,
         rooms: booking.assignedResources,
         source,
-      });
+      }, source === 'web' ? `school: ${booking.email}` : source);
       return { ok: true, booking };
     });
 
@@ -112,7 +112,7 @@ export function createBookingService({ store, catalog, sync, today }) {
     const booking = store.immediate(() => {
       const b = store.cancelBooking(id);
       if (!skipSync && sync?.enabled) store.updateSync(id, { status: 'pending' });
-      store.audit('booking.cancelled', id, { by });
+      store.audit('booking.cancelled', id, { by }, by);
       return store.getBooking(b.id);
     });
     if (!skipSync && sync?.enabled) sync.bookingCancelled(id);

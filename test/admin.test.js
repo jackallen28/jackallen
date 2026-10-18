@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { seedDemo } from '../src/seed.js';
-import { testContext, bookingForm, S2_TUESDAY } from './helpers.js';
+import { testContext, bookingForm, loginAs, S2_TUESDAY } from './helpers.js';
 
 let ctx;
 let app;
@@ -12,11 +12,7 @@ beforeEach(() => {
 });
 afterEach(() => ctx.close());
 
-async function login() {
-  const agent = request.agent(app);
-  await agent.post('/admin/api/login').send({ password: 'test-password' }).expect(200);
-  return agent;
-}
+const login = (role = 'manager') => loginAs(app, ctx, role);
 
 describe('admin', () => {
   it('admin API routes reject requests without login', async () => {
@@ -33,9 +29,8 @@ describe('admin', () => {
     expect(res.text).toContain('Staff login');
   });
 
-  it('wrong password is refused; a forged cookie is refused', async () => {
-    await request(app).post('/admin/api/login').send({ password: 'nope' }).expect(401);
-    await request(app).get('/admin/api/me').set('Cookie', `admin_session=${Date.now() + 99999}.forged`).expect(401);
+  it('a forged session cookie is refused', async () => {
+    await request(app).get('/admin/api/me').set('Cookie', 'admin_session=forged-token').expect(401);
   });
 
   it('logged-in admin sees the board, full reasons, CSV and can cancel', async () => {

@@ -33,17 +33,31 @@ export function loadConfig(env = process.env) {
     throw new Error(`SYNC_MODE must be none, email, graph or webhook (got "${env.SYNC_MODE}")`);
   }
 
+  const demoMode = bool(env.DEMO_MODE, true);
+  // How staff get into /admin: accounts (individual logins + authenticator code), off (no admin
+  // website at all — use the command line), or password (one shared password; demo mode only).
+  const adminAccess = (env.ADMIN_ACCESS || 'accounts').toLowerCase();
+  if (!['accounts', 'off', 'password'].includes(adminAccess)) {
+    throw new Error(`ADMIN_ACCESS must be accounts, off or password (got "${env.ADMIN_ACCESS}")`);
+  }
+  if (adminAccess === 'password' && !demoMode) {
+    throw new Error('ADMIN_ACCESS=password is only allowed with DEMO_MODE=true. Use ADMIN_ACCESS=accounts (see README → Security).');
+  }
+
   return {
     port: Number(env.PORT || 3000),
     dataDir,
     timezone: env.TIMEZONE || 'Australia/Melbourne',
-    adminPassword: env.ADMIN_PASSWORD || 'change-me',
+    adminAccess,
+    // Optional: only these IPs / IPv4 ranges may reach /admin, e.g. "203.0.113.10, 10.0.0.0/8"
+    adminAllowedIps: list(env.ADMIN_ALLOWED_IPS),
+    adminPassword: env.ADMIN_PASSWORD || 'change-me', // only used when ADMIN_ACCESS=password
     // Used to sign the admin login cookie. Defaults to a value derived from the admin password,
     // so changing the password logs everyone out.
     sessionSecret: env.SESSION_SECRET || '',
     calendarFeedToken: env.CALENDAR_FEED_TOKEN || '',
     syncMode,
-    demoMode: bool(env.DEMO_MODE, true),
+    demoMode,
     publicUrl: (env.PUBLIC_URL || '').replace(/\/$/, ''),
     catalogPath: path.resolve(ROOT_DIR, env.CATALOG_PATH || 'config/catalog.yaml'),
     email: {
@@ -74,8 +88,8 @@ export function loadConfig(env = process.env) {
 // Friendly warnings shown at startup for settings that are fine for a demo but not for real use.
 export function configWarnings(config) {
   const warnings = [];
-  if (config.adminPassword === 'change-me') {
-    warnings.push('ADMIN_PASSWORD is still "change-me" — set a real password before going online.');
+  if (config.adminAccess === 'password') {
+    warnings.push('ADMIN_ACCESS=password (one shared password) is for demos only — use ADMIN_ACCESS=accounts for real use.');
   }
   if (!config.calendarFeedToken || config.calendarFeedToken.startsWith('change-me')) {
     warnings.push('CALENDAR_FEED_TOKEN is not set to a random value — Outlook calendar feeds are disabled until it is.');
