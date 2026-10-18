@@ -12,8 +12,8 @@ you have one.
 ## 1. Install and run the tests (10 min)
 
 ```
-git clone -b claude/gallant-ride-1ublon https://github.com/jackallen28/jackallen.git pipath
-cd pipath
+git clone --depth 1 -b claude/gallant-ride-1ublon https://github.com/jackallen28/BNTS_PiPath.git ~/pipath
+cd ~/pipath
 python3 -m unittest discover -s tests
 ```
 
