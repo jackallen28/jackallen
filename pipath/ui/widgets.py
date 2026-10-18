@@ -336,10 +336,12 @@ def about_box(app) -> None:
     if img is not None:
         tk.Label(body, image=img, bg="#FFFFFF", relief="sunken", bd=2, padx=8, pady=6).pack(anchor="w")
     label(body, "PiPath", font="h2", fg=C["purple"]).pack(anchor="w", pady=(10, 0))
-    label(body, "A Python tutor for Raspberry Pi, made for the Banyule Nillumbik Tech School.",
+    label(body, "A Python tutor for Raspberry Pi, developed by the Banyule Nillumbik Tech School (BNTS) "
+                "and reviewed by teachers.",
           font="small", wraplength=360).pack(anchor="w")
-    label(body, "Victorian Curriculum Digital Technologies, Levels 7 to 10.\n"
-                "No AI and no internet: every hint was written by a teacher, and your work stays on this Pi.",
+    label(body, "PiPath isn't hosted on AI. It runs locally on this Raspberry Pi, and your work stays here.\n\n"
+                "It aims to open up Python programming to every student by adapting to each student's needs.\n\n"
+                "Victorian Curriculum Digital Technologies, Levels 7 to 10.",
           font="small", fg=C["muted"], wraplength=360).pack(anchor="w", pady=(6, 10))
     PButton(body, "OK", lambda: win.destroy(), kind="primary", padx=24).pack(anchor="e")
     win.place(relx=.5, rely=.45, anchor="center")
@@ -562,6 +564,45 @@ class RichText(tk.Text):
                 pass
 
 
+# ---------------------------------------------------------------- the mouse wheel / trackpad
+# One handler for the whole app (install_wheel): it scrolls the scrollable area under the mouse,
+# whatever the mouse is over inside it (text, buttons, cards). Linux / the Pi sends Button-4/5;
+# macOS sends <MouseWheel> with small deltas (many per trackpad swipe); Windows sends +-120 a notch.
+
+def wheel_target(canvas: tk.Canvas, step: int = 20) -> None:
+    """Mark a Canvas as something the wheel scrolls (step: pixels per unit)."""
+    canvas.configure(yscrollincrement=step)
+    canvas.wheel_scroll = lambda units: canvas.yview_scroll(units, "units")
+
+
+def install_wheel(root: tk.Misc) -> None:
+    def scroll(e, units: int) -> None:
+        if not units:
+            return
+        try:
+            w = root.winfo_containing(e.x_root, e.y_root)
+        except (KeyError, tk.TclError):
+            return
+        while w is not None:
+            if isinstance(w, tk.Listbox) or (isinstance(w, tk.Text) and not isinstance(w, RichText)):
+                return                  # the editor and the Output scroll themselves
+            target = getattr(w, "wheel_scroll", None)
+            if target is not None:
+                target(units)
+                return
+            w = w.master
+
+    def mousewheel(e) -> None:
+        if e.state & 0x1:               # Shift + wheel is sideways: not for these panels
+            return
+        d = e.delta
+        scroll(e, -round(d / 120 * 3) if abs(d) >= 120 else -d)
+
+    root.bind_all("<Button-4>", lambda e: scroll(e, -3), add="+")
+    root.bind_all("<Button-5>", lambda e: scroll(e, 3), add="+")
+    root.bind_all("<MouseWheel>", mousewheel, add="+")
+
+
 class ScrollFrame(tk.Frame):
     """A vertically scrollable frame. Put children in .body."""
 
@@ -577,18 +618,7 @@ class ScrollFrame(tk.Frame):
         self.vsb.pack(side="right", fill="y")
         self.body.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(self._win, width=e.width))
-        for w in (self.canvas, self.body):
-            w.bind("<Enter>", lambda e: self._bind_wheel(True))
-            w.bind("<Leave>", lambda e: self._bind_wheel(False))
-
-    def _bind_wheel(self, on: bool):
-        if on:
-            self.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-2, "units"))
-            self.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(2, "units"))
-            self.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(-1 if e.delta > 0 else 1, "units"))
-        else:
-            for seq in ("<Button-4>", "<Button-5>", "<MouseWheel>"):
-                self.unbind_all(seq)
+        wheel_target(self.canvas)
 
     def to_top(self):
         self.canvas.yview_moveto(0)

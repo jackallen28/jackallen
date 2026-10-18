@@ -117,8 +117,8 @@ Students who have used Python before pick **Advanced** (at setup, or with the Se
 - after each step, and any time with **Run > Review my code**, the code review coach looks at *how*
   the code is written: repeated code, magic numbers, unclear names, input that isn't validated,
   `global`, bare `except:`, deep nesting, and functions without a test case
-- every activity's first page lists its **Victorian Curriculum Digital Technologies (Levels 9-10)**
-  links, and its finish page has three **Level up** challenges (classes, dictionaries, validation
+- every activity's **Victorian Curriculum Digital Technologies (Levels 9-10)** links are in
+  **Settings > Curriculum** (pick an activity), and its finish page has three **Level up** challenges (classes, dictionaries, validation
   and `assert` test cases, CSV analysis, structured English...)
 
 Moderate students get the code review and the deeper explanation too. Check the curriculum links

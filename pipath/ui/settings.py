@@ -1,7 +1,8 @@
 """The Settings window, opened with the cog on any screen: a Windows 95 style tabbed dialog.
 
 Tabs: Help (how much help), Show (which activities the picker shows), Students (the names),
-Hardware (Simulator or Real Pi, camera), Text size, Save data (save a copy to Downloads, wipe the
+Hardware (Simulator or Real Pi, camera), Text size, Curriculum (each activity's Victorian Curriculum
+links), Save data (save a copy to Downloads, wipe the
 session). Changes apply straight away; the app tells every kept screen (app.settings_changed).
 Before anyone has logged in (the welcome screen) only Save data is shown.
 """
@@ -14,10 +15,10 @@ from .. import storage
 from ..gpio import CAMERA_KINDS, guess_camera, on_real_pi
 from .onboarding import level_options, show_options
 from .theme import C
-from .widgets import ChoiceList, PButton, TitleBar, entry, label
+from .widgets import ChoiceList, PButton, RichText, ScrollFrame, TitleBar, entry, label
 
 TABS = [("help", "Help"), ("show", "Show"), ("students", "Students"), ("hardware", "Hardware"),
-        ("text", "Text size"), ("data", "Save data")]
+        ("text", "Text size"), ("curriculum", "Curriculum"), ("data", "Save data")]
 
 
 class SettingsDialog(tk.Frame):
@@ -188,6 +189,47 @@ class SettingsDialog(tk.Frame):
 
     def _show_size(self) -> None:
         self.size_lbl.configure(text=f"{tkfont.nametofont('code').cget('size')} point")
+
+    def _tab_curriculum(self, page) -> None:
+        """Each activity's Victorian Curriculum Digital Technologies links (catalog.toml `curriculum`)."""
+        label(page, "Curriculum links", font="h3").pack(anchor="w")
+        label(page, "Victorian Curriculum Digital Technologies, Levels 9 and 10. Pick an activity.",
+              font="small", fg=C["muted"]).pack(anchor="w", pady=(0, 6))
+        projects = [p for p in self.app.catalog.projects if p.get("status") == "ready"]
+        row = tk.Frame(page, bg=C["bg"])
+        row.pack(fill="both", expand=True)
+        lb = tk.Listbox(row, font="small", width=24, relief="sunken", bd=2, activestyle="none",
+                        highlightthickness=0, exportselection=False, selectbackground=C["select"],
+                        selectforeground="#FFFFFF")
+        sb = tk.Scrollbar(row, orient="vertical", command=lb.yview, width=12)
+        lb.configure(yscrollcommand=sb.set)
+        lb.pack(side="left", fill="y")
+        sb.pack(side="left", fill="y")
+        for p in projects:
+            lb.insert("end", p["title"])
+        box = ScrollFrame(row, bg="#FFFFFF", relief="sunken", bd=2)
+        box.pack(side="left", fill="both", expand=True, padx=(8, 0))
+        rt = RichText(box.body, bg="#FFFFFF", font="small")
+        rt.tag_configure("b", font="small_bold")
+        rt.pack(fill="x", padx=8, pady=6)
+
+        def show(_e=None):
+            sel = lb.curselection()
+            if not sel:
+                return
+            p = projects[sel[0]]
+            links = p.get("curriculum") or []
+            rt.render(f"**{p['title']}**\n" + ("\n".join(f"- {line}" for line in links) if links
+                                              else "No curriculum links for this activity yet."))
+            box.to_top()
+
+        lb.bind("<<ListboxSelect>>", show)
+        here = getattr(self.app.screen, "project", None) or {}        # opened from an activity: start there
+        start = next((i for i, p in enumerate(projects) if p["id"] == here.get("id")), 0)
+        if projects:
+            lb.selection_set(start)
+            lb.see(start)
+            show()
 
     def _tab_data(self, page) -> None:
         info = storage.wipe_summary()

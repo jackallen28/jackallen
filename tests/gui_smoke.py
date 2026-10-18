@@ -54,6 +54,18 @@ def click(widget, text):
     button.command()
 
 
+def check_wheel(app, canvas, *events):
+    """The wheel scrolls the area under the mouse, even over a card or text inside it."""
+    x, y = canvas.winfo_rootx() + 40, canvas.winfo_rooty() + 120
+    under = app.winfo_containing(x, y)
+    for seq, kw in events:
+        before = canvas.yview()[0]
+        under.event_generate(seq, x=5, y=5, rootx=x, rooty=y, **kw)
+        app.update()
+        assert canvas.yview()[0] != before, f"{seq} {kw} didn't scroll"
+    canvas.yview_moveto(0)
+
+
 def check_copy():
     assert list(Path(os.environ["PIPATH_DOWNLOADS"]).glob("PiPath_save_*.zip")), "no copy in Downloads"
 
@@ -271,6 +283,14 @@ def scenes(app):
         ("66_idea", lambda: app.screen.start_idea(next(i for i in app.screen.library["ideas"] if i["id"] == "disco"))),
         ("67_idea_run", press_run, 2500),
         ("68_done", lambda: (stop(), app.show("home"))),
+        ("68b_curriculum_in_lesson", lambda: (open_lesson("e5_parking")(), app.open_settings("curriculum"))),
+        ("68d_wheel", lambda: (app.close_settings(), app.show("home"), app.update(),
+                               check_wheel(app, app.screen.canvas, ("<Button-5>", {}), ("<MouseWheel>", {"delta": -3}),
+                                           ("<MouseWheel>", {"delta": 120})),
+                               open_lesson("a1_traffic")(), app.update(),
+                               check_wheel(app, app.screen.guide.canvas, ("<Button-5>", {}),
+                                           ("<MouseWheel>", {"delta": -2})))),
+        ("68c_curriculum_home", lambda: (app.close_settings(), app.show("home"), app.open_settings("curriculum"))),
         ("69_save_data", lambda: app.open_settings("data")),
         ("70_save_copy", lambda: (click(app._settings, "Save a copy"), check_copy())),
         ("71_wipe_typed", lambda: type_into(find(app._settings, tk.Entry), "wipe")),

@@ -11,6 +11,7 @@ from .ui.home import HomeScreen
 from .ui.onboarding import ProfileScreen, SetupScreen, WelcomeScreen
 from .ui.settings import SettingsDialog
 from .ui.theme import C, setup_fonts, CODE_SIZE
+from .ui.widgets import install_wheel
 from .ui.workspace import FreePlayWorkspace, LessonWorkspace
 
 
@@ -46,6 +47,7 @@ class PiPathApp(tk.Tk):
                            ("relief", "raised"), ("borderWidth", 2), ("elementBorderWidth", 2),
                            ("highlightThickness", 0), ("width", 16)):
             self.option_add(f"*Scrollbar.{key}", value)    # chunky grey Windows 95 scrollbars
+        install_wheel(self)                    # the mouse wheel / trackpad scrolls whatever is under it
         self.protocol("WM_DELETE_WINDOW", self.quit_app)
         self.show("welcome")
 

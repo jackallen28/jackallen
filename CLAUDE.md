@@ -43,6 +43,14 @@ errors (`data/errors.toml`) and per-step hints written by the teacher. (The *Tea
 Machine* activity is machine learning the students write themselves: a nearest-neighbour
 classifier over tiny greyscale grids. No model, library or internet.)
 
+**Mouse wheel / trackpad:** one app-wide handler (`widgets.install_wheel`) scrolls the area under
+the mouse (Canvases marked with `widgets.wheel_target`: the activity picker and every ScrollFrame),
+for Linux Button-4/5, macOS small `<MouseWheel>` deltas and Windows ±120 notches. The editor and
+Output scroll themselves. Don't add per-widget Enter/Leave wheel bindings.
+
+**About box** (Help > About): developed by BNTS and reviewed by teachers, not hosted on AI, runs
+locally on the Pi, aims to open up Python to every student by adapting to their needs.
+
 **Look:** classic Windows 95/98 with the Banyule Nillumbik Tech School colours: the teal
 (#008080) desktop, silver-grey (#C0C0C0) windows with two-level bevels, grey buttons with a black
 ring for the default one, white sunken fields, purple→teal gradient title bars (✕ box on dialogs),
@@ -57,7 +65,8 @@ goal first, Python's real error message plus a technical explanation (`tech` in 
 **code review** after each step (`pipath/review.py`: repeated code, magic numbers, names, input
 validation, globals, bare except, test cases), **Jump to the challenge** on an activity's intro,
 and **Level up** challenges in the outro. Each activity lists its Victorian Curriculum Digital
-Technologies (Levels 9-10) links (`curriculum` in catalog.toml). Moderate students get the code
+Technologies (Levels 9-10) links (`curriculum` in catalog.toml), shown in **Settings > Curriculum**
+(a list of activities; opened from an activity, it starts on that one), not on the intro. Moderate students get the code
 review and the deeper "Under the bonnet" explanation too.
 
 **Adaptive scaffolding** (`pipath/adapt.py`, shown by the Coach as a yellow note with buttons):
@@ -197,7 +206,7 @@ repo root
 │       ├── widgets.py       PButton, TitleBar, CogButton, ChoiceList, window, bevel, RichText
 │       │                    (mini-markdown), ScrollFrame, PopupMenu, card, chip
 │       ├── settings.py      Settings dialog (cog): Help · Show · Students · Hardware · Text size ·
-│       │                    Save data (save a copy to Downloads, wipe session)
+│       │                    Curriculum (links per activity) · Save data (save a copy, wipe session)
 │       ├── editor.py        code editor (undo groups, find/replace, go to line, brackets, smart paste)
 │       ├── console.py       Output box + "type your answer" row (history, \r, live stderr)
 │       ├── tour.py          coach-mark tour (place()-based overlay)
@@ -313,7 +322,7 @@ try_first = ["s3_guess"]  # optional tip "Good to try first: ...", hidden once t
 gpio = true               # optional: card says "needs GPIO kit"
 camera = true             # optional: card says "needs camera"
 parts = [..]              # optional: shopping list, shown in the Wiring card
-curriculum = [..]         # "Strand: what students do" (Victorian Curriculum DT Levels 9-10), on the intro
+curriculum = [..]         # "Strand: what students do" (Victorian Curriculum DT Levels 9-10), in Settings > Curriculum
 stretch = [..]            # Level up challenges for experienced students, in the outro
 ```
 

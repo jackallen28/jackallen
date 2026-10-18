@@ -1251,15 +1251,7 @@ class LessonWorkspace(Workspace):
         rt.pack(fill="x")
         rt.render("**THE PLAN: STEP BY STEP**\nEach step has a checklist and builds on the one before, from the "
                   "first part to the finished project.\n" + steps_md)
-        links = self.project.get("curriculum") or []
-        if links:
-            box = card(v, padx=12, pady=10)
-            box.pack(fill="x", pady=(12, 0))
-            rt = RichText(box, bg=C["panel"], font="small")
-            rt.tag_configure("b", font="small_bold")
-            rt.pack(fill="x")
-            rt.render("**CURRICULUM LINKS**\n*Victorian Curriculum Digital Technologies, Levels 9 and 10*\n" +
-                      "\n".join(f"- {line}" for line in links))
+        # the curriculum links are in Settings > Curriculum
 
     def jump_to_challenge(self):
         """Advanced: start at the last step. The step before it's example answer goes in the editor when the

@@ -11,7 +11,7 @@ import tkinter as tk
 
 from .onboarding import Screen
 from .theme import C, TIER_COLOURS, blend
-from .widgets import CogButton, MenuBar, PButton, TitleBar, about_box, bevel, label
+from .widgets import CogButton, MenuBar, PButton, TitleBar, about_box, bevel, label, wheel_target
 
 CARD_MIN_WIDTH = 300
 PAD, GAP = 24, 14
@@ -80,13 +80,11 @@ class HomeScreen(Screen):
         sb.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.bind("<Configure>", self._resized)
-        self.canvas.bind("<Enter>", lambda e: self._wheel(True))
-        self.canvas.bind("<Leave>", lambda e: self._wheel(False))
+        wheel_target(self.canvas)
 
         self.set_filter(self.filter, save=False)
 
     def destroy(self):
-        self._wheel(False)
         if self._draw_job is not None:
             self.after_cancel(self._draw_job)
         super().destroy()
@@ -107,7 +105,6 @@ class HomeScreen(Screen):
             self._schedule_draw()
 
     def hide(self) -> None:
-        self._wheel(False)
         self.pack_forget()
 
     def settings_changed(self, what: str) -> None:
@@ -143,15 +140,6 @@ class HomeScreen(Screen):
     def _schedule_draw(self) -> None:
         if self._draw_job is None:
             self._draw_job = self.after_idle(self._draw)
-
-    def _wheel(self, on: bool) -> None:
-        if on:
-            self.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-3, "units"))
-            self.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(3, "units"))
-            self.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(-1 if e.delta > 0 else 1, "units"))
-        else:
-            for seq in ("<Button-4>", "<Button-5>", "<MouseWheel>"):
-                self.unbind_all(seq)
 
     def _draw(self) -> None:
         self._draw_job = None
