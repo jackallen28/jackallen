@@ -5,6 +5,7 @@
 Needs Pillow (on Raspberry Pi OS Desktop already). Writes, in data/brand/:
     logo_corner_44.png / logo_corner_66.png   wide version for the corner of every screen
     logo_full_200.png  / logo_full_300.png    the whole logo, for the welcome screen
+    icon_128.png                               the squares on a white tile: the menu / desktop icon
 The white background becomes transparent, so the logo sits on any colour.
 To use another school's logo, replace logo_original.png (same layout) and run this again.
 """
@@ -62,6 +63,13 @@ def main():
     for width in (200, 300):
         full.resize((width, round(full.height * width / full.width)), Image.LANCZOS).save(
             HERE / f"logo_full_{width}.png")
+    # the app icon: the squares on a white tile with a thin grey edge (Windows 95 style)
+    icon = Image.new("RGB", (128, 128), "white")
+    squares = mark.resize((112, 56), Image.LANCZOS)
+    icon.paste(squares, (8, 36))
+    edge = Image.new("RGB", (128, 128), "#808080")
+    edge.paste(icon.crop((2, 2, 126, 126)), (2, 2))
+    edge.save(HERE / "icon_128.png")
     print("written to", HERE)
 
 

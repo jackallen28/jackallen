@@ -23,12 +23,25 @@ Name=PiPath
 Comment=Learn Python, electronics and cameras step by step
 Exec=python3 \"$HERE/main.py\"
 Path=$HERE
-Icon=applications-development
+Icon=$HERE/data/brand/icon_128.png
 Terminal=false
 Categories=Development;Education;"
 
 mkdir -p "$HOME/.local/share/applications"
 echo "$ENTRY" > "$HOME/.local/share/applications/pipath.desktop"
+
+# "Update PiPath" in the menu: downloads the latest version (students' work is never touched)
+cat > "$HOME/.local/share/applications/pipath-update.desktop" <<EOF2
+[Desktop Entry]
+Type=Application
+Name=Update PiPath
+Comment=Download the latest PiPath (needs the internet)
+Exec=bash -c "bash '$HERE/tools/install_pipath.sh'; echo; read -r -p 'Press Enter to close this window. ' x"
+Path=$HERE
+Icon=$HERE/data/brand/icon_128.png
+Terminal=true
+Categories=Development;Education;
+EOF2
 
 if [ -d "$HOME/Desktop" ]; then
   echo "$ENTRY" > "$HOME/Desktop/pipath.desktop"
