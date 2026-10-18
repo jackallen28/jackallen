@@ -1,0 +1,703 @@
+# =====================================================================================
+#  PROGRAM CATALOG — the single place where every booking rule lives.
+#
+#  Generated from docs/program-booking-rules.md. Edit this file to change programs,
+#  rooms, equipment or combination rules, then run `npm run catalog:check` to validate
+#  it and print a readable summary. The server refuses to start if this file is invalid.
+#
+#  Items marked "ASSUMPTION" are judgement calls — see docs/OPEN-QUESTIONS.md (Q numbers).
+# =====================================================================================
+
+settings:
+  class_size: 25                       # students per class
+
+  # Bookable time blocks (local time). Add e.g. AM/PM half-day slots here if needed (Q4).
+  slots:
+    - { id: full, label: "Full day", start: "09:15", end: "14:45" }
+
+  staff_pool: { name: "STEAM Communicators", size: 4 }   # ASSUMPTION (Q1)
+
+  # When a pairing is explicitly allowed by an `only_runs_with` list (e.g. Creative
+  # TechStyles + Medical Emergency), let those two programs share rooms/equipment.
+  allowed_pairs_share_rooms: true      # ASSUMPTION (Q5)
+
+  # Semester date ranges. Each semester can list several ranges (one per year).
+  semesters:                           # ASSUMPTION — owner to confirm dates (Q2)
+    S1:
+      - { from: "2027-01-28", to: "2027-06-25" }
+    S2:
+      - { from: "2026-07-13", to: "2026-12-18" }
+      - { from: "2027-07-13", to: "2027-12-17" }
+
+  # Days nothing can be booked (weekends are always closed).
+  blackouts:                           # ASSUMPTION — example only, owner to supply real list (Q3)
+    - { date: "2026-11-03", reason: "Melbourne Cup Day (public holiday)" }
+
+# -------------------------------------------------------------------------------------
+# Resources. Rooms are exclusive (one program per room per slot). Equipment listed here
+# is shared, portable kit that can clash across rooms. Other equipment (laser cutter,
+# 3D printers, felt loom, ...) is assumed to stay in its room and is shown for info only (Q19).
+# -------------------------------------------------------------------------------------
+resources:
+  # rooms
+  - { id: drone-room,     name: "Drone Room",                     type: room }
+  - { id: pink-room,      name: "Pink Room",                      type: room }
+  - { id: blue-room,      name: "Blue Room",                      type: room }
+  - { id: fibre-hub,      name: "Fibre Hub",                      type: room }
+  - { id: builders-box,   name: "Builders Box",                   type: room }
+  - { id: design-hub,     name: "Design Hub",                     type: room }
+  - { id: systems-lab,    name: "Systems Lab",                    type: room }
+  - { id: podcast-studio, name: "Podcast Studio",                 type: room }
+  - { id: ce-sim-lab,     name: "CE Simulation Lab",              type: room }
+  - { id: media-room,     name: "Media / Green Screen Room",      type: room }
+  - { id: igloo,          name: "DS Igloo",                       type: room }
+  # shared equipment (tracked)
+  - { id: vr-headsets,    name: "VR Headsets",                    type: equipment }
+  - { id: drones,         name: "Drones",                         type: equipment }
+  - { id: dobots,         name: "Dobots",                         type: equipment }
+  - { id: podcasting-kits, name: "Podcasting Kits",               type: equipment }
+
+categories:
+  - { id: tech-samplers,  name: "Tech Samplers" }
+  - { id: tech-in-action, name: "Tech in Action" }
+  - { id: extension,      name: "Extension Programs" }
+
+# -------------------------------------------------------------------------------------
+# Programs
+#
+#   requires:        one line per requirement. A line with several ids means "any one of".
+#                    e.g. [pink-room, blue-room] = Pink Room OR Blue Room.
+#   cannot_run_with: programs that may never run in the same slot (applied both ways).
+#   only_runs_with:  if set, this program may ONLY run alongside the programs listed.
+#   equipment, software, rotation, notes: display / staff information only.
+#   bookings_service_id: the matching Microsoft Bookings service (fill in using
+#                    `npm run graph:check` — only needed for SYNC_MODE=graph).
+# -------------------------------------------------------------------------------------
+programs:
+
+  # ===================================================================== TECH SAMPLERS
+  # "2 STEAM Comms per booking", class size 25.
+
+  - id: medical-emergency
+    name: "Medical Emergency"
+    category: tech-samplers
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2                  # doc's Staff column says "All" (Q8)
+    requires:
+      - [drone-room]
+      - [pink-room]
+      - [drones]
+      - [dobots]
+    cannot_run_with: [clean-energy]    # "ME cannot run with CE"
+    only_runs_with: null
+    rotation: flexible
+    equipment: ["Drones", "Dobots", "Micro:bits"]
+    software: ["Block coding", "MakeCode"]
+    notes:
+      - "Dobots can't go upstairs"
+      - "Drones must be upstairs"
+      - "Micro:bits flexible"
+      - "Staff column in rules doc says: All"
+    bookings_service_id: null
+
+  - id: creative-techstyles
+    name: "Creative TechStyles"
+    category: tech-samplers
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:                          # ASSUMPTION: all five rooms needed (Q13)
+      - [fibre-hub]
+      - [pink-room]
+      - [builders-box]
+      - [design-hub]
+      - [systems-lab]
+    cannot_run_with: []
+    only_runs_with: [medical-emergency, clean-energy]   # "Can run with ME, CE but no others"
+    rotation: fixed-order
+    equipment: ["Felt loom", "Laser cutter", "3D printers"]
+    software: ["Fusion (Design Hub)"]
+    notes:
+      - "Rotations must be in order 1, 2, 3"
+      - "Must be in Fibre Hub"
+    bookings_service_id: null
+
+  - id: wearable-tech-designer
+    name: "Wearable Tech Designer"
+    category: tech-samplers
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [fibre-hub]
+      - [pink-room]                    # "Pink Room – Felt loom" (Q15)
+    cannot_run_with: []
+    only_runs_with: [medical-emergency, clean-energy]   # "Can run with ME, CE but no others"
+    rotation: fixed-order
+    equipment: ["Micro:bits", "e-Textiles (conductive thread, micro LEDs)", "Fabric waste", "Sewing machines", "Felt loom (Pink Room)"]
+    software: ["MakeCode"]
+    notes:
+      - "Rotations must be in order 1, 2, 3"
+    bookings_service_id: null
+
+  - id: hype-machine
+    name: "Hype Machine"
+    category: tech-samplers
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:                          # ASSUMPTION: all four rooms needed (Q14)
+      - [fibre-hub]
+      - [builders-box]
+      - [podcast-studio]
+      - [pink-room]
+    cannot_run_with: []
+    only_runs_with: [medical-emergency, clean-energy]   # "Can run with ME, CE but no others"
+    rotation: flexible
+    equipment: ["Sublimation printer", "Heat press", "Vinyl printer", "Podcasting deck", "DJI cameras", "Apparel (t-shirts, mugs, hats, bandanas)"]
+    software: ["Ai", "Audacity", "Pp"]
+    notes:
+      - "Rotations: App design, Film promo, Radio ad, 2D"
+      - "Might need a general intro to allow rotation flexibility"
+    bookings_service_id: null
+
+  # Semester 2
+  - id: clean-energy
+    name: "Clean Energy"
+    category: tech-samplers
+    semesters: [S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [drone-room]
+      - [ce-sim-lab]
+      - [drones]
+      - [vr-headsets]
+    cannot_run_with: [medical-emergency]   # "ME cannot run with CE"
+    only_runs_with: null
+    rotation: flexible
+    equipment: ["Drones", "STELR Kits", "VR Headsets"]
+    software: ["Anywhereville"]
+    notes:
+      - "STELR kits built ready to use"
+    bookings_service_id: null
+
+  # ==================================================================== TECH IN ACTION
+  # All year unless marked Semester 2. Staff not stated in the doc → 2 (Q7).
+
+  - id: 2d-flat-pack-furniture
+    name: "2D: Parametric Flat-pack Furniture"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [builders-box]
+      - [design-hub]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Clamps", "Glue", "Laser cutter"]
+    software: ["Ai / Procreate"]
+    notes: []
+    bookings_service_id: null
+
+  - id: 2d-merch-lab
+    name: "2D: Merch Lab"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [fibre-hub]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Sublimation printer", "Heat press", "DTG printer", "Vinyl printer"]
+    software: ["Ai / Procreate"]
+    notes: []
+    bookings_service_id: null
+
+  - id: 2d-glow-up
+    name: "2D: Glow Up"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 2                     # doc: "1 or 2 classes" (Q25)
+    staff_required: 2
+    requires:
+      - [pink-room, blue-room]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Laser cutter", "LEDs", "Bases", "Acrylic"]
+    software: ["Ai / Procreate"]
+    notes:
+      - "Need to gauge time to determine student numbers; need to know design parameters (size)"
+      - "Bases could already have LEDs, may make bases"
+    bookings_service_id: null
+
+  - id: 2d-wearable-worlds
+    name: "2D: Wearable Worlds"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [design-hub]
+      - [builders-box]
+      - [vr-headsets]                  # "VR Headsets (CE Simulation Lab)" (Q18)
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Laser cutter", "VR Headsets (kept in CE Simulation Lab)"]
+    software: ["Ai / Procreate"]
+    notes:
+      - "Wearable costume piece – do we need Fibre Hub?"
+      - "Elements that attach to costume, hand-held item (sword, lance)"
+    bookings_service_id: null
+
+  - id: 3d-smart-tags
+    name: "3D: Smart Tags"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [systems-lab]
+      - [blue-room, design-hub]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers", "NFC tags"]
+    software: ["Fusion", "NFC software"]
+    notes:
+      - "Check that Z Books can cope"
+    bookings_service_id: null
+
+  - id: 3d-hot-cup-challenge
+    name: "3D: Hot Cup Challenge"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [systems-lab]
+      - [blue-room, design-hub]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers", "Cups (paper, mugs, plastic)"]
+    software: ["Fusion"]
+    notes:
+      - "Check that Z Books can cope"
+    bookings_service_id: null
+
+  - id: 3d-tiny-houses
+    name: "3D: Tiny Houses & Sustainable Footprints"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [systems-lab]
+      - [blue-room, design-hub]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers", "Laser cutter"]
+    software: ["Fusion", "Ai"]
+    notes:
+      - "Check that Z Books can cope"
+    bookings_service_id: null
+
+  - id: 3d-worlds-in-blender
+    name: "3D: 3D Worlds in Blender"
+    category: tech-in-action
+    semesters: [S2]                    # "(SEM 2)"
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [design-hub]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: []
+    software: ["Blender"]
+    notes:
+      - "Leads: Jordan, Edward"
+    bookings_service_id: null
+
+  - id: mff-circular-fashion
+    name: "MFF: Circular Fashion"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [fibre-hub]
+      - [pink-room]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Fabric", "Felt loom", "Laser cutter", "Sublimation"]
+    software: ["Ai"]
+    notes: []
+    bookings_service_id: null
+
+  - id: mff-reimagine-waste
+    name: "MFF: Reimagine Waste"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [fibre-hub]
+      - [pink-room]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Fabric", "Felt loom", "Laser cutter", "Sublimation", "DTG"]
+    software: ["Ai"]
+    notes: []
+    bookings_service_id: null
+
+  - id: mff-cultural-connections
+    name: "MFF: Cultural Connections"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [fibre-hub]
+      - [pink-room]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Fabric", "Felt loom", "Laser cutter", "Sublimation", "Beading", "DTG"]
+    software: ["Ai"]
+    notes: []
+    bookings_service_id: null
+
+  - id: media-hollywood-effects
+    name: "Media: Hollywood Effects"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [media-room]
+      - [design-hub]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["DJIs?", "Microphones", "DSLRs", "Green screen"]
+    software: ["Ae", "Pr"]
+    notes:
+      - "Media / green screen room is upstairs"
+    bookings_service_id: null
+
+  - id: media-filmmakers-studio
+    name: "Media: Filmmakers Studio"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [media-room]
+      - [design-hub]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["DJIs?", "Microphones", "DSLRs", "Green screen", "Lighting"]
+    software: ["Pr"]
+    notes:
+      - "Media / green screen room is upstairs"
+    bookings_service_id: null
+
+  - id: media-virtual-worlds
+    name: "Media: Virtual Worlds"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [design-hub]
+      - [vr-headsets]                  # "VR Headsets upstairs" (Q24)
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["VR Headsets"]
+    software: ["Unity"]
+    notes:
+      - "Game design"
+      - "VR headsets used upstairs"
+    bookings_service_id: null
+
+  - id: media-podcast-production
+    name: "Media: Podcast Production"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [pink-room]
+      - [podcast-studio]
+      - [podcasting-kits]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Podcasting kits"]
+    software: ["Audacity"]
+    notes:
+      - "Post-production editing"
+      - "If 2 classes, must have 2nd space for recording (not yet enforced — Q17)"
+      - "App design"
+    bookings_service_id: null
+
+  - id: media-exquisite-animation
+    name: "Media: Exquisite Animation"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [igloo]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Igloo to show?"]
+    software: ["Toon Boom"]
+    notes: []
+    bookings_service_id: null
+
+  - id: ra-smart-spaces
+    name: "R&A: Smart Spaces"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 3                     # doc: "2-3 classes" (Q26)
+    staff_required: 2
+    requires:
+      - [pink-room, blue-room]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Micro:bits", "Grove kits (sensors, motors)", "Houses"]
+    software: ["MakeCode"]
+    notes:
+      - "Prefabricate houses to automate (lights come on, door opens or shuts)"
+    bookings_service_id: null
+
+  - id: ra-robot-lab
+    name: "R&A: Robot Lab"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [pink-room, blue-room]
+      - [dobots]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Houses", "Dobots"]
+    software: ["Dobot Lab", "Dobot Link"]
+    notes:
+      - "Prefab housing kits built/made ready to put together"
+    bookings_service_id: null
+
+  - id: ra-smart-devices
+    name: "R&A: Smart Devices"
+    category: tech-in-action
+    semesters: [S1, S2]
+    max_classes: 3                     # doc: "2-3 classes" (Q26)
+    staff_required: 2
+    requires:
+      - [pink-room, blue-room]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Circuit Playground", "Micro:bits", "LEDs", "Grove kits"]
+    software: []
+    notes:
+      - "Prefab items to open, close, put together"
+    bookings_service_id: null
+
+  # Semester 2
+  - id: ce-anywhereville-vr
+    name: "CE: Anywhereville VR"
+    category: tech-in-action
+    semesters: [S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [ce-sim-lab]
+      - [vr-headsets]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["VR Headsets", "STELR Kits"]
+    software: ["Anywhereville app/game"]
+    notes:
+      - "STELR Kits ready to use"
+    bookings_service_id: null
+
+  - id: ce-gridlock
+    name: "CE: Gridlock"
+    category: tech-in-action
+    semesters: [S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [ce-sim-lab]
+      - [vr-headsets]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["VR Headsets"]
+    software: ["Anywhereville app/game"]
+    notes:
+      - "VR Energy challenge – Systems Engineering"
+    bookings_service_id: null
+
+  - id: ce-drones
+    name: "CE: Drones"
+    category: tech-in-action
+    semesters: [S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [drone-room]
+      - [ce-sim-lab]
+      - [drones]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Drones"]
+    software: []
+    notes: []
+    bookings_service_id: null
+
+  # ================================================================ EXTENSION PROGRAMS
+  # Staff not stated in the doc → 2 (Q7).
+
+  - id: intro-entrepreneurship
+    name: "Introduction to Entrepreneurship"
+    category: extension
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [pink-room, blue-room]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: []
+    software: []
+    notes: []
+    bookings_service_id: null
+
+  - id: steamcode-arcade
+    name: "STEAMCode Arcade"
+    category: extension
+    semesters: [S1, S2]
+    max_classes: 3
+    staff_required: 2
+    requires:
+      - [pink-room]
+      - [blue-room]
+      - [design-hub]
+      - [builders-box]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Laser cutter", "Micro:bits", "LEDs", "Buttons", "Acrylic pens"]
+    software: ["MakeCode Arcade (game)", "Adafruit (buttons)", "Ai (console)"]
+    notes:
+      - "Need 3D printed buttons"
+      - "Games can focus on science, education, etc – teachers can choose?"
+    bookings_service_id: null
+
+  - id: mindful-mobility
+    name: "Mindful Mobility"
+    category: extension
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [blue-room]
+      - [systems-lab]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers", "Laser cutter"]
+    software: []
+    notes: []
+    bookings_service_id: null
+
+  - id: biodiverse-cities
+    name: "Biodiverse Cities"
+    category: extension
+    semesters: [S1, S2]
+    max_classes: 2
+    staff_required: 2
+    requires:
+      - [pink-room, blue-room]
+      - [podcast-studio]               # listed under Equipment in the doc (Q16)
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Podcasting studio", "Smart phones (run app)"]
+    software: ["Figma", "Ai", "Audacity"]
+    notes: []
+    bookings_service_id: null
+
+  # Semester 2
+  - id: 3d-medical-aids
+    name: "3D: Medical Aids – Design for Everyone"
+    category: extension
+    semesters: [S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [blue-room]
+      - [systems-lab]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers"]
+    software: ["Fusion"]
+    notes: []
+    bookings_service_id: null
+
+  - id: ra-escape-room
+    name: "R&A: Escape Room"
+    category: extension
+    semesters: [S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [design-hub]
+      - [igloo]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["Arduinos", "Servo motors", "Sensors", "LCD screens"]
+    software: ["Fusion", "MakeCode"]
+    notes:
+      - "Split class into 2 halves as minimum"
+    bookings_service_id: null
+
+  - id: 2d-made-to-last
+    name: "2D: Made to Last"
+    category: extension
+    semesters: [S2]
+    max_classes: 1
+    staff_required: 2
+    requires:
+      - [fibre-hub]
+      - [design-hub]
+      - [pink-room]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers", "Laser cutter", "Felt loom"]
+    software: ["Ai", "Fusion"]
+    notes: []
+    bookings_service_id: null
+
+  - id: 3d-project-mars
+    name: "3D: Project Mars Challenge"
+    category: extension
+    semesters: [S2]
+    max_classes: 1                     # blank in doc → 1 (Q27)
+    staff_required: 2
+    requires:
+      - [design-hub]
+      - [blue-room]
+      - [systems-lab]
+    cannot_run_with: []
+    only_runs_with: null
+    equipment: ["3D printers", "Laser cutter"]
+    software: ["Ai", "Fusion"]
+    notes: []
+    bookings_service_id: null
+
+  # "CE: ??" (Extension, Semester 2) — skipped: no details in the rules doc (Q30).
