@@ -17,6 +17,7 @@ BRANCH="${PIPATH_BRANCH:-BNTS_PiPath}"
 DIR="${PIPATH_DIR:-$HOME/pipath}"
 GIT_URL="https://github.com/$REPO.git"
 ZIP_URL="https://github.com/$REPO/archive/refs/heads/$BRANCH.zip"
+export GIT_TERMINAL_PROMPT=0          # never stop to ask for a GitHub login
 
 say()  { printf '\n\033[1;36m%s\033[0m\n' "$*"; }
 fail() {

@@ -148,7 +148,8 @@ repo root
 ├── main.py                  entry point (checks Python ≥ 3.11)
 ├── CLAUDE.md                this file
 ├── README.md                teacher setup guide
-├── install.sh               installs menu + desktop shortcut on a Pi
+├── install.sh               installs menu + desktop shortcut (+ Update PiPath) on a Pi
+├── Install-PiPath.desktop   double-click installer: downloads + runs tools/install_pipath.sh
 ├── docs/pi-test-checklist.md  hardware test plan for a real Pi + breadboard + camera
 ├── docs/perf.md             what keeps PiPath quick on a Pi 3B, before/after timings, how to measure
 ├── data/
@@ -168,7 +169,8 @@ repo root
 │       └── c1_photobooth, c2_teachable          Camera & AI
 │   ├── demo_files/p3/party/1.wav..6.wav  Dice DJ sounds (copied to the student's folder)
 │   └── brand/               the school logo: original + corner / full sizes (RGBA PNG)
-├── tools/make_logo_assets.py, make_party_sounds.py   remake the brand images / Dice DJ sounds
+├── tools/make_logo_assets.py, make_party_sounds.py   remake the brand images (+ icon) / Dice DJ sounds
+├── tools/install_pipath.sh  the installer / updater (download, install.sh, open PiPath)
 ├── pipath/
 │   ├── app.py               main window, routing, activity states, wipe session
 │   ├── content.py           loads config / catalogue / lessons / errors
@@ -587,11 +589,18 @@ stick (`/media/*/PiPath-lessons/*.toml`) after validating them; a lesson lint co
 
 ## 10. Deployment
 
-- `install.sh`: adds a menu entry (Programming → PiPath) and a desktop icon; optional `--autostart`;
-  pre-compiles the Python files (`compileall`) so the first start is quicker.
+- **Double-click installer** `Install-PiPath.desktop` (repo root): a launcher that downloads and runs
+  `tools/install_pipath.sh` from the `BNTS_PiPath` branch in a terminal window. The script installs
+  or updates `~/pipath` (git fetch + checkout of the branch, local edits stashed; or a fresh shallow
+  clone; or, without git, the branch zip swapped in), runs `install.sh`, then opens PiPath. It never
+  touches `~/PiPath` (student work) and never asks for a GitHub login. `PIPATH_REPO`,
+  `PIPATH_BRANCH`, `PIPATH_DIR` override; `PIPATH_NO_LAUNCH=1` skips opening the app.
+- `install.sh`: adds a menu entry (Programming → PiPath, with the school icon `data/brand/icon_128.png`),
+  **Update PiPath** (runs the installer script in a terminal) and a desktop icon; optional
+  `--autostart`; pre-compiles the Python files (`compileall`) so the first start is quicker.
 - Classroom roll-out: set up one Pi fully, then clone the SD card (Raspberry Pi
   **SD Card Copier** or Imager) for the class set.
-- Updates: `git pull`, or copy a new `data/` folder from USB. Student work in `~/PiPath`
+- Updates: menu → Update PiPath (or `git pull`), or copy a new `data/` folder from USB. Student work in `~/PiPath`
   is never touched by updates.
 - Pi OS Desktop already has `python3-tk`, `python3-gpiozero`, `python3-lgpio`,
   `python3-picamera2`. On Lite images:

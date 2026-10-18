@@ -25,21 +25,32 @@ switch to **Real Pi** and run the same code on their breadboard. In Real Pi mode
 
 ## Quick start (on the Pi)
 
+**Double-click installer:** on the Pi, open
+`https://raw.githubusercontent.com/jackallen28/jackallen/BNTS_PiPath/Install-PiPath.desktop` in the
+browser and save it (right-click > Save as, or Ctrl+S), then double-click **Install-PiPath.desktop**
+in Downloads. If asked, choose **Execute** (or **Execute in Terminal**). A window shows the progress:
+it downloads the latest PiPath into `~/pipath`, adds **PiPath** (and **Update PiPath**) to the menu
+under Programming and an icon to the desktop, then opens PiPath. Run it again (or use
+**Update PiPath**) to update; students' work in `~/PiPath` is never touched.
+
+Or in a Terminal (the same installer):
+
+```
+curl -fsSL https://raw.githubusercontent.com/jackallen28/jackallen/BNTS_PiPath/tools/install_pipath.sh | bash
+```
+
+Or by hand:
+
 ```
 git clone --depth 1 -b BNTS_PiPath https://github.com/jackallen28/jackallen.git ~/pipath
 cd ~/pipath
+./install.sh                 # menu entry + desktop icon; ./install.sh --autostart also opens it at login
 python3 main.py              # add --scale 1.25 for larger text
 ```
 
 No internet on the Pi? Download
 `https://github.com/jackallen28/jackallen/archive/refs/heads/BNTS_PiPath.zip`
-on another computer, copy it over on a USB stick and unzip it.
-
-Install a menu entry and desktop icon:
-
-```
-./install.sh                 # or: ./install.sh --autostart   (opens PiPath at login)
-```
+on another computer, copy it over on a USB stick, unzip it and run `./install.sh` in that folder.
 
 Needs Raspberry Pi OS Desktop (Bookworm or newer, Python 3.11+). Tkinter, gpiozero, lgpio and
 Picamera2 are already installed on the Desktop image. PiPath also runs on any Linux computer
