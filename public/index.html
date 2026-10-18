@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Programs</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="/"><span class="brand-logo" aria-hidden="true"></span><span data-site-name>Program Bookings</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <a href="/" aria-current="page">Programs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <h1>Book a program for your class</h1>
+      <p>Choose a program, pick a date that suits you and book in a couple of minutes.
+        The calendar only shows dates when the rooms, equipment and staff for that program are free.</p>
+    </section>
+
+    <section class="filters" aria-label="Filter programs">
+      <fieldset class="filter-group" id="filter-category">
+        <legend>Program type</legend>
+      </fieldset>
+      <fieldset class="filter-group" id="filter-semester">
+        <legend>Semester</legend>
+      </fieldset>
+      <fieldset class="filter-group" id="filter-classes">
+        <legend>Classes you're bringing</legend>
+      </fieldset>
+    </section>
+
+    <p id="result-count" class="muted" aria-live="polite"></p>
+    <div id="programs"><p class="muted">Loading programs…</p></div>
+  </main>
+
+  <footer class="site-footer">
+    <a href="/admin">Staff login</a>
+  </footer>
+
+  <script type="module" src="/js/programs.js"></script>
+</body>
+</html>

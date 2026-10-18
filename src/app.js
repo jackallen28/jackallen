@@ -1,8 +1,12 @@
 // Builds the Express app. Kept separate from server.js so tests can create an app
 // without opening a network port.
 
+import path from 'node:path';
 import express from 'express';
+import { ROOT_DIR } from './config.js';
 import { apiRoutes } from './routes/api.js';
+
+const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
 export function createApp(ctx) {
   const app = express();
@@ -20,6 +24,18 @@ export function createApp(ctx) {
 
   // Unknown API paths → JSON 404 (pages get the normal 404).
   app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
+  // ---- public pages ----------------------------------------------------------------
+  const page = (file) => (req, res) => res.sendFile(path.join(PUBLIC_DIR, file));
+  app.get('/program/:id', page('program.html'));
+  app.get('/manage/:token', (req, res) => {
+    res.set('Referrer-Policy', 'no-referrer'); // don't leak the private link to other sites
+    page('manage.html')(req, res);
+  });
+
+  // FullCalendar is served from node_modules, so the site works offline at demos (no CDN).
+  app.use('/vendor/fullcalendar', express.static(path.join(ROOT_DIR, 'node_modules/fullcalendar')));
+  app.use(express.static(PUBLIC_DIR, { index: 'index.html' }));
 
   // Last-resort error handler: log it, show a friendly message.
   app.use((err, req, res, next) => {
