@@ -54,15 +54,18 @@ def click(widget, text):
     button.command()
 
 
-def check_wheel(app, canvas, *events):
-    """The wheel scrolls the area under the mouse, even over a card or text inside it."""
-    x, y = canvas.winfo_rootx() + 40, canvas.winfo_rooty() + 120
-    under = app.winfo_containing(x, y)
+def check_wheel(app, canvas, over, *events, moves=True):
+    """Scroll like a web page: with the mouse over `over` (anywhere on the screen), the wheel moves
+    `canvas` (or, moves=False, leaves it alone: the editor scrolls itself)."""
+    x, y = over.winfo_rootx() + 20, over.winfo_rooty() + 20
+    app.event_generate("<Motion>", warp=True, x=x - app.winfo_rootx(), y=y - app.winfo_rooty())
+    app.update()
     for seq, kw in events:
         before = canvas.yview()[0]
-        under.event_generate(seq, x=5, y=5, rootx=x, rooty=y, **kw)
+        over.event_generate(seq, x=5, y=5, rootx=x, rooty=y, **kw)
         app.update()
-        assert canvas.yview()[0] != before, f"{seq} {kw} didn't scroll"
+        moved = canvas.yview()[0] != before
+        assert moved == moves, f"{seq} {kw} over {over.winfo_class()}: moved={moved}"
     canvas.yview_moveto(0)
 
 
@@ -285,11 +288,17 @@ def scenes(app):
         ("68_done", lambda: (stop(), app.show("home"))),
         ("68b_curriculum_in_lesson", lambda: (open_lesson("e5_parking")(), app.open_settings("curriculum"))),
         ("68d_wheel", lambda: (app.close_settings(), app.show("home"), app.update(),
-                               check_wheel(app, app.screen.canvas, ("<Button-5>", {}), ("<MouseWheel>", {"delta": -3}),
-                                           ("<MouseWheel>", {"delta": 120})),
+                               check_wheel(app, app.screen.canvas, app.screen.canvas, ("<Button-5>", {}),
+                                           ("<MouseWheel>", {"delta": -3}), ("<MouseWheel>", {"delta": 120})),
+                               check_wheel(app, app.screen.canvas, app.screen.hello, ("<Button-5>", {}),
+                                           ("<MouseWheel>", {"delta": -3})),
                                open_lesson("a1_traffic")(), app.update(),
-                               check_wheel(app, app.screen.guide.canvas, ("<Button-5>", {}),
-                                           ("<MouseWheel>", {"delta": -2})))),
+                               check_wheel(app, app.screen.guide.canvas, app.screen.guide.body.winfo_children()[0],
+                                           ("<Button-5>", {}), ("<MouseWheel>", {"delta": -2})),
+                               check_wheel(app, app.screen.guide.canvas, app.screen.board,
+                                           ("<Button-5>", {}), ("<MouseWheel>", {"delta": -2})),
+                               check_wheel(app, app.screen.guide.canvas, app.screen.editor.text,
+                                           ("<Button-5>", {}), moves=False))),
         ("68c_curriculum_home", lambda: (app.close_settings(), app.show("home"), app.open_settings("curriculum"))),
         ("69_save_data", lambda: app.open_settings("data")),
         ("70_save_copy", lambda: (click(app._settings, "Save a copy"), check_copy())),

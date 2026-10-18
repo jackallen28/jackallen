@@ -43,10 +43,13 @@ errors (`data/errors.toml`) and per-step hints written by the teacher. (The *Tea
 Machine* activity is machine learning the students write themselves: a nearest-neighbour
 classifier over tiny greyscale grids. No model, library or internet.)
 
-**Mouse wheel / trackpad:** one app-wide handler (`widgets.install_wheel`) scrolls the area under
-the mouse (Canvases marked with `widgets.wheel_target`: the activity picker and every ScrollFrame),
-for Linux Button-4/5, macOS small `<MouseWheel>` deltas and Windows ±120 notches. The editor and
-Output scroll themselves. Don't add per-widget Enter/Leave wheel bindings.
+**Mouse wheel / trackpad:** scrolls like a web page. One app-wide handler (`widgets.install_wheel`)
+looks under the mouse pointer for a Canvas marked with `widgets.wheel_target` (the activity picker,
+every ScrollFrame); anywhere else (toolbar, board, titles) it scrolls the screen's `wheel_default`
+(the cards, the instructions panel, the welcome list). The editor, Output and lists scroll themselves;
+nothing behind an open Settings dialog scrolls. Handles Linux Button-4/5, Tk 8.6 macOS small
+`<MouseWheel>` deltas, 120-per-notch deltas (Windows, Tk 9) and Tk 9's `<TouchpadScroll>` (newer Python
+on a Mac). Don't add per-widget Enter/Leave wheel bindings.
 
 **About box** (Help > About): developed by BNTS and reviewed by teachers, not hosted on AI, runs
 locally on the Pi, aims to open up Python to every student by adapting to their needs.

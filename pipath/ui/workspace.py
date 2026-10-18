@@ -1101,6 +1101,7 @@ class LessonWorkspace(Workspace):
     # ---------------------------------------------------------------- left panel
     def _build_left(self):
         self.guide = ScrollFrame(self.left, bg=C["bg"])
+        self.wheel_default = self.guide.canvas    # the wheel scrolls the instructions wherever the mouse is
         self.guide.pack(fill="both", expand=True)
         self.g = tk.Frame(self.guide.body, bg=C["bg"], padx=18, pady=14)
         self.g.pack(fill="both", expand=True)
@@ -1858,6 +1859,7 @@ class FreePlayWorkspace(Workspace):
         self.adapter = Adapter(app.student.help_level, None, enabled=self.help_mode == "guided", context="free")
 
         sf = self.guide = ScrollFrame(self.left, bg=C["bg"])
+        self.wheel_default = sf.canvas
         sf.pack(fill="both", expand=True)
         g = tk.Frame(sf.body, bg=C["bg"], padx=16, pady=14)
         g.pack(fill="both", expand=True)

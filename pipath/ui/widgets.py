@@ -576,31 +576,64 @@ def wheel_target(canvas: tk.Canvas, step: int = 20) -> None:
 
 
 def install_wheel(root: tk.Misc) -> None:
-    def scroll(e, units: int) -> None:
-        if not units:
-            return
+    """Scroll like a web page: the panel under the mouse scrolls, and anywhere else on the screen
+    (the toolbar, the board, a title) scrolls the screen's main panel (its `wheel_default` Canvas)."""
+    def target_at(x: int, y: int):
         try:
-            w = root.winfo_containing(e.x_root, e.y_root)
+            w = root.winfo_containing(x, y)
         except (KeyError, tk.TclError):
-            return
+            w = None
         while w is not None:
             if isinstance(w, tk.Listbox) or (isinstance(w, tk.Text) and not isinstance(w, RichText)):
-                return                  # the editor and the Output scroll themselves
-            target = getattr(w, "wheel_scroll", None)
-            if target is not None:
-                target(units)
-                return
+                return None             # the editor, the Output and lists scroll themselves
+            if getattr(w, "wheel_scroll", None) is not None:
+                return w
             w = w.master
+        settings = getattr(root, "_settings", None)
+        if settings is not None and settings.winfo_exists():
+            return None                 # Settings is open: leave the screen behind it alone
+        screen = getattr(root, "screen", None)
+        default = getattr(screen, "wheel_default", None)
+        return default if default is not None and default.winfo_ismapped() else None
+
+    def scroll(units: int) -> None:
+        if units:
+            x, y = root.winfo_pointerxy()
+            w = target_at(x, y)
+            if w is not None:
+                w.wheel_scroll(units)
+
+    notches = [0.0]
 
     def mousewheel(e) -> None:
         if e.state & 0x1:               # Shift + wheel is sideways: not for these panels
             return
         d = e.delta
-        scroll(e, -round(d / 120 * 3) if abs(d) >= 120 else -d)
+        if tk.TkVersion >= 9 or abs(d) >= 120:      # 120 per notch (Tk 9, Windows), maybe in smaller bits
+            notches[0] -= d / 40                    # a notch = 3 units
+            units = int(notches[0])
+            notches[0] -= units
+            scroll(units)
+        else:
+            scroll(-d)                  # Tk 8.6 on a Mac: small whole steps, many per swipe
 
-    root.bind_all("<Button-4>", lambda e: scroll(e, -3), add="+")
-    root.bind_all("<Button-5>", lambda e: scroll(e, 3), add="+")
+    pixels = [0.0]
+
+    def touchpad(e) -> None:            # Tk 9 (newer Python on a Mac): trackpad swipes, in pixels
+        dy = e.delta & 0xFFFF
+        dy = dy - 0x10000 if dy >= 0x8000 else dy
+        pixels[0] -= dy
+        units = int(pixels[0] / 20)     # a unit is 20 px (wheel_target's step)
+        pixels[0] -= units * 20
+        scroll(units)
+
+    root.bind_all("<Button-4>", lambda e: scroll(-3), add="+")
+    root.bind_all("<Button-5>", lambda e: scroll(3), add="+")
     root.bind_all("<MouseWheel>", mousewheel, add="+")
+    try:
+        root.bind_all("<TouchpadScroll>", touchpad, add="+")
+    except tk.TclError:
+        pass                            # Tk 8.6 (Raspberry Pi OS): trackpads send <MouseWheel>
 
 
 class ScrollFrame(tk.Frame):

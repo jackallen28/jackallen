@@ -81,6 +81,7 @@ class HomeScreen(Screen):
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.bind("<Configure>", self._resized)
         wheel_target(self.canvas)
+        self.wheel_default = self.canvas          # the wheel scrolls the cards wherever the mouse is
 
         self.set_filter(self.filter, save=False)
 

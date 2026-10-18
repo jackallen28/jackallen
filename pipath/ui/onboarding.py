@@ -70,6 +70,7 @@ class WelcomeScreen(Screen):
             well = tk.Frame(body, bg="#FFFFFF", relief="sunken", bd=2)
             well.pack(fill="x", pady=(8, 0))
             self.list = ScrollFrame(well, bg="#FFFFFF")
+            self.wheel_default = self.list.canvas
             self.list.canvas.configure(height=min(5, len(self.students)) * 46, width=470)
             self.list.pack(fill="x")
             self._fill()
