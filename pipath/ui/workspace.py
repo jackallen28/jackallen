@@ -15,6 +15,7 @@ from ..gpio import (CAMERA_KINDS, HAT_FIX, SHIM, SIM_ENV, expand_events, guess_c
 from ..hints import (CheckResult, Diagnosis, ErrorInfo, code_features, evaluate_checks, gpio_lint,
                      parse_traceback, precheck)
 from ..levels import INFO as LEVEL_INFO, LEVELS, can_skip, goal_text, hint_rules, offer_tour
+from ..adapt import Adapter
 from ..review import review
 from ..runner import Runner
 from .board import VirtualBoard
@@ -86,6 +87,15 @@ class CoachCard(tk.Frame):
         self.title.pack(anchor="w", pady=(2, 4))
         self.body = RichText(self.inner)
         self.body.pack(fill="x")
+        # a nudge or a suggestion from the adaptive coach: a yellow note with buttons
+        self.offer_box = tk.Frame(self.inner, bg=C["tooltip"], relief="solid", bd=1, padx=10, pady=8)
+        self.offer_title = label(self.offer_box, "", font="ui_bold", bg=C["tooltip"])
+        self.offer_title.pack(anchor="w")
+        self.offer_text = RichText(self.offer_box, bg=C["tooltip"], font="small")
+        self.offer_text.pack(fill="x", pady=(2, 6))
+        self.offer_row = tk.Frame(self.offer_box, bg=C["tooltip"])
+        self.offer_row.pack(anchor="w")
+        self.offer_kind = None
         self.where = tk.Frame(self.inner)
         self.hint_box = tk.Frame(self.inner)
         self.hint_box.pack(fill="x", pady=(8, 0))
@@ -113,6 +123,24 @@ class CoachCard(tk.Frame):
         self.title.configure(text=title.replace("`", ""))
         self.body.render(text)
         self.where.pack_forget()
+        self.clear_offer()
+
+    def offer(self, o, on_action) -> None:
+        """Show a nudge ("Need a hand?") or a level suggestion, with its buttons."""
+        self.offer_kind = o.kind
+        self.offer_title.configure(text=("▸ " if o.kind == "nudge" else "★ ") + o.title)
+        self.offer_text.render(o.text)
+        for w in self.offer_row.winfo_children():
+            w.destroy()
+        for text, action in o.actions:
+            PButton(self.offer_row, text, lambda a=action: on_action(a),
+                    kind="primary" if action != "dismiss" and not self.offer_row.winfo_children() else "secondary",
+                    font="small_bold", padx=8, pady=2).pack(side="left", padx=(0, 6))
+        self.offer_box.pack(fill="x", pady=(8, 0), after=self.body)
+
+    def clear_offer(self) -> None:
+        self.offer_kind = None
+        self.offer_box.pack_forget()
 
     def idle(self, text: str | None = None):
         self._set("idle", "I'm here to help",
@@ -487,6 +515,8 @@ class Workspace(Screen):
         raise NotImplementedError
 
     def _changed(self):
+        if getattr(self, "adapter", None) is not None:
+            self.adapter.on_edit(time.monotonic())
         if self._save_job is None:
             self.save_lbl.configure(text="Editing…")
         else:
@@ -978,6 +1008,9 @@ class LessonWorkspace(Workspace):
         self.step_runs = 0
         self.hint_ctx = None
         self.revealed: dict = dict(self.lp.get("hints_seen") or {})    # hints opened, kept across visits
+        profile = app.student.profile
+        self.adapter = Adapter(self.level, profile.get("adapt"), enabled=profile.get("adaptive", True) is not False)
+        self._unlocked = False               # a nudge's "Show me a hint" opened the hints early
         self.confirmed: set[int] = set()      # "I saw it happen" boxes ticked this step
         self._last_eval = None                # (code, stdout, crashed, started) of the last run, for re-checking
         self.show_full = False                # Advanced: has the student opened the full explanation?
@@ -1017,6 +1050,9 @@ class LessonWorkspace(Workspace):
 
     def park(self) -> None:
         super().park()
+        if getattr(self, "_adapt_job", None):
+            self.after_cancel(self._adapt_job)
+            self._adapt_job = None
         offer = getattr(self, "_tour_offer", None)
         if offer is not None and offer.winfo_exists():
             offer.destroy()
@@ -1050,6 +1086,8 @@ class LessonWorkspace(Workspace):
         super().settings_changed(what)
         if what == "help" and self.lesson is not None:
             new = self.app.student.help_level
+            self.adapter.level = new
+            self.adapter.enabled = self.app.student.profile.get("adaptive", True) is not False
             if new != self.level:
                 self.level = new
                 if self.view == "intro":
@@ -1315,6 +1353,11 @@ class LessonWorkspace(Workspace):
         self.step_runs = 0
         self.confirmed = set()
         self._last_eval = None
+        self._unlocked = False
+        self.adapter.start_step(time.monotonic(), already_done=i in self.lp["steps_done"])
+        if getattr(self, "_adapt_job", None):
+            self.after_cancel(self._adapt_job)
+        self._adapt_job = self.after(30_000, self._adapt_tick)
         self.show_full = False
         self.hint_ctx = ("step", i)
         if self.board:
@@ -1503,7 +1546,8 @@ class LessonWorkspace(Workspace):
                 hints = hints[:max_err]          # never the near-answer
             left = unlock_after - self.attempts
             locked = None
-            if left > 0 and not self.app.teacher_mode:
+            if left > 0 and not self.app.teacher_mode and not self._unlocked and not self.adapter.hints_early(
+                    time.monotonic()):
                 locked = ("Have a go first: hints unlock after you press Run." if left == 1 and self.attempts == 0
                           else f"Hints unlock after {left} more tr{'y' if left == 1 else 'ies'}. You can do this!")
         self.coach.set_hints(hints, locked, self.revealed.get(self._hint_key(), 0))
@@ -1514,6 +1558,8 @@ class LessonWorkspace(Workspace):
     def _hint_used(self, shown: int):
         key = self._hint_key()
         new = shown > self.revealed.get(key, 0)
+        if new:
+            self.adapter.on_hint()
         self.revealed[key] = max(shown, self.revealed.get(key, 0))
         self.lp["hints_seen"] = self.revealed
         if new and self.step_i not in self.lp["steps_done"]:      # looking back at a finished step is free
@@ -1546,9 +1592,11 @@ class LessonWorkspace(Workspace):
         passed = all(r.passed for r in results)
         waiting = [r for r in results if not r.passed]
 
+        now = time.monotonic()
         if passed:
             self._complete_step()
         elif not diag and all(r.type == "confirm" for r in waiting):
+            self.adapter.after_run(now, True)          # the code works; only the tick boxes are left
             # the code did everything the checks can see; now the student confirms what happened
             self.coach.message("info", "Did you see it happen?",
                                "Your code passed the checks. Now watch the board" +
@@ -1567,6 +1615,11 @@ class LessonWorkspace(Workspace):
                 self.coach.message("warn", "Your program ran, but…",
                                    f"**Not ticked yet:** {first.label}\n\n" + (first.fail or "Read the step instructions again and compare them with your code."))
                 self._refresh_hints()
+            if not is_precheck:
+                failing = next((r.label for r in results if not r.passed and r.type != "confirm"), None)
+                self._show_offer(self.adapter.after_run(now, False, diag.entry_id if diag else None, failing))
+                if self.adapter.hints_early(now) and not diag:
+                    self._refresh_hints()          # stuck: hints open up early
         self.app.student.save_progress()
         self._update_footer()
         self._paint_dots()
@@ -1590,6 +1643,50 @@ class LessonWorkspace(Workspace):
         self.coach.message("ok", "Step complete!", step.get("success", "Well done!") + review_text + after)
         self.coach.set_hints([], None)
         self.console.set_status("✓ step complete", C["ok"])
+        offer = self.adapter.step_done(time.monotonic())
+        self.app.student.profile["adapt"] = self.adapter.state()
+        self.app.student.save_profile()
+        self._show_offer(offer)
+
+    # ---------------------------------------------------------------- adaptive coaching
+    def _show_offer(self, offer) -> None:
+        if offer is not None:
+            self.coach.offer(offer, self._offer_action)
+            self.guide.scroll_to(self.coach)
+
+    def _offer_action(self, action: str) -> None:
+        self.coach.clear_offer()
+        if action == "hint":
+            self._unlocked = True
+            self._refresh_hints()
+            if self.coach.hints and self.coach.shown < len(self.coach.hints):
+                self.coach._hint()
+            elif self.can_watch_goal():
+                self.watch_goal()
+        elif action == "goal" and self.can_watch_goal():
+            self.watch_goal()
+        elif action == "full":
+            if not self.show_full and goal_text(self.steps[self.step_i]) and self.level == "advanced":
+                self._toggle_explanation()
+            self.guide.canvas.yview_moveto(0)
+        elif action.startswith("level:"):
+            level = action.split(":", 1)[1]
+            self.app.student.set_help_level(level)
+            self.app.settings_changed("help")
+            self.coach.message("info", f"Help level: {LEVEL_INFO[level][0]}",
+                               LEVEL_INFO[level][1] + " Change it any time with the **Settings** cog.")
+
+    def _adapt_tick(self) -> None:
+        """Every 30 seconds on a step: is the student stuck and quiet? (A cheap check: no widgets.)"""
+        self._adapt_job = None
+        if self.view != "step" or self.lesson is None:
+            return
+        now = time.monotonic()
+        if self.coach.offer_kind is None and not self.runner.running:
+            self._show_offer(self.adapter.tick(now))
+        if self.adapter.hints_early(now) and self.coach.hint_btn.cget("text") == "Hint locked":
+            self._refresh_hints()
+        self._adapt_job = self.after(30_000, self._adapt_tick)
 
     def _show_results(self, results: list[CheckResult]):
         for (icon, _txt), r in zip(self.check_rows, results):

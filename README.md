@@ -72,6 +72,19 @@ with Python 3.11+ and Tkinter, in Simulator mode (`pip install gpiozero` for GPI
 6. **Free Build** is always open for their own projects. The board appears as soon as their
    code makes an LED or a Button.
 
+## Help that adapts
+
+Students choose a help level, and PiPath adjusts around it as they go (it *offers*, never forces):
+
+- **Stuck?** The same error twice, a check that keeps failing, a long quiet spell, or no Run after a
+  few minutes brings a gentle nudge with buttons: *Show me a hint*, *Watch the goal*, *Show the
+  full explanation*. Hints also unlock early, whatever the level.
+- **Flying?** Three steps in a row first try with no hints: *"You're flying! Try a harder level?"*
+- **Finding it tough?** Lots of tries or hints over several steps: *"Want a bit more help?"*
+
+Each nudge appears once per step, and level suggestions wait a few steps, so it never nags.
+Students can turn it off in Settings (Help tab).
+
 ## Coaching for Years 9-10
 
 Students who have used Python before pick **Advanced** (at setup, or with the Settings cog):
@@ -94,12 +107,15 @@ against the version of the Victorian Curriculum your school uses.
 | Tier | Activity | Students build | Kit |
 |---|---|---|---|
 | Simple | Hello, Pi! · Meet PiBot · Guess My Number | print, variables, input, if, loops | none |
-| Moderate | Quiz Master · Turtle Art Studio · Tuckshop Till | *coming soon* | none |
+| Moderate | **Quiz Master** | lists, `zip()`, a bug hunt with `.strip().lower()`, a function that returns, percentages, shuffling | none |
+| Moderate | **Turtle Art Studio** | shapes with loops, `def polygon(sides, size)`, spinning rainbow patterns, your own artwork | none |
+| Moderate | **Tuckshop Till** | a menu dictionary, an order loop, a receipt with GST, saving receipts, a sales log and the day's takings | none |
 | Pi & Computer | **Pi Health Lights** | read the Pi's temperature, CPU load and RAM (from the helper, then the file itself), a live monitor, text bar graphs, three LEDs that glow brighter as the numbers rise, warnings, a CSV log | 3 LEDs |
 | Pi & Computer | **Binary Clock** | read the clock, binary with `format()`, a ticking clock on screen, the seconds live on six LEDs, a button for seconds / minutes / hours | 6 LEDs, button |
 | Pi & Computer | **Dice DJ** | a button rolls an LED dice and the computer plays a sound for the number, then any song / video / picture from a folder; a surprise button opens a website | 6 LEDs, 2 buttons, speaker |
 | Pi & Computer | **Doorbell Cam** | the distance sensor notices a visitor, a bell rings, the camera snaps them and the photo opens on the screen; cooldown + visitor log | HC-SR04, LED, buzzer, camera |
-| Pi & Computer | Focus Timer · Control Pad | *coming soon* | |
+| Pi & Computer | **Focus Timer** | a countdown, a shrinking bar of LEDs, a beep, a break message on the screen, a study log | 6 LEDs, buzzer, button |
+| Pi & Computer | **Control Pad** | buttons that take a screenshot, change the volume and open a website; a dictionary of actions; an action log | 3 buttons, LED |
 | Advanced | **Traffic Lights** | one LED, the Australian sequence, `def cycle()` + loop, test the button, pedestrian crossing, beeper, countdown | 3 LEDs, button, buzzer |
 | Advanced | **Reaction Timer** | the LED, random waits, test the button with a stopwatch, reaction game, false starts, 2-player race, high-score file | LED, 2 buttons |
 | Advanced | **Motion Alarm & Logger** | test the light + buzzer, measure distance with the ultrasonic sensor, "something's close" events, the alarm, arm/disarm state, CSV log, cooldown + report | HC-SR04, LED, buzzer, button |
@@ -166,6 +182,17 @@ The class kits use a **blue GPIO HAT** (breakout board). Students:
 
 The Wiring + Safety card in each activity repeats this, and "Check my wiring" failures say
 "Take the blue HAT off, fix the wiring, put the HAT back on, then try again."
+
+## Before your first class (checklist)
+
+1. On one Pi: `git clone` (see Quick start), then `./install.sh`. Open PiPath from the menu.
+2. **Change the teacher PIN** in `data/config.toml` (`teacher_pin`); the default is in this public repo.
+3. Make a test profile, open **Traffic Lights**, choose **Real Pi** (or Settings > Hardware) and press
+   **Check my wiring** with a breadboard built from the pin plan below.
+4. Plug in the USB webcam and try **Photo Booth** step 1 (click the camera panel's title to choose USB).
+5. Delete the test profile folder in `~/PiPath/students/`, then clone the SD card for the class set.
+6. In class: students take the **blue HAT** off before changing wires, and never turn the Pi off.
+   Press **Ctrl+Shift+T** for the teacher panel (skip ahead, export progress to CSV).
 
 ## For teachers
 

@@ -221,7 +221,19 @@ def scenes(app):
                                              + "q = int(input('How many? '))\n")(), app.screen.review_code())),
         ("52_level_up_outro", lambda: (app.student.mark_complete("e6_whackamole"), app.screen.show_outro())),
         ("53_morse_goal", lambda: (open_lesson("e7_morse")(), start_lesson(), to_step(2)(), goal()), 5000),
-        ("54_done", lambda: (stop(), app.show("home"))),
+        ("54_nudge_first", lambda: (stop(), app.show("home"), set_level("beginner")(), open_lesson("s3_guess")(),
+                                    start_lesson(), to_step(0)(), set_code("import random\nif True\n    print(1)\n")(),
+                                    press_run()), 1500),
+        ("55_nudge_same_error", press_run, 1500),
+        ("56_nudge_hint", lambda: app.screen._offer_action("hint")),
+        ("57_level_suggestion", lambda: (setattr(app.screen.adapter, "history",
+                                                 [{"first_try": True, "failed": 0, "hints": 0, "secs": 40}] * 2),
+                                         setattr(app.screen.adapter, "cooldown", 0),
+                                         open_lesson("s1_hello")(), start_lesson(), skip_tour(), to_step(2)(),
+                                         setattr(app.screen.adapter, "history",
+                                                 [{"first_try": True, "failed": 0, "hints": 0, "secs": 40}] * 2),
+                                         set_code(app.screen.steps[2]["demo"])(), press_run()), 2500),
+        ("58_done", lambda: (stop(), app.show("home"))),
     ]
 
 

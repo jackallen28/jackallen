@@ -7,6 +7,9 @@
     ram_used()            how much of the memory (RAM) is in use, as a percentage
     open_file("song.mp3") open a file with the Pi's normal app (a video, song or picture)
     open_website(url)     open a web page in the browser (needs the internet)
+    take_screenshot()     save a picture of the whole screen, and return its file name
+    change_volume(5)      turn the sound up 5% (or down, with -5)
+    show_message("Hi!")   pop up a message box on the screen
 
 How it works (no magic): the Pi keeps these numbers in special files.
     /sys/class/thermal/thermal_zone0/temp   the temperature in thousandths of a degree
@@ -25,7 +28,8 @@ import time
 import webbrowser
 from pathlib import Path
 
-__all__ = ["cpu_temp", "cpu_load", "ram_used", "open_file", "open_website"]
+__all__ = ["cpu_temp", "cpu_load", "ram_used", "open_file", "open_website", "take_screenshot", "change_volume",
+           "show_message"]
 
 TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp"
 _last_cpu: tuple[float, float, float] | None = None     # (time, busy, total) at the last cpu_load()
@@ -149,3 +153,60 @@ def open_website(url: str) -> None:
     print(f"▶ Opening {url}", flush=True)
     if not _just_pretend():
         _launch(url)
+
+
+# ---------------------------------------------------------------- the desktop: screenshots, sound, messages
+
+def _run_first(commands: list[list[str]]) -> bool:
+    """Run the first command that's installed. True if it worked."""
+    for cmd in commands:
+        if shutil.which(cmd[0]):
+            try:
+                return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                      timeout=10).returncode == 0
+            except (OSError, subprocess.TimeoutExpired):
+                continue
+    return False
+
+
+def take_screenshot(name: str = "screenshot.png") -> str:
+    """Save a picture of the whole screen (a .png) and return the file name."""
+    p = Path(str(name))
+    if p.suffix.lower() != ".png":
+        p = p.with_suffix(".png")
+    ok = False
+    if not _just_pretend():
+        ok = _run_first([["grim", str(p)],                              # Raspberry Pi OS (Wayland)
+                         ["scrot", "-o", str(p)], ["import", "-window", "root", str(p)],
+                         ["gnome-screenshot", "-f", str(p)]])
+    if not ok:                      # Watch the goal, or no screenshot tool: a small grey picture instead
+        from pipath_camera import write_png
+        write_png(p, 64, 36, bytes([192, 192, 192]) * (64 * 36))
+    print(f"▶ Screenshot saved: {p.name}", flush=True)
+    return str(p)
+
+
+def change_volume(step: int = 5) -> None:
+    """Turn the sound up (step > 0) or down (step < 0) by step percent."""
+    step = int(step)
+    sign = "+" if step >= 0 else "-"
+    print(f"▶ Volume {'up' if step >= 0 else 'down'} {abs(step)}%", flush=True)
+    if not _just_pretend():
+        _run_first([["wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{abs(step)}%{sign}"],
+                    ["amixer", "-q", "sset", "Master", f"{abs(step)}%{sign}"]])
+
+
+def show_message(text: str, title: str = "PiPath") -> None:
+    """Pop up a message box with an OK button (the program waits until it's closed)."""
+    print(f"▶ Message: {text}", flush=True)
+    if _just_pretend():
+        return
+    try:
+        import tkinter
+        from tkinter import messagebox
+        root = tkinter.Tk()
+        root.withdraw()
+        messagebox.showinfo(title, str(text), parent=root)
+        root.destroy()
+    except Exception:
+        pass                        # no screen: the printed line is the message

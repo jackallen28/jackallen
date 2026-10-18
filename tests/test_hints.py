@@ -47,6 +47,7 @@ CASES = [
     ('def f(a):\n    pass\nf()', "", "missing_argument"),
     ('print = 5\nprint("hi")', "", "not_callable"),
     ('score = 0\ndef add():\n    score += 1\nadd()', "", "unbound_local"),
+    ('class Terminator(Exception):\n    pass\n\nraise Terminator()', "", "turtle_closed"),
 ]
 
 

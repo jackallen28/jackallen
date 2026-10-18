@@ -1,0 +1,514 @@
+# MODERATE 2. Screen only: the turtle draws in its own window on the desktop.
+# (With no screen, e.g. in tests, the shim swaps in a stand-in turtle that draws nothing,
+# so checks never rely on turtle output. Demos print their own messages.)
+
+id = "m2_turtle"
+title = "Turtle Art Studio"
+file_name = "turtle_art.py"
+
+intro = """
+## Code that draws
+
+Python comes with a **turtle**: a little arrow that walks around a window and draws a line wherever it goes. You tell it how far to walk and how much to turn.
+
+In this project you will:
+- draw a square, one line at a time
+- use a **`for` loop** so Python repeats the work for you
+- write a **function** that can draw *any* shape
+- use a **list** of colours and `%` to make a spinning rainbow pattern
+- design your own artwork
+
+When you press **Run**, a **new window opens** with the turtle in it. Move it to the side so you can still see your code. Close the turtle window (or press **Stop**) when you've finished looking.
+"""
+
+outro = """
+## You're a turtle artist!
+
+You used `forward()` and `left()`, repeated them with a `for` loop, wrapped them in a **function** with parameters, and picked colours from a list with `%`. Those are the same tools real programmers use every day.
+
+**Extension ideas** (try these in Free Build):
+- Draw a **spiral**: make the turtle walk a little further each time round the loop (`t.forward(i * 2)`)
+- Draw a **street of houses**: write `def house(x, y):` that uses `t.penup()`, `t.goto(x, y)` and `t.pendown()`, then call it in a loop
+- Fill your shapes with colour using `t.begin_fill()` and `t.end_fill()`
+"""
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Draw a square"
+support = "guided"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)          # 0 means "as fast as you can" (good for the Pi)
+t.pensize(3)
+t.color("teal")
+
+t.forward(100)      # walk 100 steps
+t.left(90)          # turn left by 90 degrees (a corner)
+t.forward(100)
+t.left(___)
+t.forward(___)
+t.left(90)
+t.___(100)
+t.left(90)
+
+turtle.done()       # keeps the window open until you close it
+'''
+text = """
+`t = turtle.Turtle()` makes a turtle called `t`. Then:
+- `t.forward(100)` walks forward 100 steps, drawing a line
+- `t.left(90)` turns left by **90 degrees**. That's a right-angle corner, like the corner of a page.
+
+A square has **4 sides** and **4 corners**, so the turtle needs to walk and turn 4 times.
+
+**Your task:** fill in the three blanks so the turtle draws a whole square, then press **Run**.
+
+A **new window** opens with the turtle in it. Keep your code where you can see it. When you've seen the square, close the turtle window or press **Stop**.
+"""
+hints = [
+  "Every side is the same length and every corner is the same turn. Copy the numbers from the lines above.",
+  "The turns are all `90` and the sides are all `100`. The third blank is the name of the walking command.",
+  "The blanks are: `t.left(90)`, `t.forward(100)` and `t.forward(100)`.",
+]
+error_hints = { Terminator = "The turtle window was closed before it finished drawing. That's fine! Press **Run** again and let it finish." }
+success = "A perfect square! Four sides, four 90 degree turns: 4 × 90 = 360, one full turn."
+demo = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)          # 0 means "as fast as you can" (good for the Pi)
+t.pensize(3)
+t.color("teal")
+
+t.forward(100)      # walk 100 steps
+t.left(90)          # turn left by 90 degrees (a corner)
+t.forward(100)
+t.left(90)
+t.forward(100)
+t.left(90)
+t.forward(100)
+t.left(90)
+
+print("Square finished!")
+turtle.done()       # keeps the window open until you close it
+'''
+demo_seconds = 4
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "call:forward"
+min = 4
+label = "The turtle walks 4 sides"
+fail = "A square needs 4 sides. Check you have 4 `t.forward(100)` lines."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''(?s)(?:\b(?:left|right|lt|rt)\(\s*90\s*\).*?){4}'''
+label = "It turns 90 degrees at each corner"
+fail = "Each corner of a square is a 90 degree turn. Check every `t.left(...)` says `90`."
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw a square in the turtle window"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Let a loop do the work"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(3)
+
+# A square, drawn with a loop
+t.color("teal")
+for i in range(___):
+    t.forward(100)
+    t.left(90)
+
+# Now add a triangle here (in a different colour)
+
+turtle.done()
+'''
+text = """
+Writing `forward` and `left` four times is a lot of typing. A **`for` loop** repeats the indented lines for you:
+
+```
+for i in range(4):
+    t.forward(100)
+    t.left(90)
+```
+
+`range(4)` means "do it 4 times". The lines that are **indented** (pushed in with spaces) are the ones that repeat. Your old code is safe in the `backups` folder.
+
+**Your task:**
+1. Fill in the blank so the loop draws the square again.
+2. Under the comment, add a **second loop** that draws a **triangle** in a new colour.
+
+A triangle has 3 sides. To get all the way round, the turtle still turns 360 degrees in total. So each turn is 360 ÷ 3 = **120** degrees.
+"""
+hints = [
+  "A square has 4 sides, so the loop runs 4 times: `range(4)`.",
+  "The triangle loop looks just like the square loop, but runs 3 times and turns 120 degrees each time.",
+  "Add this under the comment:\n```\nt.color(\"purple\")\nfor i in range(3):\n    t.forward(100)\n    t.left(120)\n```",
+]
+error_hints = { IndentationError = "The lines inside a loop must all be pushed in by the same amount (4 spaces). Line them up under each other.", Terminator = "The turtle window was closed before it finished drawing. Press **Run** again and let it finish." }
+success = "Two shapes, and far less typing. Loops are one of the most useful ideas in coding."
+demo = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(3)
+
+# A square, drawn with a loop
+t.color("teal")
+for i in range(4):
+    t.forward(100)
+    t.left(90)
+
+# Now add a triangle here (in a different colour)
+t.color("purple")
+for i in range(3):
+    t.forward(100)
+    t.left(120)
+
+print("Square and triangle finished!")
+turtle.done()
+'''
+demo_seconds = 4
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "You use a for loop"
+fail = "Use `for i in range(4):` with the drawing lines indented underneath."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''range\(\s*4\s*\)'''
+label = "The square loop runs 4 times"
+fail = "A square has 4 sides, so its loop needs `range(4)`."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\b(?:left|right|lt|rt)\(\s*(?:120|360\s*/\s*3)\s*\)'''
+label = "The triangle turns 120 degrees at each corner"
+fail = "For a triangle, each turn is 360 ÷ 3 = 120 degrees: `t.left(120)`."
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw a square and a triangle"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "A function for any shape"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(3)
+
+def polygon(sides, size):
+    print("Drawing a", sides, "sided shape")
+    angle = 360 / ___
+    for i in range(___):
+        t.forward(size)
+        t.left(angle)
+
+t.color("teal")
+polygon(4, 100)     # a square
+
+turtle.done()
+'''
+text = """
+Did you spot the pattern? For *any* shape, the turtle turns **360 ÷ the number of sides** at each corner.
+
+So let's write a **function**: a named recipe you can use again and again. `def polygon(sides, size):` has two **parameters**. They are like empty boxes that get filled in each time you **call** the function:
+
+```
+polygon(4, 100)    # sides = 4, size = 100
+polygon(6, 60)     # sides = 6, size = 60
+```
+
+**Your task:**
+1. Fill in the two blanks so `polygon` works for any number of sides.
+2. Call it at least **3 more times** to draw a triangle, a pentagon (5 sides) and an octagon (8 sides). Try a different colour for each.
+"""
+hints = [
+  "Both blanks are the same word: the parameter that says how many sides the shape has.",
+  "The turn is `360 / sides`, and the loop runs `range(sides)` times.",
+  "Under `polygon(4, 100)` add:\n```\nt.color(\"purple\")\npolygon(3, 100)\nt.color(\"orange\")\npolygon(5, 80)\nt.color(\"green\")\npolygon(8, 50)\n```",
+]
+error_hints = { NameError = "Inside the function, use the parameter names `sides` and `size`. Check the spelling matches the `def` line.", TypeError = "Each call needs two numbers in the brackets: how many sides, then how long each side is. For example `polygon(5, 80)`.", Terminator = "The turtle window was closed before it finished drawing. Press **Run** again and let it finish." }
+success = "One function, endless shapes. Try `polygon(40, 10)`. What does it look like?"
+demo = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(3)
+
+def polygon(sides, size):
+    print("Drawing a", sides, "sided shape")
+    angle = 360 / sides
+    for i in range(sides):
+        t.forward(size)
+        t.left(angle)
+
+t.color("teal")
+polygon(4, 100)     # a square
+t.color("purple")
+polygon(3, 100)
+t.color("orange")
+polygon(5, 80)
+t.color("green")
+polygon(8, 50)
+
+turtle.done()
+'''
+demo_seconds = 4
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''def\s+polygon\s*\('''
+label = "You have a polygon function"
+fail = "Keep the `def polygon(sides, size):` line at the top of your function."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''360\s*/\s*\w+'''
+label = "It works out the turn with 360 ÷ sides"
+fail = "The turn for any shape is `360 / sides`."
+
+[[steps.checks]]
+type = "code_count"
+value = "call:polygon"
+min = 4
+label = "You draw at least 4 shapes with it"
+fail = "Call `polygon(...)` at least 4 times, for example `polygon(5, 80)` for a pentagon."
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw lots of different shapes"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "A spinning rainbow pattern"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(2)
+turtle.bgcolor("black")
+
+def polygon(sides, size):
+    angle = 360 / sides
+    for i in range(sides):
+        t.forward(size)
+        t.left(angle)
+
+colours = ["red", "orange", "yellow", "green", "blue", "purple"]
+
+for i in range(36):
+    t.color(colours[i % ___])
+    polygon(4, 100)
+    t.left(___)
+
+print("Pattern finished!")
+turtle.done()
+'''
+text = """
+Here's a trick artists love: draw a shape, turn a little, draw it again... and keep going all the way round.
+
+`range(36)` draws **36 squares**. If the turtle turns **10 degrees** after each one, that's 36 × 10 = 360, one full circle.
+
+To change colour each time, we pick from a **list** of colours. The `%` sign (called **modulo**) gives the *remainder* after dividing. So `i % 6` counts 0, 1, 2, 3, 4, 5, 0, 1, 2... and never runs off the end of the list. `len(colours)` tells you how many colours are in the list.
+
+**Your task:**
+1. Fill in the blanks: wrap around the colours list with `%`, and turn 10 degrees after each square.
+2. Run it, then experiment! Change the shape in `polygon(4, 100)`, or try `range(72)` with a turn of 5.
+"""
+hints = [
+  "The first blank is how many colours are in the list. The second is how far to turn after each square.",
+  "Use `len(colours)` for the first blank (so it still works if you add colours) and `10` for the second.",
+  "The two lines are `t.color(colours[i % len(colours)])` and `t.left(10)`.",
+]
+error_hints = { IndexError = "The list only has 6 colours (positions 0 to 5). Use `i % len(colours)` so the position wraps back to 0.", Terminator = "The turtle window was closed before it finished drawing. Press **Run** again and let it finish." }
+success = "Wow! A loop, a function and a list working together. That's real generative art."
+demo = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(2)
+turtle.bgcolor("black")
+
+def polygon(sides, size):
+    angle = 360 / sides
+    for i in range(sides):
+        t.forward(size)
+        t.left(angle)
+
+colours = ["red", "orange", "yellow", "green", "blue", "purple"]
+
+for i in range(36):
+    t.color(colours[i % len(colours)])
+    polygon(4, 100)
+    t.left(10)
+
+print("Pattern finished!")
+turtle.done()
+'''
+demo_seconds = 6
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:List"
+label = "You have a list of colours"
+fail = "Keep the `colours = [...]` list near the top."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\[\s*\w+\s*%\s*(?:len\(\s*\w+\s*\)|\d+)\s*\]'''
+label = "It picks the next colour with %"
+fail = "Pick the colour with `colours[i % len(colours)]` so it wraps back to the start of the list."
+
+[[steps.checks]]
+type = "code_count"
+value = "node:For"
+min = 2
+label = "A loop calls your shape function again and again"
+fail = "Keep the `for i in range(36):` loop that calls `polygon(...)`."
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw a colourful spinning pattern"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Your own artwork"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+Time to be the artist. Ideas:
+- a **flower**: lots of small shapes turned around a centre, with a green stem
+- a **snowflake**: six arms, each a line with little shapes on it
+- a **spiral galaxy**: walk a little further each time round the loop, turning by 91 degrees
+
+**Your task:** design your own turtle artwork. It must:
+- use a **function** you wrote (your `polygon` or a new one, like `def petal(size):`)
+- use **loops** to repeat things
+- pick colours from a **list** with `%`
+- **print** the name of your artwork, e.g. `print("My art: Galaxy")`
+
+Plan it on paper first, then build it a bit at a time, pressing **Run** to check as you go.
+"""
+hints = [
+  "Start from your spinning pattern and change one thing at a time: the shape, the size, how far it turns.",
+  "Move without drawing: `t.penup()`, `t.goto(0, -150)`, `t.pendown()`. Use this to draw a stem or start in a new spot.",
+]
+error_hints = { Terminator = "The turtle window was closed before it finished drawing. Press **Run** again and let it finish." }
+success = "Beautiful! You coded your own artwork from nothing. Save a copy in Free Build so you can keep improving it."
+demo = '''
+import turtle
+
+t = turtle.Turtle()
+t.speed(0)
+t.pensize(2)
+turtle.bgcolor("black")
+
+def polygon(sides, size):
+    angle = 360 / sides
+    for i in range(sides):
+        t.forward(size)
+        t.left(angle)
+
+def flower(petals, size):
+    for i in range(petals):
+        t.color(colours[i % len(colours)])
+        polygon(6, size)
+        t.left(360 / petals)
+
+colours = ["red", "orange", "yellow", "pink", "purple"]
+
+print("My art: Sunset Flower")
+
+# the stem
+t.color("green")
+t.pensize(6)
+t.right(90)
+t.forward(200)
+t.backward(200)
+t.left(90)
+
+# the flower head
+t.pensize(2)
+flower(24, 60)
+
+turtle.done()
+'''
+demo_seconds = 6
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:FunctionDef"
+label = "You use a function you wrote"
+fail = "Put part of your drawing in a function, like `def petal(size):`, and call it."
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "You use a loop to repeat things"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\[[^\]\n]*%[^\]\n]*\]'''
+label = "You pick colours from a list with %"
+fail = "Pick colours with something like `colours[i % len(colours)]`."
+
+[[steps.checks]]
+type = "output_lines_min"
+min = 1
+label = "It prints the name of your artwork"
+fail = "Add a line like `print(\"My art: Galaxy\")`."
+
+[[steps.checks]]
+type = "confirm"
+label = "I saw my own artwork"

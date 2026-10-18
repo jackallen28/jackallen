@@ -1,0 +1,692 @@
+# PI & COMPUTER 5: Focus Timer. A study timer: a button starts a session, six LEDs shrink as
+# the time runs out, the buzzer beeps and a message pops up on the screen for a break, and each
+# session is logged to study_log.csv. See e1_lightswitch.toml for the GPIO lesson keys.
+# Pin plan: LEDs 17, 27, 22, 5, 6, 13 (LEDBarGraph), buzzer 18, start button 23.
+# Step by step: countdown on the screen -> test the six LEDs -> the bar shrinks with the time ->
+# test the buzzer -> button starts, buzzer ends -> a message on the screen -> challenge: a log.
+# Demo sessions are 12 seconds (SESSION_SECONDS = 12); students change it to 25 * 60.
+
+id = "p5_focustimer"
+title = "Focus Timer"
+file_name = "focus_timer.py"
+requires_gpio = true
+
+intro = """
+## Time to focus
+
+Lots of people study in short bursts: **25 minutes** of focus, then a **5 minute** break. A timer helps you stick to it. In this project you'll build one on your Pi.
+
+You'll build it one part at a time:
+- a **countdown** on the screen with a `for` loop and `sleep()`
+- test **six LEDs** as a bar
+- join them: the bar **shrinks** as the time runs out
+- test the **buzzer** on its own
+- add a **start button**, and a beep at the end
+- pop up a **message** on the screen: time for a break!
+- keep a **log** of every session and add up today's minutes
+
+**Short sessions for testing:** waiting 25 minutes every time you press Run would be no fun. So the sessions are only **12 seconds** long while you build. At the end you'll change one number to make it a real 25 minute timer.
+
+**Safety:**
+- Take the **blue HAT off** before you change any wires, and put it back on after.
+- **Never turn the Pi off**, or you'll lose your progress.
+"""
+
+outro = """
+## Your Focus Timer is ready!
+
+You used a **countdown loop**, a **constant** (`SESSION_SECONDS`) that changes the whole program from one place, **division** to turn time into a bar of lights, a **button** and a **buzzer**, a message on the **computer's screen**, and a **log file** that you read back and add up.
+
+**Make it real:** change `SESSION_SECONDS = 12` to `SESSION_SECONDS = 25 * 60`. That's 1500 seconds, or 25 minutes. Now use it for your homework!
+
+**How show_message() works:** it uses Tkinter, the same toolkit PiPath is made with:
+
+```
+from tkinter import Tk, messagebox
+root = Tk()
+root.withdraw()          # hide the empty main window
+messagebox.showinfo("Focus Timer", "Time for a break!")
+```
+
+**Extension ideas:**
+- After each session, run a 5 minute **break** timer with the bar growing back up
+- Hold the button for 2 seconds (`when_held`) to cancel a session early
+- Print how many sessions you've done **this week**, not just today
+"""
+
+[[wiring]]
+part = "6 LEDs (left to right)"
+connect = "GPIO17, GPIO27, GPIO22, GPIO5, GPIO6, GPIO13 → each through its own 330Ω resistor → LED long leg. All short legs → GND rail."
+
+[[wiring]]
+part = "LED 1"
+kind = "led"
+pin = 17
+colour = "red"
+connect = "GPIO17 (pin 11). The last light to go out."
+
+[[wiring]]
+part = "LED 2"
+kind = "led"
+pin = 27
+colour = "orange"
+connect = "GPIO27 (pin 13)"
+
+[[wiring]]
+part = "LED 3"
+kind = "led"
+pin = 22
+colour = "yellow"
+connect = "GPIO22 (pin 15)"
+
+[[wiring]]
+part = "LED 4"
+kind = "led"
+pin = 5
+colour = "yellow"
+connect = "GPIO5 (pin 29)"
+
+[[wiring]]
+part = "LED 5"
+kind = "led"
+pin = 6
+colour = "green"
+connect = "GPIO6 (pin 31)"
+
+[[wiring]]
+part = "LED 6"
+kind = "led"
+pin = 13
+colour = "green"
+connect = "GPIO13 (pin 33). The first light to go out."
+
+[[wiring]]
+part = "Buzzer"
+kind = "buzzer"
+pin = 18
+connect = "An *active* buzzer: + (the longer leg) → GPIO18 (pin 12). − → GND rail."
+
+[[wiring]]
+part = "Start button"
+kind = "button"
+pin = 23
+connect = "One leg → GPIO23 (pin 16). The leg across the middle gap → GND rail."
+
+[[wiring]]
+part = "Tip"
+connect = "You only need the LEDs from step 2, the buzzer from step 4 and the button from step 5. Step 1 works on the screen."
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "Count down on the screen"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+
+for time_left in range(SESSION_SECONDS, 0, ___):
+    minutes = time_left // 60
+    seconds = time_left % 60
+    print(f"Time left: {minutes}:{seconds:02}")
+    sleep(1)
+
+print("Time's up!")
+'''
+text = """
+A timer counts **down**. `range(12, 0, -1)` gives the numbers 12, 11, 10 ... down to 1. The third number is the **step**: `-1` means "go down by one each time".
+
+`SESSION_SECONDS` is in capital letters because it's a **constant**: a setting you choose once, at the top. Change it there and the whole program changes.
+
+To show the time like a clock:
+- `time_left // 60` is the whole **minutes** (`//` divides and throws away the leftover)
+- `time_left % 60` is the **seconds** left over
+- `{seconds:02}` always shows two digits, so 5 seconds shows as `05`
+
+**Your task:** fill in the blank so the loop counts down by one each second. Run it and watch the clock.
+"""
+hints = [
+  "The third number in `range()` is how much to change by each time. You want to go down.",
+  "Going down by one is a negative number.",
+  "The line is `for time_left in range(SESSION_SECONDS, 0, -1):`",
+]
+success = "A countdown clock! Try `SESSION_SECONDS = 75` to see the minutes change, then put it back to 12."
+demo = '''
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+
+for time_left in range(SESSION_SECONDS, 0, -1):
+    minutes = time_left // 60
+    seconds = time_left % 60
+    print(f"Time left: {minutes}:{seconds:02}")
+    sleep(1)
+
+print("Time's up!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''range\(\s*SESSION_SECONDS\s*,\s*0\s*,\s*-\s*1\s*\)'''
+label = "The loop counts down by one"
+fail = "Fill in the blank with `-1` so the loop counts down."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Time left: 0:01'''
+label = "The clock counts down to 0:01"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Time's up"
+label = "It says when the time is up"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Test the six LEDs"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LEDBarGraph
+from time import sleep
+
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+
+for n in range(6, -1, -1):
+    bar.value = n / ___       # n out of 6 LEDs
+    print(n, "LEDs on")
+    sleep(0.6)
+'''
+text = """
+Now the hardware, one part at a time. Build the six LEDs (see **Wiring + Safety**, and take the blue HAT off first). Your countdown code is safe in `backups/`.
+
+An `LEDBarGraph` treats the six LEDs as one **bar**. `bar.value = 1` lights all six, `bar.value = 0.5` lights half of them (3), and `bar.value = 0` turns them all off.
+
+To light `n` LEDs out of 6, use `n / 6`.
+
+**Your task:** fill in the blank, then run it. The bar should start full and shrink, one LED at a time, until they're all off.
+"""
+hints = [
+  "How many LEDs are there altogether?",
+  "There are 6 LEDs.",
+  "The line is `bar.value = n / 6`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "All six LEDs work. Now join the bar to the countdown."
+demo = '''
+from gpiozero import LEDBarGraph
+from time import sleep
+
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+
+for n in range(6, -1, -1):
+    bar.value = n / 6       # n out of 6 LEDs
+    print(n, "LEDs on")
+    sleep(0.6)
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''bar\.value\s*=\s*n\s*/\s*6\b'''
+label = "It lights n out of 6 LEDs"
+
+[[steps.checks]]
+type = "output_contains"
+value = "0 LEDs on"
+label = "The bar shrinks all the way to 0"
+
+[[steps.checks]]
+type = "confirm"
+label = "The bar shrank from 6 LEDs to none"
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "The bar shrinks as time runs out"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+from gpiozero import LEDBarGraph
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+
+for time_left in range(SESSION_SECONDS, 0, -1):
+    bar.value = ___
+    minutes = time_left // 60
+    seconds = time_left % 60
+    print(f"Time left: {minutes}:{seconds:02}")
+    sleep(1)
+
+bar.off()
+print("Time's up!")
+'''
+text = """
+Time to join the countdown to the bar. Here's your countdown again, with the LEDs added.
+
+The bar's `value` goes from 1 (full) down to 0 (empty). How much of the session is left? It's `time_left / SESSION_SECONDS`:
+- at the start: 12 / 12 = **1**, all six LEDs on
+- halfway: 6 / 12 = **0.5**, three LEDs on
+- near the end: 1 / 12, the last LED goes out
+
+Because it uses `SESSION_SECONDS`, it still works when you change the session to 25 minutes.
+
+**Your task:** fill in the blank so the bar shows how much time is left. Run it and watch the bar shrink.
+"""
+hints = [
+  "You want a number from 1 down to 0: the time left, out of the whole session.",
+  "Divide `time_left` by the length of the whole session.",
+  "The line is `bar.value = time_left / SESSION_SECONDS`",
+]
+error_hints = { OutputDeviceBadValue = "The bar's value must be between 0 and 1. Divide `time_left` by `SESSION_SECONDS`, not the other way round." }
+success = "You can see the time running out without looking at the screen. That's the whole idea of a focus timer!"
+demo = '''
+from gpiozero import LEDBarGraph
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+
+for time_left in range(SESSION_SECONDS, 0, -1):
+    bar.value = time_left / SESSION_SECONDS
+    minutes = time_left // 60
+    seconds = time_left % 60
+    print(f"Time left: {minutes}:{seconds:02}")
+    sleep(1)
+
+bar.off()
+print("Time's up!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''bar\.value\s*=\s*time_left\s*/\s*SESSION_SECONDS'''
+label = "The bar shows the time left"
+fail = "Set `bar.value` to `time_left / SESSION_SECONDS`."
+
+[[steps.checks]]
+type = "output_contains"
+value = "Time's up"
+label = "The countdown finishes"
+
+[[steps.checks]]
+type = "confirm"
+label = "The bar got shorter as the time ran out"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Test the buzzer"
+support = "guided"
+starter_mode = "replace"
+starter = '''
+from gpiozero import Buzzer
+from time import sleep
+
+buzzer = Buzzer(___)
+
+print("One long beep...")
+buzzer.on()
+sleep(1)
+buzzer.off()
+sleep(0.5)
+
+print("Three short beeps...")
+buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)
+
+print("The buzzer works!")
+'''
+text = """
+The next part is the **buzzer**. Build it (see **Wiring + Safety**, with the blue HAT off). Your timer code is safe in `backups/`.
+
+An *active* buzzer makes a sound as soon as it gets power:
+- `buzzer.on()` starts the sound and `buzzer.off()` stops it
+- `buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)` beeps **3 times**: 0.2 seconds of sound, then 0.2 seconds of quiet. `background=False` means your program waits until the beeping is finished.
+
+**Your task:** the buzzer is on **GPIO18**. Fill in the blank, run it and listen.
+"""
+hints = [
+  "Look at the Wiring card: which GPIO is the buzzer on?",
+  "It's on GPIO18.",
+  "The line is `buzzer = Buzzer(18)`",
+]
+error_hints = { BadPinFactory = "Not on a Raspberry Pi? Choose **Simulator** next to the Run button." }
+success = "Beep! The buzzer works on its own. Next, put all the parts together."
+demo = '''
+from gpiozero import Buzzer
+from time import sleep
+
+buzzer = Buzzer(18)
+
+print("One long beep...")
+buzzer.on()
+sleep(1)
+buzzer.off()
+sleep(0.5)
+
+print("Three short beeps...")
+buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)
+
+print("The buzzer works!")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''Buzzer\(\s*18\s*\)'''
+label = "The buzzer is on GPIO18"
+
+[[steps.checks]]
+type = "output_contains"
+value = "The buzzer works"
+label = "It plays both sounds"
+
+[[steps.checks]]
+type = "confirm"
+label = "You heard one long beep, then three short ones"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Press to start, beep at the end"
+support = "scaffolded"
+starter_mode = "replace"
+run_mode = "until_stopped"
+starter = '''
+from gpiozero import LEDBarGraph, Buzzer, Button
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+buzzer = Buzzer(18)
+button = Button(23)
+
+while True:
+    print("Press the button to start a focus session.")
+    button.___()
+    button.wait_for_release()
+
+    for time_left in range(SESSION_SECONDS, 0, -1):
+        bar.value = time_left / SESSION_SECONDS
+        minutes = time_left // 60
+        seconds = time_left % 60
+        print(f"Time left: {minutes}:{seconds:02}")
+        sleep(1)
+
+    bar.off()
+    print("Time's up!")
+    buzzer.___(on_time=0.2, off_time=0.2, n=3, background=False)
+'''
+text = """
+Now join everything up. Build the **start button** (see **Wiring + Safety**). Here's your timer with the button and the buzzer added.
+
+The `while True` loop means you can do session after session without pressing Run again. Each time round, it:
+1. waits for the button to be pressed (and let go)
+2. counts down with the shrinking bar
+3. beeps three times when the time is up
+
+**Your task:** fill in the two blanks. The first one waits for the button. The second one makes the buzzer beep three times, just like the last step. Run it, press the button, and wait for the beeps. Press **Stop** when you're done.
+"""
+hints = [
+  "The first blank waits for the button to go down. The second blank is the buzzer's beeping function from the last step.",
+  "The button waits with `wait_for_press`. The buzzer beeps with `beep`.",
+  "The lines are `button.wait_for_press()` and `buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)`",
+]
+success = "Press, focus, beep! That's a working focus timer."
+demo = '''
+from gpiozero import LEDBarGraph, Buzzer, Button
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+buzzer = Buzzer(18)
+button = Button(23)
+
+while True:
+    print("Press the button to start a focus session.")
+    button.wait_for_press()
+    button.wait_for_release()
+
+    for time_left in range(SESSION_SECONDS, 0, -1):
+        bar.value = time_left / SESSION_SECONDS
+        minutes = time_left // 60
+        seconds = time_left % 60
+        print(f"Time left: {minutes}:{seconds:02}")
+        sleep(1)
+
+    bar.off()
+    print("Time's up!")
+    buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)
+'''
+demo_events = ["1 tap 23"]
+demo_seconds = 16
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:wait_for_press"
+label = "The button starts the session"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:beep"
+label = "The buzzer beeps at the end"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Time's up"
+label = "A whole session finished"
+fail = "Press the button, then wait for the countdown to finish before you press Stop."
+
+[[steps.checks]]
+type = "confirm"
+label = "The button started the timer and the buzzer beeped at the end"
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Time for a break!"
+support = "scaffolded"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+A beep is easy to miss if you have headphones on. So let's make the **computer** tell you too. `show_message()` from `pipath_computer` pops up a message box on the screen:
+
+```
+show_message("Time for a break!", "Focus Timer")
+```
+
+The first part is the message. The second part is the title at the top of the box. Your program **waits** until you click **OK**, so the next session can't start by accident.
+
+**Your task:**
+1. At the top, add `from pipath_computer import show_message`
+2. At the end of the loop, after the beeps, add the `show_message(...)` line (indented, inside the `while`)
+
+Run it, press the button, and wait for the message. Click **OK**, then press **Stop**.
+"""
+hints = [
+  "You need two new lines: the `import` at the very top, and `show_message(...)` at the end of the loop.",
+  "The `show_message(...)` line goes straight after the `buzzer.beep(...)` line, indented by the same amount.",
+  "Add `show_message(\"Time for a break!\", \"Focus Timer\")` after `buzzer.beep(...)`.",
+]
+error_hints = { NameError = "Did you add `from pipath_computer import show_message` at the top?" }
+success = "The Pi tells you when to take a break. Stretch, get a drink of water, then go again!"
+demo = '''
+from gpiozero import LEDBarGraph, Buzzer, Button
+from pipath_computer import show_message
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+buzzer = Buzzer(18)
+button = Button(23)
+
+while True:
+    print("Press the button to start a focus session.")
+    button.wait_for_press()
+    button.wait_for_release()
+
+    for time_left in range(SESSION_SECONDS, 0, -1):
+        bar.value = time_left / SESSION_SECONDS
+        minutes = time_left // 60
+        seconds = time_left % 60
+        print(f"Time left: {minutes}:{seconds:02}")
+        sleep(1)
+
+    bar.off()
+    print("Time's up!")
+    buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)
+    show_message("Time for a break!", "Focus Timer")
+'''
+demo_events = ["1 tap 23"]
+demo_seconds = 16
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:show_message"
+label = "It shows a message on the screen"
+
+[[steps.checks]]
+type = "output_contains"
+value = "Time for a break"
+label = "The message came up when the time was up"
+fail = "Press the button, then wait for the countdown to finish before you press Stop."
+
+[[steps.checks]]
+type = "confirm"
+label = "A message popped up on the screen"
+
+# ------------------------------------------------------------------ STEP 7
+[[steps]]
+title = "Challenge: a study log"
+support = "brief"
+starter_mode = "keep"
+run_mode = "until_stopped"
+text = """
+**Goal:** after each session, add a line to a file called `study_log.csv` with the **date**, the **time** and the **minutes** you focused, like this:
+
+```
+2026-10-18,15:42,0.2
+```
+
+Then read the whole file back, add up the minutes for **today** only, and print it, like `Today you've focused for 0.4 minutes`. Keep the bar, the buzzer and the message working. (With 12 second sessions, each one is 0.2 minutes. Real sessions will add up faster!)
+
+Run it, do two sessions, then press **Stop** and open `study_log.csv` in the file manager to look at it.
+
+Tips: `from datetime import datetime`, then `datetime.now().strftime("%Y-%m-%d")` gives today's date and `"%H:%M"` gives the time. `open("study_log.csv", "a")` adds to the end of a file. To read it back, loop over the lines with `for line in f:`, and `line.strip().split(",")` splits a line into a list.
+"""
+hints = [
+  "Write the line first: `with open(\"study_log.csv\", \"a\") as f:` then `f.write(f\"{date},{time},{SESSION_SECONDS / 60}\\n\")`.",
+  "To add up today: `total = 0`, then for each line, `parts = line.strip().split(\",\")`. If `parts[0] == today`, add `float(parts[2])` to `total`.",
+]
+error_hints = { FileNotFoundError = "Write to the log **before** you read it back, so the file is there the first time.", IndexError = "Is there a line in your log without three parts? Check each line has the date, the time and the minutes, with commas between." }
+success = "Your Pi remembers every session and adds up your study time. Now change SESSION_SECONDS to 25 * 60 and use it for real!"
+demo = '''
+from gpiozero import LEDBarGraph, Buzzer, Button
+from pipath_computer import show_message
+from datetime import datetime
+from time import sleep
+
+SESSION_SECONDS = 12      # a real focus session is 25 * 60
+LOG_FILE = "study_log.csv"
+bar = LEDBarGraph(17, 27, 22, 5, 6, 13)
+buzzer = Buzzer(18)
+button = Button(23)
+
+
+def log_session(minutes):
+    now = datetime.now()
+    date = now.strftime("%Y-%m-%d")
+    time = now.strftime("%H:%M")
+    with open(LOG_FILE, "a") as f:
+        f.write(f"{date},{time},{minutes}\n")
+
+
+def minutes_today():
+    today = datetime.now().strftime("%Y-%m-%d")
+    total = 0
+    with open(LOG_FILE) as f:
+        for line in f:
+            parts = line.strip().split(",")
+            if len(parts) == 3 and parts[0] == today:
+                total = total + float(parts[2])
+    return round(total, 1)
+
+
+while True:
+    print("Press the button to start a focus session.")
+    button.wait_for_press()
+    button.wait_for_release()
+
+    for time_left in range(SESSION_SECONDS, 0, -1):
+        bar.value = time_left / SESSION_SECONDS
+        minutes = time_left // 60
+        seconds = time_left % 60
+        print(f"Time left: {minutes}:{seconds:02}")
+        sleep(1)
+
+    bar.off()
+    print("Time's up!")
+    buzzer.beep(on_time=0.2, off_time=0.2, n=3, background=False)
+    log_session(SESSION_SECONDS / 60)
+    total = minutes_today()
+    print(f"Today you've focused for {total} minutes")
+    show_message(f"Time for a break! Today: {total} minutes", "Focus Timer")
+'''
+demo_events = ["1 tap 23"]
+demo_seconds = 16
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:datetime"
+label = "It uses the date and time"
+
+[[steps.checks]]
+type = "file_contains"
+file = "*.csv"
+value = '''\d{4}-\d{2}-\d{2}\s*,\s*\d{1,2}:\d{2}(:\d{2})?\s*,\s*\d+(\.\d+)?'''
+label = "study_log.csv has the date, the time and the minutes"
+fail = "Each line in the log needs the date, the time and the minutes, with commas between."
+
+[[steps.checks]]
+type = "code_count"
+value = "call:open"
+min = 2
+label = "It writes the log and reads it back"
+fail = "Open the file once to add a line (`\"a\"`) and once more to read it back."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''today.*\d+(\.\d+)?\s*min'''
+ignore_case = true
+label = "It prints today's total minutes"
+fail = "Print today's total, like `Today you've focused for 0.4 minutes`."
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:show_message"
+label = "The break message still works"

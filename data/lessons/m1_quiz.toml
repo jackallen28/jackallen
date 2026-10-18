@@ -1,0 +1,596 @@
+id = "m1_quiz"
+title = "Quiz Master"
+file_name = "quiz_master.py"
+
+intro = """
+## Build a trivia quiz
+
+Time to make a game your friends can play! Your quiz will ask questions about Australia, animals, footy and space, and keep score.
+
+To build it you'll learn some big ideas:
+- **lists**, to keep lots of questions in one place
+- **for loops** with `zip()`, to go through questions and answers together
+- **cleaning up answers** with `.strip()` and `.lower()`, so " CANBERRA " still counts
+- **functions** that hand back an answer with `return`
+- **percentages** and **random order**, so the quiz is different every time
+
+Help gets lighter as you go. By the last step you'll be working from just a goal.
+"""
+
+outro = """
+## You're a Quiz Master!
+
+You stored data in **lists**, paired them up with `zip()`, cleaned up messy answers with `.strip()` and `.lower()`, wrote a **function** that returns True or False, and worked out a **percentage**.
+
+You also found out why shuffling two lists on their own breaks a quiz. Keeping data that belongs together in **pairs** is a trick real programmers use all the time.
+
+**Extension ideas:**
+- Make a quiz about your favourite topic: a sport, a game, a band or your school
+- Give the player 3 lives, and end the quiz early when they run out
+- Accept more than one right answer, like "6" or "six" (hint: a list of answers for each question)
+"""
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "One question and a score"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+# Quiz Master: question 1
+score = 0
+
+answer = input("What is the capital of Australia? ")
+
+if answer == ___:
+    print("Correct! Canberra it is.")
+    score ___ 1
+else:
+    print("Not quite. It's Canberra.")
+
+print(f"Score: {score} out of 1")
+'''
+text = """
+Every quiz needs a **score**. A score is a **counter**: a variable that starts at `0` and goes up by 1 each time something happens.
+
+```
+score = 0
+score += 1    # same as: score = score + 1
+```
+
+`+=` means **"add this on to what's already in the box"**.
+
+**Your task:** fill in the two blanks.
+1. The `if` should check if the answer is `"Canberra"` (keep the quote marks).
+2. The score should go **up by 1** when the answer is right.
+
+Run it and answer the question. Then run it again and get it wrong on purpose. What score do you get each time?
+"""
+hints = [
+  "The first blank is the right answer, as text in quote marks. The second blank is how you add on to a variable.",
+  "Compare with `\"Canberra\"`. To add 1 to the score, use `+=`.",
+  "The two lines are `if answer == \"Canberra\":` and `score += 1`.",
+]
+error_hints = { SyntaxError = "Check the `if` line ends with a colon, and that `+=` has no space in the middle." }
+success = "Your quiz can keep score! One question down."
+demo = '''
+# Quiz Master: question 1
+score = 0
+
+answer = input("What is the capital of Australia? ")
+
+if answer == "Canberra":
+    print("Correct! Canberra it is.")
+    score += 1
+else:
+    print("Not quite. It's Canberra.")
+
+print(f"Score: {score} out of 1")
+'''
+demo_input = "Canberra\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:input"
+label = "You ask a question with input()"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''==\s*["']Canberra["']|["']Canberra["']\s*=='''
+ignore_case = true
+label = "You check if the answer is Canberra"
+fail = "Fill the first blank with the right answer in quote marks: `\"Canberra\"`."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\w+\s*\+=\s*1|(\w+)\s*=\s*\1\s*\+\s*1'''
+label = "The score goes up by 1"
+fail = "Fill the second blank so the score goes up by 1: `score += 1`."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score:?\s*\d'''
+ignore_case = true
+label = "Your quiz shows the score"
+fail = "Run it and type an answer in the box under the Output. Do you see the score at the end?"
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Lots of questions in lists"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+# Quiz Master
+questions = [
+    "What is the capital of Australia? ",
+    "Which Aussie animal lays eggs: platypus or wombat? ",
+    "How many points is a goal worth in AFL? ",
+    "Which planet is closest to the Sun? ",
+]
+answers = ["Canberra", "platypus", "6", "Mercury"]
+
+score = 0
+
+for q, a in zip(___, ___):
+    reply = input(q)
+    if reply == a:
+        print("Correct!")
+        score += 1
+    else:
+        print(f"Not quite. The answer is {a}.")
+
+print(f"Score: {score} out of {len(questions)}")
+'''
+text = """
+Copying the `if` block for every question would make a very long program. Instead, we keep the questions in a **list**, and the answers in another list, **in the same order**.
+
+```
+answers = ["Canberra", "platypus", "6", "Mercury"]
+```
+
+`zip()` **pairs up** two lists, like a zip on a jacket. The first question goes with the first answer, the second with the second, and so on. The `for` loop then takes one pair at a time:
+
+```
+for q, a in zip(questions, answers):
+```
+
+Each time round the loop, `q` is a question and `a` is its answer.
+
+Your code from the last step is safe in the `backups` folder.
+
+**Your task:**
+1. Fill in the blanks so the loop zips the **questions** list with the **answers** list.
+2. Add a **fifth question** to the end of `questions`, and its answer to the end of `answers`.
+3. Run it and play your quiz!
+"""
+hints = [
+  "`zip()` needs the two lists: the one with the questions, then the one with the answers.",
+  "The loop line is `for q, a in zip(questions, answers):`. For the new question, add a comma after the last answer, then your answer in quote marks.",
+  "For example, add `\"Which bird is on the coat of arms with the kangaroo? \",` to `questions`, and make the answers end with `\"Mercury\", \"emu\"]`.",
+]
+error_hints = { SyntaxError = "Check the commas in your lists. Every item needs a comma between it and the next one." }
+success = "One loop runs the whole quiz. Add as many questions as you like and the loop handles them all!"
+demo = '''
+# Quiz Master
+questions = [
+    "What is the capital of Australia? ",
+    "Which Aussie animal lays eggs: platypus or wombat? ",
+    "How many points is a goal worth in AFL? ",
+    "Which planet is closest to the Sun? ",
+    "Which bird is on the coat of arms with the kangaroo? ",
+]
+answers = ["Canberra", "platypus", "6", "Mercury", "emu"]
+
+score = 0
+
+for q, a in zip(questions, answers):
+    reply = input(q)
+    if reply == a:
+        print("Correct!")
+        score += 1
+    else:
+        print(f"Not quite. The answer is {a}.")
+
+print(f"Score: {score} out of {len(questions)}")
+'''
+demo_input = "Canberra\nplatypus\n6\nMercury\nemu\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_count"
+value = "node:List"
+min = 2
+label = "You keep questions and answers in lists"
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:zip"
+label = "You pair them up with zip()"
+fail = "Fill the blanks inside `zip(___, ___)` with your two lists."
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:For"
+label = "A for loop asks every question"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score:?\s*\d+\s*out of\s*([5-9]|\d\d+)'''
+ignore_case = true
+label = "Your quiz has 5 or more questions"
+fail = "Add a fifth question to `questions` and its answer to `answers`, then run it and play to the end."
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Bug hunt: canberra is wrong?!"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+Your quiz has a sneaky bug. Let's find it.
+
+**Your task:**
+1. **Run** your quiz. For the first question, type `canberra` with a small **c**. Is it marked right?
+2. Fix the bug so **messy answers still count**: small letters, CAPITALS, or extra spaces at the start or end.
+3. Run it again with messy answers, like ` CANBERRA ` and `Platypus`, and get full marks.
+
+**Why it happens:** Python compares text **letter by letter**. To a computer, `"C"` and `"c"` are different letters, and a space is a letter too. So `"canberra" == "Canberra"` is **False**.
+
+Two string methods clean up text before you compare it:
+
+```
+reply = "  CanBERra "
+print(reply.strip())            # "CanBERra"  (spaces gone)
+print(reply.strip().lower())    # "canberra"  (spaces gone, all small letters)
+```
+
+Clean up **both** sides of the `==`, so it doesn't matter how the answer in your list is written either.
+"""
+hints = [
+  "Find the line that compares the player's reply with the answer. That's where the bug is.",
+  "Use `.strip()` to remove spaces and `.lower()` to make everything small letters. Do it to the reply **and** to the answer.",
+  "The line should read `if reply.strip().lower() == a.strip().lower():`",
+]
+success = "Bug squashed! Cleaning up input before you use it is called **normalising**, and real apps do it all the time."
+demo = '''
+# Quiz Master
+questions = [
+    "What is the capital of Australia? ",
+    "Which Aussie animal lays eggs: platypus or wombat? ",
+    "How many points is a goal worth in AFL? ",
+    "Which planet is closest to the Sun? ",
+    "Which bird is on the coat of arms with the kangaroo? ",
+]
+answers = ["Canberra", "platypus", "6", "Mercury", "emu"]
+
+score = 0
+
+for q, a in zip(questions, answers):
+    reply = input(q)
+    if reply.strip().lower() == a.strip().lower():
+        print("Correct!")
+        score += 1
+    else:
+        print(f"Not quite. The answer is {a}.")
+
+print(f"Score: {score} out of {len(questions)}")
+'''
+demo_input = "  canberra\nPLATYPUS\n 6 \nmercury\nEmu \n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:strip"
+label = "You remove extra spaces with .strip()"
+fail = "Use `.strip()` on the reply to cut off spaces at the start and end."
+
+[[steps.checks]]
+type = "code_uses"
+value = "attr:lower"
+label = "You ignore capitals with .lower()"
+fail = "Use `.lower()` on both the reply and the answer, so capitals don't matter."
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You ran it to find the bug, then again after fixing it"
+fail = "Run it again after your fix, and test it with messy answers."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score:?\s*(\d+)\s*out of\s*\1\b'''
+ignore_case = true
+label = "Messy answers still get full marks"
+fail = "Run it and answer every question correctly, but type some answers messily, like ` CANBERRA `. Do you get full marks? If not, did you clean up both sides of the `==`?"
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "A function that asks"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+A **function** is a named block of code you can use again and again. A function can also **give back** an answer with `return`.
+
+We'll make a function called `ask` that asks one question and gives back **True** (they got it right) or **False** (they didn't). Then the loop just keeps score.
+
+**Your task:**
+1. Near the top of your program (under the lists), start a function:
+```
+def ask(question, answer):
+```
+2. Move the lines that ask and check the question **inside** it (indented). Use `question` and `answer` instead of `q` and `a`.
+3. Replace the `score += 1` line with `return True`. In the `else` part, add `return False`.
+4. Change the loop so it calls your function and adds 1 to the score when it gives back True:
+```
+for q, a in zip(questions, answers):
+    if ask(q, a):
+        score += 1
+```
+
+Run it. The quiz should work exactly the same as before, but now your code is **organised** into a tidy piece with a name.
+"""
+hints = [
+  "The function goes **above** the loop, because Python needs to read the `def` before you can use it.",
+  "Inside `ask`, use `reply = input(question)`, then the same `if` as before but with `answer`. End each part with `return True` or `return False`.",
+  "Example:\n```\ndef ask(question, answer):\n    reply = input(question)\n    if reply.strip().lower() == answer.strip().lower():\n        print(\"Correct!\")\n        return True\n    else:\n        print(f\"Not quite. The answer is {answer}.\")\n        return False\n```",
+]
+error_hints = { NameError = "Python reads from the top down. Is your `def ask` above the loop? Inside the function, did you use `question` and `answer` (not `q` and `a`)?", IndentationError = "Every line inside the function needs 4 spaces in front of it, and the lines inside the `if` need 8." }
+success = "Your function does one job well and hands back the result. That's how big programs are built: lots of small functions."
+demo = '''
+# Quiz Master
+questions = [
+    "What is the capital of Australia? ",
+    "Which Aussie animal lays eggs: platypus or wombat? ",
+    "How many points is a goal worth in AFL? ",
+    "Which planet is closest to the Sun? ",
+    "Which bird is on the coat of arms with the kangaroo? ",
+]
+answers = ["Canberra", "platypus", "6", "Mercury", "emu"]
+
+
+def ask(question, answer):
+    reply = input(question)
+    if reply.strip().lower() == answer.strip().lower():
+        print("Correct!")
+        return True
+    else:
+        print(f"Not quite. The answer is {answer}.")
+        return False
+
+
+score = 0
+
+for q, a in zip(questions, answers):
+    if ask(q, a):
+        score += 1
+
+print(f"Score: {score} out of {len(questions)}")
+'''
+demo_input = "Canberra\nplatypus\n6\nMercury\nemu\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''def\s+ask\s*\(\s*\w+\s*,\s*\w+\s*\)\s*:'''
+label = "You made a function ask(question, answer)"
+fail = "Start your function with `def ask(question, answer):`"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Return"
+label = "Your function gives back True or False with return"
+fail = "Use `return True` when the answer is right and `return False` when it's wrong."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''(if\s+(not\s+)?|=\s*|\+\s*)ask\s*\('''
+label = "Your loop uses what ask() gives back"
+fail = "In the loop, call your function inside an `if`: `if ask(q, a):`"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''Score:?\s*\d+\s*out of'''
+ignore_case = true
+label = "The quiz still shows the score"
+fail = "Run it and play to the end. Is the score printed after the loop?"
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Score as a percentage"
+support = "scaffolded"
+starter_mode = "keep"
+text = """
+"3 out of 5" is good, but a **percentage** makes scores easy to compare, even between quizzes with different numbers of questions.
+
+```
+percent = score / len(questions) * 100
+print(f"You got {percent:.0f}%")
+```
+
+`/` divides, `* 100` turns it into a percentage, and `:.0f` inside the curly brackets shows it with **no decimal places** (so `60.0` shows as `60`).
+
+**Your task:** at the end of your quiz:
+1. Work out the score as a percentage and print it.
+2. Use `if`, `elif` and `else` to print a different message for **at least 3** score bands. For example:
+- 80% or more: `Quiz Master!`
+- 50% or more: `Not bad at all!`
+- less than 50%: `Have another go!`
+"""
+hints = [
+  "Work out the percentage **after** the loop, once the score is final.",
+  "Start with the highest band: `if percent >= 80:`. Then `elif percent >= 50:`, then `else:`.",
+  "Example:\n```\npercent = score / len(questions) * 100\nprint(f\"You got {percent:.0f}%\")\nif percent >= 80:\n    print(\"Quiz Master!\")\nelif percent >= 50:\n    print(\"Not bad at all!\")\nelse:\n    print(\"Have another go!\")\n```",
+]
+error_hints = { ZeroDivisionError = "You divided by 0. Is the questions list empty? Divide by `len(questions)`." }
+success = "Your quiz gives a percentage and a message to match. Nice work!"
+demo = '''
+# Quiz Master
+questions = [
+    "What is the capital of Australia? ",
+    "Which Aussie animal lays eggs: platypus or wombat? ",
+    "How many points is a goal worth in AFL? ",
+    "Which planet is closest to the Sun? ",
+    "Which bird is on the coat of arms with the kangaroo? ",
+]
+answers = ["Canberra", "platypus", "6", "Mercury", "emu"]
+
+
+def ask(question, answer):
+    reply = input(question)
+    if reply.strip().lower() == answer.strip().lower():
+        print("Correct!")
+        return True
+    else:
+        print(f"Not quite. The answer is {answer}.")
+        return False
+
+
+score = 0
+
+for q, a in zip(questions, answers):
+    if ask(q, a):
+        score += 1
+
+print(f"Score: {score} out of {len(questions)}")
+
+percent = score / len(questions) * 100
+print(f"You got {percent:.0f}%")
+if percent >= 80:
+    print("Quiz Master!")
+elif percent >= 50:
+    print("Not bad at all!")
+else:
+    print("Have another go!")
+'''
+demo_input = "Canberra\nplatypus\nseven\nMercury\nemu\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+(\.\d+)?\s*%'''
+label = "Your quiz shows a percentage"
+fail = "Print the percentage with a % sign, like `print(f\"You got {percent:.0f}%\")`. Play to the end of the quiz."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''if\s+.*(>=|<=|>|<)\s*\d+'''
+label = "You compare the score to pick a message"
+fail = "Use an `if` to compare the percentage with a number, like `if percent >= 80:`"
+
+[[steps.checks]]
+type = "code_uses"
+value = "elif"
+label = "You have at least 3 message bands (elif)"
+fail = "Add an `elif` between your `if` and `else` for a middle band."
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Challenge: shuffle the questions"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** ask the questions in a **different order** every time the quiz is played, and still mark every answer correctly.
+
+`random.shuffle(my_list)` mixes up a list, like shuffling cards. You'll need `import random` at the top.
+
+**Watch out:** if you shuffle `questions` and `answers` on their own, the answers won't match their questions any more! Find a way to keep each question **with** its answer while you shuffle.
+
+Play your quiz at least twice to check the order changes.
+"""
+hints = [
+  "Join each question and its answer into a **pair** first, then shuffle the pairs. `zip()` makes pairs.",
+  "`quiz = list(zip(questions, answers))` makes one list of pairs. Shuffle `quiz`, then loop with `for q, a in quiz:`.",
+  "Example:\n```\nimport random\n...\nquiz = list(zip(questions, answers))\nrandom.shuffle(quiz)\nfor q, a in quiz:\n    if ask(q, a):\n        score += 1\n```",
+]
+success = "A shuffled quiz, with every answer still in the right place. You're a true Quiz Master!"
+demo = '''
+# Quiz Master
+import random
+
+questions = [
+    "What is the capital of Australia? ",
+    "Which Aussie animal lays eggs: platypus or wombat? ",
+    "How many points is a goal worth in AFL? ",
+    "Which planet is closest to the Sun? ",
+    "Which bird is on the coat of arms with the kangaroo? ",
+]
+answers = ["Canberra", "platypus", "6", "Mercury", "emu"]
+
+
+def ask(question, answer):
+    reply = input(question)
+    if reply.strip().lower() == answer.strip().lower():
+        print("Correct!")
+        return True
+    else:
+        print(f"Not quite. The answer is {answer}.")
+        return False
+
+
+quiz = list(zip(questions, answers))
+random.shuffle(quiz)
+
+score = 0
+
+for q, a in quiz:
+    if ask(q, a):
+        score += 1
+
+print(f"Score: {score} out of {len(quiz)}")
+
+percent = score / len(quiz) * 100
+print(f"You got {percent:.0f}%")
+if percent >= 80:
+    print("Quiz Master!")
+elif percent >= 50:
+    print("Not bad at all!")
+else:
+    print("Have another go!")
+'''
+demo_input = "Canberra\nplatypus\n6\nMercury\nemu\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:random"
+label = "You import the random module"
+fail = "Add `import random` at the top of your program."
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:shuffle"
+label = "You shuffle with random.shuffle()"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''shuffle\(\s*(?!(questions|answers)\s*\))\w+'''
+label = "Each question stays with its answer"
+fail = "Shuffling `questions` or `answers` on its own mixes up which answer goes with which question. Join them into pairs with `zip()` first, then shuffle the pairs."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\d+(\.\d+)?\s*%'''
+label = "Your quiz still shows a percentage"
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You played at least twice"
+fail = "Play your quiz again. Are the questions in a different order?"

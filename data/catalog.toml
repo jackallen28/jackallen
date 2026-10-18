@@ -117,35 +117,61 @@ status = "ready"
 id = "m1_quiz"
 tier = "moderate"
 title = "Quiz Master"
-subtitle = "A quiz game with scores, built from a list of questions"
-concepts = ["lists", "for loops", "functions", ".lower() / .strip()", "scores"]
+subtitle = "A trivia game with lists, a scoring function and shuffled questions"
+concepts = ["lists", "for loops + zip()", "functions with return", ".strip() / .lower()", "percentages", "random.shuffle"]
+curriculum = [
+    "Creating Digital Solutions: design an algorithm with iteration over lists and a function that returns a value",
+    "Data and Information: keep related data paired with zip(), and normalise text input before comparing it",
+    "Creating Digital Solutions: validate the quiz with test cases (messy answers, all wrong, shuffled order)",
+]
+stretch = [
+    "Store the quiz as a list of dictionaries ({\"q\": ..., \"answers\": [...]}) so each question can accept several right answers, like \"6\" and \"six\".",
+    "Load the questions from a quiz.csv file with the csv module, so a teacher can write a new quiz without touching the code.",
+    "Test ask() without typing: give it an optional reply parameter and check it with assert ask(\"Capital? \", \"Canberra\", reply=\" canberra \") is True.",
+]
 minutes = 40
-support = "scaffolded"
+support = "scaffolded → brief"
 try_first = ["s3_guess"]
-status = "planned"
-
+status = "ready"
 [[project]]
 id = "m2_turtle"
 tier = "moderate"
 title = "Turtle Art Studio"
-subtitle = "Draw shapes, patterns and spirals with code"
-concepts = ["turtle module", "functions with parameters", "nested loops", "random colours"]
+subtitle = "Draw shapes and spinning rainbow patterns with code"
+concepts = ["for loops", "functions with parameters", "lists", "% (modulo)", "angles"]
+curriculum = [
+    "Creating Digital Solutions: design and trace a repeating algorithm that turns angles into shapes (360 ÷ sides)",
+    "Creating Digital Solutions: a general-purpose function with parameters, called with different values",
+    "Data and Information: use a list and modulo to cycle through colours without going past the end",
+]
+stretch = [
+    "Use turtle.tracer(0) and turtle.update() to draw a 360-shape pattern instantly, and explain why it's faster.",
+    "Write a recursive function that draws a fractal tree or a Koch snowflake, with a depth parameter.",
+    "Make polygon() check its inputs: raise a ValueError for fewer than 3 sides, and centre each shape on a given (x, y).",
+]
 minutes = 40
-support = "scaffolded → brief"
-try_first = ["s3_guess"]
-status = "planned"
-
+support = "guided → brief"
+status = "ready"
 [[project]]
 id = "m3_tuckshop"
 tier = "moderate"
 title = "Tuckshop Till"
-subtitle = "A point-of-sale program that totals orders and prints receipts"
-concepts = ["dictionaries", "while menus", "money formatting", "GST", "saving to a file"]
+subtitle = "A till that totals orders, prints receipts and logs the day's sales"
+concepts = ["dictionaries", "while loops + input()", "money formatting (:.2f)", "GST", "files and CSV"]
+curriculum = [
+    "Creating Digital Solutions: a program using a dictionary, a loop and branching to process and validate orders",
+    "Data and Information: store sales as structured CSV records, then read them back and summarise them",
+    "Creating Digital Solutions: design the steps for totalling an order and the GST included in a price",
+]
+stretch = [
+    "Store the menu in menu.csv and load it into the dictionary when the till starts, so prices can change without editing code.",
+    "Use decimal.Decimal (or whole cents) instead of floats so the totals are exact, and explain why 0.1 + 0.2 isn't 0.3.",
+    "Use collections.Counter to group the order (2 x juice), and report the day's best-selling item from sales.csv.",
+]
 minutes = 50
-support = "brief"
+support = "scaffolded → brief"
 try_first = ["s3_guess"]
-status = "planned"
-
+status = "ready"
 # ---------------------------------------------------------------- PI & COMPUTER (simple → moderate)
 
 [[project]]
@@ -242,24 +268,44 @@ parts = ["HC-SR04 ultrasonic distance sensor", "1kΩ + 2kΩ resistors (for ECHO)
 id = "p5_focustimer"
 tier = "computer"
 title = "Focus Timer"
-subtitle = "A study timer: LEDs count down, the screen pops up a message, and a log adds up your study time"
-concepts = ["countdowns", "LEDBarGraph", "desktop messages", "CSV log", "adding up a column"]
+subtitle = "A study timer: a shrinking bar of lights, a beep and a break message"
+concepts = ["countdown loops", "constants", "LEDBarGraph", "buzzer", "messages on the screen", "CSV log", "datetime"]
+curriculum = [
+    "Creating Digital Solutions: design a countdown with a loop and a constant, and scale time into a bar of lights",
+    "Digital Systems: connect inputs and outputs (button, LEDs, buzzer) to the computer's own screen",
+    "Data and Information: record each study session in a CSV file, then read it back for today's total",
+]
+stretch = [
+    "Add a 5 minute break timer after each session, with the bar growing back up.",
+    "Use when_held so holding the button for 2 seconds cancels a session early.",
+    "Read study_log.csv and print a minutes total for each day of the past week, as a text bar chart.",
+]
 minutes = 45
-support = "scaffolded → brief"
-status = "planned"
+support = "guided → brief"
+status = "ready"
 gpio = true
-
+parts = ["6 LEDs (red, orange, 2 yellow, 2 green) + 6 × 330Ω resistors", "active buzzer", "1 push button", "breadboard + jumper wires"]
 [[project]]
 id = "p6_controlpad"
 tier = "computer"
 title = "Control Pad"
-subtitle = "Three buttons that open your favourite app, take a screenshot and change the volume"
-concepts = ["subprocess", "dictionaries of actions", "when_pressed", "when_held"]
+subtitle = "Three buttons that take a screenshot, change the volume and open your favourite website"
+concepts = ["when_pressed", "when_held", "functions", "dictionaries of actions", "button.pin.number", "CSV log"]
+curriculum = [
+    "Digital Systems: hardware inputs (buttons) control software on the computer: screenshots, volume, the browser",
+    "Creating Digital Solutions: a dictionary looks up the action for the button pressed, with one handler for all",
+    "Data and Information: record each action with the date and time in a CSV log file",
+]
+stretch = [
+    "Replace the pipath_computer helpers with your own subprocess.run() calls to grim and wpctl, and handle the case where the command isn't installed.",
+    "Stop a hold from also taking a screenshot: run the press action on when_released only if the button wasn't held. Test both paths.",
+    "Read controlpad_log.csv back and print how many times each action was used today, sorted from most to least used.",
+]
 minutes = 40
-support = "scaffolded → brief"
-status = "planned"
+support = "guided → brief"
+status = "ready"
 gpio = true
-
+parts = ["3 push buttons", "1 LED + 330Ω resistor", "headphones or a speaker (optional)", "breadboard + jumper wires"]
 # ---------------------------------------------------------------- ADVANCED (GPIO)
 [[project]]
 id = "a1_traffic"

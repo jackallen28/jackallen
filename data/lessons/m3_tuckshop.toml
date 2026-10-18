@@ -1,0 +1,726 @@
+id = "m3_tuckshop"
+title = "Tuckshop Till"
+file_name = "tuckshop_till.py"
+
+intro = """
+## Run the school tuckshop
+
+Every shop has a **till**: the program that knows the prices, adds up an order and prints a receipt. You're going to build one for your school tuckshop.
+
+Your till will:
+- keep the menu and prices in a **dictionary**
+- show money properly, like `$4.50` (not `4.5`)
+- take an order in a **loop** until the customer types `done`
+- print a receipt with the total and the **GST**
+- save each receipt to a **file**, and keep a log of every sale in `sales.csv`
+- read the log back to show the day's **takings** (all the money made today)
+
+Help gets lighter as you go. By the last step you'll have just a goal, like a real programmer.
+"""
+
+outro = """
+## Open for business!
+
+You built a real point-of-sale program. You used a **dictionary** to look up prices, a `while` loop to take orders, `if item in menu` to check them, `:.2f` to show money, and **files** to keep receipts and a sales log that lasts after the program stops.
+
+That's how real shops work: every sale goes into a log, and the log is added up at the end of the day.
+
+**Extension ideas:**
+- Let customers order more than one of something: ask "How many?" and multiply
+- Add a **daily special** that is 50 cents off, or a discount for teachers
+- Ask how much cash the customer gave you and work out their **change**
+"""
+
+# ------------------------------------------------------------------ STEP 1
+[[steps]]
+title = "The menu board"
+support = "scaffolded"
+starter_mode = "replace"
+starter = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.___():
+    print(f"{item}: ${price:___}")
+'''
+text = """
+A **dictionary** stores pairs: a **key** and its **value**. Here the key is the food and the value is its price.
+
+```
+menu = {"juice": 2.50, "fruit cup": 3.00}
+print(menu["juice"])    # prints 2.5
+```
+
+Look at that: Python printed `2.5`, not `$2.50`. Money needs **two decimal places**. In an f-string, `:.2f` does that:
+
+```
+price = 2.5
+print(f"${price:.2f}")    # prints $2.50
+```
+
+The `$` is just a normal character. The `{price:.2f}` part shows the price with 2 decimal places.
+
+`menu.items()` gives you each key and value together, so a `for` loop can go through the whole menu.
+
+**Your task:**
+1. Fill in the two blanks so the menu prints with proper prices, like `juice: $2.50`.
+2. Add **one more item** of your own to the dictionary (a meat pie? a cheese toastie?).
+"""
+hints = [
+  "The first blank is the dictionary method that gives you each key and its value. The second blank is the money format.",
+  "The first blank is `items`. The second blank is `.2f` (dot, two, f).",
+  "The finished lines are `for item, price in menu.items():` and `print(f\"{item}: ${price:.2f}\")`. To add an item, put a new line inside the `{ }` like `\"meat pie\": 5.00,`",
+]
+success = "Your menu board looks like a real shop's. Two decimal places, every time."
+demo = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+    "meat pie": 5.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.items():
+    print(f"{item}: ${price:.2f}")
+'''
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:Dict"
+label = "The menu is a dictionary"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\.2f'''
+label = "You use .2f for money"
+fail = "Show each price with two decimal places: `{price:.2f}`."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\$\s?\d+\.\d\d\b'''
+label = "Prices print like $4.50"
+fail = "Put a `$` before the price in your f-string, like `${price:.2f}`."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''(?:\$\s?\d+\.\d\d[\s\S]*){6}'''
+label = "You added a sixth item to the menu"
+fail = "Add one more item to the dictionary, like `\"meat pie\": 5.00,` (don't forget the comma)."
+
+# ------------------------------------------------------------------ STEP 2
+[[steps]]
+title = "Take an order"
+support = "scaffolded"
+starter_mode = "append"
+starter = '''
+
+# Take an order
+order = []
+while True:
+    item = input("What would you like? (type done to finish) ").strip().lower()
+    if item == "done":
+        ___
+    if item ___ menu:
+        order.append(item)
+        print(f"Added {item}: ${menu[item]:.2f}")
+    else:
+        print(f"Sorry, we don't sell {item}. Have a look at the menu!")
+
+print("Your order:", order)
+'''
+text = """
+Now the till needs to **take an order**. A `while True` loop keeps asking until the customer types `done`.
+
+Two new ideas:
+- `.strip().lower()` tidies up what was typed. `" Juice "` becomes `"juice"`, so it matches the menu.
+- `if item in menu:` checks whether that food is a **key** in the dictionary. If it isn't, we say sorry instead of crashing.
+
+`order.append(item)` adds the food to the end of the `order` list.
+
+**Your task:** fill in the two blanks:
+1. When the customer types `done`, the loop should stop.
+2. Only add the item if it is **in** the menu.
+
+Run it and order a few things. Try something that's *not* on the menu too, like `pizza`, and then type `done`.
+"""
+hints = [
+  "Which word stops a loop straight away? And which word checks if something is inside a dictionary?",
+  "The first blank is `break`. The second blank is `in`.",
+  "The finished lines are `        break` (under `if item == \"done\":`) and `    if item in menu:`",
+]
+error_hints = { KeyError = "That food isn't a key in the menu dictionary. Only look up `menu[item]` after `if item in menu:` says it's there." }
+success = "Your till takes orders, and it doesn't crash when someone asks for pizza."
+demo = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+    "meat pie": 5.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.items():
+    print(f"{item}: ${price:.2f}")
+
+# Take an order
+order = []
+while True:
+    item = input("What would you like? (type done to finish) ").strip().lower()
+    if item == "done":
+        break
+    if item in menu:
+        order.append(item)
+        print(f"Added {item}: ${menu[item]:.2f}")
+    else:
+        print(f"Sorry, we don't sell {item}. Have a look at the menu!")
+
+print("Your order:", order)
+'''
+demo_input = "Sausage roll\npizza\njuice\ndone\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "node:While"
+label = "A while loop takes the order"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''["']done["']'''
+label = "Typing done finishes the order"
+fail = "Check for the word `\"done\"` and stop the loop when the customer types it."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\bnot\s+in\s+menu\b|\bin\s+menu\b'''
+label = "You check if the item is in the menu"
+fail = "Use `if item in menu:` before you look up its price."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''\$\d+\.\d\d'''
+label = "You ordered something from the menu"
+fail = "Run it and type the name of a food on the menu, like `juice`, then type `done`."
+
+# ------------------------------------------------------------------ STEP 3
+[[steps]]
+title = "Print the receipt with GST"
+support = "scaffolded"
+starter_mode = "append"
+starter = '''
+
+# The receipt
+total = 0
+print()
+print("========= RECEIPT =========")
+for item in order:
+    price = menu[item]
+    print(f"{item}: ${price:.2f}")
+    total = total + ___
+
+gst = total / ___
+print(f"Total: ${total:.2f}")
+print(f"Includes GST: ${gst:.2f}")
+print("Thanks for shopping at the tuckshop!")
+'''
+text = """
+Time for the **receipt**. The loop goes through the order, prints each item and adds its price to a running `total`.
+
+**GST** (Goods and Services Tax) is a 10% tax on most things you buy in Australia. Shop prices **already include** the GST, so the receipt shows how much of the total was GST.
+
+Here's the trick: if the price *with* GST is 110%, then the GST part is 10 out of 110, which is **1/11** of the total.
+
+```
+total = 11.00
+gst = total / 11    # 1.0, so $1.00 of it is GST
+```
+
+(Watch out: `total * 0.1` would be wrong, because that's 10% of a price that already has GST in it.)
+
+**Your task:** fill in the blanks so the receipt adds up each **price** and works out the **GST**. Run it, order a few things and check the maths.
+"""
+hints = [
+  "Each time round the loop, what should be added to the total? And what number do you divide by to find the GST part?",
+  "The first blank is `price`. The second blank is `11`.",
+  "The finished lines are `    total = total + price` and `gst = total / 11`",
+]
+success = "A proper receipt. A $7.00 order has $0.64 of GST in it, and now your till knows that."
+demo = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+    "meat pie": 5.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.items():
+    print(f"{item}: ${price:.2f}")
+
+# Take an order
+order = []
+while True:
+    item = input("What would you like? (type done to finish) ").strip().lower()
+    if item == "done":
+        break
+    if item in menu:
+        order.append(item)
+        print(f"Added {item}: ${menu[item]:.2f}")
+    else:
+        print(f"Sorry, we don't sell {item}. Have a look at the menu!")
+
+print("Your order:", order)
+
+# The receipt
+total = 0
+print()
+print("========= RECEIPT =========")
+for item in order:
+    price = menu[item]
+    print(f"{item}: ${price:.2f}")
+    total = total + price
+
+gst = total / 11
+print(f"Total: ${total:.2f}")
+print(f"Includes GST: ${gst:.2f}")
+print("Thanks for shopping at the tuckshop!")
+'''
+demo_input = "Sausage roll\npizza\njuice\ndone\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''/\s*11\b'''
+label = "You work out the GST (total ÷ 11)"
+fail = "The GST part of a price is the total divided by 11: `gst = total / 11`."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''total[^\n]*\$\s?\d+\.\d\d'''
+ignore_case = true
+label = "The receipt shows the total"
+fail = "Print the total with a `$` and two decimal places: `print(f\"Total: ${total:.2f}\")`."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''GST[^\n]*\$\s?\d+\.\d\d'''
+ignore_case = true
+label = "The receipt shows the GST"
+fail = "Print the GST with a `$` and two decimal places: `print(f\"Includes GST: ${gst:.2f}\")`."
+
+# ------------------------------------------------------------------ STEP 4
+[[steps]]
+title = "Save the receipt to a file"
+support = "scaffolded"
+starter_mode = "append"
+starter = '''
+
+# Save the receipt to a file, named with the date and time
+from datetime import datetime
+
+stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+file_name = f"receipt_{___}.txt"
+with open(file_name, "w") as f:
+    f.write("TUCKSHOP RECEIPT\n")
+    for item in order:
+        f.write(f"{item}: ${menu[item]:.2f}\n")
+    f.write(f"Total: ${total:.2f}\n")
+    f.write(f"Includes GST: ${___:.2f}\n")
+print("Receipt saved as", file_name)
+'''
+text = """
+A receipt on the screen disappears when the program stops. Let's **save it to a file** so it lasts.
+
+Every receipt needs its own name, or each sale would write over the last one. The time is perfect for that:
+
+```
+from datetime import datetime
+stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+# stamp is now something like 2026-10-18_12-30-05
+```
+
+`open(file_name, "w")` makes a new file for **w**riting. `f.write()` puts text in it. Unlike `print()`, `write()` doesn't start a new line by itself, so each line ends with `\\n` (the new-line character).
+
+(We usually put `import` lines at the top of a program. You can move the `from datetime import datetime` line up there if you like.)
+
+**Your task:** fill in the blanks so the file name has the **date and time** in it, and the file has the **GST** in it. Run it, then open your folder in the file manager and find your receipt.
+"""
+hints = [
+  "Which variable holds the date and time? Which variable holds the GST you worked out in the last step?",
+  "The first blank is `stamp`. The second blank is `gst`.",
+  "The finished lines are `file_name = f\"receipt_{stamp}.txt\"` and `    f.write(f\"Includes GST: ${gst:.2f}\\n\")`",
+]
+success = "Receipt saved! Every sale now gets its own file, named with the date and time."
+demo = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+    "meat pie": 5.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.items():
+    print(f"{item}: ${price:.2f}")
+
+# Take an order
+order = []
+while True:
+    item = input("What would you like? (type done to finish) ").strip().lower()
+    if item == "done":
+        break
+    if item in menu:
+        order.append(item)
+        print(f"Added {item}: ${menu[item]:.2f}")
+    else:
+        print(f"Sorry, we don't sell {item}. Have a look at the menu!")
+
+print("Your order:", order)
+
+# The receipt
+total = 0
+print()
+print("========= RECEIPT =========")
+for item in order:
+    price = menu[item]
+    print(f"{item}: ${price:.2f}")
+    total = total + price
+
+gst = total / 11
+print(f"Total: ${total:.2f}")
+print(f"Includes GST: ${gst:.2f}")
+print("Thanks for shopping at the tuckshop!")
+
+# Save the receipt to a file, named with the date and time
+from datetime import datetime
+
+stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+file_name = f"receipt_{stamp}.txt"
+with open(file_name, "w") as f:
+    f.write("TUCKSHOP RECEIPT\n")
+    for item in order:
+        f.write(f"{item}: ${menu[item]:.2f}\n")
+    f.write(f"Total: ${total:.2f}\n")
+    f.write(f"Includes GST: ${gst:.2f}\n")
+print("Receipt saved as", file_name)
+'''
+demo_input = "Sausage roll\npizza\njuice\ndone\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_uses"
+value = "import:datetime"
+label = "You use datetime"
+
+[[steps.checks]]
+type = "file_exists"
+value = "*20[0-9][0-9]*.txt"
+label = "A receipt file is saved with the date in its name"
+fail = "Put the date and time in the file name: `file_name = f\"receipt_{stamp}.txt\"`."
+
+[[steps.checks]]
+type = "file_contains"
+file = "*.txt"
+value = '''total[^\n]*\$\s?\d+\.\d\d'''
+ignore_case = true
+label = "The receipt file has the total"
+fail = "Write the total into the file with `f.write(...)`, ending with `\\n`."
+
+[[steps.checks]]
+type = "file_contains"
+file = "*.txt"
+value = '''GST[^\n]*\$\s?\d+\.\d\d'''
+ignore_case = true
+label = "The receipt file has the GST"
+fail = "Write the GST into the file too: `f.write(f\"Includes GST: ${gst:.2f}\\n\")`."
+
+# ------------------------------------------------------------------ STEP 5
+[[steps]]
+title = "Log every sale in sales.csv"
+support = "scaffolded"
+starter_mode = "append"
+starter = '''
+
+# Add this sale to the end of the sales log
+today = datetime.now().strftime("%Y-%m-%d")
+time_now = datetime.now().strftime("%H:%M")
+with open("sales.csv", "___") as f:
+    f.write(f"{today},{time_now},{len(order)},{___:.2f}\n")
+print("Sale added to sales.csv")
+'''
+text = """
+The shop manager wants a **log** of every sale: one line per sale in a file called `sales.csv`. CSV means **comma-separated values**. Spreadsheets can open it.
+
+Each line will have the date, the time, how many items and the total:
+
+```
+2026-10-18,12:30,2,7.00
+```
+
+The new idea is the **mode** in `open()`:
+- `"w"` (**w**rite) starts a fresh file, wiping anything already in it. Good for one receipt.
+- `"a"` (**a**ppend) adds to the **end** of the file and keeps what's there. Good for a log.
+
+**Your task:** fill in the blanks so each sale is **added to the end** of `sales.csv`, with the **total** at the end of the line. Run your till **twice** (two customers), then open `sales.csv` to see both sales.
+"""
+hints = [
+  "Which mode keeps what's already in the file? Which variable holds the money for this sale?",
+  "The first blank is `a` (keep the quotes). The second blank is `total`.",
+  "The finished lines are `with open(\"sales.csv\", \"a\") as f:` and `    f.write(f\"{today},{time_now},{len(order)},{total:.2f}\\n\")`",
+]
+success = "Every sale is logged, and the old ones are kept. That's what append mode is for."
+demo = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+    "meat pie": 5.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.items():
+    print(f"{item}: ${price:.2f}")
+
+# Take an order
+order = []
+while True:
+    item = input("What would you like? (type done to finish) ").strip().lower()
+    if item == "done":
+        break
+    if item in menu:
+        order.append(item)
+        print(f"Added {item}: ${menu[item]:.2f}")
+    else:
+        print(f"Sorry, we don't sell {item}. Have a look at the menu!")
+
+print("Your order:", order)
+
+# The receipt
+total = 0
+print()
+print("========= RECEIPT =========")
+for item in order:
+    price = menu[item]
+    print(f"{item}: ${price:.2f}")
+    total = total + price
+
+gst = total / 11
+print(f"Total: ${total:.2f}")
+print(f"Includes GST: ${gst:.2f}")
+print("Thanks for shopping at the tuckshop!")
+
+# Save the receipt to a file, named with the date and time
+from datetime import datetime
+
+stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+file_name = f"receipt_{stamp}.txt"
+with open(file_name, "w") as f:
+    f.write("TUCKSHOP RECEIPT\n")
+    for item in order:
+        f.write(f"{item}: ${menu[item]:.2f}\n")
+    f.write(f"Total: ${total:.2f}\n")
+    f.write(f"Includes GST: ${gst:.2f}\n")
+print("Receipt saved as", file_name)
+
+# Add this sale to the end of the sales log
+today = datetime.now().strftime("%Y-%m-%d")
+time_now = datetime.now().strftime("%H:%M")
+with open("sales.csv", "a") as f:
+    f.write(f"{today},{time_now},{len(order)},{total:.2f}\n")
+print("Sale added to sales.csv")
+'''
+demo_input = "Sausage roll\npizza\njuice\ndone\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''open\(\s*["']sales\.csv["']\s*,\s*(mode\s*=\s*)?["']a'''
+label = "sales.csv is opened in append mode"
+fail = "Open the file with `\"a\"` so new sales go on the end: `open(\"sales.csv\", \"a\")`."
+
+[[steps.checks]]
+type = "file_contains"
+file = "sales.csv"
+value = '''^.+,\s*\$?\d+(\.\d+)?\s*$'''
+label = "sales.csv has a line for the sale, ending with the total"
+fail = "Each line needs the date, time, number of items and total, with commas between and `\\n` at the end."
+
+[[steps.checks]]
+type = "run_count_min"
+min = 2
+label = "You ran the till twice (two sales)"
+fail = "Run your till again for a second customer, so the log has two sales."
+
+# ------------------------------------------------------------------ STEP 6
+[[steps]]
+title = "Challenge: the day's takings"
+support = "brief"
+starter_mode = "keep"
+text = """
+**Goal:** at the end of your program, read `sales.csv` back and print how many sales there were **today** and the day's **takings** (all the money made today), like this:
+
+```
+Sales today: 3
+Today's takings: $21.40
+```
+
+Tips:
+- `open("sales.csv")` opens a file for reading. `for line in f:` goes through it one line at a time.
+- `line.strip().split(",")` turns `"2026-10-18,12:30,2,7.00"` into a list: `["2026-10-18", "12:30", "2", "7.00"]`.
+- The total is text, so turn it into a number with `float()` before you add it up.
+- Only count a line if its date matches `today`.
+
+If an old line in `sales.csv` gives you an error, you can delete the file and start a fresh log.
+"""
+hints = [
+  "Start with `takings = 0` and `sales = 0` before you open the file. Inside the loop, split each line into its parts.",
+  "`parts = line.strip().split(\",\")`. The date is `parts[0]` and the total is `parts[3]`. If `parts[0] == today`, add 1 to `sales` and add `float(parts[3])` to `takings`.",
+]
+error_hints = { ValueError = "`float()` was given text that isn't a number. Is there an old or blank line in sales.csv? Delete the file and run again, or skip lines that don't have 4 parts.", IndexError = "One line in sales.csv doesn't have enough parts. It might be a blank or old line. Check `len(parts) == 4` before you use `parts[3]`, or delete the file and start again." }
+success = "End of the day and the books are balanced. Your till is ready for the lunchtime rush!"
+demo = '''
+# The tuckshop menu: each item has a price in dollars
+menu = {
+    "sausage roll": 4.50,
+    "salad wrap": 6.00,
+    "banana bread": 3.20,
+    "juice": 2.50,
+    "fruit cup": 3.00,
+    "meat pie": 5.00,
+}
+
+print("====== TUCKSHOP MENU ======")
+for item, price in menu.items():
+    print(f"{item}: ${price:.2f}")
+
+# Take an order
+order = []
+while True:
+    item = input("What would you like? (type done to finish) ").strip().lower()
+    if item == "done":
+        break
+    if item in menu:
+        order.append(item)
+        print(f"Added {item}: ${menu[item]:.2f}")
+    else:
+        print(f"Sorry, we don't sell {item}. Have a look at the menu!")
+
+print("Your order:", order)
+
+# The receipt
+total = 0
+print()
+print("========= RECEIPT =========")
+for item in order:
+    price = menu[item]
+    print(f"{item}: ${price:.2f}")
+    total = total + price
+
+gst = total / 11
+print(f"Total: ${total:.2f}")
+print(f"Includes GST: ${gst:.2f}")
+print("Thanks for shopping at the tuckshop!")
+
+# Save the receipt to a file, named with the date and time
+from datetime import datetime
+
+stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+file_name = f"receipt_{stamp}.txt"
+with open(file_name, "w") as f:
+    f.write("TUCKSHOP RECEIPT\n")
+    for item in order:
+        f.write(f"{item}: ${menu[item]:.2f}\n")
+    f.write(f"Total: ${total:.2f}\n")
+    f.write(f"Includes GST: ${gst:.2f}\n")
+print("Receipt saved as", file_name)
+
+# Add this sale to the end of the sales log
+today = datetime.now().strftime("%Y-%m-%d")
+time_now = datetime.now().strftime("%H:%M")
+with open("sales.csv", "a") as f:
+    f.write(f"{today},{time_now},{len(order)},{total:.2f}\n")
+print("Sale added to sales.csv")
+
+# Read the log back and add up today's takings
+sales = 0
+takings = 0
+with open("sales.csv") as f:
+    for line in f:
+        parts = line.strip().split(",")
+        if len(parts) == 4 and parts[0] == today:
+            sales = sales + 1
+            takings = takings + float(parts[3])
+
+print()
+print(f"Sales today: {sales}")
+print(f"Today's takings: ${takings:.2f}")
+'''
+demo_input = "Sausage roll\npizza\njuice\ndone\n"
+
+[[steps.checks]]
+type = "runs_ok"
+label = "Your program runs"
+
+[[steps.checks]]
+type = "code_regex"
+value = '''open\(\s*["']sales\.csv["']\s*(\)|,\s*(mode\s*=\s*)?["']r)'''
+label = "You open sales.csv to read it"
+fail = "Open the log for reading: `with open(\"sales.csv\") as f:`."
+
+[[steps.checks]]
+type = "code_regex"
+value = '''\.split\(|csv\.(reader|DictReader)'''
+label = "You split each line into its parts"
+fail = "Use `line.strip().split(\",\")` to break each line into a list."
+
+[[steps.checks]]
+type = "code_uses"
+value = "call:float"
+label = "You turn the totals into numbers with float()"
+fail = "The totals in the file are text. Use `float()` to turn each one into a number."
+
+[[steps.checks]]
+type = "output_regex"
+value = '''taking[^\n]*\$\s?\d+\.\d\d'''
+ignore_case = true
+label = "The day's takings are printed like $21.40"
+fail = "Print the takings with a `$` and two decimal places, like `print(f\"Today's takings: ${takings:.2f}\")`."

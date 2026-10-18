@@ -75,6 +75,17 @@ class SettingsDialog(tk.Frame):
               fg=C["muted"]).pack(anchor="w", pady=(0, 8))
         ChoiceList(page, level_options(), student.help_level, wrap=440,
                    on_change=lambda k: (student.set_help_level(k), self.app.settings_changed("help"))).pack(anchor="w")
+        self.adaptive = tk.BooleanVar(value=student.profile.get("adaptive", True) is not False)
+        tk.Checkbutton(page, text="Adaptive help: nudge me when I'm stuck, and suggest a new level when it's too "
+                                  "easy or too hard", variable=self.adaptive, command=self._set_adaptive,
+                       font="small", bg=C["bg"], activebackground=C["bg"], selectcolor="#FFFFFF",
+                       wraplength=440, justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
+
+    def _set_adaptive(self) -> None:
+        student = self.app.student
+        student.profile["adaptive"] = bool(self.adaptive.get())
+        student.save_profile()
+        self.app.settings_changed("help")
 
     def _tab_show(self, page) -> None:
         student = self.app.student

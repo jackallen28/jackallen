@@ -60,6 +60,15 @@ and **Level up** challenges in the outro. Each activity lists its Victorian Curr
 Technologies (Levels 9-10) links (`curriculum` in catalog.toml). Moderate students get the code
 review and the deeper "Under the bonnet" explanation too.
 
+**Adaptive scaffolding** (`pipath/adapt.py`, shown by the Coach as a yellow note with buttons):
+on top of the chosen level, PiPath *offers* the right next thing. Stuck (the same error twice, a
+check that keeps failing, 4+ failed runs, a quiet spell, no Run after 4 minutes) → a nudge with
+"Show me a hint" / "Watch the goal" / "Show the full explanation", and hints unlock early at any
+level. Flying (3 steps in a row first try, no hints) → "try a harder level?". Struggling (many
+failed runs or hints over 3 steps) → "want a bit more help?". Each nudge once per step; a level
+suggestion then waits 4 steps. History is saved in the profile (`adapt`); students can switch it
+off in Settings (`adaptive`).
+
 **Hardware safety:** classes use a **blue GPIO HAT**. Student-facing text always says: take the
 blue HAT off before changing wires, put it back on after, and **never turn the Pi off** (they'd
 lose their progress). `gpio.SAFETY` and `gpio.HAT_FIX` hold the wording.
@@ -149,8 +158,10 @@ repo root
 │   ├── demo_files/c2/examples.json   sample training data for Teachable Machine demos
 │   └── lessons/
 │       ├── s1_hello, s2_pibot, s3_guess        Simple (screen only)
+│       ├── m1_quiz, m2_turtle, m3_tuckshop     Moderate (screen only; turtle opens its own window)
 │       ├── a1_traffic, a2_reaction, a3_alarm   Advanced GPIO
-│       ├── p1_pihealth, p2_binaryclock, p3_dicedj, p4_doorbell   Pi & Computer
+│       ├── p1_pihealth, p2_binaryclock, p3_dicedj, p4_doorbell,
+│       │   p5_focustimer, p6_controlpad                      Pi & Computer
 │       ├── e1_lightswitch, e2_moodlamp, e3_simon, e4_dice,
 │       │   e5_parking, e6_whackamole, e7_morse               Electronics Lab
 │       └── c1_photobooth, c2_teachable          Camera & AI
@@ -164,6 +175,7 @@ repo root
 │   ├── levels.py            help levels (Beginner / Moderate / Advanced): hint rules, goal text, skip
 │   ├── hints.py             Coach engine: precheck, gpio_lint, traceback parsing, matching, checks
 │   ├── review.py            code review coach (ast): tips on how code is written, for Years 9-10
+│   ├── adapt.py             adaptive scaffolding: nudges when stuck, level suggestions
 │   ├── runner.py            runs student code: live output, stdin, runaway detection, shim pipes,
 │   │                        warm start (a spare shim process with gpiozero already imported)
 │   ├── gpio.py              app-side GPIO: Pi detection, Simulator env, wiring parts, header map,
@@ -171,8 +183,10 @@ repo root
 │   ├── gpio_shim.py         runs INSIDE the student process: mock/real pins, state + commands
 │   ├── student_lib/
 │   │   ├── pipath_camera.py   the students' camera helper (Simulated / USB via V4L2 / ribbon)
-│   │   └── pipath_computer.py cpu_temp / cpu_load / ram_used (from /sys, /proc), open_file /
-│   │                          open_website (xdg-open; Watch the goal only prints what it would open)
+│   │   ├── pipath_computer.py cpu_temp / cpu_load / ram_used (from /sys, /proc), open_file /
+│   │   │                      open_website (xdg-open), take_screenshot (grim), change_volume (wpctl),
+│   │   │                      show_message; Watch the goal only prints what it would do
+│   │   └── _headless_turtle.py stands in for turtle when there's no display (tests)
 │   └── ui/
 │       ├── theme.py         logo colours, named fonts (DejaVu fallbacks), tier colours, LOGO_SQUARES
 │       ├── widgets.py       PButton, TitleBar, CogButton, ChoiceList, window, bevel, RichText
@@ -197,6 +211,7 @@ repo root
     ├── test_computer.py     pipath_computer numbers, pretend stats, opening files (never for real)
     ├── test_editor.py       editor behaviour (needs Tk + a display; skipped otherwise)
     ├── test_review.py       the code review coach
+    ├── test_adapt.py        adaptive scaffolding: nudges, level suggestions, no nagging
     ├── test_activities.py   every step's demo passes its checks (all activities); lesson lint
     ├── shimrun.py           helper: run code through the shim with timed presses
     ├── gui_smoke.py         drives the real app under Xvfb and saves screenshots (not unittest)
@@ -260,7 +275,8 @@ Run pressed
 ~/PiPath/students/<slug>/profile.json    first_name (all names joined: "Sam & Alex"), names [..],
                                           school, created, last_seen, tour_done, help_level
                                           (beginner|moderate|advanced; missing = beginner), show
-                                          ("all" or a tier id), code_size (optional)
+                                          ("all", "hardware" or a tier id), code_size (optional),
+                                          adaptive (false = no nudges), adapt {history, cooldown}
                                           (older profiles may also have class_code; no names = [first_name])
 ~/PiPath/students/<slug>/progress.json   lessons.<id>: status, step, steps_done, steps_started,
                                           steps_skipped, hints_used, hints_seen, runs, errors,
@@ -467,14 +483,15 @@ Avoid GPIO 2/3 (I²C, fixed pull-ups) and 14/15 (serial console).
 | Simple | S1 Hello, Pi! | ✅ | run · name blank · 3 prints · bug hunt (G) · ASCII art (S) |
 | Simple | S2 Meet PiBot | ✅ | variables · input + f-string (G) · `input()+1` bug · `.upper()` (S) · own question (B) |
 | Simple | S3 Guess My Number | ✅ | randint · if/else · elif · while (S) · counter 1–100 (B) |
-| Moderate | M1 Quiz Master | 🔲 | see outline below |
-| Moderate | M2 Turtle Art Studio | 🔲 | see outline below |
-| Moderate | M3 Tuckshop Till | 🔲 | see outline below |
+| Moderate | M1 Quiz Master | ✅ | one question + score · lists + `zip()` · bug hunt: `.strip().lower()` · `def ask()` returns · percentage bands · challenge: `random.shuffle` (S → B) |
+| Moderate | M2 Turtle Art Studio | ✅ | square (G) · `for` loop · `def polygon(sides, size)` · spinning rainbow with `%` (S) · own artwork (B) |
+| Moderate | M3 Tuckshop Till | ✅ | menu dictionary + `:.2f` · order loop · receipt with GST · save receipt · `sales.csv` (S) · challenge: the day's takings (B) |
 | Pi & Computer | P1 Pi Health Lights | ✅ | `cpu_temp()` etc. (G) · read the temp file with try/except (G) · loop monitor (S) · text bars (S) · test 3 PWMLEDs (G) · live brightness (S) · warnings (S) · CSV log (B) |
 | Pi & Computer | P2 Binary Clock | ✅ | `datetime.now()` (G) · `format(n, "06b")` (G) · ●/○ clock on screen (S) · test 6 LEDs (G) · seconds on LEDBoard (S) · test the button (G) · seconds/minutes/hours modes (B) |
 | Pi & Computer | P3 Dice DJ | ✅ | randint (G) · test the button (G) · test LEDBarGraph (G) · LED dice (S) · `open_file(sounds[roll - 1])` (S) · `glob` playlist (S) · surprise button → `open_website` (B) |
 | Pi & Computer | P4 Doorbell Cam | ✅ | test the distance sensor (G) · test camera + `open_file(name)` (G) · test the bell (G) · `when_in_range` ding dong (S) · snap the visitor (S) · show it (S) · cooldown + visitor CSV (B) |
-| Pi & Computer | P5 Focus Timer · P6 Control Pad | 🔲 | outlines below |
+| Pi & Computer | P5 Focus Timer | ✅ | countdown (G) · test 6 LEDs (G) · shrinking bar (S) · test buzzer (G) · button starts, beep at end · `show_message` break (S) · study log CSV (B) |
+| Pi & Computer | P6 Control Pad | ✅ | test buttons · test LED (G) · screenshot · volume (S) · dictionary of actions · `when_held` website (S) · action log CSV (B) |
 | Advanced | A1 Traffic Lights | ✅ | flash one LED (G) · green→amber→red (S) · `def cycle()` + `while True` (S) · test the button: 3 × `wait_for_press` (G) · lights + button = pedestrian crossing (S) · add the beeper (S) · countdown + flashing red (B) |
 | Advanced | A2 Reaction Timer | ✅ | light the LED (G) · random wait (S) · test the button: hold timer with `monotonic()` (G) · reaction stopwatch (S) · false start with `wait_for_press(timeout=)` (S) · 2-player `when_pressed` race (B) · best of 5 + `highscore.txt` with try/except (B) |
 | Advanced | A3 Motion Alarm & Logger | ✅ | HC-SR04 ultrasonic: test the LED + buzzer (G) · `sensor.distance * 100` (G) · `when_in_range` / `when_out_of_range` (S) · sensor + alarm (S) · armed state + button (S) · CSV log with `datetime` (B) · cooldown + report (B) |
@@ -492,35 +509,6 @@ Camera activities use the students' helper `from pipath_camera import Camera`
 (`take_photo(name)`, `capture_grid(rows, cols)`). The Simulator's pretend camera shows a
 face, ball, box or nothing (picked on the board); a nearest-neighbour classifier gets
 about 90% on its ball/box pictures.
-
-### Moderate outlines (still to write; set `status = "ready"` when done)
-
-**M1 Quiz Master** (scaffolded → brief, ~40 min)
-1. (S) One question with `input()` + `if` + `score = 0 / score += 1`.
-2. (S) Questions and answers in two **lists**; loop with `for q, a in zip(questions, answers)`.
-3. (S) Accept "Canberra", " canberra " etc: `.strip().lower()`. Planted bug: comparing without normalising.
-4. (S) Write `def ask(question, answer):` that **returns** True/False; loop calls it.
-5. (B) Final score as a percentage with a message band (`if pct >= 80`), `random.shuffle` the questions.
-
-**M2 Turtle Art Studio** (scaffolded → brief, ~40 min). Square with `forward()`/`left(90)` ×4
-(G) · `for i in range(4)` (S) · `def polygon(sides, size)` (S) · rotating pattern with
-`colours[i % len(colours)]` (S) · own art (B). Use `run_mode = "until_stopped"` and
-`confirm` checks; `speed(0)` on the Pi 3B; friendly entry for `turtle.Terminator`.
-
-**M3 Tuckshop Till** (brief, ~50 min). Menu dictionary + `f"${price:.2f}"` · order loop with
-`if item in menu` · total + GST (total ÷ 11) receipt · save receipt with `datetime` ·
-append to `sales.csv` and read back the day's takings.
-
-### Pi & Computer outlines (still to write)
-
-**P5 Focus Timer** (scaffolded → brief): countdown in the Output · six LEDs as a shrinking bar
-(`LEDBarGraph`) · buzzer at the end · a message on the screen (open a picture or text file with
-`open_file`) · log each session to `study_log.csv` and add up today's minutes.
-
-**P6 Control Pad** (scaffolded → brief): three buttons that each run a computer action from a
-**dictionary** of actions: open a favourite website or file, take a screenshot (`grim` on
-Wayland via `subprocess`), change the volume (`wpctl`); `when_held` for a second action.
-Check the commands exist on Trixie/labwc before writing it.
 
 ### Free Build
 Always open. Projects list, new project (names that shadow modules like `random.py` are
@@ -596,7 +584,8 @@ To build:
 
 ## 11. What's next
 
-Built and passing in the Simulator: the GPIO foundation, A1–A3 (A3 now ultrasonic), the
+Built and passing in the Simulator: all 24 activities (nothing is "coming soon"), adaptive
+scaffolding, the GPIO foundation, A1–A3 (A3 now ultrasonic), the
 Electronics Lab, the Camera & AI tier, the Pi & Computer tier (P1–P4), student-chosen help
 levels, the setup step + Settings cog, group profiles, the retro school-branded look, the
 Thonny-style editor, the step-by-step (one part at a time) activity structure, and the Pi 3B
@@ -605,8 +594,7 @@ speed work (`docs/perf.md`). Still to do, roughly in this order:
 1. **Real hardware check** (docs/pi-test-checklist.md): Pi 3B on Trixie with a breadboard
    kit, a USB webcam and a ribbon camera. Run `tests/perf_probe.py` and record the timings
    in `docs/perf.md`.
-2. **Moderate tier**: write M1–M3 from §7 with model answers; M2 needs `confirm` +
-   `until_stopped` (both built). Then P5–P6 (§7).
+2. **Classroom feedback on the adaptive coach**: tune the thresholds in `pipath/adapt.py`.
 3. **Phase 1 polish**: undo/redo buttons, "Reset step code", underline the exact word from
    the `^^^^` markers, `--scale` per student, high-contrast theme, 80+ errors.toml entries,
    a hidden log of entry ids hit per student.

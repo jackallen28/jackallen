@@ -646,6 +646,17 @@ hints = [
 # ------------------------------------------------------------------ GPIO (gpiozero)
 
 [[error]]
+id = "turtle_closed"
+type = "Terminator"
+title = "The turtle window was closed"
+explain = "You closed the drawing window while the turtle was still drawing, so Python stopped. That's fine! Press **Run** to draw it again, and let it finish before you close the window."
+hints = [
+  "Wait for the drawing to finish, then close the window (or press Stop).",
+  "Want it faster? Add `t.speed(0)` after you make your turtle.",
+]
+tech = "The real turtle module raises `turtle.Terminator` when its Tk window is destroyed mid-draw, because every turtle call needs that window. A program that should end cleanly can catch it: `try: ... except turtle.Terminator: pass`."
+
+[[error]]
 id = "gpio_pin_in_use"
 type = "GPIOPinInUse"
 message = '''pin (?P<pin>\w+)'''

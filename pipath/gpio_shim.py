@@ -373,6 +373,9 @@ def _run(student: str, cmd_buf: bytes = b"") -> int:
     if os.environ.get("PIPATH_CMD_FD"):
         threading.Thread(target=_listener, args=(int(os.environ["PIPATH_CMD_FD"]), cmd_buf), daemon=True).start()
     send({"t": "hello", "mode": "sim" if os.environ.get("GPIOZERO_PIN_FACTORY") == "mock" else "real"})
+    if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")) and "turtle" not in sys.modules:
+        import _headless_turtle          # no screen to draw on: turtle programs still run to the end
+        sys.modules["turtle"] = _headless_turtle
 
     try:
         runpy.run_path(student, run_name="__main__")
