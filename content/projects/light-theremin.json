@@ -1,0 +1,29 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "light-theremin",
+  "title": "Light Theremin",
+  "tier": "sensors-sound",
+  "order": 4,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "ldr"
+    },
+    {
+      "type": "resistor-10k"
+    },
+    {
+      "type": "buzzer"
+    }
+  ],
+  "minutes": 60,
+  "concepts": [
+    "analogRead",
+    "map",
+    "tone"
+  ],
+  "intro": "Wave your hand over a light sensor to play music, like a real theremin.",
+  "steps": []
+}

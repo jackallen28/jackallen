@@ -1,0 +1,30 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "keypad-safe",
+  "title": "Keypad Safe",
+  "tier": "challenge",
+  "order": 15,
+  "boards": [
+    "uno",
+    "mega"
+  ],
+  "parts": [
+    {
+      "type": "keypad-4x4"
+    },
+    {
+      "type": "servo"
+    },
+    {
+      "type": "lcd-i2c"
+    }
+  ],
+  "minutes": 120,
+  "concepts": [
+    "String",
+    "state machines",
+    "libraries"
+  ],
+  "intro": "Type the secret code on a keypad to unlock a safe. A servo opens the lock.",
+  "steps": []
+}

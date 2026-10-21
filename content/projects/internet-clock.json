@@ -1,0 +1,24 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "internet-clock",
+  "title": "Internet Clock",
+  "tier": "wifi-iot",
+  "order": 20,
+  "boards": [
+    "esp"
+  ],
+  "needs_internet": true,
+  "parts": [
+    {
+      "type": "oled"
+    }
+  ],
+  "minutes": 60,
+  "concepts": [
+    "WiFi",
+    "NTP time",
+    "displays"
+  ],
+  "intro": "Get the exact time from the internet and show it on an OLED screen.",
+  "steps": []
+}

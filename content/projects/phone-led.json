@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "phone-led",
+  "title": "Phone-controlled LED",
+  "tier": "wifi-iot",
+  "order": 17,
+  "boards": [
+    "esp"
+  ],
+  "parts": [
+    {
+      "type": "led"
+    },
+    {
+      "type": "resistor-220"
+    }
+  ],
+  "minutes": 60,
+  "concepts": [
+    "WiFi",
+    "web servers",
+    "HTML"
+  ],
+  "intro": "Make your own web page that turns an LED on and off from your phone.",
+  "steps": []
+}

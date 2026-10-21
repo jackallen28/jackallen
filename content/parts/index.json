@@ -1,0 +1,27 @@
+{
+  "$schema": "../schema/parts.schema.json",
+  "parts": {
+    "led": { "name": "LED", "plural": "LEDs", "group": "output" },
+    "rgb-led": { "name": "RGB LED", "plural": "RGB LEDs", "group": "output" },
+    "resistor-220": { "name": "220Ω resistor", "plural": "220Ω resistors", "group": "passive" },
+    "resistor-10k": { "name": "10kΩ resistor", "plural": "10kΩ resistors", "group": "passive" },
+    "button": { "name": "push button", "plural": "push buttons", "group": "input" },
+    "buzzer": { "name": "piezo buzzer", "plural": "piezo buzzers", "group": "output" },
+    "potentiometer": { "name": "potentiometer", "plural": "potentiometers", "group": "input" },
+    "joystick": { "name": "joystick", "plural": "joysticks", "group": "input" },
+    "keypad-4x4": { "name": "4×4 keypad", "plural": "4×4 keypads", "group": "input" },
+    "servo": { "name": "servo motor", "plural": "servo motors", "group": "motor" },
+    "ldr": { "name": "light sensor (LDR)", "plural": "light sensors (LDRs)", "group": "sensor" },
+    "hc-sr04": { "name": "ultrasonic distance sensor (HC-SR04)", "plural": "ultrasonic distance sensors (HC-SR04)", "group": "sensor", "needs_5v": true },
+    "pir": { "name": "motion sensor (PIR)", "plural": "motion sensors (PIR)", "group": "sensor" },
+    "dht": { "name": "temperature and humidity sensor (DHT11 / DHT22)", "plural": "temperature and humidity sensors (DHT11 / DHT22)", "group": "sensor" },
+    "soil-moisture": { "name": "soil moisture sensor", "plural": "soil moisture sensors", "group": "sensor" },
+    "rfid-rc522": { "name": "RFID reader (RC522) and cards", "plural": "RFID readers (RC522) and cards", "group": "sensor" },
+    "oled": { "name": "OLED screen (SSD1306)", "plural": "OLED screens (SSD1306)", "group": "display" },
+    "lcd-i2c": { "name": "16×2 LCD screen (I2C)", "plural": "16×2 LCD screens (I2C)", "group": "display" },
+    "tm1637": { "name": "4-digit display (TM1637)", "plural": "4-digit displays (TM1637)", "group": "display" },
+    "led-matrix": { "name": "8×8 LED matrix (MAX7219)", "plural": "8×8 LED matrices (MAX7219)", "group": "display" },
+    "neopixel-ring": { "name": "NeoPixel ring (WS2812)", "plural": "NeoPixel rings (WS2812)", "group": "output" },
+    "neopixel-strip": { "name": "NeoPixel strip (WS2812)", "plural": "NeoPixel strips (WS2812)", "group": "output" }
+  }
+}

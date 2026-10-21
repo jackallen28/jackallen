@@ -1,0 +1,13 @@
+{
+  "$schema": "../schema/board.schema.json",
+  "id": "nodemcu",
+  "name": "NodeMCU 1.0 (ESP8266)",
+  "short": "NodeMCU",
+  "family": "esp8266",
+  "fqbn": "esp8266:esp8266:nodemcuv2",
+  "logic_volts": 3.3,
+  "wifi": true,
+  "order": 4,
+  "notes": "A WiFi board. Its pins are labelled D0 to D8, and it runs on 3.3V.",
+  "upload": { "protocol": "esptool", "baud": 115200 }
+}

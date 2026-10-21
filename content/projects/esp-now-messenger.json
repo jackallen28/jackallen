@@ -1,0 +1,40 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "esp-now-messenger",
+  "title": "ESP-NOW Messenger",
+  "tier": "wifi-iot",
+  "order": 21,
+  "boards": [
+    "esp"
+  ],
+  "board_count": 2,
+  "parts": [
+    {
+      "type": "button",
+      "count": 2,
+      "note": "one for each board"
+    },
+    {
+      "type": "led",
+      "count": 2,
+      "note": "one for each board"
+    },
+    {
+      "type": "resistor-220",
+      "count": 2
+    },
+    {
+      "type": "buzzer",
+      "count": 2,
+      "note": "one for each board"
+    }
+  ],
+  "minutes": 120,
+  "concepts": [
+    "ESP-NOW",
+    "sending data",
+    "events"
+  ],
+  "intro": "Send messages between two boards with no router. Press a button and your friend's board buzzes.",
+  "steps": []
+}

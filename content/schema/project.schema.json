@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project.schema.json",
+  "title": "CircuitPath project",
+  "description": "One project on the picker. The file name must be <id>.json. A project with no steps yet shows as \"Coming soon\".",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "tier", "boards", "parts", "minutes", "intro", "steps"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "tier": { "description": "A tier id from tiers.json.", "$ref": "common.schema.json#/$defs/id" },
+    "order": { "description": "Where the project sits within its tier on the picker (lowest first).", "type": "integer", "minimum": 0 },
+    "boards": {
+      "description": "Which boards the project suits: \"all\", \"avr\", \"esp\" (any ESP8266 or ESP32), \"esp8266\", \"esp32\", or board ids.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/id" }
+    },
+    "board_count": { "description": "How many boards the project needs (2 for ESP-NOW).", "type": "integer", "minimum": 1, "maximum": 4 },
+    "needs_internet": { "type": "boolean" },
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type"],
+        "properties": {
+          "type": { "description": "A part type from parts/index.json.", "$ref": "common.schema.json#/$defs/id" },
+          "count": { "type": "integer", "minimum": 1, "maximum": 64 },
+          "note": { "type": "string", "maxLength": 80 }
+        }
+      }
+    },
+    "minutes": { "type": "integer", "minimum": 10, "maximum": 600 },
+    "concepts": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 40 } },
+    "curriculum": {
+      "description": "Victorian Curriculum Digital Technologies (Levels 7-10) content description codes.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 20 }
+    },
+    "stretch": { "description": "Level up challenges.", "type": "array", "maxItems": 3, "items": { "$ref": "common.schema.json#/$defs/text" } },
+    "intro": { "$ref": "common.schema.json#/$defs/text" },
+    "outro": { "$ref": "common.schema.json#/$defs/text" },
+    "steps": { "type": "array", "items": { "$ref": "#/$defs/step" } }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "support", "text", "demo"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "support": { "enum": ["guided", "scaffolded", "brief"] },
+        "starter_mode": { "enum": ["replace", "keep", "append"] },
+        "starter": { "type": "string" },
+        "text": { "$ref": "common.schema.json#/$defs/text" },
+        "hints": { "type": "array", "maxItems": 3, "items": { "$ref": "common.schema.json#/$defs/text" } },
+        "error_hints": { "type": "object", "additionalProperties": { "type": "string" } },
+        "checks": { "type": "array", "items": { "type": "object", "required": ["type"], "properties": { "type": { "type": "string" } } } },
+        "success": { "type": "string" },
+        "demo": { "description": "The model answer, played by Watch the goal and tested in CI.", "type": "string", "minLength": 1 },
+        "sim_events": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}

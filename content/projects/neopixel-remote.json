@@ -1,0 +1,23 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "neopixel-remote",
+  "title": "NeoPixel Remote",
+  "tier": "wifi-iot",
+  "order": 19,
+  "boards": [
+    "esp"
+  ],
+  "parts": [
+    {
+      "type": "neopixel-strip"
+    }
+  ],
+  "minutes": 90,
+  "concepts": [
+    "WiFi",
+    "web forms",
+    "colour"
+  ],
+  "intro": "Slide sliders on a web page to change the colours of a NeoPixel strip.",
+  "steps": []
+}

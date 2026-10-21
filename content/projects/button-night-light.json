@@ -1,0 +1,29 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "button-night-light",
+  "title": "Button Night Light",
+  "tier": "getting-started",
+  "order": 2,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "led"
+    },
+    {
+      "type": "resistor-220"
+    },
+    {
+      "type": "button"
+    }
+  ],
+  "minutes": 45,
+  "concepts": [
+    "digitalRead",
+    "if / else",
+    "INPUT_PULLUP"
+  ],
+  "intro": "Press a button to turn a light on and off. Then make it remember what it was doing.",
+  "steps": []
+}

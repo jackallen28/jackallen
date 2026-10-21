@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "plant-buddy",
+  "title": "Plant Buddy",
+  "tier": "displays-lights",
+  "order": 11,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "soil-moisture"
+    },
+    {
+      "type": "oled"
+    },
+    {
+      "type": "led"
+    },
+    {
+      "type": "resistor-220"
+    }
+  ],
+  "minutes": 75,
+  "concepts": [
+    "analogRead",
+    "thresholds",
+    "displays"
+  ],
+  "intro": "Check if a plant needs water. Show a happy or thirsty face on the screen.",
+  "steps": []
+}

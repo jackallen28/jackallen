@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "digital-dice",
+  "title": "Digital Dice",
+  "tier": "displays-lights",
+  "order": 10,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "tm1637"
+    },
+    {
+      "type": "button"
+    }
+  ],
+  "minutes": 60,
+  "concepts": [
+    "random",
+    "debouncing",
+    "displays"
+  ],
+  "intro": "Press a button to roll the dice and show the number on a 4-digit display.",
+  "steps": []
+}

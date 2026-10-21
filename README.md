@@ -16,7 +16,10 @@ Banyule Nillumbik Tech School (BNTS).
 - A **Teacher page** for looking after the Pi: classes, backups, Wipe session, updates.
 - A Windows Vista look in the school's colours.
 
-Status: planning. The full brief is in [CLAUDE.md](CLAUDE.md).
+Status: being built. Step 1 of the build order (the skeleton) is done: the server, logins with
+picture passwords, autosave, save files, the Vista look, and login → setup → project picker.
+The full brief is in [CLAUDE.md](CLAUDE.md); what's built so far is in
+[docs/development.md](docs/development.md).
 
 ## Setting up (when it's built)
 
@@ -30,6 +33,19 @@ Status: planning. The full brief is in [CLAUDE.md](CLAUDE.md).
    `circuitpath-first-login.txt` on the card's boot partition (or the one you set).
 6. Ask IT to trust the Pi's certificate (Teacher page > Download certificate) and to install the
    CH340 / CP2102 USB drivers on student laptops (or use boards that need no driver).
+
+## For developers
+
+You need Go 1.24+. Node 22 is only needed to run the JavaScript and browser tests.
+
+```
+go run ./cmd/circuitpath-server -dev     # then open https://localhost:8443
+go test ./...                            # server tests
+npm ci && npm test                       # JavaScript tests
+npm run e2e                              # GUI smoke test (Playwright)
+```
+
+See [docs/development.md](docs/development.md) for how it fits together.
 
 Part images come from the [Fritzing parts library](https://github.com/fritzing/fritzing-parts)
 (CC BY-SA 3.0).

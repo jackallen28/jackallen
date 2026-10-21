@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "joystick-snake",
+  "title": "Joystick Snake",
+  "tier": "games",
+  "order": 14,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "joystick"
+    },
+    {
+      "type": "led-matrix"
+    }
+  ],
+  "minutes": 150,
+  "concepts": [
+    "2D arrays",
+    "game loop",
+    "analogRead"
+  ],
+  "intro": "Steer a snake around an 8×8 LED matrix with a joystick. Eat the dots to grow!",
+  "steps": []
+}

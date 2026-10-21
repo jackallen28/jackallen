@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "parts.schema.json",
+  "title": "CircuitPath part names",
+  "description": "Every part type a project or kit can mention, with the names students see.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["parts"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "parts": {
+      "type": "object",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/id" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "plural", "group"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "plural": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "group": { "enum": ["output", "input", "sensor", "display", "passive", "motor"] },
+          "needs_5v": {
+            "description": "The part runs on 5V, so 3.3V boards need a level shifter or divider (the Wiring Wizard adds one).",
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

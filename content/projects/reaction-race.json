@@ -1,0 +1,35 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "reaction-race",
+  "title": "Reaction Race",
+  "tier": "games",
+  "order": 12,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "button",
+      "count": 2
+    },
+    {
+      "type": "led",
+      "count": 3
+    },
+    {
+      "type": "resistor-220",
+      "count": 3
+    },
+    {
+      "type": "buzzer"
+    }
+  ],
+  "minutes": 75,
+  "concepts": [
+    "millis",
+    "random",
+    "game state"
+  ],
+  "intro": "A game for 2 players. Wait for the light, then race to press your button first!",
+  "steps": []
+}

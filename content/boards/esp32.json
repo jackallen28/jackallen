@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema/board.schema.json",
+  "id": "esp32",
+  "name": "ESP32 DevKit V1 (ESP32-WROOM-32)",
+  "short": "ESP32",
+  "family": "esp32",
+  "fqbn": "esp32:esp32:esp32",
+  "logic_volts": 3.3,
+  "wifi": true,
+  "bluetooth": true,
+  "order": 6,
+  "notes": "A fast board with WiFi and Bluetooth. It runs on 3.3V.",
+  "upload": { "protocol": "esptool", "baud": 921600 }
+}

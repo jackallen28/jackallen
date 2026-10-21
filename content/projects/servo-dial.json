@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "servo-dial",
+  "title": "Servo Dial",
+  "tier": "sensors-sound",
+  "order": 5,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "potentiometer"
+    },
+    {
+      "type": "servo"
+    }
+  ],
+  "minutes": 45,
+  "concepts": [
+    "analogRead",
+    "map",
+    "Servo library"
+  ],
+  "intro": "Turn a knob and a servo motor follows it, like a dial on a dashboard.",
+  "steps": []
+}

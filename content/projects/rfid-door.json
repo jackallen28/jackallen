@@ -1,0 +1,34 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "rfid-door",
+  "title": "RFID Door",
+  "tier": "challenge",
+  "order": 16,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "rfid-rc522"
+    },
+    {
+      "type": "servo"
+    },
+    {
+      "type": "led",
+      "count": 2
+    },
+    {
+      "type": "resistor-220",
+      "count": 2
+    }
+  ],
+  "minutes": 120,
+  "concepts": [
+    "SPI",
+    "arrays",
+    "comparing IDs"
+  ],
+  "intro": "Tap the right card to open the door. The wrong card gets a red light.",
+  "steps": []
+}

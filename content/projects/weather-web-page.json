@@ -1,0 +1,23 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "weather-web-page",
+  "title": "Weather Web Page",
+  "tier": "wifi-iot",
+  "order": 18,
+  "boards": [
+    "esp"
+  ],
+  "parts": [
+    {
+      "type": "dht"
+    }
+  ],
+  "minutes": 90,
+  "concepts": [
+    "WiFi",
+    "web servers",
+    "sensors"
+  ],
+  "intro": "Show the temperature and humidity on a web page anyone in the room can open.",
+  "steps": []
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "neopixel-mood-lamp",
+  "title": "NeoPixel Mood Lamp",
+  "tier": "displays-lights",
+  "order": 9,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "neopixel-ring"
+    },
+    {
+      "type": "potentiometer"
+    },
+    {
+      "type": "button"
+    }
+  ],
+  "minutes": 75,
+  "concepts": [
+    "for loops",
+    "colour",
+    "libraries"
+  ],
+  "intro": "Build a glowing lamp. Turn the knob to change the colour and press the button for light shows.",
+  "steps": []
+}

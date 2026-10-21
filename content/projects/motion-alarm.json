@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "motion-alarm",
+  "title": "Motion Alarm",
+  "tier": "sensors-sound",
+  "order": 7,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "pir"
+    },
+    {
+      "type": "buzzer"
+    },
+    {
+      "type": "led"
+    },
+    {
+      "type": "resistor-220"
+    }
+  ],
+  "minutes": 60,
+  "concepts": [
+    "digitalRead",
+    "millis",
+    "variables"
+  ],
+  "intro": "Catch anyone sneaking past with a motion sensor, a flashing light and an alarm.",
+  "steps": []
+}

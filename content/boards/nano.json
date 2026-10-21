@@ -1,0 +1,21 @@
+{
+  "$schema": "../schema/board.schema.json",
+  "id": "nano",
+  "name": "Arduino Nano",
+  "short": "Nano",
+  "family": "avr",
+  "fqbn": "arduino:avr:nano",
+  "logic_volts": 5,
+  "wifi": false,
+  "order": 2,
+  "notes": "A small Arduino that plugs into the breadboard. Many clones use the old bootloader.",
+  "upload": { "protocol": "stk500v1", "baud": 115200 },
+  "variants": [
+    {
+      "id": "old-bootloader",
+      "label": "Old bootloader (most Nano clones)",
+      "fqbn": "arduino:avr:nano:cpu=atmega328old",
+      "upload": { "protocol": "stk500v1", "baud": 57600 }
+    }
+  ]
+}

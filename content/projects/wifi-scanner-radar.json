@@ -1,0 +1,23 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "wifi-scanner-radar",
+  "title": "WiFi Scanner Radar",
+  "tier": "wifi-iot",
+  "order": 22,
+  "boards": [
+    "esp"
+  ],
+  "parts": [
+    {
+      "type": "oled"
+    }
+  ],
+  "minutes": 60,
+  "concepts": [
+    "WiFi",
+    "arrays",
+    "sorting"
+  ],
+  "intro": "Find the WiFi networks around you and show how strong each one is.",
+  "steps": []
+}

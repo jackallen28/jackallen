@@ -1,0 +1,13 @@
+{
+  "$schema": "../schema/board.schema.json",
+  "id": "d1-mini",
+  "name": "Wemos / LOLIN D1 mini (ESP8266)",
+  "short": "D1 mini",
+  "family": "esp8266",
+  "fqbn": "esp8266:esp8266:d1_mini",
+  "logic_volts": 3.3,
+  "wifi": true,
+  "order": 5,
+  "notes": "A tiny WiFi board that runs on 3.3V.",
+  "upload": { "protocol": "esptool", "baud": 115200 }
+}

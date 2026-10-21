@@ -1,0 +1,29 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "blink-traffic-lights",
+  "title": "Blink & Traffic Lights",
+  "tier": "getting-started",
+  "order": 1,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "led",
+      "count": 3
+    },
+    {
+      "type": "resistor-220",
+      "count": 3
+    }
+  ],
+  "minutes": 45,
+  "concepts": [
+    "pinMode",
+    "digitalWrite",
+    "delay",
+    "sequences"
+  ],
+  "intro": "Make an LED blink, then add two more and run them like real traffic lights.",
+  "steps": []
+}

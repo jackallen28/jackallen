@@ -1,0 +1,34 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "parking-sensor",
+  "title": "Parking Sensor",
+  "tier": "sensors-sound",
+  "order": 6,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "hc-sr04"
+    },
+    {
+      "type": "led",
+      "count": 3
+    },
+    {
+      "type": "resistor-220",
+      "count": 3
+    },
+    {
+      "type": "buzzer"
+    }
+  ],
+  "minutes": 90,
+  "concepts": [
+    "pulseIn",
+    "functions",
+    "else if"
+  ],
+  "intro": "Measure distance with sound waves, then beep faster and light up as something gets closer.",
+  "steps": []
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema/board.schema.json",
+  "id": "mega",
+  "name": "Arduino Mega 2560",
+  "short": "Mega",
+  "family": "avr",
+  "fqbn": "arduino:avr:mega",
+  "logic_volts": 5,
+  "wifi": false,
+  "optional": true,
+  "order": 3,
+  "notes": "A big Arduino with lots of pins.",
+  "upload": { "protocol": "stk500v2", "baud": 115200 }
+}

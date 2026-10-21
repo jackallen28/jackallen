@@ -1,0 +1,13 @@
+{
+  "name": "circuitpath-dev",
+  "private": true,
+  "description": "Development-only tooling for CircuitPath (tests). Nothing here is needed to run CircuitPath.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/js/**/*.test.js\"",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

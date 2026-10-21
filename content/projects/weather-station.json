@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "weather-station",
+  "title": "Weather Station",
+  "tier": "displays-lights",
+  "order": 8,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "dht"
+    },
+    {
+      "type": "oled"
+    }
+  ],
+  "minutes": 90,
+  "concepts": [
+    "libraries",
+    "float",
+    "displays"
+  ],
+  "intro": "Read the temperature and humidity and show them on a little OLED screen.",
+  "steps": []
+}

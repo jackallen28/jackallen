@@ -1,0 +1,29 @@
+{
+  "$schema": "schema/kit.schema.json",
+  "name": "Class kit",
+  "description": "Edit this list to match the parts in one of your school's kits. The project picker says \"needs a part not in your kit\" when a project needs something that isn't here (or more than the kit has).",
+  "parts": {
+    "led": 10,
+    "rgb-led": 1,
+    "resistor-220": 10,
+    "resistor-10k": 4,
+    "button": 4,
+    "buzzer": 1,
+    "potentiometer": 1,
+    "joystick": 1,
+    "keypad-4x4": 1,
+    "servo": 1,
+    "ldr": 1,
+    "hc-sr04": 1,
+    "pir": 1,
+    "dht": 1,
+    "soil-moisture": 1,
+    "rfid-rc522": 1,
+    "oled": 1,
+    "lcd-i2c": 1,
+    "tm1637": 1,
+    "led-matrix": 1,
+    "neopixel-ring": 1,
+    "neopixel-strip": 1
+  }
+}

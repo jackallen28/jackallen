@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kit.schema.json",
+  "title": "CircuitPath class kit",
+  "description": "What one kit in the class has, so the picker can say \"needs a part not in your kit\".",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "parts"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "description": { "type": "string", "maxLength": 500 },
+    "parts": {
+      "description": "Part type: how many are in one kit.",
+      "type": "object",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/id" },
+      "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 1000 }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "serial-chatbot",
+  "title": "Serial Chatbot",
+  "tier": "getting-started",
+  "order": 3,
+  "boards": [
+    "all"
+  ],
+  "parts": [],
+  "minutes": 45,
+  "concepts": [
+    "Serial",
+    "String",
+    "if / else"
+  ],
+  "intro": "No wiring needed! Write a chatbot that talks to you in the Serial Monitor.",
+  "steps": []
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema/board.schema.json",
+  "id": "uno",
+  "name": "Arduino Uno R3",
+  "short": "Uno",
+  "family": "avr",
+  "fqbn": "arduino:avr:uno",
+  "logic_volts": 5,
+  "wifi": false,
+  "default": true,
+  "order": 1,
+  "notes": "The classic Arduino board. A great first board.",
+  "upload": { "protocol": "stk500v1", "baud": 115200 }
+}

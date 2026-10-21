@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <!-- The 9 picture-password pictures, drawn for CircuitPath. 64x64 each. -->
+  <defs>
+    <radialGradient id="gp-apple" cx=".38" cy=".35" r=".7"><stop offset="0" stop-color="#ff8a7a"/><stop offset=".55" stop-color="#e3261b"/><stop offset="1" stop-color="#9d1209"/></radialGradient>
+    <radialGradient id="gp-sun" cx=".4" cy=".38" r=".65"><stop offset="0" stop-color="#fff7b0"/><stop offset=".6" stop-color="#ffcc1f"/><stop offset="1" stop-color="#f29a00"/></radialGradient>
+    <linearGradient id="gp-star" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a0"/><stop offset=".55" stop-color="#ffc21a"/><stop offset="1" stop-color="#e08a00"/></linearGradient>
+    <linearGradient id="gp-fish" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset=".55" stop-color="#ff8a1f"/><stop offset="1" stop-color="#d95a00"/></linearGradient>
+    <linearGradient id="gp-car" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd0ff"/><stop offset=".5" stop-color="#2f7fe0"/><stop offset="1" stop-color="#174f9e"/></linearGradient>
+    <linearGradient id="gp-rocket" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c9d3dd"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#9aa8b6"/></linearGradient>
+    <radialGradient id="gp-tree" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#9fe47c"/><stop offset=".6" stop-color="#3fae2a"/><stop offset="1" stop-color="#1f7414"/></radialGradient>
+    <linearGradient id="gp-cat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b8ee"/><stop offset=".6" stop-color="#9467b4"/><stop offset="1" stop-color="#6b4588"/></linearGradient>
+    <linearGradient id="gp-umbrella" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ff0f4"/><stop offset=".55" stop-color="#19c1ca"/><stop offset="1" stop-color="#0b8990"/></linearGradient>
+  </defs>
+
+  <symbol id="p-apple" viewBox="0 0 64 64">
+    <path d="M32 18c-6-5-20-4-21 11-1 13 8 27 15 27 3 0 4-1.5 6-1.5s3 1.5 6 1.5c7 0 16-14 15-27-1-15-15-16-21-11z" fill="url(#gp-apple)" stroke="#7a0d06" stroke-width="1.5"/>
+    <path d="M32 18c0-5 1-9 4-12" fill="none" stroke="#6b3d12" stroke-width="3" stroke-linecap="round"/>
+    <path d="M35 12c4-6 11-6 14-4-3 5-9 6-14 4z" fill="#4cb52d" stroke="#2b7414" stroke-width="1.2"/>
+    <ellipse cx="22" cy="28" rx="4" ry="7" fill="#fff" opacity=".45" transform="rotate(20 22 28)"/>
+  </symbol>
+
+  <symbol id="p-cat" viewBox="0 0 64 64">
+    <path d="M12 10l9 12h22l9-12 2 26c0 13-10 20-22 20S10 49 10 36z" fill="url(#gp-cat)" stroke="#4a2c62" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M15 16l4 6M49 16l-4 6" stroke="#f3c6dd" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="23" cy="35" rx="4" ry="5" fill="#fff"/><ellipse cx="41" cy="35" rx="4" ry="5" fill="#fff"/>
+    <ellipse cx="24" cy="36" rx="2" ry="3.4" fill="#222"/><ellipse cx="42" cy="36" rx="2" ry="3.4" fill="#222"/>
+    <path d="M29.5 43h5l-2.5 3z" fill="#f08cb4"/>
+    <path d="M32 46c-1 3-5 3-6 1M32 46c1 3 5 3 6 1M8 41l12 1M8 47l12-2M56 41l-12 1M56 47l-12-2" fill="none" stroke="#3a2250" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="p-fish" viewBox="0 0 64 64">
+    <path d="M6 32c8-13 22-17 34-12 5 2 9 6 12 12-3 6-7 10-12 12-12 5-26 1-34-12z" fill="url(#gp-fish)" stroke="#9a3f00" stroke-width="1.5"/>
+    <path d="M52 32l9-11v22z" fill="url(#gp-fish)" stroke="#9a3f00" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M24 22c3 6 3 14 0 20" fill="none" stroke="#fff" stroke-width="2.4" opacity=".8"/>
+    <path d="M30 17c4-6 10-6 14-3l-4 7" fill="#ffb347" stroke="#9a3f00" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="14" cy="29" r="3.2" fill="#fff"/><circle cx="13.6" cy="29.2" r="1.7" fill="#222"/>
+  </symbol>
+
+  <symbol id="p-rocket" viewBox="0 0 64 64">
+    <path d="M32 4c9 7 13 18 12 32H20c-1-14 3-25 12-32z" fill="url(#gp-rocket)" stroke="#43505e" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M32 4c4 3 7 7 9 11H23c2-4 5-8 9-11z" fill="#e3261b" stroke="#7a0d06" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="32" cy="24" r="5" fill="#5fd3ff" stroke="#43505e" stroke-width="1.5"/><circle cx="30.5" cy="22.5" r="1.6" fill="#fff"/>
+    <path d="M20 30l-8 10v6l9-4zM44 30l8 10v6l-9-4z" fill="#e3261b" stroke="#7a0d06" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M25 36h14l-2 5H27z" fill="#5d6c7c" stroke="#2c3a48" stroke-width="1.2"/>
+    <path d="M28 42c0 8 4 14 4 18 0-4 4-10 4-18z" fill="#ffb21f" stroke="#e05a00" stroke-width="1.2" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="p-star" viewBox="0 0 64 64">
+    <path d="M32 4l8.2 17.6 19.3 2.2-14.3 13.1 3.9 19L32 46.3 14.9 55.9l3.9-19L4.5 23.8l19.3-2.2z" fill="url(#gp-star)" stroke="#9a5a00" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M32 11l5.5 12-13 1z" fill="#fff" opacity=".55"/>
+  </symbol>
+
+  <symbol id="p-sun" viewBox="0 0 64 64">
+    <g stroke="#f29a00" stroke-width="4" stroke-linecap="round">
+      <path d="M32 3v8M32 53v8M3 32h8M53 32h8M11.5 11.5l5.7 5.7M46.8 46.8l5.7 5.7M11.5 52.5l5.7-5.7M46.8 17.2l5.7-5.7"/>
+    </g>
+    <circle cx="32" cy="32" r="15" fill="url(#gp-sun)" stroke="#d98200" stroke-width="1.5"/>
+    <circle cx="26.5" cy="30" r="1.8" fill="#6b3d00"/><circle cx="37.5" cy="30" r="1.8" fill="#6b3d00"/>
+    <path d="M26 36c3 3.5 9 3.5 12 0" fill="none" stroke="#6b3d00" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="p-tree" viewBox="0 0 64 64">
+    <path d="M28 40h8v18h-8z" fill="#8b5a2b" stroke="#5a3512" stroke-width="1.5"/>
+    <circle cx="32" cy="22" r="15" fill="url(#gp-tree)" stroke="#1b5e10" stroke-width="1.5"/>
+    <circle cx="19" cy="33" r="10" fill="url(#gp-tree)" stroke="#1b5e10" stroke-width="1.5"/>
+    <circle cx="45" cy="33" r="10" fill="url(#gp-tree)" stroke="#1b5e10" stroke-width="1.5"/>
+    <circle cx="25" cy="18" r="2.4" fill="#e3261b"/><circle cx="40" cy="25" r="2.4" fill="#e3261b"/><circle cx="20" cy="34" r="2.4" fill="#e3261b"/><circle cx="45" cy="36" r="2.4" fill="#e3261b"/>
+    <path d="M10 58h44" stroke="#3fae2a" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="p-car" viewBox="0 0 64 64">
+    <path d="M5 38c0-5 2-8 7-9l6-10c1-2 3-3 5-3h18c2 0 4 1 5 3l6 10c5 1 7 4 7 9v6H5z" fill="url(#gp-car)" stroke="#0f3f80" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M20 20h11v9H15zM34 20h10l5 9H34z" fill="#d6f0ff" stroke="#0f3f80" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="17" cy="45" r="7" fill="#2c2c2c" stroke="#000" stroke-width="1.2"/><circle cx="17" cy="45" r="3" fill="#c7cdd3"/>
+    <circle cx="47" cy="45" r="7" fill="#2c2c2c" stroke="#000" stroke-width="1.2"/><circle cx="47" cy="45" r="3" fill="#c7cdd3"/>
+    <path d="M54 34h4M6 34h3" stroke="#ffd84a" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="p-umbrella" viewBox="0 0 64 64">
+    <path d="M32 6C17 6 6 17 5 31c3-3 6-3 9 0 3-3 6-3 9 0 3-3 6-3 9 0 3-3 6-3 9 0 3-3 6-3 9 0 3-3 6-3 9 0C58 17 47 6 32 6z" fill="url(#gp-umbrella)" stroke="#06646a" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M32 6c-6 6-9 15-9 25M32 6c6 6 9 15 9 25" fill="none" stroke="#06646a" stroke-width="1.2"/>
+    <path d="M32 6v46c0 6-8 6-8 1" fill="none" stroke="#5a3512" stroke-width="3" stroke-linecap="round"/>
+    <path d="M14 18c3-5 8-8 13-9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+  </symbol>
+</svg>

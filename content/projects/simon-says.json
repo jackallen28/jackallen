@@ -1,0 +1,35 @@
+{
+  "$schema": "../schema/project.schema.json",
+  "id": "simon-says",
+  "title": "Simon Says",
+  "tier": "games",
+  "order": 13,
+  "boards": [
+    "all"
+  ],
+  "parts": [
+    {
+      "type": "led",
+      "count": 4
+    },
+    {
+      "type": "resistor-220",
+      "count": 4
+    },
+    {
+      "type": "button",
+      "count": 4
+    },
+    {
+      "type": "buzzer"
+    }
+  ],
+  "minutes": 120,
+  "concepts": [
+    "arrays",
+    "functions",
+    "loops"
+  ],
+  "intro": "Watch the pattern of lights and sounds, then copy it. It gets longer every round.",
+  "steps": []
+}
