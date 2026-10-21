@@ -56,10 +56,9 @@ the next version installed by hand (or reflashed with a new image).
 
 ## Publishing a release
 
-```
-git tag v1.2.3
-git push origin v1.2.3
-```
+Change the `VERSION` file to the new version (e.g. `1.2.3`) and commit it. On github.com:
+open `VERSION` on the `BNTS_CircuitPath` branch > the pencil (edit) > type the new version >
+**Commit changes**. (Or push a tag: `git tag v1.2.3 && git push origin v1.2.3`.)
 
 The **Release** workflow tests everything, builds the server for the Pi (`linux-arm64`, and
 `linux-amd64` for testing on a PC), writes and signs `update.json`, and publishes a GitHub

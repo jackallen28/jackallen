@@ -15,9 +15,8 @@ The Pi installs CircuitPath from the repository's GitHub Releases.
    repository on github.com > **Settings** > **Secrets and variables** > **Actions** >
    **New repository secret**. Name: `CIRCUITPATH_UPDATE_KEY`. Value: the private key (one line).
    See [updates.md](updates.md) for where the key comes from.
-2. **Publish version 0.1.0**: on github.com > **Releases** > **Draft a new release** > **Choose a
-   tag** > type `v0.1.0` > **Create new tag** (target: the `BNTS_CircuitPath` branch) > **Publish
-   release**. Or from a terminal: `git tag v0.1.0 && git push origin v0.1.0`.
+2. **Publish version 0.1.0** (already done for 0.1.0): the `VERSION` file on the
+   `BNTS_CircuitPath` branch says which version to publish. Changing it publishes that version.
 3. Watch **Actions** > **Release**. After about 5 minutes the release has
    `circuitpath-server-linux-arm64`, `install.sh` and the other files.
 
@@ -47,7 +46,8 @@ The Pi installs CircuitPath from the repository's GitHub Releases.
 
 ## Check that updates work
 
-1. Publish a newer version, e.g. `v0.1.1` (step 2 above).
+1. Publish a newer version: change `VERSION` to `0.1.1` (on github.com: open the file > edit >
+   **Commit changes**), and wait about 5 minutes for **Actions > Release** to finish.
 2. Restart the Pi: `sudo reboot` (or unplug it and plug it back in).
 3. While it starts you may see **CircuitPath is getting ready**. Then **About** shows 0.1.1, and
    your profile and code are still there. (`journalctl -u circuitpath` shows "downloading an update".)

@@ -1,24 +1,27 @@
-# Publishes a CircuitPath release when a version tag is pushed:
-#   git tag v1.2.3 && git push origin v1.2.3
-# (or when a release with a new v1.2.3 tag is made on github.com).
+# Publishes a CircuitPath release. Any of these starts it:
+#   - changing the VERSION file (on github.com: open VERSION, edit, commit)
+#   - pushing a version tag:  git tag v1.2.3 && git push origin v1.2.3
+#   - making a release with a new v1.2.3 tag on github.com
 # It publishes the Pi and PC servers, update.json + its signature, SHA256SUMS,
 # install.sh and circuitpath.service.
-# Every Pi installs it the next time it starts (if it can reach the internet).
-# Needs the CIRCUITPATH_UPDATE_KEY secret (see docs/updates.md).
+# Every Pi installs it the next time it starts or at 03:00 (if it can reach
+# the internet). Needs the CIRCUITPATH_UPDATE_KEY secret (see docs/updates.md).
 name: Release
 
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    branches: [BNTS_CircuitPath, master, main]
+    paths: [VERSION]
   release:
     types: [published]
 
 permissions:
   contents: write
 
-# A release made on github.com can start this twice (tag + release); one at a time.
+# One release at a time (a release made on github.com can start this twice).
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
 
 jobs:
   release:
@@ -26,11 +29,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Which version?
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(tr -d ' \r\n' < VERSION)"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' isn't a version like v1.2.3 (VERSION should hold just 1.2.3)."
+            exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          # A VERSION change for a version that's already out does nothing.
+          if [[ "$GITHUB_REF" == refs/heads/* ]] && gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG is already published."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-go@v5
+        if: steps.version.outputs.skip != 'true'
         with:
           go-version-file: go.mod
 
       - name: Check the update key is set up
+        if: steps.version.outputs.skip != 'true'
         env:
           CIRCUITPATH_UPDATE_KEY: ${{ secrets.CIRCUITPATH_UPDATE_KEY }}
         run: |
@@ -40,11 +67,12 @@ jobs:
           fi
 
       - name: Test
+        if: steps.version.outputs.skip != 'true'
         run: go test ./...
 
       - name: Build
+        if: steps.version.outputs.skip != 'true'
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           mkdir dist
           for arch in arm64 amd64; do
             CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath \
@@ -53,11 +81,12 @@ jobs:
           done
 
       - name: Sign
+        if: steps.version.outputs.skip != 'true'
         env:
           CIRCUITPATH_UPDATE_KEY: ${{ secrets.CIRCUITPATH_UPDATE_KEY }}
         run: |
-          go run ./tools/updatesign -version "${GITHUB_REF_NAME#v}" -out dist \
-            -base-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME" \
+          go run ./tools/updatesign -version "$VERSION" -out dist \
+            -base-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG" \
             linux-arm64=dist/circuitpath-server-linux-arm64 linux-amd64=dist/circuitpath-server-linux-amd64
           (cd dist && sha256sum circuitpath-server-* > SHA256SUMS)
           # The installer and the service file, pointing at this repository's releases.
@@ -65,12 +94,13 @@ jobs:
           cp deploy/circuitpath.service dist/
 
       - name: Publish
+        if: steps.version.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/* \
-              --title "CircuitPath ${GITHUB_REF_NAME#v}" --generate-notes --verify-tag
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
+              --title "CircuitPath $VERSION" --generate-notes --latest
           fi
