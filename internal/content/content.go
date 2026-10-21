@@ -54,7 +54,16 @@ type Board struct {
 	Optional bool            `json:"optional"`
 	Default  bool            `json:"default"`
 	Order    int             `json:"order"`
+	Variants []BoardVariant  `json:"variants,omitempty"`
 	Raw      json.RawMessage `json:"-"`
+}
+
+// BoardVariant is another setting for the same board, such as the old
+// bootloader on Nano clones.
+type BoardVariant struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+	FQBN  string `json:"fqbn"`
 }
 
 // PartUse is one line of a project's parts list.

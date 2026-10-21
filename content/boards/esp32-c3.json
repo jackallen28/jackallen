@@ -4,12 +4,12 @@
   "name": "ESP32-C3 SuperMini",
   "short": "ESP32-C3",
   "family": "esp32",
-  "fqbn": "esp32:esp32:esp32c3",
+  "fqbn": "esp32:esp32:esp32c3:CDCOnBoot=cdc",
   "logic_volts": 3.3,
   "wifi": true,
   "bluetooth": true,
   "optional": true,
   "order": 7,
-  "notes": "A very small, cheap WiFi board with built-in USB. It runs on 3.3V.",
+  "notes": "A very small, cheap WiFi board with built-in USB. It runs on 3.3V. (USB CDC on boot is on, so the Serial Monitor works over its USB port.)",
   "upload": { "protocol": "esptool", "baud": 460800 }
 }

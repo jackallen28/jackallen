@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"circuitpath"
+	"circuitpath/internal/arduino"
 	"circuitpath/internal/content"
 	"circuitpath/internal/server"
 	"circuitpath/internal/store"
@@ -53,18 +54,40 @@ const updateTimeout = 5 * time.Minute
 const confirmAfter = 2 * time.Minute
 
 type config struct {
-	dev        bool
-	dataDir    string
-	httpsAddr  string
-	httpAddr   string
-	hostname   string
-	extraNames string
-	uiDir      string
-	contentDir string
-	school     string
-	demo       bool
-	autoUpdate bool
-	updateURL  string
+	dev         bool
+	dataDir     string
+	httpsAddr   string
+	httpAddr    string
+	hostname    string
+	extraNames  string
+	uiDir       string
+	contentDir  string
+	school      string
+	demo        bool
+	autoUpdate  bool
+	updateURL   string
+	updateTime  string
+	arduinoSync bool
+}
+
+// applyDefaults fills in the folders and ports for the Pi (or for -dev).
+func (cfg *config) applyDefaults() {
+	def := func(v *string, prod, dev string) {
+		if *v == "" {
+			*v = prod
+			if cfg.dev {
+				*v = dev
+			}
+		}
+	}
+	def(&cfg.dataDir, "/var/lib/circuitpath", "dev-data")
+	def(&cfg.httpsAddr, ":443", ":8443")
+	def(&cfg.httpAddr, ":80", ":8080")
+	if cfg.dev {
+		def(&cfg.uiDir, "", "ui")
+		def(&cfg.contentDir, "", "content")
+		cfg.demo = true
+	}
 }
 
 func main() {
@@ -81,6 +104,10 @@ func main() {
 	flag.BoolVar(&cfg.demo, "demo", false, "add demo classes if there are none (always on with -dev)")
 	flag.BoolVar(&cfg.autoUpdate, "auto-update", true, "check for a newer release at every start and install it (off with -dev unless set)")
 	flag.StringVar(&cfg.updateURL, "update-url", "", "where update.json is (default: this build's GitHub releases)")
+	flag.StringVar(&cfg.updateTime, "update-time", "03:00", "also check for an update every night at this time (24-hour, Pi's time zone), or \"off\"")
+	flag.BoolVar(&cfg.arduinoSync, "arduino-sync", true, "after an update, bring the board cores and libraries up to date in the background (off with -dev unless set)")
+	setupArduino := flag.Bool("setup-arduino", false, "install arduino-cli, the board cores and libraries, check every board compiles, and stop")
+	checkArduino := flag.Bool("check-arduino", false, "check every board compiles the kit-check sketch, and stop")
 	showVersion := flag.Bool("version", false, "print the version and stop")
 	flag.Parse()
 
@@ -91,8 +118,19 @@ func main() {
 	if cfg.dev && !flagSet("auto-update") {
 		cfg.autoUpdate = false
 	}
+	if cfg.dev && !flagSet("arduino-sync") {
+		cfg.arduinoSync = false
+	}
+	cfg.applyDefaults()
 
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	if *setupArduino || *checkArduino {
+		if err := runArduino(cfg, log, *setupArduino); err != nil {
+			log.Error("the Arduino tools aren't ready", "err", err)
+			os.Exit(1)
+		}
+		return
+	}
 	err := run(cfg, log)
 	if errors.Is(err, errRestart) {
 		log.Info("restarting")
@@ -111,22 +149,6 @@ func flagSet(name string) bool {
 }
 
 func run(cfg config, log *slog.Logger) error {
-	def := func(v *string, prod, dev string) {
-		if *v == "" {
-			*v = prod
-			if cfg.dev {
-				*v = dev
-			}
-		}
-	}
-	def(&cfg.dataDir, "/var/lib/circuitpath", "dev-data")
-	def(&cfg.httpsAddr, ":443", ":8443")
-	def(&cfg.httpAddr, ":80", ":8080")
-	if cfg.dev {
-		def(&cfg.uiDir, "", "ui")
-		def(&cfg.contentDir, "", "content")
-		cfg.demo = true
-	}
 	if err := os.MkdirAll(cfg.dataDir, 0o750); err != nil {
 		return err
 	}
@@ -256,6 +278,44 @@ func run(cfg config, log *slog.Logger) error {
 		defer confirm.Stop()
 	}
 
+	// Check again every night, so a Pi that's never switched off still updates.
+	restart := make(chan struct{}, 1)
+	if upd != nil && cfg.updateTime != "off" {
+		hour, minute, err := parseClock(cfg.updateTime)
+		if err != nil {
+			return fmt.Errorf("-update-time: %w", err)
+		}
+		go nightly(ctx, hour, minute, func() {
+			uctx, cancel := context.WithTimeout(ctx, updateTimeout)
+			defer cancel()
+			installed, err := upd.Run(uctx)
+			if err != nil {
+				log.Info("no update installed tonight", "reason", err)
+			}
+			if installed {
+				restart <- struct{}{}
+			}
+		})
+	}
+
+	// After an update with new board or library versions, bring the Pi's
+	// Arduino tools up to date in the background.
+	if cfg.arduinoSync {
+		env := &arduino.Env{Dir: filepath.Join(cfg.dataDir, "arduino"), Log: log}
+		if !env.Ready() {
+			go func() {
+				log.Info("setting up the board cores and libraries in the background")
+				if err := env.Setup(ctx); err != nil {
+					log.Warn("the board cores and libraries aren't up to date yet; trying again at the next start", "err", err)
+					return
+				}
+				if _, err := env.Check(ctx, boardsToCheck(cat)); err != nil {
+					log.Warn("checking the boards", "err", err)
+				}
+			}()
+		}
+	}
+
 	// Keep the certificate up to date with the Pi's addresses, and tidy old logins.
 	stopTicker := make(chan struct{})
 	go func() {
@@ -286,10 +346,113 @@ func run(cfg config, log *slog.Logger) error {
 		}
 	case <-ctx.Done():
 		log.Info("stopping")
+	case <-restart:
+		close(stopTicker)
+		shutdown()
+		return errRestart
 	}
 	close(stopTicker)
 	shutdown()
 	return nil
+}
+
+// parseClock reads "03:00".
+func parseClock(s string) (hour, minute int, err error) {
+	t, err := time.Parse("15:04", s)
+	if err != nil {
+		return 0, 0, fmt.Errorf("%q isn't a time like 03:00", s)
+	}
+	return t.Hour(), t.Minute(), nil
+}
+
+// nextAt is the next time after now that the clock shows hour:minute.
+func nextAt(now time.Time, hour, minute int) time.Time {
+	next := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, now.Location())
+	if !next.After(now) {
+		next = next.AddDate(0, 0, 1)
+	}
+	return next
+}
+
+// nightly calls fn every day at hour:minute until ctx ends.
+func nightly(ctx context.Context, hour, minute int, fn func()) {
+	for {
+		t := time.NewTimer(time.Until(nextAt(time.Now(), hour, minute)))
+		select {
+		case <-t.C:
+			fn()
+		case <-ctx.Done():
+			t.Stop()
+			return
+		}
+	}
+}
+
+// boardsToCheck lists every board and board setting students can pick.
+func boardsToCheck(cat *content.Catalogue) []arduino.Board {
+	var boards []arduino.Board
+	for _, b := range cat.Boards {
+		boards = append(boards, arduino.Board{Name: b.Name, FQBN: b.FQBN})
+		for _, v := range b.Variants {
+			boards = append(boards, arduino.Board{Name: b.Name + " (" + v.Label + ")", FQBN: v.FQBN})
+		}
+	}
+	return boards
+}
+
+// runArduino is -setup-arduino / -check-arduino: install the pinned tools
+// (if setup) and compile the kit check for every board, printing a table.
+func runArduino(cfg config, log *slog.Logger, setup bool) error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	contentFS := circuitpath.Content()
+	if cfg.contentDir != "" {
+		contentFS = os.DirFS(cfg.contentDir)
+	}
+	cat, problems := content.Load(contentFS)
+	for _, p := range problems {
+		log.Warn("content problem (skipped)", "file", p.File, "problem", p.Message)
+	}
+	env := &arduino.Env{Dir: filepath.Join(cfg.dataDir, "arduino"), Log: log}
+	if setup {
+		start := time.Now()
+		if err := env.Setup(ctx); err != nil {
+			return err
+		}
+		log.Info("board cores and libraries installed", "took", time.Since(start).Round(time.Second))
+	}
+	results, err := env.Check(ctx, boardsToCheck(cat))
+	if err != nil {
+		return err
+	}
+	failed := 0
+	fmt.Println("\nKit check (every library the projects use, on every board):")
+	for _, r := range results {
+		mark := "✓"
+		if !r.OK {
+			mark = "✗"
+			failed++
+		}
+		fmt.Printf("  %s %-45s %-40s %s\n", mark, r.Board.Name, r.Board.FQBN, r.Duration)
+	}
+	for _, r := range results {
+		if !r.OK {
+			fmt.Printf("\n--- %s (%s) ---\n%s\n", r.Board.Name, r.Board.FQBN, tailLines(r.Output, 30))
+		}
+	}
+	if failed > 0 {
+		return fmt.Errorf("%d of %d boards failed the kit check", failed, len(results))
+	}
+	fmt.Printf("\nAll %d boards are ready.\n", len(results))
+	return nil
+}
+
+func tailLines(s string, n int) string {
+	lines := strings.Split(strings.TrimRight(s, "\n"), "\n")
+	if len(lines) > n {
+		lines = lines[len(lines)-n:]
+	}
+	return strings.Join(lines, "\n")
 }
 
 // switchHandler lets the server start with the "getting ready" page and

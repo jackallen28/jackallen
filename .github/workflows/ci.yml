@@ -51,3 +51,24 @@ jobs:
           name: screenshots
           path: test-results/screenshots
           if-no-files-found: ignore
+
+  boards:
+    # Every board compiles the kit check with the pinned cores and libraries
+    # (internal/arduino/requirements.json). The Pi simulation does the same on arm64.
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Cache the Arduino cores and libraries
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-amd64-${{ hashFiles('internal/arduino/requirements.json') }}
+
+      - name: Install the Arduino tools and compile for every board
+        run: go run ./cmd/circuitpath-server -data "$RUNNER_TEMP/cp" -setup-arduino

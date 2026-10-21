@@ -72,7 +72,7 @@ func TestUpdatesItselfAtStartup(t *testing.T) {
 	port := freePort(t)
 	start := func() *exec.Cmd {
 		cmd := exec.Command(exe, "-data", filepath.Join(tmp, "data"), "-https", "127.0.0.1:"+port, "-http", "off",
-			"-hostname", "test", "-update-url", release.URL+"/update.json")
+			"-hostname", "test", "-update-url", release.URL+"/update.json", "-arduino-sync=false")
 		cmd.Stdout, cmd.Stderr = os.Stderr, os.Stderr
 		if err := cmd.Start(); err != nil {
 			t.Fatal(err)

@@ -1,9 +1,16 @@
 # Automatic updates
 
-Every time the Pi starts, CircuitPath checks for a newer version and installs it.
-Nobody needs to do anything on the Pi.
+Everything on the Pi updates itself. Nobody needs to do anything on the Pi.
 
-## What happens at startup
+| What | When |
+|---|---|
+| **CircuitPath** | every time the Pi starts, and every night at 03:00 |
+| **Board cores and libraries** (Arduino AVR, ESP8266, ESP32, every project library) | with CircuitPath: each release pins exact, tested versions (`internal/arduino/requirements.json`); after an update the Pi installs any that changed, in the background |
+| **Raspberry Pi OS** (every update, not just security fixes) | daily, by `unattended-upgrades`; if an update needs a restart, the Pi restarts at 03:30 |
+
+All of these need the internet. Without it, everything keeps working as it is.
+
+## CircuitPath: what happens at startup (and at 03:00)
 
 1. The server starts and shows students a "CircuitPath is getting ready" page (it refreshes by itself).
 2. It asks GitHub for the latest release's `update.json` and `update.json.sig`.
@@ -36,6 +43,13 @@ Releases are signed so a Pi only installs updates that really came from you.
 
 Until this is done, Pis don't update themselves (they log "no update key is set up").
 
+A key has already been made for this repository: its public half is committed in
+`internal/update/update-public-key.txt`, and the private half was handed over separately to
+add as the `CIRCUITPATH_UPDATE_KEY` secret. If you'd rather make your own, run
+`go run ./tools/updatekey -force` before the first Pi is set up (no Pi has the key yet, so
+replacing it now costs nothing), commit the new public key and add the new private key as
+the secret.
+
 If the private key is ever leaked, make a new one with `go run ./tools/updatekey -force`. Pis
 that have the old public key won't accept updates signed with the new one, so each will need
 the next version installed by hand (or reflashed with a new image).
@@ -56,7 +70,9 @@ higher version.
 
 ## Turning it off, proxies, testing
 
-- **Off:** start the server with `-auto-update=false` (the Teacher page will get a switch).
+- **Off:** start the server with `-auto-update=false` (the Teacher page will get a switch);
+  `-update-time off` turns off just the nightly check. For Raspberry Pi OS, remove
+  `/etc/apt/apt.conf.d/52circuitpath-unattended-upgrades` (security updates still install).
 - **School proxy:** if the Pi needs a proxy to reach GitHub, set `HTTPS_PROXY` in the systemd
   unit (`deploy/circuitpath.service` has the line to uncomment).
 - **Somewhere else:** `-update-url https://.../update.json` checks another address (still signed).
@@ -65,9 +81,8 @@ higher version.
 
 ## Things to know
 
-- It only checks at startup. A Pi that is never restarted keeps its version until it is
-  (the Teacher page's restart button, in a later build step, will help).
 - The server's folder (`/opt/circuitpath`) must be writable by the `circuitpath` user, so it can
   replace itself. The SD card image sets this up.
-- This updates CircuitPath itself. Raspberry Pi OS security updates are a separate setting in
-  the SD card image.
+- Board cores and libraries are never upgraded to untested versions: they only change when a
+  CircuitPath release changes `requirements.json`, and the CI compiles every board with the
+  new versions first (the **boards** job and the Pi simulation).

@@ -7,7 +7,9 @@ The brief is [CLAUDE.md](../CLAUDE.md). This page says what is built so far and 
 | Step (CLAUDE.md §13) | State |
 |---|---|
 | 1. Skeleton: Go server, HTTPS with its own CA, SQLite, accounts + picture passwords, autosave, save files, Vista theme, login → picker | **Done** |
-| Automatic updates at every startup (signed releases, database backup, rollback); release workflow | **Done**: needs the update key set up once ([updates.md](updates.md)) |
+| Automatic updates at every startup and nightly (signed releases, database backup, rollback); release workflow | **Done**: needs the update key secret added once ([updates.md](updates.md)) |
+| Installer for Raspberry Pi OS (`deploy/install.sh`): service, Arduino tools, OS updates, firewall, name | **Done**: [try-it-on-a-pi.md](try-it-on-a-pi.md); checked by the Pi simulation |
+| Arduino tools pinned and checked (arduino-cli, AVR / ESP8266 / ESP32 cores, every project library, a kit-check compile for every board) | **Done**: `internal/arduino`; the CI **boards** job and the Pi simulation |
 | 2. Fritzing import + renderer | Not started |
 | 3. Interpreter + simulated API, Serial Monitor | Not started |
 | 4. Wiring Wizard | Not started |
@@ -51,9 +53,11 @@ internal/content/         loads content/ and checks it against content/schema
 internal/savefile/        .circuit save files: write, read (with limits), merge plan
 internal/server/          the JSON API and the web app's files
 internal/update/          automatic updates: check, verify, download, install, roll back
+internal/arduino/         the pinned Arduino tools (requirements.json), their setup and the kit check
 tools/updatekey/          makes the update signing key (once)
 tools/updatesign/         writes and signs update.json (the release workflow runs it)
-deploy/                   the systemd unit the SD card image installs
+deploy/                   install.sh (the installer) and the systemd unit
+tests/pi/                 the Pi simulation: Raspberry Pi OS in a container on arm64, running install.sh
 ui/                       the web app: plain HTML, CSS and ES modules, no build step
   theme.css               every colour, gradient and font, plus the Vista pieces
   app.css                 screen layouts

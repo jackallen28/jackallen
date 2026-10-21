@@ -1,5 +1,8 @@
 # Publishes a CircuitPath release when a version tag is pushed:
 #   git tag v1.2.3 && git push origin v1.2.3
+# (or when a release with a new v1.2.3 tag is made on github.com).
+# It publishes the Pi and PC servers, update.json + its signature, SHA256SUMS,
+# install.sh and circuitpath.service.
 # Every Pi installs it the next time it starts (if it can reach the internet).
 # Needs the CIRCUITPATH_UPDATE_KEY secret (see docs/updates.md).
 name: Release
@@ -7,9 +10,15 @@ name: Release
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  release:
+    types: [published]
 
 permissions:
   contents: write
+
+# A release made on github.com can start this twice (tag + release); one at a time.
+concurrency:
+  group: release-${{ github.ref }}
 
 jobs:
   release:
@@ -51,10 +60,17 @@ jobs:
             -base-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME" \
             linux-arm64=dist/circuitpath-server-linux-arm64 linux-amd64=dist/circuitpath-server-linux-amd64
           (cd dist && sha256sum circuitpath-server-* > SHA256SUMS)
+          # The installer and the service file, pointing at this repository's releases.
+          sed "s#^REPO=\"[^\"]*\"#REPO=\"$GITHUB_REPOSITORY\"#" deploy/install.sh > dist/install.sh
+          cp deploy/circuitpath.service dist/
 
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "CircuitPath ${GITHUB_REF_NAME#v}" --generate-notes --verify-tag
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --title "CircuitPath ${GITHUB_REF_NAME#v}" --generate-notes --verify-tag
+          fi

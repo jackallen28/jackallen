@@ -21,6 +21,7 @@ import (
 func main() {
 	path := flag.String("public", "internal/update/update-public-key.txt", "the public key file to write")
 	force := flag.Bool("force", false, "replace an existing key (Pis with the old key will need the next version installed by hand)")
+	privOut := flag.String("private-out", "", "write the private key to this file instead of printing it (for scripts and tests)")
 	flag.Parse()
 
 	if old, err := os.ReadFile(*path); err == nil {
@@ -41,6 +42,14 @@ func main() {
 	if err := os.WriteFile(*path, []byte(file), 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+	if *privOut != "" {
+		if err := os.WriteFile(*privOut, []byte(base64.StdEncoding.EncodeToString(priv.Seed())+"\n"), 0o600); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Printf("Wrote the public key to %s and the private key to %s.\n", *path, *privOut)
+		return
 	}
 	fmt.Printf(`Wrote the public key to %s. Commit that file.
 

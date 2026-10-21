@@ -21,15 +21,20 @@ picture passwords, autosave, save files, the Vista look, and login → setup →
 The full brief is in [CLAUDE.md](CLAUDE.md); what's built so far is in
 [docs/development.md](docs/development.md).
 
-## Setting up (when it's built)
+## Trying it on a Pi now
+
+The SD card image isn't built yet, but you can install CircuitPath on a normal Raspberry Pi OS
+card with one command: see [docs/try-it-on-a-pi.md](docs/try-it-on-a-pi.md).
+
+## Setting up (when the image is built)
 
 1. Download `circuitpath-<version>.img.xz` from Releases.
 2. Flash it to a 32 GB+ microSD card with **Raspberry Pi Imager** (Choose OS > Use custom).
 3. Optional: open the card's boot partition on your computer and add `circuitpath.toml` (school
    name, Wi-Fi, a teacher password).
 4. Put the card in a Raspberry Pi 5, plug in a network cable and power. Wait about 2 minutes
-   (green light steady = ready). From then on, the Pi updates CircuitPath by itself every time it
-   starts, if it can reach the internet.
+   (green light steady = ready). From then on, the Pi keeps itself up to date (CircuitPath, its
+   board packages and Raspberry Pi OS) whenever it can reach the internet.
 5. On your laptop, open `https://circuitpath.local/teacher` and log in with the password from
    `circuitpath-first-login.txt` on the card's boot partition (or the one you set).
 6. Ask IT to trust the Pi's certificate (Teacher page > Download certificate) and to install the

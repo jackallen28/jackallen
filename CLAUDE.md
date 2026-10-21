@@ -179,9 +179,12 @@ The teacher's whole set-up is: **flash, insert, power on**.
   with an NVMe HAT: faster, longer-lasting).
 - **Already inside the image:** CircuitPath server, the web app, arduino-cli with the AVR, ESP8266
   and ESP32 cores and every library the projects use (pre-compiled build cache for each board),
-  avahi (mDNS name `circuitpath`), a firewall allowing only 22 / 80 / 443, unattended security
-  updates (off by default in school networks without internet), log rotation, and a read-mostly
-  setup that survives sudden power loss (data on its own partition, SQLite WAL, `fsync` on save).
+  avahi (mDNS name `circuitpath`), a firewall allowing only 22 / 80 / 443, **automatic updates for
+  everything** (Raspberry Pi OS: every update daily with `unattended-upgrades`, restarting at 03:30
+  when one needs it; CircuitPath and its board cores / libraries: §4), log rotation, and a
+  read-mostly setup that survives sudden power loss (data on its own partition, SQLite WAL, `fsync`
+  on save). The image runs the same installer as a manual install (`deploy/install.sh`; how to try
+  it on a Pi before the image exists: `docs/try-it-on-a-pi.md`).
 - **First boot (automatic, about 2 minutes):** expands the filesystem, makes the HTTPS certificate,
   creates a random first **teacher password** and writes it to `circuitpath-first-login.txt` on the
   card's boot partition (readable on any computer), then starts serving. The teacher must change it
@@ -213,11 +216,14 @@ for a minute after 5 wrong tries). Plain, Vista-styled, works on the teacher's l
 - **Wipe session:** for the next school or group: type `WIPE`; deletes every student and class
   (offers Save a copy first). The server's settings stay.
 - **Restore** from a Save a copy zip (e.g. after reflashing).
-- **Updates are automatic, at every startup.** Each time the Pi starts, if it can reach the
-  internet, it checks GitHub Releases for a newer version; if there is one it downloads it,
+- **Updates are automatic, at every startup and every night (03:00).** Each time the Pi starts,
+  and every night, if it can reach the internet, it checks GitHub Releases for a newer version;
+  if there is one it downloads it,
   verifies its signature, backs up the database, installs it and restarts (students who open the
   page meanwhile see "CircuitPath is getting ready"). If the new version can't start, the Pi goes
   back to the old one by itself and skips that version. No internet: it just starts as it is.
+  Each release pins exact, tested versions of arduino-cli, the board cores and the libraries
+  (`internal/arduino/requirements.json`); after an update the Pi installs any that changed.
   The Teacher page can also **Check for updates** now, or **Upload an update file** (downloaded on
   another computer). Student work is backed up before every update and never lost to one.
   Reflashing a new image is also fine: Save a copy first, then Restore. (How it works and how to
@@ -458,7 +464,10 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
   compile queue and sandbox, backups, Wipe / Restore, the Teacher page's auth, and updates
   (signatures, install, rollback, plus a test where a real 1.0.0 server updates itself to 1.1.0).
 - **Image (CI):** build the image, boot it in QEMU (arm64), check the server answers on 443, the
-  first-login file appears, and a sketch compiles for each board.
+  first-login file appears, and a sketch compiles for each board. Until the image exists, the
+  **Pi simulation** (`tests/pi/simulate.sh`, arm64 runner) runs `deploy/install.sh` on the real
+  Raspberry Pi OS Lite userland and checks install, every board, OS updates, firewall,
+  self-update and restart.
 - **Interpreter + simulated API (JS):** unit tests run in headless Chromium (Playwright) or Node
   (dev-only tooling is fine; nothing runtime). Every project's every `demo` runs in the simulator
   with its `sim_events` and must pass the step's checks.
@@ -502,8 +511,9 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
   so IT trusts the Pi's certificate once.
 - **USB drivers** for clone boards are IT's job (or buy driver-free boards); a server can't avoid them.
 - **Work saved on the Pi** (log in anywhere) plus `.circuit` save files; nightly backups.
-- **Automatic updates at every startup** from signed GitHub releases, with a database backup first
-  and an automatic rollback if the new version won't start.
+- **Automatic updates for everything:** CircuitPath at every startup and every night from signed
+  GitHub releases (database backup first, automatic rollback if the new version won't start);
+  board cores and libraries pinned per release; every Raspberry Pi OS update daily.
 - **Standard Fritzing parts library** for all part art (pulled from the public repository).
 - **Windows Vista skeuomorphic look** in the BNTS colours.
 - **Wiring Wizard with a forced, project-specific Test** before programming.
