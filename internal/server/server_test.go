@@ -382,3 +382,31 @@ func TestNameCleaning(t *testing.T) {
 		}
 	}
 }
+
+func TestStartingHandler(t *testing.T) {
+	st, _ := store.Open(filepath.Join(t.TempDir(), "cp.db"))
+	defer st.Close()
+	cat, _ := content.Load(os.DirFS("../../content"))
+	s := &Server{
+		Store:     st,
+		Catalogue: cat,
+		UI:        fstest.MapFS{"updating.html": {Data: []byte("getting ready")}, "theme.css": {Data: []byte("body{}")}},
+		Log:       slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	h := s.StartingHandler()
+	for path, want := range map[string]int{"/": 503, "/api/me": 503, "/api/me/sketches/blink": 503, "/theme.css": 200} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
+		if rec.Code != want {
+			t.Errorf("%s = %d, want %d", path, rec.Code, want)
+		}
+		if rec.Header().Get("Content-Security-Policy") == "" {
+			t.Errorf("%s has no CSP", path)
+		}
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if !strings.Contains(rec.Body.String(), "getting ready") {
+		t.Errorf("page = %q", rec.Body.String())
+	}
+}

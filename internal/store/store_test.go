@@ -167,3 +167,39 @@ func TestSettings(t *testing.T) {
 		t.Fatalf("setting = %q", v)
 	}
 }
+
+func TestBackupAndRestore(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "cp.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	st, _ := s.CreateStudent(ctx, NewStudent{Names: []string{"Ava"}, School: "X", PictureHash: "h"})
+	s.PutSketch(ctx, st.ID, "blink", "before")
+	backup := filepath.Join(dir, "backup.db")
+	v, err := s.BackupTo(ctx, backup)
+	if err != nil || v != SchemaVersion {
+		t.Fatalf("BackupTo = %d, %v", v, err)
+	}
+	s.PutSketch(ctx, st.ID, "blink", "after")
+	s.db.Exec("PRAGMA user_version = 99") // pretend a newer version migrated it
+	s.Close()
+
+	if v, err := FileVersion(path); err != nil || v != 99 {
+		t.Fatalf("FileVersion = %d, %v", v, err)
+	}
+	if err := RestoreFile(backup, path); err != nil {
+		t.Fatal(err)
+	}
+	s, err = Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	sk, _ := s.GetSketch(ctx, st.ID, "blink")
+	if sk.Code != "before" {
+		t.Fatalf("after restore: %q", sk.Code)
+	}
+}

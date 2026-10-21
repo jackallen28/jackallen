@@ -1,0 +1,60 @@
+# Publishes a CircuitPath release when a version tag is pushed:
+#   git tag v1.2.3 && git push origin v1.2.3
+# Every Pi installs it the next time it starts (if it can reach the internet).
+# Needs the CIRCUITPATH_UPDATE_KEY secret (see docs/updates.md).
+name: Release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Check the update key is set up
+        env:
+          CIRCUITPATH_UPDATE_KEY: ${{ secrets.CIRCUITPATH_UPDATE_KEY }}
+        run: |
+          if [ -z "$CIRCUITPATH_UPDATE_KEY" ]; then
+            echo "::error::The CIRCUITPATH_UPDATE_KEY secret is missing. See docs/updates.md."
+            exit 1
+          fi
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir dist
+          for arch in arm64 amd64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath \
+              -ldflags "-s -w -X circuitpath.Version=$VERSION -X circuitpath.UpdateRepo=$GITHUB_REPOSITORY" \
+              -o dist/circuitpath-server-linux-$arch ./cmd/circuitpath-server
+          done
+
+      - name: Sign
+        env:
+          CIRCUITPATH_UPDATE_KEY: ${{ secrets.CIRCUITPATH_UPDATE_KEY }}
+        run: |
+          go run ./tools/updatesign -version "${GITHUB_REF_NAME#v}" -out dist \
+            -base-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME" \
+            linux-arm64=dist/circuitpath-server-linux-arm64 linux-amd64=dist/circuitpath-server-linux-amd64
+          (cd dist && sha256sum circuitpath-server-* > SHA256SUMS)
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "CircuitPath ${GITHUB_REF_NAME#v}" --generate-notes --verify-tag

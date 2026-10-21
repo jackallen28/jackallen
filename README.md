@@ -28,7 +28,8 @@ The full brief is in [CLAUDE.md](CLAUDE.md); what's built so far is in
 3. Optional: open the card's boot partition on your computer and add `circuitpath.toml` (school
    name, Wi-Fi, a teacher password).
 4. Put the card in a Raspberry Pi 5, plug in a network cable and power. Wait about 2 minutes
-   (green light steady = ready).
+   (green light steady = ready). From then on, the Pi updates CircuitPath by itself every time it
+   starts, if it can reach the internet.
 5. On your laptop, open `https://circuitpath.local/teacher` and log in with the password from
    `circuitpath-first-login.txt` on the card's boot partition (or the one you set).
 6. Ask IT to trust the Pi's certificate (Teacher page > Download certificate) and to install the
@@ -45,7 +46,8 @@ npm ci && npm test                       # JavaScript tests
 npm run e2e                              # GUI smoke test (Playwright)
 ```
 
-See [docs/development.md](docs/development.md) for how it fits together.
+See [docs/development.md](docs/development.md) for how it fits together, and
+[docs/updates.md](docs/updates.md) for automatic updates and publishing a release.
 
 Part images come from the [Fritzing parts library](https://github.com/fritzing/fritzing-parts)
 (CC BY-SA 3.0).

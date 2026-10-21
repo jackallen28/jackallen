@@ -497,3 +497,14 @@
   .editor { height: 60vh; }
   .toolbar .tool span { display: none; }
 }
+
+/* ---------- "Getting ready" page (shown while the server updates) ---------- */
+
+.getting-ready { width: min(460px, 100%); }
+.getting-ready .titlebar img { width: 18px; height: 18px; }
+.progress.marquee { position: relative; margin: 14px 0; }
+.progress.marquee > span { position: absolute; width: 30%; animation: marquee 1.6s linear infinite; }
+@keyframes marquee {
+  from { left: -30%; }
+  to { left: 100%; }
+}

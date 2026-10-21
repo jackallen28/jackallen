@@ -313,3 +313,25 @@ func contentType(ext string) string {
 	}
 	return mime.TypeByExtension(ext)
 }
+
+// StartingHandler is served while the server starts up and checks for an
+// update: the "getting ready" page (which refreshes itself), the files it
+// needs, and a 503 for the API so autosave waits and tries again.
+func (s *Server) StartingHandler() http.Handler {
+	s.init()
+	page, _ := fs.ReadFile(s.UI, "updating.html")
+	return s.middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Retry-After", "10")
+		switch ext := path.Ext(r.URL.Path); {
+		case strings.HasPrefix(r.URL.Path, "/api/"):
+			writeError(w, http.StatusServiceUnavailable, "starting", "CircuitPath is getting ready. Try again in a moment.")
+		case ext == ".css" || ext == ".svg" || ext == ".png" || ext == ".ico":
+			s.static.ServeHTTP(w, r)
+		default:
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write(page)
+		}
+	}))
+}

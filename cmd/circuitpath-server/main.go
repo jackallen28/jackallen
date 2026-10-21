@@ -7,6 +7,9 @@
 //
 // then open https://localhost:8443 (accept the certificate warning, or trust
 // dev-data/tls/ca.crt).
+//
+// Every time it starts (except with -dev) it checks for a newer release and
+// installs it first; see internal/update and docs/updates.md.
 package main
 
 import (
@@ -23,6 +26,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -31,7 +35,22 @@ import (
 	"circuitpath/internal/server"
 	"circuitpath/internal/store"
 	"circuitpath/internal/tlsca"
+	"circuitpath/internal/update"
 )
+
+// exitRestart is the exit code after installing an update; systemd starts
+// the new version straight away (Restart=always).
+const exitRestart = 75
+
+// errRestart means "stop now and start again" (a new version is in place).
+var errRestart = errors.New("restarting into a new version")
+
+// updateTimeout caps checking for, downloading and installing an update at
+// startup. Without internet the check gives up within seconds.
+const updateTimeout = 5 * time.Minute
+
+// confirmAfter is how long a new version must run before it counts as good.
+const confirmAfter = 2 * time.Minute
 
 type config struct {
 	dev        bool
@@ -44,6 +63,8 @@ type config struct {
 	contentDir string
 	school     string
 	demo       bool
+	autoUpdate bool
+	updateURL  string
 }
 
 func main() {
@@ -58,13 +79,35 @@ func main() {
 	flag.StringVar(&cfg.contentDir, "content", "", "read content from this folder instead of the built-in copy")
 	flag.StringVar(&cfg.school, "school", "", "the school name shown on the welcome screen (saved; only needed once)")
 	flag.BoolVar(&cfg.demo, "demo", false, "add demo classes if there are none (always on with -dev)")
+	flag.BoolVar(&cfg.autoUpdate, "auto-update", true, "check for a newer release at every start and install it (off with -dev unless set)")
+	flag.StringVar(&cfg.updateURL, "update-url", "", "where update.json is (default: this build's GitHub releases)")
+	showVersion := flag.Bool("version", false, "print the version and stop")
 	flag.Parse()
 
+	if *showVersion {
+		fmt.Println(circuitpath.Version)
+		return
+	}
+	if cfg.dev && !flagSet("auto-update") {
+		cfg.autoUpdate = false
+	}
+
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	if err := run(cfg, log); err != nil {
+	err := run(cfg, log)
+	if errors.Is(err, errRestart) {
+		log.Info("restarting")
+		os.Exit(exitRestart)
+	}
+	if err != nil {
 		log.Error("CircuitPath stopped", "err", err)
 		os.Exit(1)
 	}
+}
+
+func flagSet(name string) bool {
+	set := false
+	flag.Visit(func(f *flag.Flag) { set = set || f.Name == name })
+	return set
 }
 
 func run(cfg config, log *slog.Logger) error {
@@ -87,13 +130,32 @@ func run(cfg config, log *slog.Logger) error {
 	if err := os.MkdirAll(cfg.dataDir, 0o750); err != nil {
 		return err
 	}
+	dbPath := filepath.Join(cfg.dataDir, "circuitpath.db")
 
-	db, err := store.Open(filepath.Join(cfg.dataDir, "circuitpath.db"))
+	// First, before anything else can fail: if a new version keeps stopping,
+	// put the old one back.
+	var upd *update.Updater
+	if cfg.autoUpdate {
+		var err error
+		if upd, err = newUpdater(cfg, log, dbPath); err != nil {
+			log.Warn("automatic updates are off", "reason", err)
+		} else if restart, err := upd.Startup(); err != nil {
+			log.Error("checking the last update", "err", err)
+		} else if restart {
+			return errRestart
+		}
+	}
+
+	db, err := store.Open(dbPath)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	ctx := context.Background()
+	if upd != nil {
+		upd.Hooks.BackupDB = db.BackupTo
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	if cfg.school != "" {
 		if err := db.SetSetting(ctx, "school", cfg.school); err != nil {
 			return err
@@ -136,9 +198,16 @@ func run(cfg config, log *slog.Logger) error {
 		Log:         log,
 		CacheStatic: cfg.uiDir == "",
 	}
+	// While checking for an update, students see a "getting ready" page.
+	handler := &switchHandler{}
+	if upd != nil {
+		handler.set(srv.StartingHandler())
+	} else {
+		handler.set(srv.Handler())
+	}
 	https := &http.Server{
 		Addr:              cfg.httpsAddr,
-		Handler:           srv.Handler(),
+		Handler:           handler,
 		TLSConfig:         &tls.Config{GetCertificate: ca.GetCertificate, MinVersion: tls.VersionTLS12},
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,
@@ -157,6 +226,34 @@ func run(cfg config, log *slog.Logger) error {
 			ReadHeaderTimeout: 10 * time.Second,
 		}
 		go func() { errs <- redirect.ListenAndServe() }()
+	}
+	shutdown := func() {
+		c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if redirect != nil {
+			redirect.Shutdown(c)
+		}
+		https.Shutdown(c)
+	}
+
+	if upd != nil {
+		uctx, cancel := context.WithTimeout(ctx, updateTimeout)
+		installed, err := upd.Run(uctx)
+		cancel()
+		if err != nil {
+			log.Info("no update installed", "reason", err)
+		}
+		if installed {
+			shutdown()
+			return errRestart
+		}
+		handler.set(srv.Handler())
+		confirm := time.AfterFunc(confirmAfter, func() {
+			if err := upd.Confirm(); err != nil {
+				log.Error("confirming the update", "err", err)
+			}
+		})
+		defer confirm.Stop()
 	}
 
 	// Keep the certificate up to date with the Pi's addresses, and tidy old logins.
@@ -182,23 +279,57 @@ func run(cfg config, log *slog.Logger) error {
 	log.Info("CircuitPath is ready", "version", circuitpath.Version, "urls", strings.Join(urls(cfg), " "),
 		"projects", len(cat.Projects), "boards", len(cat.Boards))
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	select {
 	case err := <-errs:
 		if !errors.Is(err, http.ErrServerClosed) {
 			return err
 		}
-	case s := <-sig:
-		log.Info("stopping", "signal", s.String())
+	case <-ctx.Done():
+		log.Info("stopping")
 	}
 	close(stopTicker)
-	shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if redirect != nil {
-		redirect.Shutdown(shutdown)
+	shutdown()
+	return nil
+}
+
+// switchHandler lets the server start with the "getting ready" page and
+// swap to the real app once the update check is done.
+type switchHandler struct{ h atomic.Pointer[http.Handler] }
+
+func (s *switchHandler) set(h http.Handler) { s.h.Store(&h) }
+
+func (s *switchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	(*s.h.Load()).ServeHTTP(w, r)
+}
+
+// newUpdater sets up automatic updates from this build's GitHub releases
+// (or -update-url).
+func newUpdater(cfg config, log *slog.Logger, dbPath string) (*update.Updater, error) {
+	exe, err := os.Executable()
+	if err == nil {
+		exe, err = filepath.EvalSymlinks(exe)
 	}
-	return https.Shutdown(shutdown)
+	if err != nil {
+		return nil, fmt.Errorf("can't find this program's file: %w", err)
+	}
+	manifestURL := cfg.updateURL
+	if manifestURL == "" && circuitpath.UpdateRepo != "" {
+		manifestURL = "https://github.com/" + circuitpath.UpdateRepo + "/releases/latest/download/" + update.ManifestName
+	}
+	key, _ := update.PublicKey()
+	return &update.Updater{
+		Dir:         filepath.Join(cfg.dataDir, "update"),
+		BackupDir:   filepath.Join(cfg.dataDir, "backups"),
+		Exe:         exe,
+		Current:     circuitpath.Version,
+		ManifestURL: manifestURL,
+		PublicKey:   key,
+		Log:         log,
+		Hooks: update.Hooks{
+			DBVersion: func() (int, error) { return store.FileVersion(dbPath) },
+			RestoreDB: func(backup string) error { return store.RestoreFile(backup, dbPath) },
+		},
+	}, nil
 }
 
 // redirectHandler sends plain-HTTP visitors to the HTTPS site.

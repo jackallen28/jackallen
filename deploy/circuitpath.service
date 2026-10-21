@@ -1,0 +1,35 @@
+# systemd unit for the CircuitPath server (installed by the SD card image).
+#
+# The server checks for an update every time it starts. After installing one
+# it exits with code 75 and systemd starts the new version straight away.
+# The binary's folder must be writable by the circuitpath user so it can
+# update itself; nothing else on the system is.
+[Unit]
+Description=CircuitPath server
+Wants=network-online.target
+After=network-online.target
+# Never give up restarting (a new version that keeps stopping is rolled back
+# by the server itself after 3 tries).
+StartLimitIntervalSec=0
+
+[Service]
+User=circuitpath
+Group=circuitpath
+ExecStart=/opt/circuitpath/circuitpath-server
+Restart=always
+RestartSec=3
+StateDirectory=circuitpath
+# Ports 80 and 443 without running as root.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/circuitpath /var/lib/circuitpath
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+# A school proxy, if the Pi needs one to reach GitHub, goes here, e.g.:
+# Environment=HTTPS_PROXY=http://proxy.school.vic.edu.au:8080
+
+[Install]
+WantedBy=multi-user.target

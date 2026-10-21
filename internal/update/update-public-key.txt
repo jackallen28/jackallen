@@ -1,0 +1,7 @@
+# CircuitPath's update public key (base64 Ed25519). The Pi only installs
+# updates signed with the matching private key, which lives in the GitHub
+# secret CIRCUITPATH_UPDATE_KEY.
+#
+# There is no key yet, so automatic updates are off. Make one with:
+#   go run ./tools/updatekey
+# (see docs/updates.md)

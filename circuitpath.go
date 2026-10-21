@@ -10,6 +10,10 @@ import (
 // Version is set at build time: go build -ldflags "-X circuitpath.Version=1.2.3".
 var Version = "dev"
 
+// UpdateRepo is the GitHub repository ("owner/name") whose releases this
+// build updates itself from. The release workflow sets it.
+var UpdateRepo = ""
+
 //go:embed ui
 var uiFiles embed.FS
 

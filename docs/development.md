@@ -7,6 +7,7 @@ The brief is [CLAUDE.md](../CLAUDE.md). This page says what is built so far and 
 | Step (CLAUDE.md §13) | State |
 |---|---|
 | 1. Skeleton: Go server, HTTPS with its own CA, SQLite, accounts + picture passwords, autosave, save files, Vista theme, login → picker | **Done** |
+| Automatic updates at every startup (signed releases, database backup, rollback); release workflow | **Done**: needs the update key set up once ([updates.md](updates.md)) |
 | 2. Fritzing import + renderer | Not started |
 | 3. Interpreter + simulated API, Serial Monitor | Not started |
 | 4. Wiring Wizard | Not started |
@@ -49,6 +50,10 @@ internal/auth/            picture passwords (bcrypt), login tokens, lockout and 
 internal/content/         loads content/ and checks it against content/schema
 internal/savefile/        .circuit save files: write, read (with limits), merge plan
 internal/server/          the JSON API and the web app's files
+internal/update/          automatic updates: check, verify, download, install, roll back
+tools/updatekey/          makes the update signing key (once)
+tools/updatesign/         writes and signs update.json (the release workflow runs it)
+deploy/                   the systemd unit the SD card image installs
 ui/                       the web app: plain HTML, CSS and ES modules, no build step
   theme.css               every colour, gradient and font, plus the Vista pieces
   app.css                 screen layouts
@@ -93,5 +98,9 @@ tests/e2e/                Playwright GUI smoke test (saves screenshots to test-r
   projects that aren't here, asks before replacing older work with newer copies from the file,
   and never replaces newer work with older copies. Files are size-limited and checked entry by
   entry.
+- **Updates** happen at every startup (see [updates.md](updates.md)): signed with Ed25519 (the
+  public key is committed, the private key is a GitHub secret), a database backup first, the old
+  binary kept, and an automatic rollback if the new version stops 3 times in its first 2 minutes.
+  While it checks, students see a "getting ready" page and the API answers 503, so autosave waits.
 - **The code editor** is a plain text area with line numbers for now; CodeMirror (vendored)
   replaces it when the Coach arrives.

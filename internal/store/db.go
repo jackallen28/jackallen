@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -163,4 +164,48 @@ func (s *Store) SetSetting(ctx context.Context, key, value string) error {
 		"INSERT INTO server_settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
 		key, value)
 	return err
+}
+
+// BackupTo writes a consistent copy of the database to path (which must not
+// exist yet) and returns its schema version. Students can keep working
+// while it runs.
+func (s *Store) BackupTo(ctx context.Context, path string) (int, error) {
+	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", path); err != nil {
+		return 0, err
+	}
+	return s.Version(ctx)
+}
+
+// FileVersion reads the schema version of the database at path without
+// changing it (no migrations).
+func FileVersion(path string) (int, error) {
+	db, err := sql.Open("sqlite", "file:"+path+"?_pragma=busy_timeout(10000)")
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+	var v int
+	err = db.QueryRow("PRAGMA user_version").Scan(&v)
+	return v, err
+}
+
+// RestoreFile puts a backup made by BackupTo back as the database at path.
+// The database must not be open.
+func RestoreFile(backup, path string) error {
+	data, err := os.ReadFile(backup)
+	if err != nil {
+		return err
+	}
+	tmp := path + ".restoring"
+	if err := os.WriteFile(tmp, data, 0o640); err != nil {
+		return err
+	}
+	f, err := os.Open(tmp)
+	if err == nil {
+		f.Sync()
+		f.Close()
+	}
+	os.Remove(path + "-wal")
+	os.Remove(path + "-shm")
+	return os.Rename(tmp, path)
 }

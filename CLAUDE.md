@@ -136,6 +136,7 @@ Raspberry Pi 5 (8 GB), headless           student laptops (Windows, Edge / Chrom
     see "You're 3rd in line"; a **shared build cache** per board so each core is compiled once
   - returns the compiled `.hex` / `.bin` to the browser, which uploads it (below)
   - has a **Teacher page** (§4)
+  - **updates itself every time it starts** (§4: signed GitHub releases; no internet → starts as it is)
 - **The simulator runs entirely in the student's browser** (§6), so the Pi only works when a student
   presses **Upload** or **Check my code** (a real compile, for the Coach to explain real errors).
 - **Uploading to a real board happens in the browser** with **Web Serial** (Edge / Chrome on Windows
@@ -212,14 +213,19 @@ for a minute after 5 wrong tries). Plain, Vista-styled, works on the teacher's l
 - **Wipe session:** for the next school or group: type `WIPE`; deletes every student and class
   (offers Save a copy first). The server's settings stay.
 - **Restore** from a Save a copy zip (e.g. after reflashing).
-- **Updates:** "Check for updates" (if the Pi has internet: downloads the next release's update
-  bundle from GitHub, verifies its signature, installs, restarts) or **Upload an update file**
-  (downloaded on another computer). Student data is never touched by updates. Reflashing a new
-  image is also fine: Save a copy first, then Restore.
+- **Updates are automatic, at every startup.** Each time the Pi starts, if it can reach the
+  internet, it checks GitHub Releases for a newer version; if there is one it downloads it,
+  verifies its signature, backs up the database, installs it and restarts (students who open the
+  page meanwhile see "CircuitPath is getting ready"). If the new version can't start, the Pi goes
+  back to the old one by itself and skips that version. No internet: it just starts as it is.
+  The Teacher page can also **Check for updates** now, or **Upload an update file** (downloaded on
+  another computer). Student work is backed up before every update and never lost to one.
+  Reflashing a new image is also fine: Save a copy first, then Restore. (How it works and how to
+  publish a release: `docs/updates.md`.)
 - **Settings:** school name, change the teacher password, HTTPS certificate (download the Pi's CA /
   upload the school's own certificate), network (hostname, Wi-Fi), SSH on/off, which boards and
-  projects are shown, the class kit list (`kit.json`), shut down / restart (shut down before
-  unplugging when possible).
+  projects are shown, the class kit list (`kit.json`), automatic updates on / off, shut down /
+  restart (shut down before unplugging when possible).
 
 ---
 
@@ -417,9 +423,11 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 
 ## 11. Rules for Claude Code
 
-1. **On the school network, private.** No calls to the internet from the web app or the server
-   (except the teacher choosing "Check for updates"). No telemetry, no cloud accounts, no CDN fonts or
-   scripts. Student data stays on the Pi (and in save files students and the teacher download).
+1. **On the school network, private.** No calls to the internet from the web app or the server,
+   except checking for and downloading CircuitPath updates from GitHub Releases (at every startup,
+   and when the teacher chooses "Check for updates"); nothing about students is ever sent. No
+   telemetry, no cloud accounts, no CDN fonts or scripts. Student data stays on the Pi (and in save
+   files students and the teacher download).
 2. **No AI**, anywhere.
 3. **Nothing to install on student laptops**, ever: just Edge / Chrome. **Nothing to do on the Pi**
    but flash, insert and power on; everything else is on the Teacher page. Never require a screen,
@@ -447,7 +455,8 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 ## 12. Testing
 
 - **Server (Go):** unit tests for the API, accounts and picture passwords, saves (migrations), the
-  compile queue and sandbox, backups, Wipe / Restore, the Teacher page's auth.
+  compile queue and sandbox, backups, Wipe / Restore, the Teacher page's auth, and updates
+  (signatures, install, rollback, plus a test where a real 1.0.0 server updates itself to 1.1.0).
 - **Image (CI):** build the image, boot it in QEMU (arm64), check the server answers on 443, the
   first-login file appears, and a sketch compiles for each board.
 - **Interpreter + simulated API (JS):** unit tests run in headless Chromium (Playwright) or Node
@@ -493,6 +502,8 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
   so IT trusts the Pi's certificate once.
 - **USB drivers** for clone boards are IT's job (or buy driver-free boards); a server can't avoid them.
 - **Work saved on the Pi** (log in anywhere) plus `.circuit` save files; nightly backups.
+- **Automatic updates at every startup** from signed GitHub releases, with a database backup first
+  and an automatic rollback if the new version won't start.
 - **Standard Fritzing parts library** for all part art (pulled from the public repository).
 - **Windows Vista skeuomorphic look** in the BNTS colours.
 - **Wiring Wizard with a forced, project-specific Test** before programming.
