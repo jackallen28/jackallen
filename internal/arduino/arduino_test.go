@@ -47,7 +47,7 @@ func fakeDownloads(t *testing.T, archive []byte, sum string) *httptest.Server {
 	name := fmt.Sprintf("arduino-cli_1.5.1_%s.tar.gz", plat)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch strings.TrimPrefix(r.URL.Path, "/") {
-		case "arduino-cli_1.5.1_checksums.txt":
+		case "1.5.1-checksums.txt":
 			fmt.Fprintf(w, "%s  %s\n0000  arduino-cli_1.5.1_Other.tar.gz\n", sum, name)
 		case name:
 			w.Write(archive)

@@ -297,7 +297,7 @@ func (e *Env) ensureCLI(ctx context.Context, version string) error {
 		base = "https://downloads.arduino.cc/arduino-cli"
 	}
 	name := fmt.Sprintf("arduino-cli_%s_%s.tar.gz", version, plat)
-	sums, err := e.get(ctx, fmt.Sprintf("%s/arduino-cli_%s_checksums.txt", base, version), 64<<10)
+	sums, err := e.get(ctx, fmt.Sprintf("%s/%s-checksums.txt", base, version), 64<<10)
 	if err != nil {
 		return err
 	}
