@@ -84,7 +84,7 @@ pi bash /srv/release/v0.0.1/install.sh \
   || fail "the installer stopped"
 echo "Installed in $(( $(date +%s) - start ))s"
 
-api() { curl -fsSk "https://127.0.0.1:$PORT$1"; }
+api() { curl -fsSk --connect-timeout 5 --max-time 20 "https://127.0.0.1:$PORT$1"; }
 version() { api /api/info | sed -n 's/.*"version":"\([^"]*\)".*/\1/p'; }
 wait_version() { # wait_version WANT
   for _ in $(seq 1 90); do [ "$(version 2>/dev/null)" = "$1" ] && return 0; sleep 2; done
@@ -95,8 +95,8 @@ pi systemctl is-active circuitpath || fail "the service isn't running"
 pi systemctl is-enabled circuitpath || fail "the service won't start at boot"
 wait_version 0.0.1
 echo "HTTPS answers from outside the Pi: version $(version)"
-curl -fsSk -o /dev/null "https://127.0.0.1:$PORT/" || fail "the web app isn't served"
-curl -fsSk -X POST -H 'Content-Type: application/json' -H 'X-CircuitPath: 1' \
+curl -fsSk --max-time 20 -o /dev/null "https://127.0.0.1:$PORT/" || fail "the web app isn't served"
+curl -fsSk --max-time 20 -X POST -H 'Content-Type: application/json' -H 'X-CircuitPath: 1' \
   -d '{"class_id":0,"names":["Sim"],"school":"Pi Simulation High","pictures":["cat","rocket","apple"]}' \
   "https://127.0.0.1:$PORT/api/students" >/dev/null || fail "a student couldn't sign up"
 api /api/classes/0/students | grep -q Sim || fail "the new student isn't listed"
@@ -109,9 +109,18 @@ pi runuser -u circuitpath -- env HOME=/var/lib/circuitpath /opt/circuitpath/circ
 step "3. Automatic OS updates, firewall, name"
 pi systemctl is-active avahi-daemon || fail "avahi (circuitpath.local) isn't running"
 pi systemctl is-enabled apt-daily-upgrade.timer || fail "automatic OS updates aren't on"
-pi unattended-upgrade --dry-run --debug 2>&1 | grep -i "allowed origins" | tee "$WORK/allowed-origins.txt"
-grep -q "Raspberry Pi Foundation" "$WORK/allowed-origins.txt" || fail "Raspberry Pi OS updates aren't allowed"
-grep -q "Debian-Security" "$WORK/allowed-origins.txt" || fail "Debian security updates aren't allowed"
+# The update rules must name the package sources exactly as Raspberry Pi
+# OS reports them (checked without downloading or installing anything).
+pi apt-config dump | grep -A8 "Origins-Pattern" | tee "$WORK/allowed-origins.txt"
+pi apt-cache policy > "$WORK/apt-policy.txt"
+codename="$(pi sh -c '. /etc/os-release && echo "$VERSION_CODENAME"')"
+grep -q "origin=Raspberry Pi Foundation,codename=\${distro_codename},label=Raspberry Pi Foundation" "$WORK/allowed-origins.txt" \
+  || fail "Raspberry Pi OS updates aren't allowed"
+grep -q "o=Raspberry Pi Foundation,a=$codename,n=$codename,l=Raspberry Pi Foundation" "$WORK/apt-policy.txt" \
+  || fail "the Raspberry Pi archive doesn't match the update rule (see apt-policy.txt)"
+grep -q "n=$codename-security,l=Debian-Security" "$WORK/apt-policy.txt" \
+  || fail "the Debian security archive doesn't match the update rule (see apt-policy.txt)"
+grep -q "n=$codename-updates" "$WORK/apt-policy.txt" || fail "the Debian updates archive isn't there"
 pi nft list ruleset | grep -q "443" || fail "the firewall isn't loaded"
 echo "Firewall loaded; unattended-upgrades will install every update."
 

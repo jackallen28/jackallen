@@ -14,6 +14,11 @@ on:
 permissions:
   contents: read
 
+# A newer push replaces a simulation that's still running.
+concurrency:
+  group: pi-simulation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   simulate:
     runs-on: ubuntu-24.04-arm
