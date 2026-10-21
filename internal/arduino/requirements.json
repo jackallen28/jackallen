@@ -23,6 +23,6 @@
     { "name": "TM1637", "version": "1.2.0" },
     { "name": "Keypad", "version": "3.1.1" },
     { "name": "MFRC522", "version": "1.4.12" },
-    { "name": "LedControl", "version": "1.0.6" }
+    { "name": "MD_MAX72XX", "version": "3.5.1" }
   ]
 }

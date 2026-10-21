@@ -124,11 +124,15 @@ mkdir -p /etc/systemd/system/circuitpath.service.d
 } > /etc/systemd/system/circuitpath.service.d/install.conf
 systemctl daemon-reload
 
+BOARDS_OK=1
 if [ "$ARDUINO" -eq 1 ]; then
   step "Board cores and libraries (15-30 minutes: ESP32 is big)"
-  runuser -u circuitpath -- env HOME=/var/lib/circuitpath ${PROXY:+HTTPS_PROXY=$PROXY HTTP_PROXY=$PROXY} \
-    /opt/circuitpath/circuitpath-server -data /var/lib/circuitpath -setup-arduino \
-    || die "the board cores and libraries didn't install (see above). Run the installer again to retry."
+  # A problem here doesn't stop CircuitPath: it also tries again by itself
+  # every time it starts, until the boards are all set up.
+  if ! runuser -u circuitpath -- env HOME=/var/lib/circuitpath ${PROXY:+HTTPS_PROXY=$PROXY HTTP_PROXY=$PROXY} \
+      /opt/circuitpath/circuitpath-server -data /var/lib/circuitpath -setup-arduino; then
+    BOARDS_OK=0
+  fi
 fi
 
 step "Automatic updates (CircuitPath and Raspberry Pi OS)"
@@ -202,5 +206,9 @@ echo "Open it in Edge or Chrome:  https://$NAME.local   ${ADDRS:+(or $ADDRS)}"
 echo "The browser will warn about the certificate until IT trusts the Pi's"
 echo "certificate (/var/lib/circuitpath/tls/ca.crt). For a test, choose Advanced > Continue."
 echo
+if [ "$BOARDS_OK" -eq 0 ]; then
+  printf '\n\033[1;33mSome boards aren'"'"'t ready yet (see "Kit check" above). If it was a download\n'
+  printf 'problem, CircuitPath tries again each time it starts; or run this installer again.\033[0m\n\n'
+fi
 echo "Logs:     journalctl -u circuitpath -f"
 echo "Restart:  sudo systemctl restart circuitpath   (it checks for updates as it starts)"

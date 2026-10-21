@@ -3,6 +3,26 @@
 // for every board after installing or updating the Arduino tools (which
 // also fills the build cache, so students' first compiles are quick).
 
+// Board-specific libraries first: Keypad.h defines CLOSED and OPEN as
+// macros, which clash with the ESP8266 WiFi headers if they come after it.
+#if defined(ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#include <esp_now.h>
+#include <ESP32Servo.h>
+WebServer server(80);
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <espnow.h>
+#include <Servo.h>
+ESP8266WebServer server(80);
+#else
+#include <Servo.h>
+#include <LiquidCrystal_I2C.h> // Keypad Safe (Uno / Mega)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+#endif
+
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_NeoPixel.h>
@@ -12,32 +32,14 @@
 #include <TM1637Display.h>
 #include <Keypad.h>
 #include <MFRC522.h>
-#include <LedControl.h>
-
-#if defined(ESP32)
-#include <ESP32Servo.h>
-#include <WiFi.h>
-#include <WebServer.h>
-#include <esp_now.h>
-WebServer server(80);
-#elif defined(ESP8266)
-#include <Servo.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <espnow.h>
-ESP8266WebServer server(80);
-#else
-#include <Servo.h>
-#include <LiquidCrystal_I2C.h> // Keypad Safe (Uno / Mega)
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-#endif
+#include <MD_MAX72xx.h>
 
 Adafruit_NeoPixel pixels(12, 2, NEO_GRB + NEO_KHZ800);
 Adafruit_SSD1306 oled(128, 64, &Wire, -1);
 DHT dht(3, DHT11);
 TM1637Display digits(4, 5);
 MFRC522 rfid(10, 9);
-LedControl matrix(7, 6, 8, 1);
+MD_MAX72XX matrix(MD_MAX72XX::FC16_HW, 8, 1); // 8×8 LED matrix (Joystick Snake)
 Servo servo;
 
 const byte ROWS = 4;
@@ -68,8 +70,8 @@ void setup() {
   digits.showNumberDec(42);
   SPI.begin();
   rfid.PCD_Init();
-  matrix.shutdown(0, false);
-  matrix.setLed(0, 1, 1, true);
+  matrix.begin();
+  matrix.setPoint(1, 1, true);
   servo.attach(9);
   servo.write(90);
 #if defined(ESP32) || defined(ESP8266)
