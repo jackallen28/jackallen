@@ -11,7 +11,8 @@ RUN : > /etc/fstab \
              sshswitch.service regenerate_ssh_host_keys.service systemd-remount-fs.service \
              getty@tty1.service serial-getty@ttyAMA0.service serial-getty@ttyS0.service \
              rpi-eeprom-update.service NetworkManager.service NetworkManager-wait-online.service \
-             NetworkManager-dispatcher.service dhcpcd.service wpa_supplicant.service ModemManager.service \
+             NetworkManager-dispatcher.service systemd-networkd-wait-online.service \
+             dhcpcd.service wpa_supplicant.service ModemManager.service \
              bluetooth.service hciuart.service; do \
       systemctl mask "$u" >/dev/null 2>&1 || true; done
 STOPSIGNAL SIGRTMIN+3

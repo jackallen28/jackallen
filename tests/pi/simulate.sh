@@ -114,13 +114,19 @@ pi systemctl is-enabled apt-daily-upgrade.timer || fail "automatic OS updates ar
 pi apt-config dump | grep -A8 "Origins-Pattern" | tee "$WORK/allowed-origins.txt"
 pi apt-cache policy > "$WORK/apt-policy.txt"
 codename="$(pi sh -c '. /etc/os-release && echo "$VERSION_CODENAME"')"
-grep -q "origin=Raspberry Pi Foundation,codename=\${distro_codename},label=Raspberry Pi Foundation" "$WORK/allowed-origins.txt" \
+echo "Package sources (codename $codename):"
+grep -E '^ +release ' "$WORK/apt-policy.txt" | sort -u | sed 's/^ */  /'
+grep -A2 'archive\.raspberrypi\.com' "$WORK/apt-policy.txt" | grep -q "origin archive.raspberrypi.com" \
+  || fail "the Raspberry Pi archive isn't a package source"
+grep -q "site=archive.raspberrypi.com" "$WORK/allowed-origins.txt" \
   || fail "Raspberry Pi OS updates aren't allowed"
-grep -q "o=Raspberry Pi Foundation,a=$codename,n=$codename,l=Raspberry Pi Foundation" "$WORK/apt-policy.txt" \
-  || fail "the Raspberry Pi archive doesn't match the update rule (see apt-policy.txt)"
 grep -q "n=$codename-security,l=Debian-Security" "$WORK/apt-policy.txt" \
-  || fail "the Debian security archive doesn't match the update rule (see apt-policy.txt)"
+  || fail "the Debian security archive doesn't match the update rule"
+grep -q "origin=Debian,codename=\${distro_codename}-security,label=Debian-Security" "$WORK/allowed-origins.txt" \
+  || fail "Debian security updates aren't allowed"
 grep -q "n=$codename-updates" "$WORK/apt-policy.txt" || fail "the Debian updates archive isn't there"
+grep -q "origin=Debian,codename=\${distro_codename}-updates" "$WORK/allowed-origins.txt" \
+  || fail "Debian updates aren't allowed"
 pi nft list ruleset | grep -q "443" || fail "the firewall isn't loaded"
 echo "Firewall loaded; unattended-upgrades will install every update."
 
