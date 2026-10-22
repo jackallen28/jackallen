@@ -213,11 +213,33 @@
           "items": {
             "type": "object",
             "required": [
-              "type"
+              "type",
+              "label"
             ],
             "properties": {
               "type": {
-                "type": "string"
+                "enum": [
+                  "code_contains",
+                  "code_regex",
+                  "uses_function",
+                  "compiles",
+                  "runs",
+                  "serial_contains",
+                  "serial_regex",
+                  "pin_seen",
+                  "pwm_seen",
+                  "tone_seen",
+                  "servo_angle",
+                  "display_text",
+                  "neopixel_lit",
+                  "run_count",
+                  "confirm"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
               }
             }
           }
@@ -235,6 +257,12 @@
           "items": {
             "type": "object"
           }
+        },
+        "sim_ms": {
+          "description": "How long the demo runs in the simulator when tested (ms, default 5000).",
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 60000
         }
       }
     },
