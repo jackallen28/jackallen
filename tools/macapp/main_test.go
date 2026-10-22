@@ -22,7 +22,7 @@ func TestBuildsAUniversalApp(t *testing.T) {
 			t.Fatalf("%s: %v\n%s", arch, err, out)
 		}
 	}
-	if err := build(filepath.Join(dir, "amd64"), filepath.Join(dir, "arm64"), "1.2.3", "../../cmd/circuitpath/macos/CircuitPath.icns", dir); err != nil {
+	if err := build(filepath.Join(dir, "amd64"), filepath.Join(dir, "arm64"), "1.2.3", "../../cmd/circuitpath/macos/CircuitPath.icns", dir, "main.go"); err != nil {
 		t.Fatal(err)
 	}
 	app := filepath.Join(dir, "CircuitPath.app", "Contents")
@@ -51,7 +51,10 @@ func TestBuildsAUniversalApp(t *testing.T) {
 			t.Errorf("Info.plist has no %s", want)
 		}
 	}
-	if err := build("x", "y", "1.2", "", dir); err == nil {
+	if _, err := os.Stat(filepath.Join(app, "Resources", "boards.zip")); err != nil {
+		t.Error("the board tools weren't built in")
+	}
+	if err := build("x", "y", "1.2", "", dir, ""); err == nil {
 		t.Fatal("accepted a bad version")
 	}
 	if _, err := universal([]byte("not a program")); err == nil {

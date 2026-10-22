@@ -6,7 +6,7 @@
 //	go run ./tools/macapp -version 0.3.0 -amd64 dist/circuitpath-amd64 -arm64 dist/circuitpath-arm64 -out dist
 //
 // The app holds one universal program (both builds, so it runs natively on
-// every Mac), Info.plist and the icon. Sign it afterwards (ad hoc at least:
+// every Mac), Info.plist, the icon and (with -boards) the board tools. Sign it afterwards (ad hoc at least:
 // Apple Silicon Macs only run signed code), e.g. codesign --force --deep -s - dist/CircuitPath.app
 package main
 
@@ -16,6 +16,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -29,14 +30,15 @@ func main() {
 	version := flag.String("version", "0.0.0", "the version (like 1.2.3)")
 	icon := flag.String("icon", "cmd/circuitpath/macos/CircuitPath.icns", "the app icon")
 	out := flag.String("out", "dist", "folder to put CircuitPath.app in")
+	boards := flag.String("boards", "", "the board tools (boards.zip from tools/packboards) to build in")
 	flag.Parse()
-	if err := build(*amd64, *arm64, *version, *icon, *out); err != nil {
+	if err := build(*amd64, *arm64, *version, *icon, *out, *boards); err != nil {
 		fmt.Fprintln(os.Stderr, "macapp:", err)
 		os.Exit(1)
 	}
 }
 
-func build(amd64, arm64, version, icon, out string) error {
+func build(amd64, arm64, version, icon, out, boards string) error {
 	if !regexp.MustCompile(`^\d+\.\d+\.\d+$`).MatchString(version) {
 		return fmt.Errorf("version %q isn't like 1.2.3", version)
 	}
@@ -70,6 +72,16 @@ func build(amd64, arm64, version, icon, out string) error {
 		{"Contents/MacOS/CircuitPath", fat, 0o755},
 		{"Contents/Resources/CircuitPath.icns", iconData, 0o644},
 	}
+	if boards != "" {
+		// Copied, not read into memory: it's big.
+		dest := filepath.Join(app, "Contents", "Resources", "boards.zip")
+		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+			return err
+		}
+		if err := copyFile(boards, dest); err != nil {
+			return err
+		}
+	}
 	for _, f := range files {
 		p := filepath.Join(app, filepath.FromSlash(f.path))
 		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
@@ -81,6 +93,23 @@ func build(amd64, arm64, version, icon, out string) error {
 	}
 	fmt.Println("made", app)
 	return nil
+}
+
+func copyFile(from, to string) error {
+	in, err := os.Open(from)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(to)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
 }
 
 // universal joins Mach-O programs for different CPUs into one fat

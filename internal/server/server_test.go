@@ -26,7 +26,7 @@ type env struct {
 	store *store.Store
 }
 
-func newEnv(t *testing.T) *env {
+func newEnv(t *testing.T, opts ...func(*Server)) *env {
 	t.Helper()
 	st, err := store.Open(filepath.Join(t.TempDir(), "cp.db"))
 	if err != nil {
@@ -43,6 +43,9 @@ func newEnv(t *testing.T) *env {
 		UI:        fstest.MapFS{"index.html": {Data: []byte("<!doctype html><title>CircuitPath</title>")}, "js/main.js": {Data: []byte("export {}")}},
 		Version:   "test",
 		Log:       slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	for _, o := range opts {
+		o(s)
 	}
 	ts := httptest.NewTLSServer(s.Handler())
 	t.Cleanup(ts.Close)

@@ -30,6 +30,22 @@ try {
   if ($sketch.code -ne "// Hello from Windows") { throw "autosave didn't come back" }
   Write-Host "Profile made, code saved and read back"
 
+  # The board tools: built in, and they compile for a real Uno.
+  if ($env:CIRCUITPATH_EXPECT_TOOLS -eq "1") {
+    $tools = Invoke-RestMethod "$base/api/tools"
+    if (-not $tools.built_in) { throw "the board tools aren't built in" }
+    $blink = '{"board":"uno","code":"void setup() {\n  pinMode(13, OUTPUT);\n}\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(500);\n  digitalWrite(13, LOW);\n  delay(500);\n}\n"}'
+    $started = Invoke-RestMethod -Method Post "$base/api/compile" -Headers $write -ContentType "application/json" -Body $blink -WebSession $session
+    $job = $null
+    for ($i = 0; $i -lt 300; $i++) {
+      $job = Invoke-RestMethod "$base/api/jobs/$($started.id)" -WebSession $session
+      if ($job.state -eq "done" -or $job.state -eq "failed") { break }
+      Start-Sleep -Seconds 2
+    }
+    if ($job.state -ne "done") { throw "compiling for the Uno failed: $($job | ConvertTo-Json -Depth 6)" }
+    Write-Host "Compiled for a real Uno with the built-in tools: $($job.result.size.flash) bytes"
+  }
+
   # Another website can't use it: writes without the header are refused.
   try {
     Invoke-RestMethod -Method Post "$base/api/wipe" -ContentType "application/json" -Body '{"confirm":"WIPE"}' | Out-Null

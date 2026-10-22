@@ -37,6 +37,20 @@ curl -sf -c "$jar" -b "$jar" -X PUT -H "X-CircuitPath: 1" -H "Content-Type: appl
 curl -sf -b "$jar" "$base/api/me/sketches/freeplay" | grep -q 'Hello from a Mac'
 echo "Profile made, code saved and read back"
 
+# The board tools: built in, and they compile for a real Uno.
+if [ "${CIRCUITPATH_EXPECT_TOOLS:-}" = 1 ]; then
+  curl -sf "$base/api/tools" | grep -q '"built_in":true' || { echo "the board tools aren't built in"; exit 1; }
+  id=$(curl -sf -b "$jar" -H "X-CircuitPath: 1" -H "Content-Type: application/json" \
+    -d '{"board":"uno","code":"void setup() {\n  pinMode(13, OUTPUT);\n}\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(500);\n  digitalWrite(13, LOW);\n  delay(500);\n}\n"}' \
+    "$base/api/compile" | sed 's/.*"id":"\([0-9a-f]*\)".*/\1/')
+  for i in $(seq 1 300); do
+    job=$(curl -sf -b "$jar" "$base/api/jobs/$id")
+    case "$job" in *'"state":"done"'*|*'"state":"failed"'*) break ;; esac
+    sleep 2
+  done
+  case "$job" in *'"state":"done"'*) echo "Compiled for a real Uno with the built-in tools" ;; *) echo "compiling for the Uno failed: $job"; exit 1 ;; esac
+fi
+
 code=$(curl -s -o /dev/null -w '%{http_code}' -H "Content-Type: application/json" -d '{"confirm":"WIPE"}' "$base/api/wipe")
 [ "$code" = 403 ] || { echo "a write without the X-CircuitPath header got $code"; exit 1; }
 code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: evil.example:47820" "$base/api/info")

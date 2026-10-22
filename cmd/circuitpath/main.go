@@ -37,6 +37,7 @@ import (
 	"circuitpath"
 	"circuitpath/internal/arduino"
 	"circuitpath/internal/content"
+	"circuitpath/internal/serialmon"
 	"circuitpath/internal/server"
 	"circuitpath/internal/store"
 )
@@ -58,6 +59,8 @@ type config struct {
 	school     string
 	noBrowser  bool
 	idleExit   time.Duration
+	boards     string // a boards.zip to use instead of the built-in one
+	arduinoDir string // board tools already installed here (development, CI)
 }
 
 func main() {
@@ -70,8 +73,11 @@ func main() {
 	flag.StringVar(&cfg.school, "school", "", "the school name shown on the welcome screen (saved; only needed once)")
 	flag.BoolVar(&cfg.noBrowser, "no-browser", false, "don't open a browser window")
 	flag.DurationVar(&cfg.idleExit, "idle-exit", 20*time.Minute, "close after this long with no CircuitPath window open (0: never)")
+	flag.StringVar(&cfg.boards, "boards", "", "use the board tools in this boards.zip instead of the built-in ones")
+	flag.StringVar(&cfg.arduinoDir, "arduino-dir", "", "use board tools already installed in this folder (by -setup-arduino)")
 	setupArduino := flag.Bool("setup-arduino", false, "install arduino-cli, the board cores and libraries, check every board compiles, and stop (for CI)")
 	checkArduino := flag.Bool("check-arduino", false, "check every board compiles the kit-check sketch, and stop")
+	installArduino := flag.Bool("install-arduino", false, "install arduino-cli, the board cores and libraries (no kit check), and stop (for CI)")
 	showVersion := flag.Bool("version", false, "print the version and stop")
 	flag.Parse()
 	cfg.applyDefaults()
@@ -80,9 +86,9 @@ func main() {
 		fmt.Println("CircuitPath", circuitpath.Version)
 		return
 	}
-	if *setupArduino || *checkArduino {
+	if *setupArduino || *checkArduino || *installArduino {
 		log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-		if err := runArduino(cfg, log, *setupArduino); err != nil {
+		if err := runArduino(cfg, log, *setupArduino || *installArduino, !*installArduino); err != nil {
 			log.Error("stopped", "err", err)
 			os.Exit(1)
 		}
@@ -230,6 +236,9 @@ func run(cfg config, log *slog.Logger) error {
 		log.Warn("content problem (skipped)", "file", p.File, "problem", p.Message)
 	}
 
+	tools, closeTools := boardTools(cfg, log)
+	defer closeTools()
+
 	srv := &server.Server{
 		Store:       db,
 		Catalogue:   cat,
@@ -239,6 +248,11 @@ func run(cfg config, log *slog.Logger) error {
 		Log:         log,
 		CacheStatic: cfg.uiDir == "",
 		Hosts:       []string{"localhost", "127.0.0.1", "::1"},
+		Serial:      serialmon.NewManager(),
+	}
+	if tools != nil {
+		srv.Tools = tools
+		tools.Prepare("avr") // the default boards: ready before the first Upload
 	}
 	idle := &idleTracker{}
 	idle.touch()
@@ -282,6 +296,33 @@ func run(cfg config, log *slog.Logger) error {
 			}
 		}
 	}
+}
+
+// boardTools finds the board tools: installed in -arduino-dir, a -boards
+// zip, or built into CircuitPath itself. None is fine: the simulator works
+// without them.
+func boardTools(cfg config, log *slog.Logger) (*arduino.Tools, func()) {
+	if cfg.arduinoDir != "" {
+		t, err := arduino.InstalledTools(cfg.arduinoDir, log)
+		if err != nil {
+			log.Warn("no board tools", "err", err)
+			return nil, func() {}
+		}
+		return t, func() {}
+	}
+	var b *arduino.Bundle
+	var err error
+	if cfg.boards != "" {
+		b, err = arduino.OpenBundle(cfg.boards)
+	} else {
+		b, err = arduino.FindBundle()
+	}
+	if err != nil {
+		log.Info("no board tools: compiling for real boards is off", "err", err)
+		return nil, func() {}
+	}
+	log.Info("board tools found", "in", b.Path, "families", len(b.Manifest.Families))
+	return arduino.NewTools(b, cfg.dataDir, log), func() { b.Close() }
 }
 
 func shutdown(hs *http.Server) error {
@@ -330,9 +371,10 @@ func boardsToCheck(cat *content.Catalogue) []arduino.Board {
 	return boards
 }
 
-// runArduino is -setup-arduino / -check-arduino: install the pinned tools
-// (if setup) and compile the kit check for every board, printing a table.
-func runArduino(cfg config, log *slog.Logger, setup bool) error {
+// runArduino is -setup-arduino / -check-arduino / -install-arduino: install
+// the pinned tools (if setup) and compile the kit check for every board (if
+// check), printing a table.
+func runArduino(cfg config, log *slog.Logger, setup, check bool) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	contentFS := circuitpath.Content()
@@ -350,6 +392,9 @@ func runArduino(cfg config, log *slog.Logger, setup bool) error {
 			return err
 		}
 		log.Info("board cores and libraries installed", "took", time.Since(start).Round(time.Second))
+	}
+	if !check {
+		return nil
 	}
 	results, err := env.Check(ctx, boardsToCheck(cat))
 	if err != nil {

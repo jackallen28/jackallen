@@ -10,6 +10,7 @@ package arduino
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bufio"
 	"bytes"
 	"compress/gzip"
@@ -26,6 +27,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -106,7 +108,15 @@ func (e *Env) log() *slog.Logger {
 }
 
 // CLI is the path of arduino-cli.
-func (e *Env) CLI() string { return filepath.Join(e.Dir, "bin", "arduino-cli") }
+func (e *Env) CLI() string { return filepath.Join(e.Dir, "bin", cliName()) }
+
+// cliName is arduino-cli's file name on this computer.
+func cliName() string {
+	if runtime.GOOS == "windows" {
+		return "arduino-cli.exe"
+	}
+	return "arduino-cli"
+}
 
 // ConfigFile is the path of arduino-cli.yaml.
 func (e *Env) ConfigFile() string { return filepath.Join(e.Dir, "arduino-cli.yaml") }
@@ -212,7 +222,8 @@ func (e *Env) Check(ctx context.Context, boards []Board) ([]Result, error) {
 func (e *Env) run(ctx context.Context, args ...string) (string, error) {
 	args = append([]string{"--config-file", e.ConfigFile(), "--no-color"}, args...)
 	cmd := exec.CommandContext(ctx, e.CLI(), args...)
-	cmd.Env = append(os.Environ(), "HOME="+e.Dir) // the circuitpath user has no home folder
+	cmd.Env = append(os.Environ(), "HOME="+e.Dir)
+	hideConsole(cmd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(out), fmt.Errorf("arduino-cli %s: %w\n%s", strings.Join(args[3:], " "), err, tail(string(out), 40))
@@ -265,6 +276,10 @@ func cliPlatform() (string, error) {
 		return "macOS_ARM64", nil
 	case "darwin/amd64":
 		return "macOS_64bit", nil
+	case "windows/amd64":
+		return "Windows_64bit", nil
+	case "windows/arm64":
+		return "Windows_ARM64", nil
 	}
 	return "", fmt.Errorf("no arduino-cli download for %s/%s: install arduino-cli %s at %s yourself", runtime.GOOS, runtime.GOARCH, Pinned().CLI, "bin/arduino-cli")
 }
@@ -296,7 +311,11 @@ func (e *Env) ensureCLI(ctx context.Context, version string) error {
 	if base == "" {
 		base = "https://downloads.arduino.cc/arduino-cli"
 	}
-	name := fmt.Sprintf("arduino-cli_%s_%s.tar.gz", version, plat)
+	ext := ".tar.gz"
+	if runtime.GOOS == "windows" {
+		ext = ".zip"
+	}
+	name := fmt.Sprintf("arduino-cli_%s_%s%s", version, plat, ext)
 	sums, err := e.get(ctx, fmt.Sprintf("%s/%s-checksums.txt", base, version), 64<<10)
 	if err != nil {
 		return err
@@ -318,7 +337,7 @@ func (e *Env) ensureCLI(ctx context.Context, version string) error {
 	if sum := sha256.Sum256(archive); hex.EncodeToString(sum[:]) != want {
 		return fmt.Errorf("%s doesn't match its checksum", name)
 	}
-	bin, err := extractFile(archive, "arduino-cli")
+	bin, err := extractFile(archive, cliName())
 	if err != nil {
 		return err
 	}
@@ -359,8 +378,25 @@ func (e *Env) get(ctx context.Context, rawURL string, limit int64) ([]byte, erro
 	return b, nil
 }
 
-// extractFile pulls one file out of a .tar.gz.
+// extractFile pulls one file out of a .tar.gz or .zip.
 func extractFile(archive []byte, name string) ([]byte, error) {
+	if bytes.HasPrefix(archive, []byte("PK\x03\x04")) {
+		zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range zr.File {
+			if path.Base(f.Name) == name && !f.FileInfo().IsDir() {
+				rc, err := f.Open()
+				if err != nil {
+					return nil, err
+				}
+				defer rc.Close()
+				return io.ReadAll(io.LimitReader(rc, 200<<20))
+			}
+		}
+		return nil, fmt.Errorf("%s isn't in the archive", name)
+	}
 	gz, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {
 		return nil, err
