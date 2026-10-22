@@ -12,9 +12,9 @@
 ## 1. What CircuitPath is
 
 CircuitPath teaches Arduino C++ on real boards (Arduino Uno, Arduino Nano, NodeMCU, other ESP8266 /
-ESP32 boards) like a tutor sitting beside the student. It is **one file on each student's Windows
-laptop, `CircuitPath.exe`**, like PiPath: double-click it and the web app opens in **Edge or
-Chrome** as an app window. Nothing to install, no admin rights, **no server and no teacher
+ESP32 boards) like a tutor sitting beside the student. It is **one app on each student's laptop:
+`CircuitPath.exe` on Windows, `CircuitPath.app` on a Mac**, like PiPath: double-click it and the
+web app opens in **Edge or Chrome** as an app window. Nothing to install, no admin rights, **no server and no teacher
 controls**. Work is saved on the laptop. Everything works without the internet.
 
 > **History:** CircuitPath was first planned as a web app served by a Raspberry Pi 5 on the school
@@ -112,7 +112,7 @@ variables (`ui/theme.css`).
 
 ---
 
-## 3. Architecture (decided): a Windows app on each student laptop
+## 3. Architecture (decided): an app on each student laptop (Windows and macOS)
 
 ```
 student laptop (Windows 10/11, no admin rights)
@@ -148,8 +148,13 @@ student laptop (Windows 10/11, no admin rights)
   `%LOCALAPPDATA%` on first use (no admin needed). `internal/arduino` already pins and checks them.
 - **The web app** is plain HTML / CSS / ES modules, no build step; third-party code is vendored
   with its licence (CodeMirror, esptool-js), never loaded from a CDN.
-- **Releases:** changing `VERSION` publishes `CircuitPath.exe` (+ ARM64) as a GitHub release, after
-  testing on Windows. No automatic updates yet (students download the new file).
+- **macOS: `CircuitPath.app`**, the same program as one universal binary (Intel + Apple Silicon,
+  built by `tools/macapp`, signed ad hoc, not notarised yet). Work in
+  `~/Library/Application Support/CircuitPath`. The app starts the server as a background process
+  and quits (macOS won't relaunch a running app), and has no Dock icon (`LSUIElement`).
+- **Releases:** changing `VERSION` publishes `CircuitPath.exe` (+ ARM64) and `CircuitPath-macOS.zip`
+  as a GitHub release, after testing each on real Windows and macOS. No automatic updates yet
+  (students download the new file).
 - **Performance target:** the app window opens in under 2 s, a project in under 0.5 s.
 
 ### What IT may need to do
@@ -367,7 +372,7 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
    about students is ever sent. No telemetry, no cloud accounts, no CDN fonts or scripts. Student
    data stays on the laptop (and in save files students download).
 2. **No AI**, anywhere.
-3. **Nothing to install and no admin rights**: just `CircuitPath.exe` and Edge / Chrome. Never
+3. **Nothing to install and no admin rights**: just `CircuitPath.exe` / `CircuitPath.app` and Edge / Chrome. Never
    require a console, an installer or settings changes on the laptop.
 4. **Content is data** (§8). A teacher can add a project without touching code.
 5. **Every project step has a `demo`** that passes its own checks in the simulator, and compiles
@@ -392,9 +397,10 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 
 - **Go:** unit tests for the API, profiles, saves (migrations), save files, WIPE, the localhost /
   Host / cross-site guards, and the launcher (single instance, closing when idle).
-- **Windows (CI):** the Go tests on `windows-latest`, then `tests/windows/smoke.ps1` starts the real
-  `CircuitPath.exe` and uses it (profile, autosave, cross-site refusal, second launch). The exe is
-  kept as a CI download, and the Release workflow runs the same test before publishing.
+- **Windows and macOS (CI):** the Go tests on `windows-latest` and `macos-latest`, then
+  `tests/windows/smoke.ps1` / `tests/macos/smoke.sh` start the real `CircuitPath.exe` /
+  `CircuitPath.app` and use them (profile, autosave, cross-site refusal, second launch). Both are
+  kept as CI downloads, and the Release workflow runs the same tests before publishing.
 - **Interpreter + simulated API (JS):** unit tests run in headless Chromium (Playwright) or Node
   (dev-only tooling is fine; nothing runtime). Every project's every `demo` runs in the simulator
   with its `sim_events` and must pass the step's checks.
@@ -428,14 +434,15 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 
 ## 14. Decisions already made (don't relitigate without reason)
 
-- **A Windows app on each student laptop** (`CircuitPath.exe`), like PiPath: no server, no teacher
+- **An app on each student laptop** (`CircuitPath.exe` on Windows, `CircuitPath.app` on macOS), like PiPath: no server, no teacher
   controls, works offline. (The Raspberry Pi server couldn't be reached on the school network; a
   cloud server was started and parked.)
 - **The web app in Edge / Chrome**, served by the exe on localhost: the same UI, and Web Serial for
   Upload (localhost is a secure site).
 - **Welcome screen with names** (first name(s) + school, no password); a **WIPE page** on the
   laptop, with Save everyone's work first.
-- **Work saved on the laptop** (`%LOCALAPPDATA%\CircuitPath`) plus `.circuit` save files to move it.
+- **Work saved on the laptop** (`%LOCALAPPDATA%\CircuitPath`, or `~/Library/Application Support/CircuitPath`
+  on a Mac) plus `.circuit` save files to move it.
 - **USB drivers** for clone boards are IT's job (or buy driver-free boards).
 - **Standard Fritzing parts library** for all part art (pulled from the public repository).
 - **Windows Vista skeuomorphic look** in the BNTS colours.

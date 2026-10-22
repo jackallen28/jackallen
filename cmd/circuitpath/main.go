@@ -1,8 +1,10 @@
 // Command circuitpath is CircuitPath for one laptop: double-click
-// CircuitPath.exe and it opens in Edge (or Chrome) as an app window. Nothing
-// to install and no admin rights needed. It serves the web app to this
-// computer only (http://localhost:47820) and keeps everyone's work in
-// %LOCALAPPDATA%\CircuitPath. It closes itself a while after the window closes.
+// CircuitPath.exe (Windows) or CircuitPath.app (macOS) and it opens in Edge
+// or Chrome as an app window. Nothing to install and no admin rights needed.
+// It serves the web app to this computer only (http://localhost:47820) and
+// keeps everyone's work in %LOCALAPPDATA%\CircuitPath (Windows) or
+// ~/Library/Application Support/CircuitPath (macOS). It closes itself a while
+// after the window closes.
 //
 // For development:
 //
@@ -42,6 +44,10 @@ import (
 // defaultPort stays the same every time, so the browser keeps the same site
 // (and anything it stored for it, like unsaved code waiting to save).
 const defaultPort = 47820
+
+// errStartFailed means the background server (macOS) stopped while starting;
+// it has already shown its own message.
+var errStartFailed = errors.New("the CircuitPath server stopped while starting (see circuitpath.log)")
 
 type config struct {
 	dev        bool
@@ -84,6 +90,17 @@ func main() {
 	}
 	log, closeLog := openLog(cfg)
 	defer closeLog()
+	if startsInBackground(cfg) {
+		if err := launchInBackground(cfg, log); err != nil {
+			log.Error("couldn't start", "err", err)
+			if err != errStartFailed {
+				showError("CircuitPath can't start", err.Error()+"\n\nTry again, or ask your teacher for help.")
+			}
+			closeLog()
+			os.Exit(1)
+		}
+		return
+	}
 	if err := run(cfg, log); err != nil {
 		log.Error("stopped", "err", err)
 		showError("CircuitPath can't start", err.Error()+"\n\nTry again, or ask your teacher for help.")
@@ -118,9 +135,10 @@ func (cfg *config) applyDefaults() {
 	}
 }
 
-// defaultDataDir is %LOCALAPPDATA%\CircuitPath on Windows: inside the
-// student's own Windows profile, which needs no admin rights and isn't
-// shared with other people who log in to the laptop.
+// defaultDataDir is %LOCALAPPDATA%\CircuitPath on Windows and
+// ~/Library/Application Support/CircuitPath on macOS: inside the student's
+// own account, which needs no admin rights and isn't shared with other
+// people who log in to the laptop.
 func defaultDataDir() string {
 	if runtime.GOOS == "windows" {
 		if d := os.Getenv("LOCALAPPDATA"); d != "" {

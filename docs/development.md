@@ -6,7 +6,7 @@ The brief is [CLAUDE.md](../CLAUDE.md). This page says what is built so far and 
 
 | Step (CLAUDE.md §13) | State |
 |---|---|
-| 1. Skeleton: the Windows app (`CircuitPath.exe`), SQLite, profiles, autosave, save files, the WIPE page, Vista theme, welcome → picker | **Done**; CI tests it on real Windows |
+| 1. Skeleton: the Windows app (`CircuitPath.exe`) and Mac app (`CircuitPath.app`), SQLite, profiles, autosave, save files, the WIPE page, Vista theme, welcome → picker | **Done**; CI tests both on real Windows and macOS |
 | Arduino tools pinned and checked (arduino-cli, AVR / ESP8266 / ESP32 cores, every project library, a kit-check compile for every board) | **Done**: `internal/arduino` and the CI **boards** job (not yet used by the app) |
 | 2. Fritzing import + renderer | Not started |
 | 3. Interpreter + simulated API, Serial Monitor | Not started |
@@ -27,9 +27,14 @@ Then open http://localhost:8080. `-dev` means:
 - data in `./dev-data` (delete it to start again)
 - `ui/` and `content/` are read from disk, so edits show on reload
 
-Without `-dev` (as `CircuitPath.exe`): port 47820, data in `%LOCALAPPDATA%\CircuitPath`, `ui/`
-and `content/` built into the program, an Edge / Chrome app window opens, and it closes itself
-20 minutes after the last window closes. Other flags: `go run ./cmd/circuitpath -h`.
+Without `-dev` (as `CircuitPath.exe` or `CircuitPath.app`): port 47820, data in
+`%LOCALAPPDATA%\CircuitPath` (Windows) or `~/Library/Application Support/CircuitPath` (macOS),
+`ui/` and `content/` built into the program, an Edge / Chrome app window opens, and it closes
+itself 20 minutes after the last window closes. Other flags: `go run ./cmd/circuitpath -h`.
+
+On macOS the app starts the server as a separate background process and quits once it answers
+(`background_darwin.go`): macOS only brings a running app to the front when it's opened again,
+so this way a second double-click starts the app afresh, finds the server, and opens a window.
 
 Build the Windows app (one file, no cgo, no console window):
 
@@ -45,13 +50,28 @@ go install github.com/tc-hib/go-winres@v0.3.3
 cd cmd/circuitpath && go-winres make --in winres/winres.json --arch amd64,arm64
 ```
 
+Build the Mac app (`CircuitPath.app`, one universal program for Intel and Apple Silicon):
+
+```
+for a in amd64 arm64; do CGO_ENABLED=0 GOOS=darwin GOARCH=$a go build -trimpath -ldflags "-s -w -X circuitpath.Version=0.3.0" -o dist/circuitpath-$a ./cmd/circuitpath; done
+go run ./tools/macapp -version 0.3.0 -amd64 dist/circuitpath-amd64 -arm64 dist/circuitpath-arm64 -out dist
+codesign --force --deep -s - dist/CircuitPath.app     # on a Mac (or rcodesign sign on Linux)
+```
+
+Apple Silicon Macs only run signed code, so the app must be signed, ad hoc at least. It isn't
+notarised (that needs an Apple Developer account), so macOS asks once before the first open
+([mac-app.md](mac-app.md)).
+
 ## Layout
 
 ```
 circuitpath.go            embeds ui/ and content/ into the program
 cmd/circuitpath/          main: flags, the local web server, opening the app window, closing when idle
-  desktop_windows.go      finds Edge / Chrome, message boxes
+  desktop_*.go            finds Edge / Chrome, message boxes (Windows, macOS, Linux)
+  background_darwin.go    macOS: starts the server in the background, then the app quits
   winres/                 the icon and version details for CircuitPath.exe
+  macos/                  the icon for CircuitPath.app
+tools/macapp/             builds CircuitPath.app: a universal program, Info.plist, icon
 internal/store/           SQLite: schema migrations, profiles, sessions, sketches, progress, wipe
 internal/auth/            login tokens
 internal/content/         loads content/ and checks it against content/schema
@@ -71,6 +91,7 @@ content/                  data a teacher can edit: tiers, parts, kit, boards, pr
 tests/js/                 Node tests for the web app's logic
 tests/e2e/                Playwright GUI smoke test (saves screenshots to test-results/screenshots)
 tests/windows/smoke.ps1   starts the real CircuitPath.exe on Windows and uses it (CI and releases)
+tests/macos/smoke.sh      starts the real CircuitPath.app on macOS and uses it (CI and releases)
 ```
 
 ## Decisions

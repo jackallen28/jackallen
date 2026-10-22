@@ -1,9 +1,11 @@
-# Publishes CircuitPath.exe as a GitHub release. Any of these starts it:
+# Publishes CircuitPath for Windows and macOS as a GitHub release. Any of
+# these starts it:
 #   - changing the VERSION file (on github.com: open VERSION, edit, commit)
 #   - pushing a version tag:  git tag v1.2.3 && git push origin v1.2.3
 #   - making a release with a new v1.2.3 tag on github.com
-# It tests on Windows, starts the exe and uses it, then publishes
-# CircuitPath.exe (64-bit Intel/AMD), CircuitPath-arm64.exe and SHA256SUMS.
+# Each app is tested on its own system (started and used) before anything
+# is published: CircuitPath.exe (64-bit Intel/AMD), CircuitPath-arm64.exe,
+# CircuitPath-macOS.zip (one app for Intel and Apple Silicon Macs) and SHA256SUMS.
 name: Release
 
 on:
@@ -22,11 +24,12 @@ concurrency:
   group: release
 
 jobs:
-  release:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: bash
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      skip: ${{ steps.version.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,25 +47,34 @@ jobs:
             echo "::error::'$TAG' isn't a version like v1.2.3 (VERSION should hold just 1.2.3)."
             exit 1
           fi
-          echo "TAG=$TAG" >> "$GITHUB_ENV"
-          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           # A VERSION change for a version that's already out does nothing.
-          if [[ "$GITHUB_REF" == refs/heads/* ]] && gh release view "$TAG" >/dev/null 2>&1; then
+          if [[ "$GITHUB_REF" == refs/heads/* ]] && gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "$TAG is already published."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
+  windows:
+    needs: version
+    if: needs.version.outputs.skip != 'true'
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
-        if: steps.version.outputs.skip != 'true'
         with:
           go-version-file: go.mod
 
       - name: Test
-        if: steps.version.outputs.skip != 'true'
         run: go test ./...
 
       - name: Build
-        if: steps.version.outputs.skip != 'true'
         run: |
           mkdir -p dist
           for arch in amd64 arm64; do
@@ -71,22 +83,74 @@ jobs:
             CGO_ENABLED=0 GOOS=windows GOARCH=$arch go build -trimpath \
               -ldflags "-H windowsgui -s -w -X circuitpath.Version=$VERSION" -o "$out" ./cmd/circuitpath
           done
-          (cd dist && sha256sum *.exe > SHA256SUMS)
 
       - name: Start CircuitPath.exe and use it
-        if: steps.version.outputs.skip != 'true'
         shell: pwsh
         run: ./tests/windows/smoke.ps1 -Exe dist/CircuitPath.exe
 
-      - name: Publish
-        if: steps.version.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*.exe
+
+  macos:
+    needs: version
+    if: needs.version.outputs.skip != 'true'
+    runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
         run: |
-          notes="Download **CircuitPath.exe** and double-click it: CircuitPath opens in Edge or Chrome. Nothing to install, no admin rights needed. (CircuitPath-arm64.exe is for Windows laptops with ARM chips, such as Snapdragon.) See docs/windows-app.md."
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/* --clobber
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=darwin GOARCH=$arch go build -trimpath \
+              -ldflags "-s -w -X circuitpath.Version=$VERSION" -o dist/circuitpath-$arch ./cmd/circuitpath
+          done
+          go run ./tools/macapp -version "$VERSION" -amd64 dist/circuitpath-amd64 -arm64 dist/circuitpath-arm64 -out dist
+          codesign --force --deep -s - dist/CircuitPath.app
+
+      - name: Start CircuitPath.app and use it
+        run: tests/macos/smoke.sh dist/CircuitPath.app
+
+      - name: Zip
+        run: ditto -c -k --keepParent dist/CircuitPath.app dist/CircuitPath-macOS.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/CircuitPath-macOS.zip
+
+  publish:
+    needs: [version, windows, macos]
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish
+        run: |
+          (cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS)
+          notes="**Windows:** download **CircuitPath.exe** and double-click it (CircuitPath-arm64.exe is for Windows laptops with ARM chips, such as Snapdragon).
+          **Mac:** download **CircuitPath-macOS.zip**, open it, and drag CircuitPath into Applications (one app for Intel and Apple Silicon Macs).
+          CircuitPath opens in Chrome or Edge. Nothing to install, no admin rights needed. If Windows or macOS blocks it the first time, see docs/windows-app.md or docs/mac-app.md."
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
-              --title "CircuitPath $VERSION (Windows app)" --notes "$notes" --latest
+            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "CircuitPath $VERSION (Windows and Mac)" --notes "$notes" --latest
           fi

@@ -1,0 +1,57 @@
+#!/bin/bash
+# Starts the real CircuitPath.app on macOS and uses it like the web app does:
+# the app starts its background server and quits, then we make a profile,
+# autosave some code, read it back, check a cross-site write is refused,
+# and check that opening the app again just hands over. Used by CI and releases.
+#   tests/macos/smoke.sh dist/CircuitPath.app
+set -euo pipefail
+app="$1"
+exe="$app/Contents/MacOS/CircuitPath"
+data="$(mktemp -d)/circuitpath-smoke"
+base="http://localhost:47820"
+jar="$(mktemp)"
+
+cleanup() {
+  pids=$(lsof -ti tcp:47820 -sTCP:LISTEN || true)
+  [ -n "$pids" ] && kill $pids || true
+  echo "--- circuitpath.log ---"
+  tail -20 "$data/circuitpath.log" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+echo "Architectures: $(lipo -archs "$exe")"
+codesign --verify --deep --strict "$app"
+echo "Signature OK"
+
+# The app starts the server in the background and quits once it's ready.
+"$exe" -no-browser -data "$data"
+info=$(curl -sf "$base/api/info")
+echo "Started: $info"
+grep -q '"app":"CircuitPath"' <<<"$info"
+pgrep -f "$exe" >/dev/null || { echo "the background server isn't running"; exit 1; }
+
+curl -sf -c "$jar" -b "$jar" -H "X-CircuitPath: 1" -H "Content-Type: application/json" \
+  -d '{"names":["ava"],"school":"Test School"}' "$base/api/students" | grep -q '"names":\["Ava"\]'
+curl -sf -c "$jar" -b "$jar" -X PUT -H "X-CircuitPath: 1" -H "Content-Type: application/json" \
+  -d '{"code":"// Hello from a Mac"}' "$base/api/me/sketches/freeplay" >/dev/null
+curl -sf -b "$jar" "$base/api/me/sketches/freeplay" | grep -q 'Hello from a Mac'
+echo "Profile made, code saved and read back"
+
+code=$(curl -s -o /dev/null -w '%{http_code}' -H "Content-Type: application/json" -d '{"confirm":"WIPE"}' "$base/api/wipe")
+[ "$code" = 403 ] || { echo "a write without the X-CircuitPath header got $code"; exit 1; }
+code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: evil.example:47820" "$base/api/info")
+[ "$code" = 421 ] || { echo "another Host name got $code"; exit 1; }
+
+# Opening it again while it's running just hands over and quits.
+"$exe" -no-browser -data "$data-2"
+[ "$(pgrep -f "$exe" | wc -l | tr -d ' ')" = 1 ] || { echo "a second server started"; exit 1; }
+echo "Second launch handed over to the running copy"
+
+# Opening it the Finder way (LaunchServices) works too.
+pids=$(lsof -ti tcp:47820 -sTCP:LISTEN); kill $pids; sleep 1
+open -W "$app" --args -no-browser -data "$data"
+curl -sf "$base/api/info" >/dev/null
+echo "Opened with 'open' (as from the Finder)"
+
+[ -f "$data/circuitpath.db" ] || { echo "no database in $data"; exit 1; }
+echo "macOS smoke test passed"

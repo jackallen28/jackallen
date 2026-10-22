@@ -78,6 +78,39 @@ jobs:
           name: CircuitPath-exe
           path: dist/CircuitPath.exe
 
+  macos:
+    # The real CircuitPath.app on a real Mac: the Go tests, then build the
+    # universal app, sign it (ad hoc), start it and use it. The app is kept
+    # as a download on the run's page.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Go tests on macOS
+        run: go test ./...
+
+      - name: Build CircuitPath.app
+        run: |
+          VERSION="0.0.0"
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=darwin GOARCH=$arch go build -trimpath -ldflags "-s -w -X circuitpath.Version=${GITHUB_SHA::7}" -o dist/circuitpath-$arch ./cmd/circuitpath
+          done
+          go run ./tools/macapp -version "$VERSION" -amd64 dist/circuitpath-amd64 -arm64 dist/circuitpath-arm64 -out dist
+          codesign --force --deep -s - dist/CircuitPath.app
+          ditto -c -k --keepParent dist/CircuitPath.app dist/CircuitPath-macOS.zip
+
+      - name: Start CircuitPath.app and use it
+        run: tests/macos/smoke.sh dist/CircuitPath.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CircuitPath-macOS
+          path: dist/CircuitPath-macOS.zip
+
   boards:
     # Every board compiles the kit check with the pinned cores and libraries
     # (internal/arduino/requirements.json).
