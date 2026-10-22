@@ -44,6 +44,23 @@ The Pi installs CircuitPath from the repository's GitHub Releases.
    certificate (IT trusts it later, see [the brief](../CLAUDE.md) §3): choose **Advanced** >
    **Continue**. Make a profile and try the picker and Free Play.
 
+## If `circuitpath.local` isn't found
+
+`ssh: Could not resolve hostname circuitpath.local` (or the browser can't find it) means your
+laptop can't find the Pi by name. Try these in order:
+
+1. **Wait.** The first start takes up to 5 minutes (the Pi restarts once to apply Imager's
+   settings). The green light settles down when it's ready.
+2. **Check the name:** `ping circuitpath.local`, then `ping raspberrypi.local`. If only the second
+   answers, Imager's hostname didn't apply: use `raspberrypi.local` instead.
+3. **Use the IP address instead.** Find it on your router's connected-devices page (at home),
+   ask IT to look up the device called `circuitpath` (at school), or plug a screen and keyboard
+   into the Pi once and type `hostname -I`. Then `ssh yourusername@192.168.x.x`, and open
+   `https://192.168.x.x` in the browser. Everything else is the same.
+4. **Same network?** At school, laptops on Wi-Fi and a Pi on a cable are often on separate networks
+   that can't see each other, and `.local` names are often blocked. Try at home on one router
+   first, or ask IT for a fixed address and a DNS name for the Pi (the brief, §3).
+
 ## Check that updates work
 
 1. Publish a newer version: change `VERSION` to `0.1.1` (on github.com: open the file > edit >
