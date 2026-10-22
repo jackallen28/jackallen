@@ -57,6 +57,23 @@ laptop can't find the Pi by name. Try these in order:
    ask IT to look up the device called `circuitpath` (at school), or plug a screen and keyboard
    into the Pi once and type `hostname -I`. Then `ssh yourusername@192.168.x.x`, and open
    `https://192.168.x.x` in the browser. Everything else is the same.
+
+   Or let Windows find it: with the laptop on the same network as the Pi, paste this into
+   PowerShell. It pings every address on your network, then lists any device whose network card
+   is a Raspberry Pi's:
+   ```powershell
+   $ip = (Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway } | Select-Object -First 1).IPv4Address.IPAddress
+   $net = $ip -replace '\.\d+$',''
+   "Your laptop is $ip. Looking for a Raspberry Pi on $net.1 to $net.254..."
+   $pings = 1..254 | ForEach-Object { try { (New-Object System.Net.NetworkInformation.Ping).SendPingAsync("$net.$_", 500) } catch {} }
+   try { [void][System.Threading.Tasks.Task]::WaitAll(@($pings | Where-Object { $_ })) } catch {}
+   arp -a | Select-String '2c-cf-67|d8-3a-dd|dc-a6-32|e4-5f-01|b8-27-eb|28-cd-c1|88-a2-9e'
+   ```
+   If `ping 192.168.x.x` works but `ping circuitpath.local` doesn't, `.local` names are blocked on
+   that network: use the address. If the script finds nothing, the Pi isn't on your laptop's
+   network (see 4), or it isn't starting (a solid red light: re-flash the card, use the official
+   27 W power supply). School Wi-Fi that needs a username and password can't be set in Imager:
+   use a network cable.
 4. **Same network?** At school, laptops on Wi-Fi and a Pi on a cable are often on separate networks
    that can't see each other, and `.local` names are often blocked. Try at home on one router
    first, or ask IT for a fixed address and a DNS name for the Pi (the brief, §3).
