@@ -38,8 +38,8 @@ const int           DETECT_DISTANCE_CM = 50;    // trigger if object is closer t
 const unsigned long HOLD_TIME_MS       = 5000;  // stay open this long after trigger ends
 
 const int           SERVO_STOP   = 90;   // "stop" value for the continuous servo
-const int           SERVO_OPEN   = 120;  // speed/direction used to open
-const int           SERVO_CLOSE  = 60;   // speed/direction used to close (opposite way)
+const int           SERVO_OPEN   = 60;   // speed/direction used to open
+const int           SERVO_CLOSE  = 120;  // speed/direction used to close (opposite way)
 const unsigned long TURN_TIME_MS = 350;  // how long to spin for ~90 degrees (tune this!)
 
 Servo servo;
