@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -132,9 +133,56 @@ func TestRealBundle(t *testing.T) {
 		}
 	}
 
+	compileDemos(ctx, t, tools, cat)
 	for fam, st := range tools.Status() {
 		t.Logf("%s: %s", fam, st.State)
 	}
+}
+
+// demoBoards are the boards every model answer is compiled for: one per
+// chip (the other boards of a family share its core and libraries).
+var demoBoards = []string{"uno", "nodemcu", "esp32", "esp32-c3"}
+
+// compileDemos compiles every step's model answer for every board its
+// project lists, with the pin header for that board. Boards compile side
+// by side; each board's sketches go one at a time (they share a build folder).
+func compileDemos(ctx context.Context, t *testing.T, tools *Tools, cat *content.Catalogue) {
+	var wg sync.WaitGroup
+	for _, id := range demoBoards {
+		b, ok := cat.Board(id)
+		if !ok {
+			t.Errorf("no board %s", id)
+			continue
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			n, start := 0, time.Now()
+			for _, p := range cat.Projects {
+				if !p.Supports(b) {
+					continue
+				}
+				var full struct {
+					Steps []struct {
+						Title string `json:"title"`
+						Demo  string `json:"demo"`
+					} `json:"steps"`
+				}
+				json.Unmarshal(p.Raw, &full)
+				for i, s := range full.Steps {
+					code := content.ExpandPins(p, b, s.Demo)
+					res, err := tools.Compile(ctx, code, b.FQBN, b.BuildProperties, nil)
+					if err != nil || !res.OK {
+						t.Errorf("%s step %d (%s) on %s: %v\n%s", p.ID, i+1, s.Title, b.ID, err, CoachText(res.Diagnostics)+tail(res.Output, 15))
+						continue
+					}
+					n++
+				}
+			}
+			t.Logf("%s: %d model answers compiled in %s", b.ID, n, time.Since(start).Round(time.Second))
+		}()
+	}
+	wg.Wait()
 }
 
 func firstChars(s string, n int) string {
