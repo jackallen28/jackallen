@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -40,7 +41,8 @@ func TestBuildsAUniversalApp(t *testing.T) {
 	if len(fat.Arches) != 2 || !cpus[macho.CpuAmd64] || !cpus[macho.CpuArm64] {
 		t.Fatalf("arches = %v", cpus)
 	}
-	if fi, _ := os.Stat(filepath.Join(app, "MacOS", "CircuitPath")); fi.Mode()&0o111 == 0 {
+	// Windows has no "executable" mark on files; on a Mac or Linux it must be set.
+	if fi, _ := os.Stat(filepath.Join(app, "MacOS", "CircuitPath")); runtime.GOOS != "windows" && fi.Mode()&0o111 == 0 {
 		t.Fatal("not executable")
 	}
 	plist, _ := os.ReadFile(filepath.Join(app, "Info.plist"))
