@@ -7,6 +7,11 @@ on:
 permissions:
   contents: read
 
+# A newer push replaces a run that's still going (the board jobs are heavy).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -69,8 +74,9 @@ jobs:
       - name: Go tests on Windows
         run: go test ./...
 
-      - name: Cache the board tools
-        uses: actions/cache@v4
+      - name: Restore the board tools
+        id: tools-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/cp/arduino
           key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
@@ -79,6 +85,13 @@ jobs:
         run: |
           go run ./cmd/circuitpath -data "$RUNNER_TEMP/cp" -install-arduino
           rm -rf "$RUNNER_TEMP/cp/arduino/downloads"
+
+      - name: Save the board tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
 
       - name: Build CircuitPath.exe with the board tools built in
         run: |
@@ -121,8 +134,9 @@ jobs:
       - name: Go tests on macOS
         run: go test ./...
 
-      - name: Cache the board tools
-        uses: actions/cache@v4
+      - name: Restore the board tools
+        id: tools-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/cp/arduino
           key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
@@ -131,6 +145,13 @@ jobs:
         run: |
           go run ./cmd/circuitpath -data "$RUNNER_TEMP/cp" -install-arduino
           rm -rf "$RUNNER_TEMP/cp/arduino/downloads"
+
+      - name: Save the board tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
 
       - name: Build CircuitPath.app with the board tools built in
         run: |
@@ -173,8 +194,9 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Cache the board tools
-        uses: actions/cache@v4
+      - name: Restore the board tools
+        id: tools-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/cp/arduino
           key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
@@ -183,6 +205,13 @@ jobs:
         run: |
           go run ./cmd/circuitpath -data "$RUNNER_TEMP/cp" -setup-arduino
           rm -rf "$RUNNER_TEMP/cp/arduino/downloads"
+
+      - name: Save the board tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
 
       - name: Pack the tools like the apps, unpack them and compile again
         run: |

@@ -11,7 +11,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 
 	"circuitpath/internal/arduino"
 )
@@ -58,9 +62,48 @@ func run(in, out, appendTo, bundle string) error {
 	}
 	fi, _ := os.Stat(out)
 	fmt.Printf("wrote %s (%.0f MB) for %s/%s\n", out, float64(fi.Size())/1e6, m.OS, m.Arch)
+	biggest(in)
 	for _, fam := range append([]string{"common"}, arduino.Families...) {
 		info := m.Families[fam]
 		fmt.Printf("  %-8s %6d files %8.0f MB unpacked\n", fam, info.Files, float64(info.Bytes)/1e6)
 	}
 	return nil
+}
+
+// biggest prints the largest folders in the packages (to see what to trim).
+func biggest(dir string) {
+	sizes := map[string]int64{}
+	filepath.WalkDir(filepath.Join(dir, "data", "packages"), func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+		rel, _ := filepath.Rel(dir, p)
+		parts := strings.Split(filepath.ToSlash(rel), "/")
+		for depth := 5; depth <= 9 && depth < len(parts); depth++ {
+			sizes[strings.Join(parts[:depth], "/")] += info.Size()
+		}
+		return nil
+	})
+	type kv struct {
+		k string
+		v int64
+	}
+	var all []kv
+	for k, v := range sizes {
+		if v > 50e6 {
+			all = append(all, kv{k, v})
+		}
+	}
+	sort.Slice(all, func(i, j int) bool { return all[i].v > all[j].v })
+	if len(all) > 60 {
+		all = all[:60]
+	}
+	fmt.Println("largest folders:")
+	for _, e := range all {
+		fmt.Printf("  %8.0f MB  %s\n", float64(e.v)/1e6, e.k)
+	}
 }

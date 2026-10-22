@@ -93,12 +93,11 @@
       }
     },
     "curriculum": {
-      "description": "Victorian Curriculum Digital Technologies (Levels 7-10) content description codes.",
+      "description": "Topic ids from curriculum.json.",
       "type": "array",
+      "uniqueItems": true,
       "items": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 20
+        "$ref": "common.schema.json#/$defs/id"
       }
     },
     "stretch": {

@@ -297,8 +297,7 @@ func (t *Tools) Compile(ctx context.Context, code, fqbn string, out func(string)
 }
 
 // parseCompileJSON reads arduino-cli's --format json result.
-func parseCompileJSON(text string) CompileResult {
-	var res CompileResult
+func parseCompileJSON(text string) (res CompileResult) {
 	var j struct {
 		CompilerOut   string `json:"compiler_out"`
 		CompilerErr   string `json:"compiler_err"`
@@ -320,6 +319,11 @@ func parseCompileJSON(text string) CompileResult {
 	res.OK = j.Success
 	res.Output = strings.TrimSpace(j.CompilerOut + "\n" + j.CompilerErr + "\n" + j.Error)
 	res.Diagnostics = ParseDiagnostics(j.CompilerErr + "\n" + j.Error)
+	defer func() {
+		if res.Size == nil && res.OK {
+			res.Size = sizeFromText(res.Output)
+		}
+	}()
 	for _, s := range j.BuilderResult.Sections {
 		if res.Size == nil {
 			res.Size = &Size{}
@@ -332,6 +336,28 @@ func parseCompileJSON(text string) CompileResult {
 		}
 	}
 	return res
+}
+
+var (
+	flashRe = regexp.MustCompile(`Sketch uses (\d+) bytes .*?Maximum is (\d+) bytes`)
+	ramRe   = regexp.MustCompile(`Global variables use (\d+) bytes .*?Maximum is (\d+) bytes`)
+)
+
+// sizeFromText reads "Sketch uses 924 bytes (2%) of program storage space.
+// Maximum is 32256 bytes." (and the same for RAM) from compiler output.
+func sizeFromText(out string) *Size {
+	m := flashRe.FindStringSubmatch(out)
+	if m == nil {
+		return nil
+	}
+	sz := &Size{}
+	sz.Flash, _ = strconv.ParseInt(m[1], 10, 64)
+	sz.FlashMax, _ = strconv.ParseInt(m[2], 10, 64)
+	if r := ramRe.FindStringSubmatch(out); r != nil {
+		sz.RAM, _ = strconv.ParseInt(r[1], 10, 64)
+		sz.RAMMax, _ = strconv.ParseInt(r[2], 10, 64)
+	}
+	return sz
 }
 
 var (
@@ -373,6 +399,38 @@ func ParseDiagnostics(output string) []Diagnostic {
 		}
 	}
 	return out
+}
+
+// CoachText is what the Coach matches against the errors database: the
+// first error in the sketch (or anywhere, if none is in the sketch) and the
+// notes right after it ("suggested alternative: ..."). coach.js does the same.
+func CoachText(ds []Diagnostic) string {
+	first := -1
+	for i, d := range ds {
+		if d.Severity == "error" && d.File == "sketch.ino" {
+			first = i
+			break
+		}
+	}
+	if first < 0 {
+		for i, d := range ds {
+			if d.Severity == "error" {
+				first = i
+				break
+			}
+		}
+	}
+	if first < 0 {
+		return ""
+	}
+	parts := []string{ds[first].Message}
+	for _, d := range ds[first+1:] {
+		if d.Severity != "note" {
+			break
+		}
+		parts = append(parts, d.Message)
+	}
+	return strings.Join(parts, "\n")
 }
 
 // Upload sends a compiled sketch (from Compile's build folder) to a board.

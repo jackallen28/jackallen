@@ -82,12 +82,26 @@ func skipWhenPacking(rel string) bool {
 			return true
 		}
 	}
-	// data/packages/esp32/tools/<tool>/<version>/...
 	parts := strings.Split(rel, "/")
+	// Documentation and translations inside the toolchains.
+	for i := 0; i+1 < len(parts); i++ {
+		if parts[i] == "share" && (parts[i+1] == "doc" || parts[i+1] == "man" || parts[i+1] == "info" || parts[i+1] == "locale") {
+			return true
+		}
+	}
+	// data/packages/esp32/tools/<tool>/<version>/...
 	if len(parts) >= 7 && parts[0] == "data" && parts[1] == "packages" && parts[2] == "esp32" && parts[3] == "tools" {
 		tool := parts[4]
-		if strings.Contains(tool, "gdb") || strings.Contains(tool, "openocd") {
+		if strings.Contains(tool, "gdb") || strings.Contains(tool, "openocd") || tool == "esp-rom-elfs" {
 			return true // keep <tool>/<version>/ itself, empty
+		}
+		// The Xtensa compiler's libraries for ESP32-S2 and S3 chips.
+		if tool == "esp-x32" || strings.HasPrefix(tool, "xtensa") {
+			for _, p := range parts[6:] {
+				if strings.Contains(p, "esp32s2") || strings.Contains(p, "esp32s3") {
+					return true
+				}
+			}
 		}
 		// esp32-arduino-libs/<version>/<chip>/...: only the chips we support.
 		if tool == "esp32-arduino-libs" {

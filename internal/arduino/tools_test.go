@@ -25,16 +25,20 @@ func fakeInstall(t *testing.T, cli string) string {
 		"data/package_index.json":      "{}",
 		"data/staging/tmp.zip":         "skip me",
 		"user/libraries/Servo/Servo.h": "// servo",
-		"data/packages/arduino/hardware/avr/1.8.7/platform.txt":             "avr",
-		"data/packages/arduino/tools/avr-gcc/7.3/bin/avr-gcc":               "gcc",
-		"data/packages/esp8266/hardware/esp8266/3.1.2/platform.txt":         "esp8266",
-		"data/packages/esp32/hardware/esp32/3.3.12/platform.txt":            "esp32",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32/a.a":        "keep",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32c3/b.a":      "keep",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32s3/c.a":      "drop",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/versions.txt":     "keep",
-		"data/packages/esp32/tools/xtensa-esp-elf-gdb/12.1/bin/gdb":         "drop",
-		"data/packages/builtin/tools/serial-discovery/1.4/serial-discovery": "discovery",
+		"data/packages/arduino/hardware/avr/1.8.7/platform.txt":                    "avr",
+		"data/packages/arduino/tools/avr-gcc/7.3/bin/avr-gcc":                      "gcc",
+		"data/packages/esp8266/hardware/esp8266/3.1.2/platform.txt":                "esp8266",
+		"data/packages/esp32/hardware/esp32/3.3.12/platform.txt":                   "esp32",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32/a.a":               "keep",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32c3/b.a":             "keep",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32s3/c.a":             "drop",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/versions.txt":            "keep",
+		"data/packages/esp32/tools/xtensa-esp-elf-gdb/12.1/bin/gdb":                "drop",
+		"data/packages/builtin/tools/serial-discovery/1.4/serial-discovery":        "discovery",
+		"data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32/libc.a":   "keep",
+		"data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32s3/libc.a": "drop",
+		"data/packages/esp32/tools/esp-x32/2405/share/doc/gcc/manual.html":         "drop",
+		"data/packages/esp32/tools/esp-rom-elfs/20240305/esp32_rev0_rom.elf":       "drop",
 	}
 	for name, data := range files {
 		p := filepath.Join(dir, filepath.FromSlash(name))
@@ -95,13 +99,14 @@ func TestPackAndExtract(t *testing.T) {
 		"esp32/data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32c3/b.a",
 		"esp32/data/packages/esp32/tools/esp32-arduino-libs/3.3/versions.txt",
 		"esp32/data/packages/esp32/tools/xtensa-esp-elf-gdb/12.1/",
+		"esp32/data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32/libc.a",
 	} {
 		if !names[want] {
 			t.Errorf("%s isn't in the bundle", want)
 		}
 	}
 	for name := range names {
-		for _, bad := range []string{"downloads", "build-cache", "staging", "esp32s3", "gdb/12.1/bin", "arduino-cli.yaml", "installed.json"} {
+		for _, bad := range []string{"downloads", "build-cache", "staging", "esp32s3", "gdb/12.1/bin", "arduino-cli.yaml", "installed.json", "share/doc", "rom.elf"} {
 			if strings.Contains(name, bad) {
 				t.Errorf("%s shouldn't be in the bundle", name)
 			}
@@ -223,6 +228,10 @@ func TestParseCompileJSON(t *testing.T) {
 	if bad.OK || len(bad.Diagnostics) != 1 || bad.Diagnostics[0].Line != 2 {
 		t.Fatalf("bad = %+v", bad)
 	}
+	text := parseCompileJSON(`{"compiler_out":"Sketch uses 265413 bytes (25%) of program storage space. Maximum is 1044464 bytes.\nGlobal variables use 28104 bytes (34%) of dynamic memory, leaving 53816 bytes for local variables. Maximum is 81920 bytes.","success":true}`)
+	if text.Size == nil || text.Size.Flash != 265413 || text.Size.RAMMax != 81920 {
+		t.Fatalf("size from text = %+v", text.Size)
+	}
 	junk := parseCompileJSON("Error: no JSON here")
 	if junk.OK || junk.Output != "Error: no JSON here" {
 		t.Fatalf("junk = %+v", junk)
@@ -320,5 +329,25 @@ func TestToolsUnpackCompileUpload(t *testing.T) {
 	}
 	if _, err := tools.Compile(ctx, "x", "pico:rp2040:pico", nil); err == nil {
 		t.Error("compiled for an unknown board")
+	}
+}
+
+func TestCoachText(t *testing.T) {
+	ds := []Diagnostic{
+		{File: "Servo.cpp", Severity: "error", Message: "in a library"},
+		{File: "sketch.ino", Line: 6, Severity: "warning", Message: "unused"},
+		{File: "sketch.ino", Line: 7, Severity: "error", Message: "'digitalwrite' was not declared in this scope"},
+		{File: "sketch.ino", Line: 7, Severity: "note", Message: "suggested alternative: 'digitalWrite'"},
+		{File: "sketch.ino", Line: 9, Severity: "error", Message: "expected ';' before '}' token"},
+	}
+	want := "'digitalwrite' was not declared in this scope\nsuggested alternative: 'digitalWrite'"
+	if got := CoachText(ds); got != want {
+		t.Fatalf("got %q", got)
+	}
+	if got := CoachText(ds[:1]); got != "in a library" {
+		t.Fatalf("library only: %q", got)
+	}
+	if CoachText(nil) != "" {
+		t.Fatal("empty")
 	}
 }

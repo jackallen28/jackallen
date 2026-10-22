@@ -62,6 +62,7 @@ jobs:
     needs: version
     if: needs.version.outputs.skip != 'true'
     runs-on: windows-latest
+    timeout-minutes: 150
     defaults:
       run:
         shell: bash
@@ -77,29 +78,61 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Build
+      - name: Restore the board tools
+        id: tools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
+
+      - name: Install the board tools
+        run: |
+          go run ./cmd/circuitpath -data "$RUNNER_TEMP/cp" -install-arduino
+          rm -rf "$RUNNER_TEMP/cp/arduino/downloads"
+
+      - name: Save the board tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
+
+      - name: Build (with the board tools built in)
         run: |
           mkdir -p dist
+          go run ./tools/packboards -in "$RUNNER_TEMP/cp/arduino" -out "$RUNNER_TEMP/boards.zip"
           for arch in amd64 arm64; do
             out=dist/CircuitPath.exe
             [ "$arch" = arm64 ] && out=dist/CircuitPath-arm64.exe
             CGO_ENABLED=0 GOOS=windows GOARCH=$arch go build -trimpath \
               -ldflags "-H windowsgui -s -w -X circuitpath.Version=$VERSION" -o "$out" ./cmd/circuitpath
+            # The tools run as x64 on ARM laptops too (Windows emulates them).
+            go run ./tools/packboards -append "$out" -bundle "$RUNNER_TEMP/boards.zip"
           done
+          ls -la dist
+
+      - name: Unpack the built-in tools and compile for every board
+        env:
+          CIRCUITPATH_BOARDS: ${{ github.workspace }}/dist/CircuitPath.exe
+        run: go test -v -timeout 120m -run TestRealBundle ./internal/arduino
 
       - name: Start CircuitPath.exe and use it
         shell: pwsh
+        env:
+          CIRCUITPATH_EXPECT_TOOLS: "1"
         run: ./tests/windows/smoke.ps1 -Exe dist/CircuitPath.exe
 
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: dist/*.exe
+          retention-days: 3
 
   macos:
     needs: version
     if: needs.version.outputs.skip != 'true'
     runs-on: macos-latest
+    timeout-minutes: 150
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -112,16 +145,43 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Build
+      - name: Restore the board tools
+        id: tools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
+
+      - name: Install the board tools
+        run: |
+          go run ./cmd/circuitpath -data "$RUNNER_TEMP/cp" -install-arduino
+          rm -rf "$RUNNER_TEMP/cp/arduino/downloads"
+
+      - name: Save the board tools
+        if: steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/cp/arduino
+          key: arduino-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('internal/arduino/requirements.json') }}
+
+      - name: Build (with the board tools built in)
         run: |
           for arch in amd64 arm64; do
             CGO_ENABLED=0 GOOS=darwin GOARCH=$arch go build -trimpath \
               -ldflags "-s -w -X circuitpath.Version=$VERSION" -o dist/circuitpath-$arch ./cmd/circuitpath
           done
-          go run ./tools/macapp -version "$VERSION" -amd64 dist/circuitpath-amd64 -arm64 dist/circuitpath-arm64 -out dist
+          go run ./tools/packboards -in "$RUNNER_TEMP/cp/arduino" -out "$RUNNER_TEMP/boards.zip"
+          go run ./tools/macapp -version "$VERSION" -amd64 dist/circuitpath-amd64 -arm64 dist/circuitpath-arm64 -boards "$RUNNER_TEMP/boards.zip" -out dist
           codesign --force --deep -s - dist/CircuitPath.app
 
+      - name: Unpack the built-in tools and compile for every board
+        env:
+          CIRCUITPATH_BOARDS: ${{ github.workspace }}/dist/CircuitPath.app/Contents/Resources/boards.zip
+        run: go test -v -timeout 120m -run TestRealBundle ./internal/arduino
+
       - name: Start CircuitPath.app and use it
+        env:
+          CIRCUITPATH_EXPECT_TOOLS: "1"
         run: tests/macos/smoke.sh dist/CircuitPath.app
 
       - name: Zip
@@ -131,6 +191,7 @@ jobs:
         with:
           name: macos
           path: dist/CircuitPath-macOS.zip
+          retention-days: 3
 
   publish:
     needs: [version, windows, macos]

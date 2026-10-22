@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -85,6 +86,7 @@ type ProjectSummary struct {
 	Parts         []PartUse `json:"parts"`
 	Minutes       int       `json:"minutes"`
 	Concepts      []string  `json:"concepts,omitempty"`
+	Curriculum    []string  `json:"curriculum,omitempty"`
 	Intro         string    `json:"intro"`
 	StepCount     int       `json:"step_count"`
 }
@@ -95,13 +97,61 @@ type Project struct {
 	Raw json.RawMessage
 }
 
+// ErrorEntry is one entry of the Coach's errors database (errors.json).
+type ErrorEntry struct {
+	ID            string   `json:"id"`
+	Kind          string   `json:"kind"`
+	Pattern       string   `json:"pattern"`
+	Title         string   `json:"title"`
+	Explain       string   `json:"explain"`
+	Hints         []string `json:"hints"`
+	Tech          string   `json:"tech"`
+	Example       string   `json:"example,omitempty"`
+	ExampleBoard  string   `json:"example_board,omitempty"`
+	ExampleOutput string   `json:"example_output,omitempty"`
+
+	re *regexp.Regexp
+}
+
+// MatchError finds the first entry of a kind whose pattern matches text,
+// and its groups ({1}, {2}...). The web app's Coach does the same (coach.js).
+func MatchError(entries []ErrorEntry, kind, text string) (*ErrorEntry, []string) {
+	for i := range entries {
+		e := &entries[i]
+		if e.Kind != kind || e.re == nil {
+			continue
+		}
+		if m := e.re.FindStringSubmatch(text); m != nil {
+			return e, m[1:]
+		}
+	}
+	return nil, nil
+}
+
+// Curriculum is the curriculum topics projects link to.
+type Curriculum struct {
+	Name   string            `json:"name"`
+	Topics []CurriculumTopic `json:"topics"`
+}
+
+// CurriculumTopic is one topic: a level band, a strand and what it covers.
+type CurriculumTopic struct {
+	ID     string `json:"id"`
+	Levels string `json:"levels"`
+	Strand string `json:"strand"`
+	Text   string `json:"text"`
+	Code   string `json:"code,omitempty"`
+}
+
 // Catalogue is all the content.
 type Catalogue struct {
-	Tiers    []Tier              `json:"tiers"`
-	Parts    map[string]PartInfo `json:"parts"`
-	Kit      Kit                 `json:"kit"`
-	Boards   []Board             `json:"-"`
-	Projects []Project           `json:"-"`
+	Tiers      []Tier              `json:"tiers"`
+	Parts      map[string]PartInfo `json:"parts"`
+	Kit        Kit                 `json:"kit"`
+	Errors     []ErrorEntry        `json:"errors"`
+	Curriculum Curriculum          `json:"curriculum"`
+	Boards     []Board             `json:"-"`
+	Projects   []Project           `json:"-"`
 }
 
 // BoardKeywords can be used in a project's boards list instead of board ids.
@@ -184,6 +234,27 @@ func Load(fsys fs.FS) (*Catalogue, []Problem) {
 		c.Kit = kit
 	}
 
+	var errs struct{ Errors []ErrorEntry }
+	if l.read("errors.json", "errors", &errs) {
+		seen := map[string]bool{}
+		for i := range errs.Errors {
+			e := &errs.Errors[i]
+			re, err := regexp.Compile("(?i)" + e.Pattern)
+			if err != nil {
+				l.problem("errors.json", "%s: the pattern doesn't work: %v", e.ID, err)
+				continue
+			}
+			if seen[e.ID] {
+				l.problem("errors.json", "%s is in the list twice", e.ID)
+			}
+			seen[e.ID] = true
+			e.re = re
+		}
+		c.Errors = errs.Errors
+	}
+
+	l.read("curriculum.json", "curriculum", &c.Curriculum)
+
 	for _, file := range l.list("boards") {
 		var b Board
 		raw, ok := l.readRaw(file, "board", &b)
@@ -254,6 +325,11 @@ func (l *loader) checkProject(c *Catalogue, p ProjectSummary, file string) strin
 			return fmt.Sprintf("unknown part type %q (add it to parts/index.json)", part.Type)
 		}
 	}
+	for _, topic := range p.Curriculum {
+		if !slices.ContainsFunc(c.Curriculum.Topics, func(t CurriculumTopic) bool { return t.ID == topic }) {
+			return fmt.Sprintf("unknown curriculum topic %q (see curriculum.json)", topic)
+		}
+	}
 	return ""
 }
 
@@ -286,7 +362,7 @@ func (l *loader) compileSchemas() error {
 			return fmt.Errorf("%s: %w", f, err)
 		}
 	}
-	for _, name := range []string{"tiers", "parts", "kit", "board", "project"} {
+	for _, name := range []string{"tiers", "parts", "kit", "board", "project", "errors", "curriculum"} {
 		s, err := comp.Compile(schemaURL(name + ".schema.json"))
 		if err != nil {
 			return fmt.Errorf("%s.schema.json: %w", name, err)

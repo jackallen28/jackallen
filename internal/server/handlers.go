@@ -43,11 +43,13 @@ func (s *Server) handleCatalogue(w http.ResponseWriter, r *http.Request) {
 		projects = append(projects, p.ProjectSummary)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"tiers":    c.Tiers,
-		"parts":    c.Parts,
-		"kit":      c.Kit,
-		"boards":   boards,
-		"projects": projects,
+		"tiers":      c.Tiers,
+		"parts":      c.Parts,
+		"kit":        c.Kit,
+		"boards":     boards,
+		"projects":   projects,
+		"errors":     c.Errors,
+		"curriculum": c.Curriculum,
 	})
 }
 

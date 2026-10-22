@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"circuitpath/internal/content"
 )
 
 // TestRealBundle unpacks a real bundle (CI sets CIRCUITPATH_BOARDS to a
@@ -67,6 +69,10 @@ func TestRealBundle(t *testing.T) {
 					t.Errorf("%s, %s: %v\n%s", fqbn, name, err, tail(res.Output, 40))
 					continue
 				}
+				if res.Size == nil {
+					t.Errorf("%s, %s: no size reported; output starts %q", fqbn, name, firstChars(res.Output, 400))
+					continue
+				}
 				t.Logf("%-45s %-9s ok in %s (flash %d of %d)", fqbn, name, time.Since(start).Round(time.Second), res.Size.Flash, res.Size.FlashMax)
 			}
 		}
@@ -89,7 +95,50 @@ func TestRealBundle(t *testing.T) {
 	if !found["expected:2"] && !found["expected:3"] {
 		t.Errorf("no \"expected ';'\" error on line 2 or 3: %+v", res.Diagnostics)
 	}
+	// Every broken sketch in the Coach's errors database gives a compiler
+	// message that maps to its own entry.
+	cat, problems := content.Load(os.DirFS("../../content"))
+	if len(problems) > 0 {
+		t.Fatal(problems)
+	}
+	for _, e := range cat.Errors {
+		if e.Example == "" {
+			continue
+		}
+		boardID := e.ExampleBoard
+		if boardID == "" {
+			boardID = "uno"
+		}
+		b, ok := cat.Board(boardID)
+		if !ok {
+			t.Errorf("%s: unknown board %s", e.ID, boardID)
+			continue
+		}
+		res, err := tools.Compile(ctx, e.Example, b.FQBN, nil)
+		if err != nil {
+			t.Errorf("%s: %v", e.ID, err)
+			continue
+		}
+		text := CoachText(res.Diagnostics)
+		got, _ := content.MatchError(cat.Errors, "compile", text)
+		switch {
+		case res.OK:
+			t.Errorf("%s: the example compiled", e.ID)
+		case got == nil || got.ID != e.ID:
+			t.Errorf("%s: the compiler said %q, which maps to %v", e.ID, text, got)
+		default:
+			t.Logf("errors.json %-28s <- %q", e.ID, strings.SplitN(text, "\n", 2)[0])
+		}
+	}
+
 	for fam, st := range tools.Status() {
 		t.Logf("%s: %s", fam, st.State)
 	}
+}
+
+func firstChars(s string, n int) string {
+	if len(s) > n {
+		return s[:n]
+	}
+	return s
 }
