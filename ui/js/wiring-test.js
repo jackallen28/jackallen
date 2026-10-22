@@ -31,7 +31,7 @@ const TESTS = {
     outputs: [`Serial.println(F("TEST:${p.id}:BEEP"));`, `tone(${p.pins.positive}, 880);`, "delay(250);", `noTone(${p.pins.positive});`, "delay(150);"],
   }),
   servo: (p) => p.pins.signal && ({
-    includes: ["#if defined(ESP32)", "#include <ESP32Servo.h>", "#else", "#include <Servo.h>", "#endif"],
+    includes: ["#include <Servo.h>"], // on ESP32, CircuitPath's Servo.h is ESP32Servo
     globals: [`Servo servo_${cid(p.id)};`],
     setup: [`servo_${cid(p.id)}.attach(${p.pins.signal});`],
     outputs: [0, 90, 180, 90].flatMap((a) => [`servo_${cid(p.id)}.write(${a});`, `Serial.println(F("TEST:${p.id}:${a}"));`, "delay(400);"]),

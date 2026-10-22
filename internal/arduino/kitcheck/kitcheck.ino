@@ -9,7 +9,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <esp_now.h>
-#include <ESP32Servo.h>
+#include <Servo.h> // CircuitPath's Servo.h for ESP32 (ESP32Servo)
 WebServer server(80);
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
