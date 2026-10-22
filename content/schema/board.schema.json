@@ -273,6 +273,14 @@
       "additionalProperties": {
         "$ref": "#/$defs/pincode"
       }
+    },
+    "build_properties": {
+      "description": "Extra arduino-cli --build-property settings, e.g. defining LED_BUILTIN where the core doesn't.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^compiler\\.(c|cpp)\\.extra_flags=[-A-Za-z0-9_= ]+$"
+      }
     }
   },
   "$defs": {

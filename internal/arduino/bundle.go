@@ -103,7 +103,24 @@ func skipWhenPacking(rel string) bool {
 				}
 			}
 		}
-		// esp32-arduino-libs/<version>/<chip>/...: only the chips we support.
+		// <chip>-libs: the precompiled ESP-IDF for one chip. Only ours.
+		if strings.HasSuffix(tool, "-libs") && strings.HasPrefix(tool, "esp32") && tool != "esp32-libs" && tool != "esp32c3-libs" && tool != "esp32-arduino-libs" {
+			return true
+		}
+		// picolibc: another C library the toolchains carry; Arduino uses newlib.
+		if (tool == "esp-x32" || tool == "esp-rv32") && parts[6] == "picolibc" {
+			return true
+		}
+		// The RISC-V compiler's libraries for other RISC-V chips: the C3 is
+		// rv32imc (the base library stays for the compiler's own use).
+		if tool == "esp-rv32" {
+			for _, p := range parts[6:] {
+				if strings.HasPrefix(p, "rv32") && p != "rv32imc_zicsr_zifencei" && p != "rv32imc" {
+					return true
+				}
+			}
+		}
+		// esp32-arduino-libs/<version>/<chip>/... (older cores): only our chips.
 		if tool == "esp32-arduino-libs" {
 			chip := parts[6]
 			if strings.HasPrefix(chip, "esp32") && chip != "esp32" && chip != "esp32c3" {

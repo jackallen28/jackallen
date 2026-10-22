@@ -28,7 +28,7 @@
         "If {1} is a pin name like LED_PIN, check the #define lines at the top of your code."
       ],
       "tech": "'{1}' has no declaration visible in this scope. Declare it before use: globals at file scope, locals inside the function that uses them.",
-      "example": "void setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n}\n"
+      "example": "void setup() {\n  pinMode(trafficLightPin, OUTPUT);\n}\n\nvoid loop() {\n}\n"
     },
     {
       "id": "missing-semicolon",
@@ -308,7 +308,7 @@
         "If yes, change void to int (or float, bool...). If no, write return; without a value."
       ],
       "tech": "A void function returns an expression.",
-      "example": "void setup() {\n}\n\nvoid loop() {\n  return 5;\n}\n"
+      "example_output": "/tmp/sketch/sketch.ino:5:10: warning: return-statement with a value, in function returning 'void' [-fpermissive]"
     },
     {
       "id": "conversion",
@@ -322,7 +322,7 @@
         "Check what kind of value the variable or function needs."
       ],
       "tech": "No implicit conversion from '{1}' to '{2}'.",
-      "example": "void setup() {\n  int pin = \"thirteen\";\n}\n\nvoid loop() {\n}\n"
+      "example_output": "/tmp/sketch/sketch.ino:2:13: warning: invalid conversion from 'const char*' to 'int' [-fpermissive]"
     },
     {
       "id": "jump-to-case",
@@ -336,7 +336,7 @@
         "Or move the variable above the switch."
       ],
       "tech": "Jumping to a later case label would bypass the initialisation of a variable declared in an earlier case; give the case its own block scope.",
-      "example": "void setup() {\n}\n\nvoid loop() {\n  switch (millis() % 2) {\n    case 0:\n      int x = 1;\n      break;\n    case 1:\n      break;\n  }\n}\n"
+      "example_output": "/tmp/sketch/sketch.ino:9:10: warning: jump to case label [-fpermissive]"
     },
     {
       "id": "sketch-too-big",

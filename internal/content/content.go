@@ -48,15 +48,17 @@ type Kit struct {
 
 // Board is a board students can pick. Raw is the whole file, served as is.
 type Board struct {
-	ID       string          `json:"id"`
-	Name     string          `json:"name"`
-	Family   string          `json:"family"`
-	FQBN     string          `json:"fqbn"`
-	Optional bool            `json:"optional"`
-	Default  bool            `json:"default"`
-	Order    int             `json:"order"`
-	Variants []BoardVariant  `json:"variants,omitempty"`
-	Raw      json.RawMessage `json:"-"`
+	ID       string         `json:"id"`
+	Name     string         `json:"name"`
+	Family   string         `json:"family"`
+	FQBN     string         `json:"fqbn"`
+	Optional bool           `json:"optional"`
+	Default  bool           `json:"default"`
+	Order    int            `json:"order"`
+	Variants []BoardVariant `json:"variants,omitempty"`
+	// BuildProperties are extra arduino-cli --build-property settings.
+	BuildProperties []string        `json:"build_properties,omitempty"`
+	Raw             json.RawMessage `json:"-"`
 }
 
 // BoardVariant is another setting for the same board, such as the old

@@ -25,20 +25,25 @@ func fakeInstall(t *testing.T, cli string) string {
 		"data/package_index.json":      "{}",
 		"data/staging/tmp.zip":         "skip me",
 		"user/libraries/Servo/Servo.h": "// servo",
-		"data/packages/arduino/hardware/avr/1.8.7/platform.txt":                    "avr",
-		"data/packages/arduino/tools/avr-gcc/7.3/bin/avr-gcc":                      "gcc",
-		"data/packages/esp8266/hardware/esp8266/3.1.2/platform.txt":                "esp8266",
-		"data/packages/esp32/hardware/esp32/3.3.12/platform.txt":                   "esp32",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32/a.a":               "keep",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32c3/b.a":             "keep",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32s3/c.a":             "drop",
-		"data/packages/esp32/tools/esp32-arduino-libs/3.3/versions.txt":            "keep",
-		"data/packages/esp32/tools/xtensa-esp-elf-gdb/12.1/bin/gdb":                "drop",
-		"data/packages/builtin/tools/serial-discovery/1.4/serial-discovery":        "discovery",
-		"data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32/libc.a":   "keep",
-		"data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32s3/libc.a": "drop",
-		"data/packages/esp32/tools/esp-x32/2405/share/doc/gcc/manual.html":         "drop",
-		"data/packages/esp32/tools/esp-rom-elfs/20240305/esp32_rev0_rom.elf":       "drop",
+		"data/packages/arduino/hardware/avr/1.8.7/platform.txt":                                      "avr",
+		"data/packages/arduino/tools/avr-gcc/7.3/bin/avr-gcc":                                        "gcc",
+		"data/packages/esp8266/hardware/esp8266/3.1.2/platform.txt":                                  "esp8266",
+		"data/packages/esp32/hardware/esp32/3.3.12/platform.txt":                                     "esp32",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32/a.a":                                 "keep",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32c3/b.a":                               "keep",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/esp32s3/c.a":                               "drop",
+		"data/packages/esp32/tools/esp32-arduino-libs/3.3/versions.txt":                              "keep",
+		"data/packages/esp32/tools/xtensa-esp-elf-gdb/12.1/bin/gdb":                                  "drop",
+		"data/packages/builtin/tools/serial-discovery/1.4/serial-discovery":                          "discovery",
+		"data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32/libc.a":                     "keep",
+		"data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32s3/libc.a":                   "drop",
+		"data/packages/esp32/tools/esp-x32/2405/share/doc/gcc/manual.html":                           "drop",
+		"data/packages/esp32/tools/esp-rom-elfs/20240305/esp32_rev0_rom.elf":                         "drop",
+		"data/packages/esp32/tools/esp32s3-libs/3.3.12/lib/libx.a":                                   "drop",
+		"data/packages/esp32/tools/esp32c3-libs/3.3.12/lib/liby.a":                                   "keep",
+		"data/packages/esp32/tools/esp-rv32/2601/picolibc/lib/libc.a":                                "drop",
+		"data/packages/esp32/tools/esp-rv32/2601/riscv32-esp-elf/lib/rv32imac_zicsr_zifencei/libc.a": "drop",
+		"data/packages/esp32/tools/esp-rv32/2601/riscv32-esp-elf/lib/rv32imc_zicsr_zifencei/libc.a":  "keep",
 	}
 	for name, data := range files {
 		p := filepath.Join(dir, filepath.FromSlash(name))
@@ -100,13 +105,19 @@ func TestPackAndExtract(t *testing.T) {
 		"esp32/data/packages/esp32/tools/esp32-arduino-libs/3.3/versions.txt",
 		"esp32/data/packages/esp32/tools/xtensa-esp-elf-gdb/12.1/",
 		"esp32/data/packages/esp32/tools/esp-x32/2405/xtensa-esp-elf/lib/esp32/libc.a",
+		"esp32/data/packages/esp32/tools/esp32c3-libs/3.3.12/lib/liby.a",
+		"esp32/data/packages/esp32/tools/esp32s3-libs/3.3.12/",
+		"esp32/data/packages/esp32/tools/esp-rv32/2601/riscv32-esp-elf/lib/rv32imc_zicsr_zifencei/libc.a",
 	} {
 		if !names[want] {
 			t.Errorf("%s isn't in the bundle", want)
 		}
 	}
 	for name := range names {
-		for _, bad := range []string{"downloads", "build-cache", "staging", "esp32s3", "gdb/12.1/bin", "arduino-cli.yaml", "installed.json", "share/doc", "rom.elf"} {
+		if strings.HasSuffix(name, "/") {
+			continue // folders stay (empty) so arduino-cli sees every tool installed
+		}
+		for _, bad := range []string{"downloads", "build-cache", "staging", "esp32s3", "gdb/12.1/bin", "arduino-cli.yaml", "installed.json", "share/doc", "rom.elf", "picolibc", "rv32imac"} {
 			if strings.Contains(name, bad) {
 				t.Errorf("%s shouldn't be in the bundle", name)
 			}
@@ -288,7 +299,7 @@ func TestToolsUnpackCompileUpload(t *testing.T) {
 	defer cancel()
 
 	var streamed strings.Builder
-	res, err := tools.Compile(ctx, "void setup(){}\nvoid loop(){}\n", "arduino:avr:uno", func(s string) { streamed.WriteString(s) })
+	res, err := tools.Compile(ctx, "void setup(){}\nvoid loop(){}\n", "arduino:avr:uno", []string{"compiler.cpp.extra_flags=-DX=1"}, func(s string) { streamed.WriteString(s) })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,7 +315,7 @@ func TestToolsUnpackCompileUpload(t *testing.T) {
 		t.Fatalf("settings don't point at the unpacked tools:\n%s", cfg)
 	}
 
-	bad, err := tools.Compile(ctx, "void setup(){\nBROKEN\n", "arduino:avr:uno", nil)
+	bad, err := tools.Compile(ctx, "void setup(){\nBROKEN\n", "arduino:avr:uno", nil, nil)
 	if err != nil || bad.OK || len(bad.Diagnostics) != 1 || bad.Diagnostics[0].Line != 4 {
 		t.Fatalf("broken compile = %+v, %v", bad, err)
 	}
@@ -327,7 +338,7 @@ func TestToolsUnpackCompileUpload(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(data, "arduino-oldversion1")); err == nil {
 		t.Error("old tools weren't removed")
 	}
-	if _, err := tools.Compile(ctx, "x", "pico:rp2040:pico", nil); err == nil {
+	if _, err := tools.Compile(ctx, "x", "pico:rp2040:pico", nil, nil); err == nil {
 		t.Error("compiled for an unknown board")
 	}
 }

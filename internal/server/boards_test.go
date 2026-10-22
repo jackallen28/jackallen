@@ -26,7 +26,7 @@ func (f *fakeTools) Status() map[string]arduino.FamilyStatus {
 	return map[string]arduino.FamilyStatus{"avr": {State: "ready"}, "esp32": {State: "packed"}}
 }
 func (f *fakeTools) Prepare(string) {}
-func (f *fakeTools) Compile(ctx context.Context, code, fqbn string, out func(string)) (arduino.CompileResult, error) {
+func (f *fakeTools) Compile(ctx context.Context, code, fqbn string, props []string, out func(string)) (arduino.CompileResult, error) {
 	f.mu.Lock()
 	f.compiled = append(f.compiled, fqbn)
 	f.mu.Unlock()

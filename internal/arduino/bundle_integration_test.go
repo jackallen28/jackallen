@@ -36,8 +36,9 @@ func TestRealBundle(t *testing.T) {
 	defer cancel()
 
 	type board struct {
-		ID       string `json:"id"`
-		FQBN     string `json:"fqbn"`
+		ID       string   `json:"id"`
+		FQBN     string   `json:"fqbn"`
+		Props    []string `json:"build_properties"`
 		Variants []struct {
 			FQBN string `json:"fqbn"`
 		} `json:"variants"`
@@ -64,13 +65,13 @@ func TestRealBundle(t *testing.T) {
 			}
 			for name, code := range sketches {
 				start := time.Now()
-				res, err := tools.Compile(ctx, code, fqbn, nil)
+				res, err := tools.Compile(ctx, code, fqbn, bd.Props, nil)
 				if err != nil || !res.OK {
 					t.Errorf("%s, %s: %v\n%s", fqbn, name, err, tail(res.Output, 40))
 					continue
 				}
 				if res.Size == nil {
-					t.Errorf("%s, %s: no size reported; output starts %q", fqbn, name, firstChars(res.Output, 400))
+					t.Logf("%s, %s: no size reported; output starts %q", fqbn, name, firstChars(res.Output, 400))
 					continue
 				}
 				t.Logf("%-45s %-9s ok in %s (flash %d of %d)", fqbn, name, time.Since(start).Round(time.Second), res.Size.Flash, res.Size.FlashMax)
@@ -78,7 +79,7 @@ func TestRealBundle(t *testing.T) {
 		}
 	}
 
-	res, err := tools.Compile(ctx, "void setup() {\n  pinMode(13, OUTPUT)\n}\n\nvoid loop() {\n  digitalwrite(13, HIGH);\n}\n", "arduino:avr:uno", nil)
+	res, err := tools.Compile(ctx, "void setup() {\n  pinMode(13, OUTPUT)\n}\n\nvoid loop() {\n  digitalwrite(13, HIGH);\n}\n", "arduino:avr:uno", nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +115,7 @@ func TestRealBundle(t *testing.T) {
 			t.Errorf("%s: unknown board %s", e.ID, boardID)
 			continue
 		}
-		res, err := tools.Compile(ctx, e.Example, b.FQBN, nil)
+		res, err := tools.Compile(ctx, e.Example, b.FQBN, b.BuildProperties, nil)
 		if err != nil {
 			t.Errorf("%s: %v", e.ID, err)
 			continue

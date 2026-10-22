@@ -22,7 +22,7 @@ import (
 type BoardTools interface {
 	Status() map[string]arduino.FamilyStatus
 	Prepare(family string)
-	Compile(ctx context.Context, code, fqbn string, out func(string)) (arduino.CompileResult, error)
+	Compile(ctx context.Context, code, fqbn string, props []string, out func(string)) (arduino.CompileResult, error)
 	Upload(ctx context.Context, buildPath, fqbn, port string, out func(string)) (string, error)
 	Ports(ctx context.Context) ([]arduino.Port, error)
 }
@@ -41,6 +41,7 @@ type job struct {
 	Finished int64                  `json:"finished,omitempty"`
 
 	code, fqbn string
+	props      []string
 }
 
 const maxJobOutput = 256 << 10
@@ -92,7 +93,7 @@ func (s *Server) runJob(j *job) {
 		})
 	}
 	s.setJob(j, func(j *job) { j.State = "compiling" })
-	res, err := s.Tools.Compile(ctx, j.code, j.fqbn, nil)
+	res, err := s.Tools.Compile(ctx, j.code, j.fqbn, j.props, nil)
 	if err != nil {
 		finish("failed", err.Error())
 		return
@@ -155,21 +156,22 @@ func (s *Server) handlePrepareTools(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// boardFQBN finds the FQBN for a board and setting from the content.
-func boardFQBN(c *content.Catalogue, boardID, variant string) (string, bool) {
+// boardFQBN finds the FQBN and build properties for a board and setting
+// from the content.
+func boardFQBN(c *content.Catalogue, boardID, variant string) (string, []string, bool) {
 	b, ok := c.Board(boardID)
 	if !ok {
-		return "", false
+		return "", nil, false
 	}
 	if variant == "" {
-		return b.FQBN, true
+		return b.FQBN, b.BuildProperties, true
 	}
 	for _, v := range b.Variants {
 		if v.ID == variant {
-			return v.FQBN, true
+			return v.FQBN, b.BuildProperties, true
 		}
 	}
-	return "", false
+	return "", nil, false
 }
 
 // portRe is what a serial port name looks like (COM3, /dev/ttyUSB0,
@@ -195,7 +197,7 @@ func (s *Server) handleNewJob(kind string) http.HandlerFunc {
 			writeError(w, http.StatusBadRequest, "bad_code", "This sketch is too long (the limit is 100 KB).")
 			return
 		}
-		fqbn, ok := boardFQBN(s.Catalogue, req.Board, req.Variant)
+		fqbn, props, ok := boardFQBN(s.Catalogue, req.Board, req.Variant)
 		if !ok {
 			writeError(w, http.StatusBadRequest, "bad_board", "Pick one of the boards on the list.")
 			return
@@ -206,7 +208,7 @@ func (s *Server) handleNewJob(kind string) http.HandlerFunc {
 		}
 		id := make([]byte, 8)
 		rand.Read(id)
-		j := &job{ID: hex.EncodeToString(id), Kind: kind, State: "queued", Board: req.Board, Port: req.Port, code: req.Code, fqbn: fqbn}
+		j := &job{ID: hex.EncodeToString(id), Kind: kind, State: "queued", Board: req.Board, Port: req.Port, code: req.Code, fqbn: fqbn, props: props}
 		s.forgetOldJobs()
 		s.jobs.mu.Lock()
 		s.jobs.jobs[j.ID] = j

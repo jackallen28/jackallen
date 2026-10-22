@@ -252,9 +252,10 @@ type CompileResult struct {
 
 const sketchName = "sketch"
 
-// Compile compiles code for a board. out is called with output as it
-// arrives (it may be nil).
-func (t *Tools) Compile(ctx context.Context, code, fqbn string, out func(string)) (CompileResult, error) {
+// Compile compiles code for a board, with extra build properties (from the
+// board's file, such as defining LED_BUILTIN). out is called with output as
+// it arrives (it may be nil).
+func (t *Tools) Compile(ctx context.Context, code, fqbn string, props []string, out func(string)) (CompileResult, error) {
 	family := FamilyOf(fqbn)
 	if family == "" {
 		return CompileResult{}, fmt.Errorf("unknown board %q", fqbn)
@@ -278,7 +279,11 @@ func (t *Tools) Compile(ctx context.Context, code, fqbn string, out func(string)
 	}
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Minute)
 	defer cancel()
-	text, err := t.stream(ctx, out, "compile", "--fqbn", fqbn, "--build-path", build, "--warnings", "default", "--format", "json", sketchDir)
+	args := []string{"compile", "--fqbn", fqbn, "--build-path", build, "--warnings", "default", "--format", "json"}
+	for _, p := range props {
+		args = append(args, "--build-property", p)
+	}
+	text, err := t.stream(ctx, out, append(args, sketchDir)...)
 	if err != nil && strings.TrimSpace(text) == "" {
 		return CompileResult{}, fmt.Errorf("the compiler didn't run: %w", err)
 	}
@@ -341,6 +346,9 @@ func parseCompileJSON(text string) (res CompileResult) {
 var (
 	flashRe = regexp.MustCompile(`Sketch uses (\d+) bytes .*?Maximum is (\d+) bytes`)
 	ramRe   = regexp.MustCompile(`Global variables use (\d+) bytes .*?Maximum is (\d+) bytes`)
+
+	esp8266FlashRe = regexp.MustCompile(`Code in flash \(default, ICACHE_FLASH_ATTR\), used (\d+) / (\d+) bytes`)
+	esp8266RAMRe   = regexp.MustCompile(`Variables and constants in RAM \(global, static\), used (\d+) / (\d+) bytes`)
 )
 
 // sizeFromText reads "Sketch uses 924 bytes (2%) of program storage space.
@@ -348,6 +356,17 @@ var (
 func sizeFromText(out string) *Size {
 	m := flashRe.FindStringSubmatch(out)
 	if m == nil {
+		// ESP8266: ". Code in flash (default, ICACHE_FLASH_ATTR), used 231884 / 1048576 bytes"
+		if e := esp8266FlashRe.FindStringSubmatch(out); e != nil {
+			sz := &Size{}
+			sz.Flash, _ = strconv.ParseInt(e[1], 10, 64)
+			sz.FlashMax, _ = strconv.ParseInt(e[2], 10, 64)
+			if r := esp8266RAMRe.FindStringSubmatch(out); r != nil {
+				sz.RAM, _ = strconv.ParseInt(r[1], 10, 64)
+				sz.RAMMax, _ = strconv.ParseInt(r[2], 10, 64)
+			}
+			return sz
+		}
 		return nil
 	}
 	sz := &Size{}
