@@ -3,6 +3,8 @@
 #   - changing the VERSION file (on github.com: open VERSION, edit, commit)
 #   - pushing a version tag:  git tag v1.2.3 && git push origin v1.2.3
 #   - making a release with a new v1.2.3 tag on github.com
+#   - Actions > Release > Run workflow (publishes VERSION if it isn't out yet),
+#     or a change to this file
 # Each app is tested on its own system (started and used) before anything
 # is published: CircuitPath.exe (64-bit Intel/AMD), CircuitPath-arm64.exe,
 # CircuitPath-macOS.zip (one app for Intel and Apple Silicon Macs) and SHA256SUMS.
@@ -12,9 +14,10 @@ on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
     branches: [BNTS_CircuitPath, master, main]
-    paths: [VERSION]
+    paths: [VERSION, .github/workflows/release.yml]
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -50,7 +53,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           # A VERSION change for a version that's already out does nothing.
-          if [[ "$GITHUB_REF" == refs/heads/* ]] && gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if [[ "$GITHUB_REF" != refs/tags/* ]] && gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "$TAG is already published."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
