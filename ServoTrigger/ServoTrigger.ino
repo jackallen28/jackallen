@@ -9,7 +9,7 @@
 
   Wiring (Grove Base Shield on an Arduino Uno):
     Ultrasonic Ranger  -> D7  (single SIG pin is used for trigger and echo)
-    Push Button        -> D2
+    Push Button        -> D2  (10K pull-up to 5V, button to GND: LOW = pressed)
     Servo (signal)     -> D3
     LED                -> D13 (on-board LED, or external LED + 220R resistor)
 
@@ -91,7 +91,7 @@ void closeGate() {
 
 void setup() {
   Serial.begin(9600);
-  pinMode(BUTTON_PIN, INPUT);  // Grove button outputs HIGH when pressed
+  pinMode(BUTTON_PIN, INPUT);  // external 10K pull-up: reads HIGH idle, LOW when pressed
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
   Serial.println("Ready");
@@ -100,7 +100,7 @@ void setup() {
 void loop() {
   long distance = readDistanceCm();
   bool objectNear    = (distance > 0 && distance <= DETECT_DISTANCE_CM);
-  bool buttonPressed = (digitalRead(BUTTON_PIN) == HIGH);
+  bool buttonPressed = (digitalRead(BUTTON_PIN) == LOW);
 
   Serial.print("Distance: ");
   Serial.print(distance);
