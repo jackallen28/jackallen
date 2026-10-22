@@ -1,62 +1,77 @@
 /*
-  UltrasonicTest - diagnose a Grove Ultrasonic Ranger that always reads -1
+  UltrasonicTest - diagnose an ultrasonic ranger that always reads -1
 
-  Upload this on its own (nothing else needs to be connected), open the
-  Serial Monitor at 9600 baud and hold your hand ~20 cm in front of the sensor.
+  Wiring for this test (jumper wires straight to the Uno):
+    GND        -> GND
+    VCC        -> 5V
+    SIG (yellow, or the pin labelled SIG / ECHO)          -> D7
+    NC  (white,  or the pin labelled NC  / TRIG)          -> D8
 
-  For each of pins D7 and D8 it prints the raw echo time in microseconds,
-  measured with a short (30 ms) and a long (1 s) timeout:
-    - "no echo" on everything      -> wiring/power problem (see checks below)
-    - numbers on D8 but not D7     -> cable is in the wrong port; use that pin
-    - numbers only with long timeout -> increase the timeout in ServoTrigger
+  Open the Serial Monitor at 9600 baud and hold your hand ~20 cm in front of
+  the sensor. Each line tries a different way of talking to the sensor:
 
-  Checks if you see no echo anywhere:
-    - Grove Base Shield VCC switch set to 5V (not 3.3V)
-    - Shield pushed fully onto the Uno, cable clicked in at both ends
-    - Try a different Grove cable / port (change the pins below to match)
+    1-pin on D7          -> genuine Seeed Grove Ultrasonic Ranger (SIG only)
+    trig D8, echo D7     -> clone with separate Trig/Echo pins
+    trig D7, echo D8     -> clone with separate Trig/Echo pins, other way round
+
+  Whichever line shows a distance tells us how the sensor needs to be driven.
+  "no echo" on every line means the sensor isn't answering at all: try another
+  jumper for each wire, check 5V with a multimeter, or try another sensor.
 */
 
-const int PINS[] = {7, 8};
+const int PIN_A = 7;
+const int PIN_B = 8;
+const unsigned long TIMEOUT_US = 100000UL;  // 100 ms, generous
 
-long readEcho(int pin, unsigned long timeoutUs) {
+void pulse(int pin) {
   pinMode(pin, OUTPUT);
   digitalWrite(pin, LOW);
   delayMicroseconds(2);
   digitalWrite(pin, HIGH);
   delayMicroseconds(10);
   digitalWrite(pin, LOW);
-  pinMode(pin, INPUT);
-  return pulseIn(pin, HIGH, timeoutUs);
 }
 
-void printResult(long us) {
+// Single-pin sensor: trigger and echo on the same pin
+long readOnePin(int pin) {
+  pulse(pin);
+  pinMode(pin, INPUT);
+  return pulseIn(pin, HIGH, TIMEOUT_US);
+}
+
+// Two-pin sensor: separate trigger and echo pins
+long readTwoPin(int trigPin, int echoPin) {
+  pinMode(echoPin, INPUT);
+  pulse(trigPin);
+  long us = pulseIn(echoPin, HIGH, TIMEOUT_US);
+  pinMode(trigPin, INPUT);  // release the pin so the next test isn't disturbed
+  return us;
+}
+
+void printResult(const char *label, long us) {
+  Serial.print(label);
   if (us == 0) {
-    Serial.print("no echo     ");
+    Serial.println("no echo");
   } else {
-    Serial.print(us);
-    Serial.print(" us = ");
     Serial.print(us / 29 / 2);
-    Serial.print(" cm   ");
+    Serial.print(" cm  (");
+    Serial.print(us);
+    Serial.println(" us)");
   }
+  delay(60);  // let echoes die out before the next test
 }
 
 void setup() {
   Serial.begin(9600);
+  pinMode(PIN_A, INPUT);
+  pinMode(PIN_B, INPUT);
   Serial.println("Ultrasonic test - hold your hand ~20 cm away");
 }
 
 void loop() {
-  for (int pin : PINS) {
-    Serial.print("D");
-    Serial.print(pin);
-    Serial.print("  30ms: ");
-    printResult(readEcho(pin, 30000UL));
-    delay(60);
-    Serial.print(" 1s: ");
-    printResult(readEcho(pin, 1000000UL));
-    Serial.println();
-    delay(60);
-  }
+  printResult("1-pin on D7       : ", readOnePin(PIN_A));
+  printResult("trig D8, echo D7  : ", readTwoPin(PIN_B, PIN_A));
+  printResult("trig D7, echo D8  : ", readTwoPin(PIN_A, PIN_B));
   Serial.println("---");
   delay(500);
 }
