@@ -7,6 +7,12 @@
   "boards": [
     "all"
   ],
+  "pins": {
+    "esp32-c3": {
+      "TM1637_CLK": "3",
+      "TM1637_DIO": "4"
+    }
+  },
   "parts": [
     {
       "type": "tm1637"
