@@ -50,16 +50,27 @@ It can't be undone. It only wipes CircuitPath on this laptop (in this Windows ac
 
 ## If Windows blocks it
 
-The app isn't code-signed yet, so the first time it runs:
+The app isn't code-signed yet. Windows Defender SmartScreen checks files that are **marked as
+downloaded from the internet**, and a new unsigned file has no "reputation" yet, so SmartScreen
+stops it. Try these, in order:
 
-- **"Windows protected your PC" (SmartScreen):** press **More info**, then **Run anyway**. Or
-  right-click the file > **Properties** > tick **Unblock** > OK, before opening it.
-- **"This app has been blocked by your system administrator"** (AppLocker / Intune / Smart App
-  Control): only IT can allow it. Ask them to allow `CircuitPath.exe` (by its hash from
-  `SHA256SUMS` on the release, or by its file path), or to sign it with the school's
-  code-signing certificate.
-- **A firewall question:** you shouldn't see one. CircuitPath only listens on the laptop itself
-  (`127.0.0.1`), never on the network. If one appears, **Cancel** is fine.
+1. **"Windows protected your PC" with a More info link:** press **More info**, then **Run anyway**.
+2. **No Run anyway button:** remove the "downloaded" mark, then double-click the file again:
+   - right-click `CircuitPath.exe` > **Properties** > tick **Unblock** (bottom of the General
+     tab) > **OK**; or
+   - in PowerShell (no admin needed): `Unblock-File "$env:USERPROFILE\Downloads\CircuitPath.exe"`; or
+   - copy it to the laptop from a **USB stick** instead of downloading it there. (The mark only
+     survives on NTFS drives; most USB sticks are FAT32 or exFAT, so it's dropped on the way.)
+3. **"This app has been blocked by your system administrator"**, or **Smart App Control**, or still
+   blocked after unblocking: the school's policy doesn't allow unsigned apps, and only IT can
+   change that. Ask IT to do one of these (any one is enough):
+   - **deploy it with Intune** (or put it on a school network share): files that arrive that way
+     aren't marked as downloaded, so SmartScreen doesn't stop them
+   - **allow it in Microsoft Defender** by its file hash (from `SHA256SUMS` on the release)
+   - **sign it** with the school's code-signing certificate
+
+A firewall question shouldn't appear: CircuitPath only listens on the laptop itself (`127.0.0.1`),
+never on the network. If one does, **Cancel** is fine.
 
 ## Good to know
 
