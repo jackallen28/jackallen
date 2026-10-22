@@ -15,7 +15,7 @@ import (
 func sample() File {
 	return File{
 		Manifest: Manifest{AppVersion: "test"},
-		Profile:  Profile{Settings: json.RawMessage(`{"board":"uno"}`)},
+		Profile:  Profile{Names: []string{"Mia", "Leo"}, School: "Eltham High", Settings: json.RawMessage(`{"board":"uno"}`)},
 		Sketches: []store.Sketch{
 			{ProjectID: "blink-traffic-lights", Code: "void setup() {}\nvoid loop() {}\n", UpdatedAt: 100},
 			{ProjectID: "freeplay", Code: "// mine", UpdatedAt: 300},
@@ -33,7 +33,7 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if f.Manifest.Version != Version || !strings.Contains(string(f.Profile.Settings), `"uno"`) {
+	if f.Manifest.Version != Version || f.Profile.School != "Eltham High" || len(f.Profile.Names) != 2 {
 		t.Fatalf("read %+v", f)
 	}
 	if len(f.Sketches) != 2 || f.Sketches[0].Code != "void setup() {}\nvoid loop() {}\n" || f.Sketches[1].UpdatedAt != 300 {
@@ -132,23 +132,5 @@ func TestFutureTimesAreClamped(t *testing.T) {
 	}
 	if f.Sketches[0].UpdatedAt > time.Now().UnixMilli() {
 		t.Fatal("a save time in the future was kept")
-	}
-}
-
-func TestReadsVersion1(t *testing.T) {
-	f, err := Read(makeZip(t, map[string]string{
-		"manifest.json": `{"format":"circuitpath-save","version":1}`,
-		"profile.json":  `{"names":["Mia"],"school":"Eltham High","settings":{"board":"nano"}}`,
-	}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(f.Profile.Settings) != `{"board":"nano"}` {
-		t.Fatalf("settings = %s", f.Profile.Settings)
-	}
-	var buf bytes.Buffer
-	Write(&buf, *f)
-	if strings.Contains(buf.String(), "Mia") {
-		t.Fatal("a name from a version 1 file was written back out")
 	}
 }

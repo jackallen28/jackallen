@@ -1,9 +1,10 @@
-# Development data (database, certificates)
+# Development data
 /dev-data/
 /data/
 
 # Build output
-/circuitpath-server
+/circuitpath
+/CircuitPath.exe
 /dist/
 
 # Node (dev-only test tooling)

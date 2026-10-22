@@ -1,5 +1,5 @@
 // Package circuitpath holds the web app and content that are built into the
-// server binary, so the Pi needs just one file.
+// program, so CircuitPath.exe is just one file.
 package circuitpath
 
 import (
@@ -9,10 +9,6 @@ import (
 
 // Version is set at build time: go build -ldflags "-X circuitpath.Version=1.2.3".
 var Version = "dev"
-
-// UpdateRepo is the GitHub repository ("owner/name") whose releases this
-// build updates itself from. The release workflow sets it.
-var UpdateRepo = ""
 
 //go:embed ui
 var uiFiles embed.FS

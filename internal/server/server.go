@@ -1,5 +1,7 @@
-// Package server is CircuitPath's web server: the web app's files and the
-// JSON API for profiles, logins, autosave, progress and save files.
+// Package server is CircuitPath's local web server: the web app's files and
+// the JSON API for profiles, logins, autosave, progress, save files and the
+// WIPE page. It runs on the student's own laptop and only answers that
+// laptop (see Hosts).
 package server
 
 import (
@@ -25,12 +27,11 @@ import (
 )
 
 const (
-	cookieName     = "cp_session"
-	maxJSONBytes   = 256 << 10
-	csrfHeader     = "X-CircuitPath"
-	defaultSchool  = "Banyule Nillumbik Tech School"
-	sessionTTL     = 12 * time.Hour
-	createsPerHour = 30
+	cookieName    = "cp_session"
+	maxJSONBytes  = 256 << 10
+	csrfHeader    = "X-CircuitPath"
+	defaultSchool = "Banyule Nillumbik Tech School"
+	sessionTTL    = 12 * time.Hour
 )
 
 // Server holds everything the handlers need.
@@ -44,11 +45,16 @@ type Server struct {
 	// CacheStatic lets browsers cache the web app's files (they are checked
 	// with an ETag on every load). Turn it off when editing ui/ live.
 	CacheStatic bool
+	// SecureCookies marks the login cookie Secure (only when served over HTTPS).
+	SecureCookies bool
+	// Hosts are the Host names (without port) the server answers, e.g.
+	// "localhost" and "127.0.0.1". Anything else is refused, so a website
+	// can't reach the server by pointing its own name at 127.0.0.1 (DNS
+	// rebinding). Empty: answer any host (tests).
+	Hosts []string
 
-	lockout *auth.Lockout
-	creates *auth.Window
-	once    sync.Once
-	static  http.Handler
+	once   sync.Once
+	static http.Handler
 }
 
 func (s *Server) init() {
@@ -56,8 +62,6 @@ func (s *Server) init() {
 		if s.Log == nil {
 			s.Log = slog.Default()
 		}
-		s.lockout = auth.NewLockout(5, time.Minute)
-		s.creates = auth.NewWindow(createsPerHour, time.Hour)
 		s.static = newStatic(s.UI, s.CacheStatic)
 	})
 }
@@ -69,8 +73,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/info", s.handleInfo)
 	mux.HandleFunc("GET /api/catalogue", s.handleCatalogue)
 	mux.HandleFunc("GET /api/projects/{id}", s.handleProject)
-	mux.HandleFunc("GET /api/classes", s.handleClasses)
-	mux.HandleFunc("GET /api/classes/{id}/students", s.handleClassStudents)
+	mux.HandleFunc("GET /api/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	mux.HandleFunc("GET /api/students", s.handleStudents)
 	mux.HandleFunc("POST /api/students", s.handleCreateStudent)
 	mux.HandleFunc("POST /api/login", s.handleLogin)
 	mux.HandleFunc("POST /api/logout", s.handleLogout)
@@ -82,6 +86,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/me/sketches/{project}", s.withStudent(s.handlePutSketch))
 	mux.HandleFunc("GET /api/me/export", s.withStudent(s.handleExport))
 	mux.HandleFunc("POST /api/me/import", s.withStudent(s.handleImport))
+	mux.HandleFunc("GET /api/everyone/export", s.handleExportEveryone)
+	mux.HandleFunc("POST /api/wipe", s.handleWipe)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not_found", "There's nothing here.")
 	})
@@ -98,6 +104,10 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Cross-Origin-Opener-Policy", "same-origin")
+		if !s.hostAllowed(r.Host) {
+			http.Error(w, "CircuitPath only answers this computer.", http.StatusMisdirectedRequest)
+			return
+		}
 		defer func() {
 			if v := recover(); v != nil {
 				s.Log.Error("panic", "path", r.URL.Path, "err", v)
@@ -113,6 +123,23 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *Server) hostAllowed(hostport string) bool {
+	if len(s.Hosts) == 0 {
+		return true
+	}
+	host := hostport
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
+		host = h
+	}
+	host = strings.TrimSuffix(strings.Trim(host, "[]"), ".")
+	for _, ok := range s.Hosts {
+		if strings.EqualFold(host, ok) {
+			return true
+		}
+	}
+	return false
 }
 
 // sameOrigin blocks cross-site requests: every write must carry our custom
@@ -173,14 +200,6 @@ func readJSON(w http.ResponseWriter, r *http.Request, v any) bool {
 	return true
 }
 
-func clientIP(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
-
 // withStudent runs h only for a logged-in student, passing their id.
 func (s *Server) withStudent(h func(http.ResponseWriter, *http.Request, int64)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -191,7 +210,7 @@ func (s *Server) withStudent(h func(http.ResponseWriter, *http.Request, int64)) 
 		}
 		id, err := s.Store.SessionStudent(r.Context(), auth.HashToken(c.Value))
 		if errors.Is(err, store.ErrNotFound) {
-			clearCookie(w)
+			s.clearCookie(w)
 			writeError(w, http.StatusUnauthorized, "logged_out", "Please log in again.")
 			return
 		}
@@ -211,19 +230,20 @@ func (s *Server) startSession(ctx context.Context, w http.ResponseWriter, studen
 	if err := s.Store.CreateSession(ctx, hash, studentID, sessionTTL); err != nil {
 		return err
 	}
-	// A session cookie (no expiry): it goes when the browser closes, which
-	// suits shared laptops. The server also ends it after sessionTTL.
+	// A session cookie (no expiry): it goes when the browser closes, so the
+	// next person on the laptop starts at the welcome screen. The server also
+	// ends it after sessionTTL.
 	http.SetCookie(w, &http.Cookie{
 		Name: cookieName, Value: token, Path: "/",
-		HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode,
+		HttpOnly: true, Secure: s.SecureCookies, SameSite: http.SameSiteStrictMode,
 	})
 	return nil
 }
 
-func clearCookie(w http.ResponseWriter) {
+func (s *Server) clearCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name: cookieName, Value: "", Path: "/", MaxAge: -1,
-		HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode,
+		HttpOnly: true, Secure: s.SecureCookies, SameSite: http.SameSiteStrictMode,
 	})
 }
 
@@ -312,26 +332,4 @@ func contentType(ext string) string {
 		return "text/plain; charset=utf-8"
 	}
 	return mime.TypeByExtension(ext)
-}
-
-// StartingHandler is served while the server starts up and checks for an
-// update: the "getting ready" page (which refreshes itself), the files it
-// needs, and a 503 for the API so autosave waits and tries again.
-func (s *Server) StartingHandler() http.Handler {
-	s.init()
-	page, _ := fs.ReadFile(s.UI, "updating.html")
-	return s.middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Retry-After", "10")
-		switch ext := path.Ext(r.URL.Path); {
-		case strings.HasPrefix(r.URL.Path, "/api/"):
-			writeError(w, http.StatusServiceUnavailable, "starting", "CircuitPath is getting ready. Try again in a moment.")
-		case ext == ".css" || ext == ".svg" || ext == ".png" || ext == ".ico":
-			s.static.ServeHTTP(w, r)
-		default:
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Header().Set("Cache-Control", "no-store")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write(page)
-		}
-	}))
 }

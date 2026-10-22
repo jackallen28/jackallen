@@ -1,5 +1,5 @@
-// Talks to the CircuitPath server. Every write carries the X-CircuitPath
-// header, which the server requires (it stops other websites sending
+// Talks to CircuitPath.exe, running on this laptop. Every write carries the
+// X-CircuitPath header, which it requires (it stops other websites sending
 // requests as a logged-in student).
 
 export class ApiError extends Error {
@@ -10,7 +10,7 @@ export class ApiError extends Error {
     this.retryAfter = body?.retry_after || 0;
   }
 
-  /** True when the server couldn't be reached (network blip, Pi off). */
+  /** True when CircuitPath.exe couldn't be reached (it has closed). */
   get offline() {
     return this.status === 0;
   }
@@ -39,7 +39,7 @@ export async function request(method, path, body, { raw = false, keepalive = fal
   try {
     res = await fetch(path, { method, headers, body: payload, credentials: "same-origin", keepalive });
   } catch {
-    throw new ApiError(0, { error: "offline", message: "Can't reach CircuitPath. Check your network." });
+    throw new ApiError(0, { error: "offline", message: "CircuitPath has closed. Open CircuitPath again from the Start menu or your desktop." });
   }
   if (raw && res.ok) return res;
   let data = null;
@@ -52,7 +52,6 @@ export async function request(method, path, body, { raw = false, keepalive = fal
   }
   if (!res.ok) {
     const err = new ApiError(res.status, data);
-    if (res.status >= 502 && res.status <= 504) err.status = 0; // the Pi is restarting
     if (err.code === "logged_out" && !path.startsWith("/api/login")) listeners.forEach((fn) => fn());
     throw err;
   }
@@ -63,10 +62,12 @@ export const api = {
   info: () => request("GET", "/api/info"),
   catalogue: () => request("GET", "/api/catalogue"),
   project: (id) => request("GET", `/api/projects/${encodeURIComponent(id)}`),
-  classes: () => request("GET", "/api/classes"),
-  students: (classId) => request("GET", `/api/classes/${classId}/students`),
+  ping: () => request("GET", "/api/ping"),
+  students: () => request("GET", "/api/students"),
   createStudent: (profile) => request("POST", "/api/students", profile),
-  login: (studentId, pictures) => request("POST", "/api/login", { student_id: studentId, pictures }),
+  login: (studentId) => request("POST", "/api/login", { student_id: studentId }),
+  wipe: () => request("POST", "/api/wipe", { confirm: "WIPE" }),
+  everyoneExportUrl: "/api/everyone/export",
   logout: () => request("POST", "/api/logout"),
   me: () => request("GET", "/api/me"),
   saveSettings: (settings) => request("PUT", "/api/me/settings", settings),

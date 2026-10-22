@@ -1,11 +1,11 @@
-// Package arduino installs and checks the Arduino tools the Pi compiles
+// Package arduino installs and checks the Arduino tools CircuitPath compiles
 // with: arduino-cli, the board cores (AVR, ESP8266, ESP32) and every library
 // the projects use, at the exact versions in requirements.json.
 //
-// The versions are built into the server, so a CircuitPath release can move
-// them on: after an update the server notices the list changed and brings
-// the Pi's tools up to date (Setup), then compiles the kit-check sketch for
-// every board (Check), which also fills the build cache.
+// Setup brings a folder's tools to those versions; Check compiles the
+// kit-check sketch for every board (which also fills the build cache). CI
+// runs both on every board; the app doesn't use them yet (how compiling
+// ships with the Windows app is still to decide).
 package arduino
 
 import (
@@ -76,7 +76,7 @@ type Board struct {
 	FQBN string
 }
 
-// Env is the Pi's Arduino folder (normally /var/lib/circuitpath/arduino):
+// Env is an Arduino tools folder:
 //
 //	bin/arduino-cli      the pinned arduino-cli
 //	arduino-cli.yaml     its settings (all paths inside this folder)
@@ -208,7 +208,7 @@ func (e *Env) Check(ctx context.Context, boards []Board) ([]Result, error) {
 	return results, nil
 }
 
-// run runs arduino-cli with the Pi's settings and returns its output.
+// run runs arduino-cli with this folder's settings and returns its output.
 func (e *Env) run(ctx context.Context, args ...string) (string, error) {
 	args = append([]string{"--config-file", e.ConfigFile(), "--no-color"}, args...)
 	cmd := exec.CommandContext(ctx, e.CLI(), args...)

@@ -108,13 +108,11 @@ func (c *client) want(status int, method, path string, body any, headers ...stri
 	return data
 }
 
-var pics = []string{"cat", "rocket", "apple"}
-
-func (c *client) signUp(classID int64, names ...string) meResponse {
+func (c *client) signUp(names ...string) meResponse {
 	c.e.t.Helper()
 	var me meResponse
 	data := c.want(http.StatusCreated, "POST", "/api/students", map[string]any{
-		"class_id": classID, "names": names, "school": "Eltham High", "pictures": pics,
+		"names": names, "school": "Eltham High",
 	})
 	json.Unmarshal(data, &me)
 	return me
@@ -125,7 +123,7 @@ func TestInfoCatalogueAndStatic(t *testing.T) {
 	c := e.client()
 	var info map[string]any
 	json.Unmarshal(c.want(200, "GET", "/api/info", nil), &info)
-	if info["school"] != defaultSchool || len(info["pictures"].([]any)) != 9 {
+	if info["school"] != defaultSchool || info["app"] != "CircuitPath" {
 		t.Fatalf("info = %v", info)
 	}
 	var cat struct {
@@ -154,44 +152,45 @@ func TestInfoCatalogueAndStatic(t *testing.T) {
 	c.want(404, "GET", "/missing.js", nil)
 }
 
-func TestSignUpWithoutClasses(t *testing.T) {
+func TestSignUpAndPickYourName(t *testing.T) {
 	e := newEnv(t)
 	c := e.client()
-	if string(c.want(200, "GET", "/api/classes", nil)) != "[]\n" {
-		t.Fatal("expected no classes")
+	if string(c.want(200, "GET", "/api/students", nil)) != "[]\n" {
+		t.Fatal("expected no profiles")
 	}
-	me := c.signUp(0, "mia", "Leo")
+	me := c.signUp("mia", "Leo")
 	if me.Student.Names[0] != "Mia" || me.Settings.Board != "uno" || me.Settings.HelpLevel != "" || !me.Settings.Nudges {
 		t.Fatalf("me = %+v", me)
 	}
 	c.want(200, "GET", "/api/me", nil)
 	var list []store.StudentSummary
-	json.Unmarshal(c.want(200, "GET", "/api/classes/0/students", nil), &list)
+	json.Unmarshal(c.want(200, "GET", "/api/students", nil), &list)
 	if len(list) != 1 || list[0].Names[1] != "Leo" {
 		t.Fatalf("students = %+v", list)
 	}
 	// The same names at the same school can't be made twice.
 	c2 := e.client()
-	c2.want(409, "POST", "/api/students", map[string]any{
-		"class_id": 0, "names": []string{"Leo", "Mia"}, "school": "eltham high", "pictures": pics,
-	})
+	c2.want(409, "POST", "/api/students", map[string]any{"names": []string{"Leo", "Mia"}, "school": "eltham high"})
+
+	// Picking your name logs you in (no password on your own laptop).
+	c2.want(401, "GET", "/api/me", nil)
+	c2.want(200, "POST", "/api/login", map[string]any{"student_id": list[0].ID})
+	c2.want(200, "GET", "/api/me", nil)
+	c2.want(404, "POST", "/api/login", map[string]any{"student_id": 999})
+	c2.want(204, "POST", "/api/logout", nil)
+	c2.want(401, "GET", "/api/me", nil)
 }
 
 func TestSignUpChecksInput(t *testing.T) {
 	e := newEnv(t)
-	cls, _ := e.store.CreateClass(context.Background(), "9D Tuesday")
 	c := e.client()
-	ok := map[string]any{"class_id": cls.ID, "names": []string{"Ava"}, "school": "Eltham High", "pictures": pics}
 	bad := []map[string]any{
-		{"class_id": 0, "names": []string{"Ava"}, "school": "Eltham High", "pictures": pics},              // classes exist now
-		{"class_id": 999, "names": []string{"Ava"}, "school": "Eltham High", "pictures": pics},            // no such class
-		{"class_id": cls.ID, "names": []string{}, "school": "Eltham High", "pictures": pics},              // no names
-		{"class_id": cls.ID, "names": []string{"A", "B", "C", "D", "E"}, "school": "X", "pictures": pics}, // 5 names
-		{"class_id": cls.ID, "names": []string{"<script>"}, "school": "X", "pictures": pics},
-		{"class_id": cls.ID, "names": []string{"Ava", "ava"}, "school": "X", "pictures": pics},
-		{"class_id": cls.ID, "names": []string{"Ava"}, "school": "", "pictures": pics},
-		{"class_id": cls.ID, "names": []string{"Ava"}, "school": "X", "pictures": []string{"cat", "cat", "sun"}},
-		{"class_id": cls.ID, "names": []string{"Ava"}, "school": "X", "pictures": pics, "surname": "Smith"},
+		{"names": []string{}, "school": "Eltham High"},
+		{"names": []string{"A", "B", "C", "D", "E"}, "school": "X"},
+		{"names": []string{"<script>"}, "school": "X"},
+		{"names": []string{"Ava", "ava"}, "school": "X"},
+		{"names": []string{"Ava"}, "school": ""},
+		{"names": []string{"Ava"}, "school": "X", "surname": "Smith"},
 	}
 	for _, b := range bad {
 		if res, data := c.do("POST", "/api/students", b); res.StatusCode != 400 {
@@ -201,48 +200,76 @@ func TestSignUpChecksInput(t *testing.T) {
 	if res, _ := c.do("POST", "/api/students", "{not json"); res.StatusCode != 400 {
 		t.Errorf("bad JSON = %d", res.StatusCode)
 	}
-	c.want(201, "POST", "/api/students", ok)
+	c.want(201, "POST", "/api/students", map[string]any{"names": []string{"Ava"}, "school": "Eltham High"})
 }
 
 func TestCrossSiteWritesAreBlocked(t *testing.T) {
 	e := newEnv(t)
 	c := e.client()
-	body := map[string]any{"class_id": 0, "names": []string{"Ava"}, "school": "X", "pictures": pics}
+	body := map[string]any{"names": []string{"Ava"}, "school": "X"}
 	c.want(403, "POST", "/api/students", body, "X-CircuitPath", "")
 	c.want(403, "POST", "/api/students", body, "Sec-Fetch-Site", "cross-site")
+	c.want(403, "POST", "/api/wipe", map[string]any{"confirm": "WIPE"}, "Sec-Fetch-Site", "cross-site")
 	c.want(201, "POST", "/api/students", body, "Sec-Fetch-Site", "same-origin")
 }
 
-func TestLoginAndLockout(t *testing.T) {
-	e := newEnv(t)
-	me := e.client().signUp(0, "Ava")
-	c := e.client()
-	c.want(401, "GET", "/api/me", nil)
-	wrong := map[string]any{"student_id": me.Student.ID, "pictures": []string{"rocket", "cat", "apple"}}
-	right := map[string]any{"student_id": me.Student.ID, "pictures": pics}
-	for i := 0; i < 4; i++ {
-		c.want(401, "POST", "/api/login", wrong)
+func TestOnlyThisComputerIsAnswered(t *testing.T) {
+	cat, _ := content.Load(os.DirFS("../../content"))
+	s := &Server{
+		Catalogue: cat,
+		UI:        fstest.MapFS{"index.html": {Data: []byte("hi")}},
+		Hosts:     []string{"localhost", "127.0.0.1"},
+		Log:       slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
-	res, data := c.do("POST", "/api/login", wrong)
-	if res.StatusCode != 429 || res.Header.Get("Retry-After") == "" || !strings.Contains(string(data), "locked") {
-		t.Fatalf("5th wrong try = %d %s", res.StatusCode, data)
+	h := s.Handler()
+	for host, want := range map[string]int{
+		"localhost:47820": 200, "127.0.0.1:47820": 200, "LOCALHOST": 200,
+		"evil.example:47820": 421, "circuitpath.local": 421, "": 421,
+	} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Host = host
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != want {
+			t.Errorf("Host %q = %d, want %d", host, rec.Code, want)
+		}
 	}
-	// Even the right pictures wait out the lock.
-	c.want(429, "POST", "/api/login", right)
-	c.want(404, "POST", "/api/login", map[string]any{"student_id": 999, "pictures": pics})
+}
 
-	// A fresh profile logs in fine.
-	other := e.client().signUp(0, "Ben")
-	c.want(200, "POST", "/api/login", map[string]any{"student_id": other.Student.ID, "pictures": pics})
-	c.want(200, "GET", "/api/me", nil)
-	c.want(204, "POST", "/api/logout", nil)
-	c.want(401, "GET", "/api/me", nil)
+func TestWipe(t *testing.T) {
+	e := newEnv(t)
+	ava, ben := e.client(), e.client()
+	ava.signUp("Ava")
+	ben.signUp("Ben")
+	ava.want(200, "PUT", "/api/me/sketches/freeplay", map[string]any{"code": "// Ava's robot"})
+
+	// Save everyone's work first: one zip with a .circuit file each.
+	res, data := e.client().do("GET", "/api/everyone/export", nil)
+	if res.StatusCode != 200 || !strings.Contains(res.Header.Get("Content-Disposition"), "Everyone_CircuitPath_") {
+		t.Fatalf("everyone export = %d %v", res.StatusCode, res.Header)
+	}
+	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil || len(z.File) != 2 || !strings.HasPrefix(z.File[0].Name, "Ava_CircuitPath_") {
+		t.Fatalf("zip = %v, %v", z, err)
+	}
+
+	c := e.client()
+	c.want(400, "POST", "/api/wipe", map[string]any{"confirm": "wipe"})
+	c.want(400, "POST", "/api/wipe", map[string]any{})
+	if list, _ := e.store.ListStudents(context.Background()); len(list) != 2 {
+		t.Fatal("wiped without WIPE")
+	}
+	c.want(204, "POST", "/api/wipe", map[string]any{"confirm": "WIPE"})
+	if string(c.want(200, "GET", "/api/students", nil)) != "[]\n" {
+		t.Fatal("profiles left after the wipe")
+	}
+	ava.want(401, "GET", "/api/me", nil)
 }
 
 func TestSettings(t *testing.T) {
 	e := newEnv(t)
 	c := e.client()
-	c.signUp(0, "Ava")
+	c.signUp("Ava")
 	c.want(200, "PUT", "/api/me/settings", map[string]any{"help_level": "advanced", "board": "esp32", "nudges": false})
 	var me meResponse
 	json.Unmarshal(c.want(200, "GET", "/api/me", nil), &me)
@@ -259,8 +286,8 @@ func TestSettings(t *testing.T) {
 func TestAutosaveIsPrivate(t *testing.T) {
 	e := newEnv(t)
 	ava, ben := e.client(), e.client()
-	ava.signUp(0, "Ava")
-	ben.signUp(0, "Ben")
+	ava.signUp("Ava")
+	ben.signUp("Ben")
 	code := "void setup() {\n  pinMode(13, OUTPUT);\n}\n"
 	ava.want(200, "PUT", "/api/me/sketches/blink-traffic-lights", map[string]any{"code": code})
 	var sk store.Sketch
@@ -291,7 +318,7 @@ func TestAutosaveIsPrivate(t *testing.T) {
 func TestSaveMyWorkAndOpenMyWork(t *testing.T) {
 	e := newEnv(t)
 	ava := e.client()
-	ava.signUp(0, "Ava", "Zoë")
+	ava.signUp("Ava", "Zoë")
 	ava.want(200, "PUT", "/api/me/sketches/freeplay", map[string]any{"code": "// Ava's"})
 	ava.want(200, "PUT", "/api/me/sketches/blink-traffic-lights", map[string]any{"code": "// blink"})
 	ava.want(200, "PUT", "/api/me/progress/blink-traffic-lights", map[string]any{"step": 2})
@@ -309,7 +336,7 @@ func TestSaveMyWorkAndOpenMyWork(t *testing.T) {
 
 	// Ben has an older blink of his own.
 	ben := e.client()
-	ben.signUp(0, "Ben")
+	ben.signUp("Ben")
 	ben.want(200, "PUT", "/api/me/sketches/blink-traffic-lights", map[string]any{"code": "// Ben's newer blink"})
 
 	var preview struct {
@@ -380,33 +407,5 @@ func TestNameCleaning(t *testing.T) {
 		if got := cleanName(in); got != want {
 			t.Errorf("cleanName(%q) = %q, want %q", in, got, want)
 		}
-	}
-}
-
-func TestStartingHandler(t *testing.T) {
-	st, _ := store.Open(filepath.Join(t.TempDir(), "cp.db"))
-	defer st.Close()
-	cat, _ := content.Load(os.DirFS("../../content"))
-	s := &Server{
-		Store:     st,
-		Catalogue: cat,
-		UI:        fstest.MapFS{"updating.html": {Data: []byte("getting ready")}, "theme.css": {Data: []byte("body{}")}},
-		Log:       slog.New(slog.NewTextHandler(io.Discard, nil)),
-	}
-	h := s.StartingHandler()
-	for path, want := range map[string]int{"/": 503, "/api/me": 503, "/api/me/sketches/blink": 503, "/theme.css": 200} {
-		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
-		if rec.Code != want {
-			t.Errorf("%s = %d, want %d", path, rec.Code, want)
-		}
-		if rec.Header().Get("Content-Security-Policy") == "" {
-			t.Errorf("%s has no CSP", path)
-		}
-	}
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
-	if !strings.Contains(rec.Body.String(), "getting ready") {
-		t.Errorf("page = %q", rec.Body.String())
 	}
 }

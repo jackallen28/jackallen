@@ -2,16 +2,13 @@
 // student's profile, progress and sketches that they can take home or open
 // on another CircuitPath server.
 //
-// Format version 2:
+// Format version 1:
 //
-//	manifest.json        {"format": "circuitpath-save", "version": 2, ...}
-//	profile.json         settings only: no names and never the sign-in code
+//	manifest.json        {"format": "circuitpath-save", "version": 1, ...}
+//	profile.json         names, school, settings (never the picture password)
 //	progress.json        [{project_id, data, updated_at}]
 //	sketches.json        [{project_id, updated_at}]
 //	sketches/<id>.ino    the code, so the zip opens in the Arduino IDE too
-//
-// Version 1 (from the Raspberry Pi server) also had names and a school in
-// profile.json; they are ignored when it is read.
 //
 // Never break this format: bump the version and keep reading the old ones.
 package savefile
@@ -33,7 +30,7 @@ import (
 // Format and Version identify a save file.
 const (
 	Format  = "circuitpath-save"
-	Version = 2
+	Version = 1
 )
 
 // Limits for files being opened.
@@ -59,8 +56,10 @@ type Manifest struct {
 	AppVersion string `json:"app_version"`
 }
 
-// Profile is the part of a student's profile that is saved (no names).
+// Profile is the part of a student's profile that is saved.
 type Profile struct {
+	Names    []string        `json:"names"`
+	School   string          `json:"school"`
 	Settings json.RawMessage `json:"settings,omitempty"`
 }
 

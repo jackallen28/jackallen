@@ -1,0 +1,92 @@
+# Publishes CircuitPath.exe as a GitHub release. Any of these starts it:
+#   - changing the VERSION file (on github.com: open VERSION, edit, commit)
+#   - pushing a version tag:  git tag v1.2.3 && git push origin v1.2.3
+#   - making a release with a new v1.2.3 tag on github.com
+# It tests on Windows, starts the exe and uses it, then publishes
+# CircuitPath.exe (64-bit Intel/AMD), CircuitPath-arm64.exe and SHA256SUMS.
+name: Release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    branches: [BNTS_CircuitPath, master, main]
+    paths: [VERSION]
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+# One release at a time (a release made on github.com can start this twice).
+concurrency:
+  group: release
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Which version?
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(tr -d ' \r\n' < VERSION)"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' isn't a version like v1.2.3 (VERSION should hold just 1.2.3)."
+            exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          # A VERSION change for a version that's already out does nothing.
+          if [[ "$GITHUB_REF" == refs/heads/* ]] && gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG is already published."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-go@v5
+        if: steps.version.outputs.skip != 'true'
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        if: steps.version.outputs.skip != 'true'
+        run: go test ./...
+
+      - name: Build
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          mkdir -p dist
+          for arch in amd64 arm64; do
+            out=dist/CircuitPath.exe
+            [ "$arch" = arm64 ] && out=dist/CircuitPath-arm64.exe
+            CGO_ENABLED=0 GOOS=windows GOARCH=$arch go build -trimpath \
+              -ldflags "-H windowsgui -s -w -X circuitpath.Version=$VERSION" -o "$out" ./cmd/circuitpath
+          done
+          (cd dist && sha256sum *.exe > SHA256SUMS)
+
+      - name: Start CircuitPath.exe and use it
+        if: steps.version.outputs.skip != 'true'
+        shell: pwsh
+        run: ./tests/windows/smoke.ps1 -Exe dist/CircuitPath.exe
+
+      - name: Publish
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="Download **CircuitPath.exe** and double-click it: CircuitPath opens in Edge or Chrome. Nothing to install, no admin rights needed. (CircuitPath-arm64.exe is for Windows laptops with ARM chips, such as Snapdragon.) See docs/windows-app.md."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
+              --title "CircuitPath $VERSION (Windows app)" --notes "$notes" --latest
+          fi

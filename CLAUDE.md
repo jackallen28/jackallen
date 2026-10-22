@@ -12,13 +12,15 @@
 ## 1. What CircuitPath is
 
 CircuitPath teaches Arduino C++ on real boards (Arduino Uno, Arduino Nano, NodeMCU, other ESP8266 /
-ESP32 boards) like a tutor sitting beside the student. It is a **web app served by a Raspberry Pi 5
-on the school network**: the teacher flashes a ready-made **CircuitPath SD card image**, puts it in
-the Pi, plugs in power and a network cable, and that's it. **No screen, no keyboard**, no setup on
-the Pi. Students open `https://circuitpath.local` (or the address IT gives it) in **Edge or Chrome**
-on their Windows laptops: nothing to install, no admin rights needed. Their work is saved on the
-Pi, so they can log in from any laptop. The teacher manages it from a **Teacher page** in their own
-browser. Everything works without the internet.
+ESP32 boards) like a tutor sitting beside the student. It is **one file on each student's Windows
+laptop, `CircuitPath.exe`**, like PiPath: double-click it and the web app opens in **Edge or
+Chrome** as an app window. Nothing to install, no admin rights, **no server and no teacher
+controls**. Work is saved on the laptop. Everything works without the internet.
+
+> **History:** CircuitPath was first planned as a web app served by a Raspberry Pi 5 on the school
+> network, then as a cloud server (Render + Postgres) with student codes and staff logins. The
+> school network blocked the Pi, and the teacher chose a local Windows app instead. The cloud work
+> is parked in the git history (the "Park the unfinished cloud version" commit).
 
 Audience: secondary students (Years 7–10), new to text-based coding and electronics. Content links
 to the **Victorian Curriculum Digital Technologies (Levels 7–10)**. Made for the **Banyule
@@ -26,12 +28,12 @@ Nillumbik Tech School (BNTS)**.
 
 ### The student journey
 
-1. **Login:** welcome → pick your class → pick your name, or create a profile: **first name(s) +
-   school only** (up to 4 names when students share a laptop and kit), plus a **picture password**
-   (tap 3 of 9 pictures: easy for Year 7s, and it stops classmates opening each other's work on a
-   shared server; the teacher can reset it) → step 2: **how much help** and **which board they
-   have** (Uno, Nano, NodeMCU, ESP32...) → the **project picker**. A **Settings** button on
-   every screen changes these at any time.
+1. **Login (the welcome screen, as in PiPath):** pick your name from the profiles on this
+   laptop, or **I'm new here**: **first name(s) + school only** (up to 4 names when students share
+   a laptop and kit). No password: it's the student's own laptop → step 2: **how much help** and
+   **which board they have** (Uno, Nano, NodeMCU, ESP32...) → the **project picker**. A
+   **Settings** button on every screen changes these at any time. The welcome screen also links
+   to the **WIPE page** (§4).
 2. **Free choice:** every project is open from day one, in any order. Tiers are a guide only (a
    colour badge, a filter, "Good to try first" tips). Nothing is locked.
 3. **Free Play is the first box** on the picker ("Free Play: build anything you like! ...or pick
@@ -67,13 +69,11 @@ Nillumbik Tech School (BNTS)**.
 - **One part at a time:** each project adds one new part, tests it on its own, then joins it up.
 - **Curriculum links live in Settings > Curriculum** (a list of projects; opened from a project, it
   starts on that one). Not on the project intro.
-- **Students run their own learning; the teacher only looks after the server.** Students never see
-  teacher tools. Because the server is shared by the whole school, the things that affect everyone
-  (Save a copy of all work, **Wipe session** for the next group, resetting a picture password) are
-  on the **Teacher page** (§4), behind the teacher's password. Students' Settings keep **Save my
-  work** (a `.circuit` file of their own work) and **Open my work**.
-- **Autosave:** code saves to the Pi about a second after typing stops, and progress saves at every
-  step, so students pick up where they left off, on any laptop.
+- **Students run their own learning; there are no teacher controls.** The only tool that affects
+  everyone on a laptop is the **WIPE page** (§4). Students' Settings keep **Save my work** (a
+  `.circuit` file of their own work) and **Open my work** (to move work between laptops).
+- **Autosave:** code saves on the laptop about a second after typing stops, and progress saves at
+  every step, so students pick up where they left off.
 - **Scrolling works like a website:** the wheel / trackpad scrolls the panel under the mouse, and
   anywhere else scrolls the page's main panel. (Free in a browser; don't break it with custom
   scroll handling.)
@@ -112,126 +112,60 @@ variables (`ui/theme.css`).
 
 ---
 
-## 3. Architecture (decided): a Raspberry Pi 5 server on the school network
+## 3. Architecture (decided): a Windows app on each student laptop
 
 ```
-Raspberry Pi 5 (8 GB), headless           student laptops (Windows, Edge / Chrome)
-┌──────────────────────────────────┐      ┌────────────────────────────────────────┐
-│ CircuitPath server (Go, systemd) │ https│ the web app: projects, Wiring Wizard,  │
-│  - serves the web app            │◀────▶│ simulator (runs in the browser),       │
-│  - accounts + saves (SQLite)     │      │ editor, Serial Monitor                 │
-│  - compile queue (arduino-cli)   │      │                                        │
-│  - Teacher page                  │      │ Upload: the compiled file goes to the  │
-│ arduino-cli + cores + libraries  │      │ board over USB with Web Serial         │
-└──────────────────────────────────┘      └────────────────────────────────────────┘
+student laptop (Windows 10/11, no admin rights)
+┌──────────────────────────────────────────────────────────────────┐
+│ CircuitPath.exe (Go, one file)        Edge / Chrome app window   │
+│  - serves the web app on              ┌────────────────────────┐ │
+│    http://localhost:47820 ◀──────────▶│ projects, Wiring Wizard,│ │
+│    (this laptop only)                 │ simulator, editor,      │ │
+│  - profiles + saves (SQLite in        │ Serial Monitor          │ │
+│    %LOCALAPPDATA%\CircuitPath)        │ Upload: Web Serial → USB│ │
+│  - WIPE                               └────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-- **Server: one Go program** (`circuitpath-server`, a single static binary for linux/arm64), run by
-  systemd, started at boot, restarted if it stops. It:
-  - serves the web app (`ui/`) and a JSON API over **HTTPS** (port 443; port 80 redirects)
-  - stores profiles, progress, sketches and settings in **SQLite** (one file, WAL mode, nightly
-    backups, §4)
-  - compiles with the bundled **arduino-cli** (cores and libraries pre-installed in the image, no
-    internet needed), through a **queue**: at most 3–4 compiles at once (one per CPU core), others
-    see "You're 3rd in line"; a **shared build cache** per board so each core is compiled once
-  - returns the compiled `.hex` / `.bin` to the browser, which uploads it (below)
-  - has a **Teacher page** (§4)
-  - **updates itself every time it starts** (§4: signed GitHub releases; no internet → starts as it is)
-- **The simulator runs entirely in the student's browser** (§6), so the Pi only works when a student
-  presses **Upload** or **Check my code** (a real compile, for the Coach to explain real errors).
-- **Uploading to a real board happens in the browser** with **Web Serial** (Edge / Chrome on Windows
-  10/11, Chromebooks too): STK500v1 (Optiboot) for Uno / Nano, STK500v2 for Mega, `esptool-js`
-  (Apache-2.0, vendored) for ESP8266 / ESP32, the Uno R4's bootloader protocol if R4s are used. The
-  Serial Monitor and the Wiring Wizard's test also use Web Serial. Firefox and Safari can use the
-  simulator but not Upload (the app says so kindly).
-- **The web app** is plain HTML / CSS / ES modules, no build step needed to serve it; third-party code
-  is vendored with its licence (CodeMirror, esptool-js), never loaded from a CDN.
-- **Performance target on a Pi 5:** Uno compile (cached core) ≤ 5 s, ESP32 ≤ 30 s, a class of 25
-  using it at once, the web app loads in under 2 s on the school network.
+- **`CircuitPath.exe`: one Go program** (no cgo, no console window, an icon and version details).
+  Double-click it and it:
+  - serves the web app (`ui/`, built in) and a JSON API on **`http://localhost:47820`**, listening
+    on `127.0.0.1` / `::1` only and answering only `localhost` Host names (no DNS rebinding);
+    every write needs the `X-CircuitPath: 1` header (no cross-site requests)
+  - opens it as an **Edge app window** (or Chrome, or the default browser)
+  - stores profiles, progress, sketches and settings in **SQLite** (one file in
+    `%LOCALAPPDATA%\CircuitPath`, WAL mode, `fsync` on save)
+  - if it's already running, a second launch just opens another window; it closes itself
+    20 minutes after the last window closes (open windows ping every minute)
+  - writes `circuitpath.log` next to the database; shows a message box if it can't start
+- **The simulator runs entirely in the browser** (§6).
+- **Uploading to a real board happens in the browser** with **Web Serial** (Edge / Chrome;
+  `http://localhost` counts as a secure site): STK500v1 (Optiboot) for Uno / Nano, STK500v2 for
+  Mega, `esptool-js` (Apache-2.0, vendored) for ESP8266 / ESP32. The Serial Monitor and the Wiring
+  Wizard's test also use Web Serial.
+- **Compiling for Upload** (arduino-cli and the board cores) is **still to decide** for the local
+  app: shipping them with the app is roughly 300 MB for AVR and over 1 GB with ESP32, unpacked into
+  `%LOCALAPPDATA%` on first use (no admin needed). `internal/arduino` already pins and checks them.
+- **The web app** is plain HTML / CSS / ES modules, no build step; third-party code is vendored
+  with its licence (CodeMirror, esptool-js), never loaded from a CDN.
+- **Releases:** changing `VERSION` publishes `CircuitPath.exe` (+ ARM64) as a GitHub release, after
+  testing on Windows. No automatic updates yet (students download the new file).
+- **Performance target:** the app window opens in under 2 s, a project in under 0.5 s.
 
-### What IT needs to do (once)
+### What IT may need to do
 
-1. **A network port and a name.** Plug the Pi into a wired network port. It announces itself as
-   `circuitpath.local` (mDNS). If the school network blocks mDNS, ask IT for a **DHCP reservation**
-   and a DNS name (e.g. `circuitpath.<school domain>`). The Teacher page shows the address to use.
-2. **HTTPS that browsers trust** (Web Serial, and so Upload, only works on secure sites). On first
-   boot the Pi makes its own small certificate authority. The Teacher page has **Download
-   certificate**: IT pushes it to the laptops as a trusted root (Intune / Group Policy), and
-   `https://circuitpath.local` then shows a padlock. Or IT installs a certificate from the school's
-   own certificate system on the Teacher page. (Fallback IT can choose instead: the Edge / Chrome
-   policy that treats `http://circuitpath.local` as secure.)
-3. **USB drivers on the laptops** for clone boards (CH340, CP2102): push them once with Intune, or
-   choose boards with built-in USB that need no driver (genuine Uno R3, Uno R4 Minima / WiFi, Nano
-   ESP32, ESP32-C3 / S3). Test one laptop first: plug a board in and check Device Manager for a COM
-   port.
+1. **Allow the app** if the laptops block unsigned programs (SmartScreen: More info > Run anyway;
+   AppLocker / Intune: allow it by hash or path, or sign it with the school's certificate).
+2. **USB drivers** for clone boards (CH340, CP2102), or boards with built-in USB.
 
 ---
 
-## 3a. The SD card image (no screen, no keyboard)
+## 4. The WIPE page (`#/wipe`, linked from the welcome screen)
 
-The teacher's whole set-up is: **flash, insert, power on**.
-
-- **Built by CI** (GitHub Actions) with Raspberry Pi's image builder (`rpi-image-gen`, or `pi-gen` if
-  needed), on **Raspberry Pi OS Lite (64-bit, Trixie)**. Published as a GitHub Release:
-  `circuitpath-<version>.img.xz`, with its SHA-256.
-- **Flash it with Raspberry Pi Imager** ("Use custom"). Imager's own settings (hostname, Wi-Fi,
-  SSH key, password) still work and are optional. Use a 32 GB+ A2 card (or flash an SSD for a Pi 5
-  with an NVMe HAT: faster, longer-lasting).
-- **Already inside the image:** CircuitPath server, the web app, arduino-cli with the AVR, ESP8266
-  and ESP32 cores and every library the projects use (pre-compiled build cache for each board),
-  avahi (mDNS name `circuitpath`), a firewall allowing only 22 / 80 / 443, **automatic updates for
-  everything** (Raspberry Pi OS: every update daily with `unattended-upgrades`, restarting at 03:30
-  when one needs it; CircuitPath and its board cores / libraries: §4), log rotation, and a
-  read-mostly setup that survives sudden power loss (data on its own partition, SQLite WAL, `fsync`
-  on save). The image runs the same installer as a manual install (`deploy/install.sh`; how to try
-  it on a Pi before the image exists: `docs/try-it-on-a-pi.md`).
-- **First boot (automatic, about 2 minutes):** expands the filesystem, makes the HTTPS certificate,
-  creates a random first **teacher password** and writes it to `circuitpath-first-login.txt` on the
-  card's boot partition (readable on any computer), then starts serving. The teacher must change it
-  on first login (and the file is deleted).
-- **Optional settings file:** before first boot the teacher can put `circuitpath.toml` on the boot
-  partition (any computer can open it): `school`, `hostname`, `teacher_password`, Wi-Fi network and
-  password (Ethernet is recommended), `timezone`, static IP. Read once at first boot, then removed.
-- **SSH** is off by default and only for emergencies: turned on from the Teacher page, or by Imager's
-  settings, or an `ssh` file on the boot partition.
-- **No screen ever needed.** The Pi's green LED shows status: steady = ready, slow blink = starting /
-  updating, fast blink = a problem (the Teacher page or the boot partition's `circuitpath-status.txt`
-  explains it).
-
----
-
-## 4. The Teacher page (`https://circuitpath.local/teacher`)
-
-Only for looking after the server. Behind a teacher password (hashed with Argon2 / bcrypt; locked
-for a minute after 5 wrong tries). Plain, Vista-styled, works on the teacher's laptop or phone.
-
-- **Status:** address(es), uptime, CPU temperature, disk space, compile queue, students online,
-  version.
-- **Classes:** create classes (e.g. "9D Tuesday") so students pick their class at login; see each
-  student's progress (projects, steps, stars, hints, last seen); reset a student's picture password;
-  move or delete a student (with a confirm).
-- **Save a copy:** download everything (all students' work + `progress.csv`) as a zip. **Automatic
-  backups** every night to the data partition (keep 14) and to a USB stick if one is plugged into the
-  Pi.
-- **Wipe session:** for the next school or group: type `WIPE`; deletes every student and class
-  (offers Save a copy first). The server's settings stay.
-- **Restore** from a Save a copy zip (e.g. after reflashing).
-- **Updates are automatic, at every startup and every night (03:00).** Each time the Pi starts,
-  and every night, if it can reach the internet, it checks GitHub Releases for a newer version;
-  if there is one it downloads it,
-  verifies its signature, backs up the database, installs it and restarts (students who open the
-  page meanwhile see "CircuitPath is getting ready"). If the new version can't start, the Pi goes
-  back to the old one by itself and skips that version. No internet: it just starts as it is.
-  Each release pins exact, tested versions of arduino-cli, the board cores and the libraries
-  (`internal/arduino/requirements.json`); after an update the Pi installs any that changed.
-  The Teacher page can also **Check for updates** now, or **Upload an update file** (downloaded on
-  another computer). Student work is backed up before every update and never lost to one.
-  Reflashing a new image is also fine: Save a copy first, then Restore. (How it works and how to
-  publish a release: `docs/updates.md`.)
-- **Settings:** school name, change the teacher password, HTTPS certificate (download the Pi's CA /
-  upload the school's own certificate), network (hostname, Wi-Fi), SSH on/off, which boards and
-  projects are shown, the class kit list (`kit.json`), automatic updates on / off, shut down /
-  restart (shut down before unplugging when possible).
+For the end of a program, before the next group uses the laptop. It lists the profiles on the
+laptop, offers **Save everyone's work** (one zip of everyone's `.circuit` files), and deletes every
+profile with all their work once the student or teacher types **WIPE**. The database is compacted
+afterwards so deleted work can't be read back. It only affects CircuitPath in that Windows account.
 
 ---
 
@@ -276,7 +210,7 @@ workspace (a Vista-style wizard: a glass frame, a title, step dots, Back / Next 
    - plain-English instructions ("Connect the LED's long leg to pin 13 through a 220Ω resistor")
    - a safety reminder (unplug USB while wiring)
    - **Back / Next**, and "Show the whole circuit"
-3. **Test it (required):** the student plugs the board in and presses **Test**. The Pi compiles a
+3. **Test it (required):** the student plugs the board in and presses **Test**. CircuitPath compiles a
    **test sketch generated for this project's parts** and the browser uploads it over USB, then
    listens on the Serial port (or it runs in the simulator in Simulator mode):
    - LEDs blink one at a time; RGB LEDs cycle red, green, blue; buzzers beep; servos sweep;
@@ -329,25 +263,25 @@ supports (tested in CI, §12).
   - **WiFi in the simulator:** `WiFi.begin()` "connects" to a pretend network; a sketch's web server
     pages appear in a **phone panel** next to the board (an iframe served from the worker), so
     "control the LED from your phone" projects work fully in the simulator.
-  - The real compiler is still the judge: **Upload** and **Check my code** compile on the Pi with
-    arduino-cli for the chosen board, so students see real compile errors explained by the Coach.
-    **Run** in the simulator is instant and doesn't need the Pi.
+  - The real compiler is still the judge: **Upload** and **Check my code** compile with arduino-cli
+    for the chosen board (§3: how it ships with the app is still to decide), so students see real
+    compile errors explained by the Coach. **Run** in the simulator is instant and needs no compiler.
 - **Serial Monitor + Serial Plotter** (Vista console look): shared by the simulator and real boards.
 
 ---
 
 ## 7. Saving
 
-- **Autosave to the Pi:** code saves about a second after typing stops (and on Run / Upload / leaving
-  a project); progress saves at every step. If the network blips, unsaved changes wait in the
-  browser (IndexedDB) and are sent when it's back, with a small "Saved ✓ / Saving... / Offline,
-  will save when you're back" note.
-- **Log in anywhere:** work lives on the Pi, so a student can change laptops between lessons.
+- **Autosave on the laptop:** code saves about a second after typing stops (and on Run / Upload /
+  leaving a project); progress saves at every step. If CircuitPath has closed, unsaved changes wait
+  in the browser (IndexedDB) and are sent when it's back, with a small "Saved ✓ / Saving... /
+  Offline, will save when you're back" note.
+- **Changing laptops:** Save my work on one, Open my work on the other.
 - **Save files** (students' Settings): **Save my work** downloads
   `<Name>_CircuitPath_<date>.circuit` (a zip: profile, progress, sketches; versioned), to take home
   or keep. **Open my work** loads one (merging by project, newest wins, asking before replacing).
 - **Per-sketch export:** download the current sketch as `.ino` for the normal Arduino IDE.
-- **Everyone's work** (Save a copy, Wipe session, Restore, nightly backups) is on the Teacher page.
+- **Everyone's work** on a laptop: Save everyone's work and WIPE are on the WIPE page (§4).
 - Never break the save format: the database has a schema version and migrations.
 
 ## 8. Content is data
@@ -429,15 +363,12 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 
 ## 11. Rules for Claude Code
 
-1. **On the school network, private.** No calls to the internet from the web app or the server,
-   except checking for and downloading CircuitPath updates from GitHub Releases (at every startup,
-   and when the teacher chooses "Check for updates"); nothing about students is ever sent. No
-   telemetry, no cloud accounts, no CDN fonts or scripts. Student data stays on the Pi (and in save
-   files students and the teacher download).
+1. **Local and private.** No calls to the internet from the web app or `CircuitPath.exe`; nothing
+   about students is ever sent. No telemetry, no cloud accounts, no CDN fonts or scripts. Student
+   data stays on the laptop (and in save files students download).
 2. **No AI**, anywhere.
-3. **Nothing to install on student laptops**, ever: just Edge / Chrome. **Nothing to do on the Pi**
-   but flash, insert and power on; everything else is on the Teacher page. Never require a screen,
-   keyboard or SSH for normal use.
+3. **Nothing to install and no admin rights**: just `CircuitPath.exe` and Edge / Chrome. Never
+   require a console, an installer or settings changes on the laptop.
 4. **Content is data** (§8). A teacher can add a project without touching code.
 5. **Every project step has a `demo`** that passes its own checks in the simulator, and compiles
    with arduino-cli for every board the project lists (CI, §12). Every step has a goal for Advanced.
@@ -447,12 +378,11 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 8. **Student-facing text:** Year 7 reading level, Australian spelling, encouraging.
 9. **Vista look** (§2) on every screen, in one theme stylesheet.
 10. **Keep it quick:** first screen in under 2 s, a project opens in under 0.5 s, the simulator runs
-    smoothly at 60 fps with a dozen parts on a school laptop; the Pi 5 compiles an Uno sketch in
-    ≤ 5 s and serves a class of 25.
-13. **Security basics:** HTTPS only; teacher password hashed; picture passwords rate-limited;
-    students can only read and write their own work; every API input validated; compiles run in a
-    sandboxed temporary folder with a time and memory limit (a student's sketch can't touch the
-    server); uploads of save files are size-limited and checked.
+    smoothly at 60 fps with a dozen parts on a school laptop.
+13. **Security basics:** listen on localhost only and refuse other Host names; every write needs
+    the `X-CircuitPath` header; strict CSP; every API input validated; a profile's API calls only
+    touch that profile's work; save files are size-limited and checked; compiles (when added) run
+    in a temporary folder with a time limit.
 11. **Keep the tests green** after every change.
 12. **Fritzing attribution** stays with the part files (CC BY-SA 3.0).
 
@@ -460,67 +390,57 @@ Classroom kits differ: keep a `content/kit.json` of what the school owns, so the
 
 ## 12. Testing
 
-- **Server (Go):** unit tests for the API, accounts and picture passwords, saves (migrations), the
-  compile queue and sandbox, backups, Wipe / Restore, the Teacher page's auth, and updates
-  (signatures, install, rollback, plus a test where a real 1.0.0 server updates itself to 1.1.0).
-- **Image (CI):** build the image, boot it in QEMU (arm64), check the server answers on 443, the
-  first-login file appears, and a sketch compiles for each board. Until the image exists, the
-  **Pi simulation** (`tests/pi/simulate.sh`, arm64 runner) runs `deploy/install.sh` on the real
-  Raspberry Pi OS Lite userland and checks install, every board, OS updates, firewall,
-  self-update and restart.
+- **Go:** unit tests for the API, profiles, saves (migrations), save files, WIPE, the localhost /
+  Host / cross-site guards, and the launcher (single instance, closing when idle).
+- **Windows (CI):** the Go tests on `windows-latest`, then `tests/windows/smoke.ps1` starts the real
+  `CircuitPath.exe` and uses it (profile, autosave, cross-site refusal, second launch). The exe is
+  kept as a CI download, and the Release workflow runs the same test before publishing.
 - **Interpreter + simulated API (JS):** unit tests run in headless Chromium (Playwright) or Node
   (dev-only tooling is fine; nothing runtime). Every project's every `demo` runs in the simulator
   with its `sim_events` and must pass the step's checks.
 - **Compile matrix (CI):** every demo and every generated test sketch compiles with arduino-cli for
   every board it lists (GitHub Actions, caching the cores).
 - **Errors database:** each entry has a real broken sketch whose compiler output must map to it.
-- **GUI smoke test:** Playwright drives login → picker → a project → the Wiring Wizard (meet parts,
-  wire, Test in simulator, confirm) → programming → Watch the goal → Free Play → Save my work /
-  Open my work, and saves screenshots at 1366×768 and 1920×1080.
-- **Real hardware checklist** (`docs/hardware-test-checklist.md`): a Pi 5 flashed from the release
-  image (no screen), a no-admin Windows laptop in Edge, a genuine Uno, a CH340 Nano clone, a NodeMCU
-  and an ESP32 with the kit's parts; 25 simultaneous compiles (a load-test script).
+- **GUI smoke test:** Playwright drives welcome → make a profile → picker → a project → the Wiring
+  Wizard (meet parts, wire, Test in simulator, confirm) → programming → Watch the goal → Free Play
+  → Save my work / Open my work → pick your name → the WIPE page, and saves screenshots at
+  1366×768 and 1920×1080.
+- **Real hardware checklist** (`docs/hardware-test-checklist.md`): a no-admin Windows laptop in
+  Edge running `CircuitPath.exe`, a genuine Uno, a CH340 Nano clone, a NodeMCU and an ESP32 with
+  the kit's parts.
 
 ---
 
 ## 13. Build order
 
-1. **Skeleton:** the Go server (HTTPS with its own CA, SQLite, accounts + picture passwords, autosave,
-   save files), the Vista theme and window chrome, login → picker. Runs on any Linux / Mac / Windows
-   for development (`go run`), with a dev certificate.
+1. **Skeleton:** `CircuitPath.exe` (local server, SQLite, profiles, autosave, save files, WIPE), the
+   Vista theme and window chrome, welcome → picker. **Done.**
 2. **Fritzing import** of the first parts (Uno, Nano, NodeMCU, ESP32, breadboard, LED, resistor,
    button, buzzer, pot, servo) and the **renderer** (breadboard + schematic, wires).
 3. **Interpreter + simulated API** for the Getting Started projects; Serial Monitor (simulated).
 4. **Wiring Wizard** with generated test sketches in the simulator.
-5. **Compile queue** (arduino-cli, shared cache, sandbox) + the Coach on real compiler errors; then
-   **Web Serial upload** (Uno / Nano first, then ESP via esptool-js) and the real Serial Monitor; the
-   wizard's Test on real boards.
-6. **The SD card image** (CI build, first boot, boot-partition files, LED status) and the **Teacher
-   page** (status, classes, Save a copy, Wipe, Restore, updates, certificate).
-7. Getting Started projects, then Free Play, then the other tiers, then WiFi & IoT (phone panel).
-8. Adaptive coach, help levels, code review, curriculum in Settings.
-9. Hardware checklist on a real Pi 5 + laptops, then a classroom trial.
+5. **Compiling for Upload** (decide how arduino-cli ships with the app) + the Coach on real
+   compiler errors; then **Web Serial upload** (Uno / Nano first, then ESP via esptool-js) and the
+   real Serial Monitor; the wizard's Test on real boards.
+6. Getting Started projects, then Free Play, then the other tiers, then WiFi & IoT (phone panel).
+7. Adaptive coach, help levels, code review, curriculum in Settings.
+8. Hardware checklist on real laptops, then a classroom trial.
 
 ## 14. Decisions already made (don't relitigate without reason)
 
-- **A web app served by a headless Raspberry Pi 5** on the school network, from a **ready-made SD card
-  image**: flash, insert, power on. No screen, keyboard or SSH needed; a **Teacher page** in the
-  browser for everything else. (Chosen over a portable Windows app: students have no admin rights,
-  unsigned exes may be blocked, and work must follow students across laptops.)
-- **Upload from the browser** with Web Serial (Edge / Chrome); the Pi compiles. HTTPS is required,
-  so IT trusts the Pi's certificate once.
-- **USB drivers** for clone boards are IT's job (or buy driver-free boards); a server can't avoid them.
-- **Work saved on the Pi** (log in anywhere) plus `.circuit` save files; nightly backups.
-- **Automatic updates for everything:** CircuitPath at every startup and every night from signed
-  GitHub releases (database backup first, automatic rollback if the new version won't start);
-  board cores and libraries pinned per release; every Raspberry Pi OS update daily.
+- **A Windows app on each student laptop** (`CircuitPath.exe`), like PiPath: no server, no teacher
+  controls, works offline. (The Raspberry Pi server couldn't be reached on the school network; a
+  cloud server was started and parked.)
+- **The web app in Edge / Chrome**, served by the exe on localhost: the same UI, and Web Serial for
+  Upload (localhost is a secure site).
+- **Welcome screen with names** (first name(s) + school, no password); a **WIPE page** on the
+  laptop, with Save everyone's work first.
+- **Work saved on the laptop** (`%LOCALAPPDATA%\CircuitPath`) plus `.circuit` save files to move it.
+- **USB drivers** for clone boards are IT's job (or buy driver-free boards).
 - **Standard Fritzing parts library** for all part art (pulled from the public repository).
 - **Windows Vista skeuomorphic look** in the BNTS colours.
 - **Wiring Wizard with a forced, project-specific Test** before programming.
-- **Own Arduino interpreter for the simulator** (works the same for AVR and ESP boards); the simulator
-  runs in the browser, so the Pi only compiles for Upload / Check my code.
+- **Own Arduino interpreter for the simulator** (works the same for AVR and ESP boards); it runs in
+  the browser.
 - **Separate from PiPath:** different repository, no shared code.
-- First name(s) + school (+ a picture password, because the server is shared). Free choice of
-  projects. Stars measure independence. Help level is the student's choice. Teacher tools only for
-  looking after the server; students never see them.
-
+- Free choice of projects. Stars measure independence. Help level is the student's choice.

@@ -1,0 +1,73 @@
+# CircuitPath on a student laptop (Windows)
+
+CircuitPath is one file, `CircuitPath.exe`. It runs on the student's own laptop: no server, no
+teacher page and no internet needed.
+
+## Getting it
+
+- **A release:** on GitHub, open **Releases** and download `CircuitPath.exe` (most laptops) or
+  `CircuitPath-arm64.exe` (laptops with an ARM chip, such as Snapdragon).
+- **The newest build:** open **Actions > CI**, pick the latest run, and download
+  **CircuitPath-exe** at the bottom of the page (a zip with `CircuitPath.exe` inside).
+
+Put it anywhere the student can reach: the Desktop, Documents, or a shared folder. To make it
+easy to find, right-click it and choose **Pin to Start**.
+
+## What happens when you double-click it
+
+1. CircuitPath opens in **Edge** as its own window (or Chrome, or the default browser if neither
+   is found). There's no console window.
+2. **The welcome screen** lists everyone who has a profile on this laptop. Students pick their
+   name, or press **I'm new here** and type their first name(s) and school. Students sharing a
+   kit can add up to 4 first names. The first time, it goes straight to making a profile.
+3. They choose how much help they want and which board they have, then pick a project.
+
+Code saves by itself about a second after typing stops. **Log out** goes back to the welcome
+screen. Closing the window is fine too: CircuitPath closes itself about 20 minutes later.
+Double-clicking `CircuitPath.exe` while it's already running just opens another window.
+
+## Where the work is kept
+
+In `%LOCALAPPDATA%\CircuitPath` (for example `C:\Users\<you>\AppData\Local\CircuitPath`):
+
+- `circuitpath.db`: every profile on this laptop, with their code and progress
+- `circuitpath.log`: what happened, for troubleshooting
+
+It's inside the Windows account that ran it. If students log in to the laptop with their own
+Windows accounts, each one has their own CircuitPath with their own profiles. To move work to
+another laptop: **Settings > My work > Save my work**, then **Open my work** on the other laptop.
+
+## The WIPE page
+
+On the welcome screen, **Wipe this laptop** (bottom of the screen) deletes every profile on this
+laptop, with all their code and progress: use it at the end of a program, before the next group.
+
+1. **Save everyone's work** (a good idea): downloads one zip holding a `.circuit` file for each
+   profile. A student can open theirs later with **Settings > My work > Open my work**.
+2. Type **WIPE** in capital letters, then press **Wipe this laptop**.
+
+It can't be undone. It only wipes CircuitPath on this laptop (in this Windows account).
+
+## If Windows blocks it
+
+The app isn't code-signed yet, so the first time it runs:
+
+- **"Windows protected your PC" (SmartScreen):** press **More info**, then **Run anyway**. Or
+  right-click the file > **Properties** > tick **Unblock** > OK, before opening it.
+- **"This app has been blocked by your system administrator"** (AppLocker / Intune / Smart App
+  Control): only IT can allow it. Ask them to allow `CircuitPath.exe` (by its hash from
+  `SHA256SUMS` on the release, or by its file path), or to sign it with the school's
+  code-signing certificate.
+- **A firewall question:** you shouldn't see one. CircuitPath only listens on the laptop itself
+  (`127.0.0.1`), never on the network. If one appears, **Cancel** is fine.
+
+## Good to know
+
+- **Edge or Chrome** is needed to upload to real boards (Web Serial). Other browsers can use the
+  simulator only.
+- CircuitPath uses port **47820** on the laptop (`http://localhost:47820`). If another program
+  has it, CircuitPath says so; start it with `CircuitPath.exe -port 47900` to use another one.
+- Clone boards with CH340 / CP2102 chips need their USB drivers installed (IT can push them with
+  Intune), or use boards with built-in USB that need no driver.
+- Uploading to a real board needs the code compiled first; that part isn't built yet. For now,
+  students can use the simulator (also still being built: projects show "Coming soon").

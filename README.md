@@ -3,56 +3,48 @@
 A step-by-step Arduino and ESP coding tutor for secondary students, made for the
 Banyule Nillumbik Tech School (BNTS).
 
-- **Runs from a Raspberry Pi 5 on the school network.** Flash the CircuitPath image onto a microSD
-  card, put it in the Pi, plug in power and a network cable. No screen or keyboard needed.
-- **Students just open a web page** (`https://circuitpath.local`) in Edge or Chrome. Nothing to
-  install on their laptops, and their work follows them to any laptop.
+- **One file on each student laptop: `CircuitPath.exe`.** Double-click it and CircuitPath opens
+  in Edge or Chrome. Nothing to install, no admin rights, no server, no internet needed.
+- **Welcome screen like PiPath:** students pick their name, or make a profile with their first
+  name(s) and school. Work saves on the laptop by itself.
+- **A WIPE page** clears the laptop for the next group (after offering to save everyone's work).
 - A **simulator** for every project, and **upload to real boards** from the browser: Arduino Uno,
   Arduino Nano, NodeMCU and other ESP8266 / ESP32 boards.
 - Every project starts with a **Wiring Wizard**: meet the parts, wire them step by step with
   breadboard and schematic diagrams, then a test program checks your wiring before you start coding.
 - A **Coach** explains errors in plain English, with hints that adapt to each student.
   No AI: every hint was written and reviewed by teachers.
-- A **Teacher page** for looking after the Pi: classes, backups, Wipe session, updates.
 - A Windows Vista look in the school's colours.
 
-Status: being built. Step 1 of the build order (the skeleton) is done: the server, logins with
-picture passwords, autosave, save files, the Vista look, and login → setup → project picker.
-The full brief is in [CLAUDE.md](CLAUDE.md); what's built so far is in
-[docs/development.md](docs/development.md).
+Status: being built. The skeleton is done: the Windows app, profiles, autosave, save files, the
+WIPE page, the Vista look, and welcome → setup → project picker. The full brief is in
+[CLAUDE.md](CLAUDE.md); what's built so far is in [docs/development.md](docs/development.md).
 
-## Trying it on a Pi now
+## Trying it on a student laptop
 
-The SD card image isn't built yet, but you can install CircuitPath on a normal Raspberry Pi OS
-card with one command: see [docs/try-it-on-a-pi.md](docs/try-it-on-a-pi.md).
-
-## Setting up (when the image is built)
-
-1. Download `circuitpath-<version>.img.xz` from Releases.
-2. Flash it to a 32 GB+ microSD card with **Raspberry Pi Imager** (Choose OS > Use custom).
-3. Optional: open the card's boot partition on your computer and add `circuitpath.toml` (school
-   name, Wi-Fi, a teacher password).
-4. Put the card in a Raspberry Pi 5, plug in a network cable and power. Wait about 2 minutes
-   (green light steady = ready). From then on, the Pi keeps itself up to date (CircuitPath, its
-   board packages and Raspberry Pi OS) whenever it can reach the internet.
-5. On your laptop, open `https://circuitpath.local/teacher` and log in with the password from
-   `circuitpath-first-login.txt` on the card's boot partition (or the one you set).
-6. Ask IT to trust the Pi's certificate (Teacher page > Download certificate) and to install the
-   CH340 / CP2102 USB drivers on student laptops (or use boards that need no driver).
+Download `CircuitPath.exe` from the latest release (or from a CI run's **CircuitPath-exe**
+download) and double-click it. See [docs/windows-app.md](docs/windows-app.md) for what to expect,
+where the work is kept, and what to do if Windows blocks it.
 
 ## For developers
 
 You need Go 1.24+. Node 22 is only needed to run the JavaScript and browser tests.
 
 ```
-go run ./cmd/circuitpath-server -dev     # then open https://localhost:8443
-go test ./...                            # server tests
+go run ./cmd/circuitpath -dev            # then open http://localhost:8080
+go test ./...                            # Go tests
 npm ci && npm test                       # JavaScript tests
 npm run e2e                              # GUI smoke test (Playwright)
 ```
 
-See [docs/development.md](docs/development.md) for how it fits together, and
-[docs/updates.md](docs/updates.md) for automatic updates and publishing a release.
+Build the Windows app (from any computer):
+
+```
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-H windowsgui -s -w -X circuitpath.Version=0.2.0" -o dist/CircuitPath.exe ./cmd/circuitpath
+```
+
+See [docs/development.md](docs/development.md) for how it fits together. To publish a release,
+change the `VERSION` file: the Release workflow tests on Windows and publishes `CircuitPath.exe`.
 
 Part images come from the [Fritzing parts library](https://github.com/fritzing/fritzing-parts)
 (CC BY-SA 3.0).

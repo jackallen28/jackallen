@@ -23,11 +23,8 @@ jobs:
       - name: Go vet
         run: go vet ./...
 
-      - name: Go tests (server, content, save files, certificates)
+      - name: Go tests (server, content, save files)
         run: go test ./...
-
-      - name: Build the Pi server (linux/arm64, one static file)
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w -X circuitpath.Version=${GITHUB_SHA::7}" -o circuitpath-server-linux-arm64 ./cmd/circuitpath-server
 
       - uses: actions/setup-node@v4
         with:
@@ -52,9 +49,38 @@ jobs:
           path: test-results/screenshots
           if-no-files-found: ignore
 
+  windows:
+    # The real CircuitPath.exe on real Windows: the Go tests, then start the
+    # exe and use it. The exe is kept as a download on the run's page.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Go tests on Windows
+        run: go test ./...
+
+      - name: Build CircuitPath.exe
+        shell: pwsh
+        run: |
+          $env:CGO_ENABLED = "0"
+          go build -trimpath -ldflags "-H windowsgui -s -w -X circuitpath.Version=$("$env:GITHUB_SHA".Substring(0,7))" -o dist/CircuitPath.exe ./cmd/circuitpath
+
+      - name: Start CircuitPath.exe and use it
+        shell: pwsh
+        run: ./tests/windows/smoke.ps1 -Exe dist/CircuitPath.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CircuitPath-exe
+          path: dist/CircuitPath.exe
+
   boards:
     # Every board compiles the kit check with the pinned cores and libraries
-    # (internal/arduino/requirements.json). The Pi simulation does the same on arm64.
+    # (internal/arduino/requirements.json).
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -71,4 +97,4 @@ jobs:
           key: arduino-amd64-${{ hashFiles('internal/arduino/requirements.json') }}
 
       - name: Install the Arduino tools and compile for every board
-        run: go run ./cmd/circuitpath-server -data "$RUNNER_TEMP/cp" -setup-arduino
+        run: go run ./cmd/circuitpath -data "$RUNNER_TEMP/cp" -setup-arduino

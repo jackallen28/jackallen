@@ -1,6 +1,7 @@
 package server
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -25,10 +26,9 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"app":      "CircuitPath",
-		"version":  s.Version,
-		"school":   school,
-		"pictures": auth.Pictures,
+		"app":     "CircuitPath",
+		"version": s.Version,
+		"school":  school,
 	})
 }
 
@@ -61,41 +61,8 @@ func (s *Server) handleProject(w http.ResponseWriter, r *http.Request) {
 	w.Write(p.Raw)
 }
 
-func (s *Server) handleClasses(w http.ResponseWriter, r *http.Request) {
-	classes, err := s.Store.ListClasses(r.Context())
-	if err != nil {
-		s.serverError(w, r, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, classes)
-}
-
-// checkClass reports whether a class id can be used at login. 0 means "no
-// class", which is only allowed while the teacher hasn't made any classes.
-func (s *Server) checkClass(r *http.Request, id int64) (bool, error) {
-	if id == 0 {
-		classes, err := s.Store.ListClasses(r.Context())
-		return len(classes) == 0, err
-	}
-	return s.Store.ClassExists(r.Context(), id)
-}
-
-func (s *Server) handleClassStudents(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil || id < 0 {
-		writeError(w, http.StatusNotFound, "not_found", "That class isn't here.")
-		return
-	}
-	ok, err := s.checkClass(r, id)
-	if err != nil {
-		s.serverError(w, r, err)
-		return
-	}
-	if !ok {
-		writeError(w, http.StatusNotFound, "not_found", "That class isn't here.")
-		return
-	}
-	list, err := s.Store.ListStudents(r.Context(), id)
+func (s *Server) handleStudents(w http.ResponseWriter, r *http.Request) {
+	list, err := s.Store.ListStudents(r.Context())
 	if err != nil {
 		s.serverError(w, r, err)
 		return
@@ -118,10 +85,8 @@ func (s *Server) me(r *http.Request, id int64) (meResponse, error) {
 
 func (s *Server) handleCreateStudent(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		ClassID  int64    `json:"class_id"`
-		Names    []string `json:"names"`
-		School   string   `json:"school"`
-		Pictures []string `json:"pictures"`
+		Names  []string `json:"names"`
+		School string   `json:"school"`
 	}
 	if !readJSON(w, r, &req) {
 		return
@@ -136,35 +101,11 @@ func (s *Server) handleCreateStudent(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "bad_school", err.Error())
 		return
 	}
-	if auth.ValidPictures(req.Pictures) != nil {
-		writeError(w, http.StatusBadRequest, "bad_pictures", "Pick 3 different pictures.")
-		return
-	}
-	ok, err := s.checkClass(r, req.ClassID)
-	if err != nil {
-		s.serverError(w, r, err)
-		return
-	}
-	if !ok {
-		writeError(w, http.StatusBadRequest, "bad_class", "Pick your class first.")
-		return
-	}
-	if !s.creates.Allow(clientIP(r)) {
-		writeError(w, http.StatusTooManyRequests, "too_many", "Lots of profiles have been made on this laptop. Ask your teacher for help.")
-		return
-	}
-	hash, err := auth.HashPictures(req.Pictures)
-	if err != nil {
-		s.serverError(w, r, err)
-		return
-	}
 	settings, _ := json.Marshal(defaultSettings(s.Catalogue))
-	st, err := s.Store.CreateStudent(r.Context(), store.NewStudent{
-		ClassID: req.ClassID, Names: names, School: school, PictureHash: hash, Settings: settings,
-	})
+	st, err := s.Store.CreateStudent(r.Context(), store.NewStudent{Names: names, School: school, Settings: settings})
 	if errors.Is(err, store.ErrExists) {
 		writeError(w, http.StatusConflict, "exists",
-			"There's already a profile with "+joinNames(names)+" from "+school+" in this class. Is it you? Go back and pick your name.")
+			"There's already a profile for "+joinNames(names)+" from "+school+" on this laptop. Is it you? Go back and pick your name.")
 		return
 	}
 	if err != nil {
@@ -175,7 +116,7 @@ func (s *Server) handleCreateStudent(w http.ResponseWriter, r *http.Request) {
 		s.serverError(w, r, err)
 		return
 	}
-	s.Log.Info("profile created", "student", st.ID, "class", req.ClassID)
+	s.Log.Info("profile created", "student", st.ID)
 	me, err := s.me(r, st.ID)
 	if err != nil {
 		s.serverError(w, r, err)
@@ -184,38 +125,22 @@ func (s *Server) handleCreateStudent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, me)
 }
 
+// handleLogin opens a profile. There's no password: CircuitPath runs on the
+// student's own laptop, under their own Windows account.
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		StudentID int64    `json:"student_id"`
-		Pictures  []string `json:"pictures"`
+		StudentID int64 `json:"student_id"`
 	}
 	if !readJSON(w, r, &req) {
 		return
 	}
-	key := strconv.FormatInt(req.StudentID, 10)
-	if wait := s.lockout.Wait(key); wait > 0 {
-		writeLocked(w, wait)
-		return
-	}
-	hash, err := s.Store.PictureHash(r.Context(), req.StudentID)
-	if errors.Is(err, store.ErrNotFound) {
+	if _, err := s.Store.GetStudent(r.Context(), req.StudentID); errors.Is(err, store.ErrNotFound) {
 		writeError(w, http.StatusNotFound, "not_found", "That profile isn't here any more. Go back and pick your name.")
 		return
-	}
-	if err != nil {
+	} else if err != nil {
 		s.serverError(w, r, err)
 		return
 	}
-	if !auth.CheckPictures(hash, req.Pictures) {
-		if wait := s.lockout.Fail(key); wait > 0 {
-			s.Log.Info("picture password locked", "student", req.StudentID, "ip", clientIP(r))
-			writeLocked(w, wait)
-			return
-		}
-		writeError(w, http.StatusUnauthorized, "wrong_pictures", "Those pictures don't match. Try again.")
-		return
-	}
-	s.lockout.Succeed(key)
 	if err := s.startSession(r.Context(), w, req.StudentID); err != nil {
 		s.serverError(w, r, err)
 		return
@@ -229,19 +154,6 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, me)
 }
 
-func writeLocked(w http.ResponseWriter, wait time.Duration) {
-	secs := int(wait.Round(time.Second) / time.Second)
-	if secs < 1 {
-		secs = 1
-	}
-	w.Header().Set("Retry-After", strconv.Itoa(secs))
-	writeJSON(w, http.StatusTooManyRequests, apiError{
-		Error:      "locked",
-		Message:    "Too many tries. Wait a minute, then try again. If you've forgotten your pictures, your teacher can reset them.",
-		RetryAfter: secs,
-	})
-}
-
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(cookieName); err == nil && c.Value != "" {
 		if err := s.Store.DeleteSession(r.Context(), auth.HashToken(c.Value)); err != nil {
@@ -249,14 +161,14 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	clearCookie(w)
+	s.clearCookie(w)
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request, id int64) {
 	me, err := s.me(r, id)
 	if errors.Is(err, store.ErrNotFound) {
-		clearCookie(w)
+		s.clearCookie(w)
 		writeError(w, http.StatusUnauthorized, "logged_out", "Please log in again.")
 		return
 	}
@@ -389,21 +301,19 @@ func saveFileName(names []string, now time.Time) (ascii, utf string) {
 	return a + "_CircuitPath_" + date + ".circuit", utf
 }
 
-func (s *Server) handleExport(w http.ResponseWriter, r *http.Request, id int64) {
+// saveFile makes a student's .circuit file and its name.
+func (s *Server) saveFile(r *http.Request, id int64, now time.Time) (data []byte, ascii, utf string, err error) {
 	st, err := s.Store.GetStudent(r.Context(), id)
 	if err != nil {
-		s.serverError(w, r, err)
-		return
+		return nil, "", "", err
 	}
 	sketches, err := s.Store.ListSketches(r.Context(), id)
 	if err != nil {
-		s.serverError(w, r, err)
-		return
+		return nil, "", "", err
 	}
 	progress, err := s.Store.ListProgress(r.Context(), id)
 	if err != nil {
-		s.serverError(w, r, err)
-		return
+		return nil, "", "", err
 	}
 	var buf bytes.Buffer
 	err = savefile.Write(&buf, savefile.File{
@@ -412,15 +322,84 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request, id int64) 
 		Sketches: sketches,
 		Progress: progress,
 	})
+	ascii, utf = saveFileName(st.Names, now)
+	return buf.Bytes(), ascii, utf, err
+}
+
+func attachment(w http.ResponseWriter, contentType, ascii, utf string, size int) {
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"; filename*=UTF-8''%s`, ascii, url.PathEscape(utf)))
+	w.Header().Set("Content-Length", strconv.Itoa(size))
+}
+
+func (s *Server) handleExport(w http.ResponseWriter, r *http.Request, id int64) {
+	data, ascii, utf, err := s.saveFile(r, id, time.Now())
 	if err != nil {
 		s.serverError(w, r, err)
 		return
 	}
-	ascii, utf := saveFileName(st.Names, time.Now())
-	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"; filename*=UTF-8''%s`, ascii, url.PathEscape(utf)))
-	w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+	attachment(w, "application/zip", ascii, utf, len(data))
+	w.Write(data)
+}
+
+// handleExportEveryone downloads one zip holding every profile's .circuit
+// file (offered on the WIPE page before wiping).
+func (s *Server) handleExportEveryone(w http.ResponseWriter, r *http.Request) {
+	list, err := s.Store.ListStudents(r.Context())
+	if err != nil {
+		s.serverError(w, r, err)
+		return
+	}
+	now := time.Now()
+	var buf bytes.Buffer
+	z := zip.NewWriter(&buf)
+	used := map[string]int{}
+	for _, st := range list {
+		data, _, utf, err := s.saveFile(r, st.ID, now)
+		if err != nil {
+			s.serverError(w, r, err)
+			return
+		}
+		name := utf
+		if used[strings.ToLower(name)]++; used[strings.ToLower(name)] > 1 {
+			name = strings.TrimSuffix(name, ".circuit") + fmt.Sprintf("_%d.circuit", used[strings.ToLower(name)])
+		}
+		f, err := z.CreateHeader(&zip.FileHeader{Name: name, Method: zip.Store, Modified: now})
+		if err != nil {
+			s.serverError(w, r, err)
+			return
+		}
+		f.Write(data)
+	}
+	if err := z.Close(); err != nil {
+		s.serverError(w, r, err)
+		return
+	}
+	date := now.Format("2006-01-02")
+	attachment(w, "application/zip", "Everyone_CircuitPath_"+date+".zip", "Everyone_CircuitPath_"+date+".zip", buf.Len())
 	w.Write(buf.Bytes())
+}
+
+// handleWipe deletes every profile on this laptop and everything they saved
+// (the WIPE page). The request must say {"confirm": "WIPE"}.
+func (s *Server) handleWipe(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Confirm string `json:"confirm"`
+	}
+	if !readJSON(w, r, &req) {
+		return
+	}
+	if req.Confirm != "WIPE" {
+		writeError(w, http.StatusBadRequest, "not_confirmed", "Type WIPE in capital letters to wipe this laptop.")
+		return
+	}
+	if err := s.Store.WipeAll(r.Context()); err != nil {
+		s.serverError(w, r, err)
+		return
+	}
+	s.Log.Info("wiped every profile")
+	s.clearCookie(w)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleImport opens a .circuit file. With mode=preview it only says what

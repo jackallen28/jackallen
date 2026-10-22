@@ -299,6 +299,13 @@ svg.icon-48 { width: 48px; height: 48px; }
 
 /* The default button glows gently, like Vista's */
 .btn.default { border-color: #3c7fb1; animation: default-pulse 1.6s ease-in-out infinite alternate; }
+.btn.danger:not(:disabled) {
+  border-color: #8f1d1d;
+  background: linear-gradient(180deg, #f6a3a3 0%, #e05b5b 45%, #c53030 50%, #d94848 100%);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+.btn.danger:hover:not(:disabled) { border-color: #6f1414; background: linear-gradient(180deg, #f8b6b6 0%, #e86c6c 45%, #d03a3a 50%, #e25555 100%); }
 @keyframes default-pulse {
   from { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 0 0 rgba(60, 127, 177, 0); }
   to { box-shadow: inset 0 0 0 1px #9fd5f7, 0 0 4px 1px rgba(60, 160, 220, 0.55); }

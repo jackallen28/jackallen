@@ -71,7 +71,7 @@
 }
 .logon-back:hover, .logon-link:hover { border-color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.12); }
 .logon-back svg, .logon-link svg { width: 20px; height: 20px; }
-.logon-footer { margin-top: 24px; }
+.logon-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin-top: 24px; }
 
 .tiles {
   display: flex;
@@ -137,71 +137,7 @@
 }
 .avatar-3, .avatar-4 { font-size: 20px; }
 
-.who { display: flex; align-items: center; gap: 18px; text-align: left; margin-bottom: 16px; }
-.who h1 { margin: 0; }
-.who .logon-lead { margin: 0; }
-
-/* Picture password */
-.picture-pad { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.picture-pad.shake { animation: shake 0.4s; }
-@keyframes shake {
-  20%, 60% { transform: translateX(-8px); }
-  40%, 80% { transform: translateX(8px); }
-}
-
-.slots { display: flex; gap: 10px; }
-.slot {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border: 1px dashed rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.18);
-}
-.slot.filled { border-style: solid; border-color: rgba(0, 0, 0, 0.35); background: var(--tile-frame); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
-.slot-number { font-size: 18px; opacity: 0.7; }
-.slot svg.slot-art { width: 40px; height: 40px; }
-
-.picture-grid { display: grid; grid-template-columns: repeat(3, 96px); gap: 10px; }
-.picture {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  height: 96px;
-  padding: 8px 4px 4px;
-  border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 10px;
-  background: var(--tile-frame);
-  box-shadow: inset 0 0 0 1px #fff, 0 3px 8px rgba(0, 0, 0, 0.35);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--font-size-small);
-  cursor: pointer;
-  transition: transform 0.08s, box-shadow 0.15s;
-}
-.picture:hover:not(:disabled) { box-shadow: inset 0 0 0 1px #fff, 0 0 14px 3px rgba(130, 230, 240, 0.7); }
-.picture:active:not(:disabled) { transform: scale(0.96); }
-.picture:disabled { cursor: default; opacity: 0.7; }
-.picture[aria-pressed="true"] { border-color: var(--select-border); background: var(--select-fill); box-shadow: inset 0 0 0 2px var(--bnts-teal), 0 0 10px 2px rgba(25, 193, 202, 0.6); }
-.picture svg.picture-art { width: 58px; height: 58px; }
-.picture-order:not(:empty) {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--bnts-purple);
-  color: #fff;
-  font-weight: 600;
-}
-
-/* Wizard windows on the logon background (new profile, setup) */
+/* Wizard windows on the logon background (new profile, setup, WIPE) */
 .wizard {
   width: min(640px, 100%);
   text-align: left;
@@ -217,9 +153,6 @@
   border-top: 1px solid #dfdfdf;
   background: #f0f0f0;
 }
-.wizard .picture-pad { margin: 12px 0 4px; }
-.wizard .slot { border-color: #9aa9b8; background: #f3f6f9; }
-.wizard .slot-number { color: #7d8a96; }
 .wizard .note { margin: 10px 0; }
 .wizard .note[hidden] { display: none; }
 .setup { width: min(760px, 100%); }
@@ -490,21 +423,19 @@
 @media (max-width: 760px) {
   .split { flex-direction: column; }
   .nav-pane, .side-panel { position: static; width: auto; max-height: none; border-right: 0; border-bottom: 1px solid #c9d6e3; }
-  .picture-grid { grid-template-columns: repeat(3, 84px); }
-  .picture { height: 84px; }
-  .picture svg.picture-art { width: 48px; height: 48px; }
-  .who { flex-direction: column; text-align: center; }
   .editor { height: 60vh; }
   .toolbar .tool span { display: none; }
 }
 
-/* ---------- "Getting ready" page (shown while the server updates) ---------- */
-
-.getting-ready { width: min(460px, 100%); }
-.getting-ready .titlebar img { width: 18px; height: 18px; }
-.progress.marquee { position: relative; margin: 14px 0; }
-.progress.marquee > span { position: absolute; width: 30%; animation: marquee 1.6s linear infinite; }
-@keyframes marquee {
-  from { left: -30%; }
-  to { left: 100%; }
+/* ---------- The WIPE page ---------- */
+.wipe .field { margin: 12px 0; }
+.wipe-list {
+  max-height: 160px;
+  overflow: auto;
+  margin: 4px 0 0;
+  padding: 6px 6px 6px 24px;
+  border: 1px solid #b8c4ce;
+  border-radius: 3px;
+  background: #fff;
 }
+.wipe a.btn { display: inline-flex; width: fit-content; align-items: center; gap: 6px; text-decoration: none; color: inherit; }

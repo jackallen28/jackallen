@@ -1,11 +1,12 @@
 // CircuitPath's web app: starts up, then shows the right screen for the
-// address (#/projects, #/project/<id>, #/freeplay...).
+// address (#/projects, #/project/<id>, #/freeplay, #/wipe...).
 
 import { api, onLoggedOut } from "./api.js";
 import { h, clear, loadSprites } from "./dom.js";
 import { state } from "./state.js";
 import { messageBox } from "./widgets/window.js";
 import { loginScreen } from "./screens/login.js";
+import { wipeScreen } from "./screens/wipe.js";
 import { setupScreen } from "./screens/setup.js";
 import { pickerScreen } from "./screens/picker.js";
 import { workspaceScreen } from "./screens/workspace.js";
@@ -36,9 +37,16 @@ function route() {
   routing = routing.then(async () => {
     await leaveScreen();
     const hash = location.hash || "#/";
+    if (hash === "#/wipe") {
+      wipeScreen(root, {
+        onDone: () => { state.me = null; go("#/"); },
+        onCancel: () => history.back(),
+      });
+      return;
+    }
     if (!state.me) {
       if (hash !== "#/") history.replaceState(null, "", "#/");
-      loginScreen(root, { onLoggedIn });
+      loginScreen(root, { onLoggedIn, openWipe: () => go("#/wipe") });
       return;
     }
     if (!state.me.settings.help_level && hash !== "#/setup") {
@@ -95,7 +103,7 @@ onLoggedOut(() => {
 });
 
 async function start() {
-  await loadSprites(["img/icons.svg", "img/pictures.svg"]);
+  await loadSprites(["img/icons.svg"]);
   try {
     [state.info, state.catalogue] = await Promise.all([api.info(), api.catalogue()]);
   } catch (err) {
@@ -113,6 +121,9 @@ async function start() {
   }
   window.addEventListener("hashchange", route);
   route();
+  // CircuitPath.exe closes itself a while after the last window closes;
+  // this tells it a window is still open.
+  setInterval(() => api.ping().catch(() => {}), 60_000);
 }
 
 start();
