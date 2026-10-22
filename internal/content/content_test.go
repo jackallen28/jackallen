@@ -48,7 +48,11 @@ func schemaFiles(t *testing.T) fstest.MapFS {
 	m["tiers.json"] = &fstest.MapFile{Data: []byte(`{"tiers":[{"id":"getting-started","name":"Getting Started","blurb":"x"}]}`)}
 	m["parts/index.json"] = &fstest.MapFile{Data: []byte(`{"parts":{"led":{"name":"LED","plural":"LEDs","group":"output"}}}`)}
 	m["kit.json"] = &fstest.MapFile{Data: []byte(`{"name":"Kit","parts":{"led":5}}`)}
-	m["boards/uno.json"] = &fstest.MapFile{Data: []byte(`{"id":"uno","name":"Uno","short":"Uno","family":"avr","fqbn":"arduino:avr:uno","logic_volts":5,"wifi":false,"default":true,"order":1,"upload":{"protocol":"stk500v1","baud":115200}}`)}
+	uno, err := os.ReadFile("../../content/boards/uno.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m["boards/uno.json"] = &fstest.MapFile{Data: uno}
 	return m
 }
 

@@ -10,5 +10,673 @@
   "optional": true,
   "order": 3,
   "notes": "A big Arduino with lots of pins.",
-  "upload": { "protocol": "stk500v2", "baud": 115200 }
+  "upload": {
+    "protocol": "stk500v2",
+    "baud": 115200
+  },
+  "power": {
+    "vcc": "5V",
+    "pins": [
+      "5V",
+      "3V3",
+      "GND",
+      "VIN"
+    ]
+  },
+  "analog_max": 1023,
+  "pwm_max": 255,
+  "int_bits": 16,
+  "led_builtin": {
+    "pin": "13",
+    "active_low": false
+  },
+  "i2c": {
+    "sda": "20",
+    "scl": "21"
+  },
+  "spi": {
+    "mosi": "51",
+    "miso": "50",
+    "sck": "52",
+    "ss": "53"
+  },
+  "pins": [
+    {
+      "code": "0",
+      "number": 0,
+      "label": "0",
+      "modes": [
+        "digital"
+      ],
+      "note": "used by USB serial: avoid"
+    },
+    {
+      "code": "1",
+      "number": 1,
+      "label": "1",
+      "modes": [
+        "digital"
+      ],
+      "note": "used by USB serial: avoid"
+    },
+    {
+      "code": "2",
+      "number": 2,
+      "label": "2",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "3",
+      "number": 3,
+      "label": "3",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "4",
+      "number": 4,
+      "label": "4",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "5",
+      "number": 5,
+      "label": "5",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "6",
+      "number": 6,
+      "label": "6",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "7",
+      "number": 7,
+      "label": "7",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "8",
+      "number": 8,
+      "label": "8",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "9",
+      "number": 9,
+      "label": "9",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "10",
+      "number": 10,
+      "label": "10",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "11",
+      "number": 11,
+      "label": "11",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "12",
+      "number": 12,
+      "label": "12",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "13",
+      "number": 13,
+      "label": "13",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "14",
+      "number": 14,
+      "label": "14",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "15",
+      "number": 15,
+      "label": "15",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "16",
+      "number": 16,
+      "label": "16",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "17",
+      "number": 17,
+      "label": "17",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "18",
+      "number": 18,
+      "label": "18",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "19",
+      "number": 19,
+      "label": "19",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "20",
+      "number": 20,
+      "label": "20",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "21",
+      "number": 21,
+      "label": "21",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "22",
+      "number": 22,
+      "label": "22",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "23",
+      "number": 23,
+      "label": "23",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "24",
+      "number": 24,
+      "label": "24",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "25",
+      "number": 25,
+      "label": "25",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "26",
+      "number": 26,
+      "label": "26",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "27",
+      "number": 27,
+      "label": "27",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "28",
+      "number": 28,
+      "label": "28",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "29",
+      "number": 29,
+      "label": "29",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "30",
+      "number": 30,
+      "label": "30",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "31",
+      "number": 31,
+      "label": "31",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "32",
+      "number": 32,
+      "label": "32",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "33",
+      "number": 33,
+      "label": "33",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "34",
+      "number": 34,
+      "label": "34",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "35",
+      "number": 35,
+      "label": "35",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "36",
+      "number": 36,
+      "label": "36",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "37",
+      "number": 37,
+      "label": "37",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "38",
+      "number": 38,
+      "label": "38",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "39",
+      "number": 39,
+      "label": "39",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "40",
+      "number": 40,
+      "label": "40",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "41",
+      "number": 41,
+      "label": "41",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "42",
+      "number": 42,
+      "label": "42",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "43",
+      "number": 43,
+      "label": "43",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "44",
+      "number": 44,
+      "label": "44",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "45",
+      "number": 45,
+      "label": "45",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "46",
+      "number": 46,
+      "label": "46",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "47",
+      "number": 47,
+      "label": "47",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "48",
+      "number": 48,
+      "label": "48",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "49",
+      "number": 49,
+      "label": "49",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "50",
+      "number": 50,
+      "label": "50",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "51",
+      "number": 51,
+      "label": "51",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "52",
+      "number": 52,
+      "label": "52",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "53",
+      "number": 53,
+      "label": "53",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "A0",
+      "number": 54,
+      "label": "A0",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A1",
+      "number": 55,
+      "label": "A1",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A2",
+      "number": 56,
+      "label": "A2",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A3",
+      "number": 57,
+      "label": "A3",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A4",
+      "number": 58,
+      "label": "A4",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A5",
+      "number": 59,
+      "label": "A5",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A6",
+      "number": 60,
+      "label": "A6",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A7",
+      "number": 61,
+      "label": "A7",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A8",
+      "number": 62,
+      "label": "A8",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A9",
+      "number": 63,
+      "label": "A9",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A10",
+      "number": 64,
+      "label": "A10",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A11",
+      "number": 65,
+      "label": "A11",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A12",
+      "number": 66,
+      "label": "A12",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A13",
+      "number": 67,
+      "label": "A13",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A14",
+      "number": 68,
+      "label": "A14",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A15",
+      "number": 69,
+      "label": "A15",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    }
+  ],
+  "pin_plan": {
+    "LED_PIN": "13",
+    "LED_RED": "12",
+    "LED_YELLOW": "11",
+    "LED_GREEN": "10",
+    "LED_BLUE": "9",
+    "RGB_RED": "9",
+    "RGB_GREEN": "10",
+    "RGB_BLUE": "11",
+    "BUTTON_PIN": "2",
+    "BUTTON2_PIN": "3",
+    "BUTTON_RED": "2",
+    "BUTTON_YELLOW": "3",
+    "BUTTON_GREEN": "4",
+    "BUTTON_BLUE": "5",
+    "BUZZER_PIN": "8",
+    "SERVO_PIN": "9",
+    "POT_PIN": "A0",
+    "LDR_PIN": "A1",
+    "SOIL_PIN": "A2",
+    "JOY_X_PIN": "A0",
+    "JOY_Y_PIN": "A1",
+    "JOY_SW_PIN": "7",
+    "PIR_PIN": "7",
+    "DHT_PIN": "4",
+    "TRIG_PIN": "6",
+    "ECHO_PIN": "7",
+    "NEOPIXEL_PIN": "6",
+    "TM1637_CLK": "6",
+    "TM1637_DIO": "7",
+    "MATRIX_DIN": "51",
+    "MATRIX_CLK": "52",
+    "MATRIX_CS": "53",
+    "RFID_SS": "53",
+    "RFID_RST": "49",
+    "KEYPAD_R1": "9",
+    "KEYPAD_R2": "8",
+    "KEYPAD_R3": "7",
+    "KEYPAD_R4": "6",
+    "KEYPAD_C1": "5",
+    "KEYPAD_C2": "4",
+    "KEYPAD_C3": "3",
+    "KEYPAD_C4": "2"
+  }
 }

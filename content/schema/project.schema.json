@@ -5,64 +5,377 @@
   "description": "One project on the picker. The file name must be <id>.json. A project with no steps yet shows as \"Coming soon\".",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "title", "tier", "boards", "parts", "minutes", "intro", "steps"],
+  "required": [
+    "id",
+    "title",
+    "tier",
+    "boards",
+    "parts",
+    "minutes",
+    "intro",
+    "steps"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "id": { "$ref": "common.schema.json#/$defs/id" },
-    "title": { "type": "string", "minLength": 1, "maxLength": 60 },
-    "tier": { "description": "A tier id from tiers.json.", "$ref": "common.schema.json#/$defs/id" },
-    "order": { "description": "Where the project sits within its tier on the picker (lowest first).", "type": "integer", "minimum": 0 },
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "tier": {
+      "description": "A tier id from tiers.json.",
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "order": {
+      "description": "Where the project sits within its tier on the picker (lowest first).",
+      "type": "integer",
+      "minimum": 0
+    },
     "boards": {
       "description": "Which boards the project suits: \"all\", \"avr\", \"esp\" (any ESP8266 or ESP32), \"esp8266\", \"esp32\", or board ids.",
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "common.schema.json#/$defs/id" }
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      }
     },
-    "board_count": { "description": "How many boards the project needs (2 for ESP-NOW).", "type": "integer", "minimum": 1, "maximum": 4 },
-    "needs_internet": { "type": "boolean" },
+    "board_count": {
+      "description": "How many boards the project needs (2 for ESP-NOW).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "needs_internet": {
+      "type": "boolean"
+    },
     "parts": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type"],
+        "required": [
+          "type"
+        ],
         "properties": {
-          "type": { "description": "A part type from parts/index.json.", "$ref": "common.schema.json#/$defs/id" },
-          "count": { "type": "integer", "minimum": 1, "maximum": 64 },
-          "note": { "type": "string", "maxLength": 80 }
+          "type": {
+            "description": "A part type from parts/index.json.",
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 80
+          }
         }
       }
     },
-    "minutes": { "type": "integer", "minimum": 10, "maximum": 600 },
-    "concepts": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 40 } },
+    "minutes": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 600
+    },
+    "concepts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      }
+    },
     "curriculum": {
       "description": "Victorian Curriculum Digital Technologies (Levels 7-10) content description codes.",
       "type": "array",
-      "items": { "type": "string", "minLength": 1, "maxLength": 20 }
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20
+      }
     },
-    "stretch": { "description": "Level up challenges.", "type": "array", "maxItems": 3, "items": { "$ref": "common.schema.json#/$defs/text" } },
-    "intro": { "$ref": "common.schema.json#/$defs/text" },
-    "outro": { "$ref": "common.schema.json#/$defs/text" },
-    "steps": { "type": "array", "items": { "$ref": "#/$defs/step" } }
+    "stretch": {
+      "description": "Level up challenges.",
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "common.schema.json#/$defs/text"
+      }
+    },
+    "intro": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "outro": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "pins": {
+      "description": "Overrides of the board's standard pin plan, by \"all\", family (avr, esp8266, esp32) or board id: role → pin code.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "board.schema.json#/$defs/role"
+        },
+        "additionalProperties": {
+          "$ref": "board.schema.json#/$defs/pincode"
+        }
+      }
+    },
+    "circuit": {
+      "$ref": "#/$defs/circuit"
+    },
+    "wiring_steps": {
+      "description": "The Wiring Wizard's screens, in order. Parts and wires say which one they belong to with \"step\" (from 1).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "text"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "text": {
+            "$ref": "common.schema.json#/$defs/text"
+          }
+        }
+      }
+    }
   },
   "$defs": {
     "step": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["title", "support", "text", "demo"],
+      "required": [
+        "title",
+        "support",
+        "text",
+        "demo"
+      ],
       "properties": {
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "support": { "enum": ["guided", "scaffolded", "brief"] },
-        "starter_mode": { "enum": ["replace", "keep", "append"] },
-        "starter": { "type": "string" },
-        "text": { "$ref": "common.schema.json#/$defs/text" },
-        "hints": { "type": "array", "maxItems": 3, "items": { "$ref": "common.schema.json#/$defs/text" } },
-        "error_hints": { "type": "object", "additionalProperties": { "type": "string" } },
-        "checks": { "type": "array", "items": { "type": "object", "required": ["type"], "properties": { "type": { "type": "string" } } } },
-        "success": { "type": "string" },
-        "demo": { "description": "The model answer, played by Watch the goal and tested in CI.", "type": "string", "minLength": 1 },
-        "sim_events": { "type": "array", "items": { "type": "object" } }
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "support": {
+          "enum": [
+            "guided",
+            "scaffolded",
+            "brief"
+          ]
+        },
+        "starter_mode": {
+          "enum": [
+            "replace",
+            "keep",
+            "append"
+          ]
+        },
+        "starter": {
+          "type": "string"
+        },
+        "text": {
+          "$ref": "common.schema.json#/$defs/text"
+        },
+        "hints": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "common.schema.json#/$defs/text"
+          }
+        },
+        "error_hints": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "success": {
+          "type": "string"
+        },
+        "demo": {
+          "description": "The model answer, played by Watch the goal and tested in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "sim_events": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "circuit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "breadboard",
+        "parts",
+        "wires"
+      ],
+      "properties": {
+        "breadboard": {
+          "enum": [
+            "half",
+            "none"
+          ]
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/id"
+              },
+              "type": {
+                "$ref": "common.schema.json#/$defs/id"
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "color": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "at": {
+                "type": "string",
+                "pattern": "^([A-J]([1-9]|[12][0-9]|30)|[TB][PN]([1-9]|1[0-9]|2[0-5]))$"
+              },
+              "rotate": {
+                "enum": [
+                  0,
+                  90,
+                  180,
+                  270
+                ]
+              },
+              "offboard": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "rotate": {
+                    "enum": [
+                      0,
+                      90,
+                      180,
+                      270
+                    ]
+                  }
+                }
+              },
+              "when": {
+                "enum": [
+                  "5v",
+                  "3v3"
+                ]
+              },
+              "step": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "options": {
+                "type": "object",
+                "description": "Part settings, e.g. {\"pixels\": 12} for a NeoPixel ring."
+              }
+            }
+          }
+        },
+        "wires": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string",
+                "pattern": "^([A-J]([1-9]|[12][0-9]|30)|[TB][PN]([1-9]|1[0-9]|2[0-5])|pin:[A-Z0-9_]+|board:(5V|3V3|GND|VIN|VCC)|part:[a-z0-9-]+:[a-z0-9_-]+)$"
+              },
+              "to": {
+                "type": "string",
+                "pattern": "^([A-J]([1-9]|[12][0-9]|30)|[TB][PN]([1-9]|1[0-9]|2[0-5])|pin:[A-Z0-9_]+|board:(5V|3V3|GND|VIN|VCC)|part:[a-z0-9-]+:[a-z0-9_-]+)$"
+              },
+              "color": {
+                "enum": [
+                  "red",
+                  "black",
+                  "blue",
+                  "green",
+                  "yellow",
+                  "orange",
+                  "white",
+                  "purple",
+                  "grey",
+                  "brown"
+                ]
+              },
+              "when": {
+                "enum": [
+                  "5v",
+                  "3v3"
+                ]
+              },
+              "step": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
       }
     }
   }

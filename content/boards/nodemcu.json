@@ -9,5 +9,169 @@
   "wifi": true,
   "order": 4,
   "notes": "A WiFi board. Its pins are labelled D0 to D8, and it runs on 3.3V.",
-  "upload": { "protocol": "esptool", "baud": 115200 }
+  "upload": {
+    "protocol": "esptool",
+    "baud": 115200
+  },
+  "power": {
+    "vcc": "3V3",
+    "pins": [
+      "3V3",
+      "GND",
+      "VIN"
+    ]
+  },
+  "analog_max": 1023,
+  "pwm_max": 255,
+  "int_bits": 32,
+  "led_builtin": {
+    "pin": "D4",
+    "active_low": true
+  },
+  "i2c": {
+    "sda": "D2",
+    "scl": "D1"
+  },
+  "spi": {
+    "mosi": "D7",
+    "miso": "D6",
+    "sck": "D5",
+    "ss": "D8"
+  },
+  "pins": [
+    {
+      "code": "D0",
+      "number": 16,
+      "label": "D0",
+      "modes": [
+        "digital"
+      ],
+      "note": "no PWM; wakes the board from deep sleep"
+    },
+    {
+      "code": "D1",
+      "number": 5,
+      "label": "D1",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "I2C SCL"
+    },
+    {
+      "code": "D2",
+      "number": 4,
+      "label": "D2",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "I2C SDA"
+    },
+    {
+      "code": "D3",
+      "number": 0,
+      "label": "D3",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "has a pull-up; don't hold LOW while the board starts"
+    },
+    {
+      "code": "D4",
+      "number": 2,
+      "label": "D4",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "built-in LED (on when LOW); don't hold LOW while the board starts"
+    },
+    {
+      "code": "D5",
+      "number": 14,
+      "label": "D5",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI SCK"
+    },
+    {
+      "code": "D6",
+      "number": 12,
+      "label": "D6",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI MISO"
+    },
+    {
+      "code": "D7",
+      "number": 13,
+      "label": "D7",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI MOSI"
+    },
+    {
+      "code": "D8",
+      "number": 15,
+      "label": "D8",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "must be LOW while the board starts (SPI SS)"
+    },
+    {
+      "code": "A0",
+      "number": 17,
+      "label": "A0",
+      "modes": [
+        "analog"
+      ],
+      "note": "the only analog input (0 to 1023)"
+    }
+  ],
+  "pin_plan": {
+    "LED_PIN": "D5",
+    "LED_RED": "D5",
+    "LED_YELLOW": "D6",
+    "LED_GREEN": "D7",
+    "LED_BLUE": "D0",
+    "RGB_RED": "D5",
+    "RGB_GREEN": "D6",
+    "RGB_BLUE": "D7",
+    "BUTTON_PIN": "D3",
+    "BUTTON2_PIN": "D4",
+    "BUTTON_RED": "D1",
+    "BUTTON_YELLOW": "D2",
+    "BUTTON_GREEN": "D3",
+    "BUTTON_BLUE": "D4",
+    "BUZZER_PIN": "D8",
+    "SERVO_PIN": "D6",
+    "POT_PIN": "A0",
+    "LDR_PIN": "A0",
+    "SOIL_PIN": "A0",
+    "JOY_X_PIN": "A0",
+    "JOY_Y_PIN": "A0",
+    "JOY_SW_PIN": "D3",
+    "PIR_PIN": "D7",
+    "DHT_PIN": "D5",
+    "TRIG_PIN": "D1",
+    "ECHO_PIN": "D2",
+    "NEOPIXEL_PIN": "D6",
+    "TM1637_CLK": "D5",
+    "TM1637_DIO": "D6",
+    "MATRIX_DIN": "D7",
+    "MATRIX_CLK": "D5",
+    "MATRIX_CS": "D8",
+    "RFID_SS": "D8",
+    "RFID_RST": "D0"
+  }
 }

@@ -10,5 +10,296 @@
   "bluetooth": true,
   "order": 6,
   "notes": "A fast board with WiFi and Bluetooth. It runs on 3.3V.",
-  "upload": { "protocol": "esptool", "baud": 921600 }
+  "upload": {
+    "protocol": "esptool",
+    "baud": 921600
+  },
+  "power": {
+    "vcc": "3V3",
+    "pins": [
+      "3V3",
+      "GND",
+      "VIN"
+    ]
+  },
+  "analog_max": 4095,
+  "pwm_max": 255,
+  "int_bits": 32,
+  "led_builtin": {
+    "pin": "2",
+    "active_low": false
+  },
+  "i2c": {
+    "sda": "21",
+    "scl": "22"
+  },
+  "spi": {
+    "mosi": "23",
+    "miso": "19",
+    "sck": "18",
+    "ss": "5"
+  },
+  "pins": [
+    {
+      "code": "2",
+      "number": 2,
+      "label": "D2",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "built-in LED; must be LOW or floating while the board starts"
+    },
+    {
+      "code": "4",
+      "number": 4,
+      "label": "D4",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "5",
+      "number": 5,
+      "label": "D5",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI SS (VSPI)"
+    },
+    {
+      "code": "12",
+      "number": 12,
+      "label": "D12",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "must be LOW while the board starts: avoid"
+    },
+    {
+      "code": "13",
+      "number": 13,
+      "label": "D13",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "14",
+      "number": 14,
+      "label": "D14",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "15",
+      "number": 15,
+      "label": "D15",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "strapping pin: keep it free while the board starts if you can"
+    },
+    {
+      "code": "16",
+      "number": 16,
+      "label": "D16",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "17",
+      "number": 17,
+      "label": "D17",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "18",
+      "number": 18,
+      "label": "D18",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI SCK"
+    },
+    {
+      "code": "19",
+      "number": 19,
+      "label": "D19",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI MISO"
+    },
+    {
+      "code": "21",
+      "number": 21,
+      "label": "D21",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "I2C SDA"
+    },
+    {
+      "code": "22",
+      "number": 22,
+      "label": "D22",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "I2C SCL"
+    },
+    {
+      "code": "23",
+      "number": 23,
+      "label": "D23",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI MOSI"
+    },
+    {
+      "code": "25",
+      "number": 25,
+      "label": "D25",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "analog 2 (can't be used with WiFi on)"
+    },
+    {
+      "code": "26",
+      "number": 26,
+      "label": "D26",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "analog 2 (can't be used with WiFi on)"
+    },
+    {
+      "code": "27",
+      "number": 27,
+      "label": "D27",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "analog 2 (can't be used with WiFi on)"
+    },
+    {
+      "code": "32",
+      "number": 32,
+      "label": "D32",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ]
+    },
+    {
+      "code": "33",
+      "number": 33,
+      "label": "D33",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ]
+    },
+    {
+      "code": "34",
+      "number": 34,
+      "label": "D34",
+      "modes": [
+        "analog",
+        "input"
+      ],
+      "note": "input only (no pull-up)"
+    },
+    {
+      "code": "35",
+      "number": 35,
+      "label": "D35",
+      "modes": [
+        "analog",
+        "input"
+      ],
+      "note": "input only (no pull-up)"
+    },
+    {
+      "code": "36",
+      "number": 36,
+      "label": "VP",
+      "modes": [
+        "analog",
+        "input"
+      ],
+      "note": "input only (no pull-up)"
+    },
+    {
+      "code": "39",
+      "number": 39,
+      "label": "VN",
+      "modes": [
+        "analog",
+        "input"
+      ],
+      "note": "input only (no pull-up)"
+    }
+  ],
+  "pin_plan": {
+    "LED_PIN": "25",
+    "LED_RED": "25",
+    "LED_YELLOW": "26",
+    "LED_GREEN": "27",
+    "LED_BLUE": "14",
+    "RGB_RED": "25",
+    "RGB_GREEN": "26",
+    "RGB_BLUE": "27",
+    "BUTTON_PIN": "4",
+    "BUTTON2_PIN": "16",
+    "BUTTON_RED": "4",
+    "BUTTON_YELLOW": "16",
+    "BUTTON_GREEN": "17",
+    "BUTTON_BLUE": "13",
+    "BUZZER_PIN": "33",
+    "SERVO_PIN": "32",
+    "POT_PIN": "34",
+    "LDR_PIN": "35",
+    "SOIL_PIN": "36",
+    "JOY_X_PIN": "34",
+    "JOY_Y_PIN": "35",
+    "JOY_SW_PIN": "17",
+    "PIR_PIN": "14",
+    "DHT_PIN": "13",
+    "TRIG_PIN": "16",
+    "ECHO_PIN": "17",
+    "NEOPIXEL_PIN": "19",
+    "TM1637_CLK": "18",
+    "TM1637_DIO": "19",
+    "MATRIX_DIN": "23",
+    "MATRIX_CLK": "18",
+    "MATRIX_CS": "5",
+    "RFID_SS": "5",
+    "RFID_RST": "2"
+  }
 }

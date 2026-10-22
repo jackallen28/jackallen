@@ -5,35 +5,273 @@
   "description": "One board students can pick. The file name must be <id>.json.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "short", "family", "fqbn", "logic_volts", "wifi", "upload", "order"],
+  "required": [
+    "id",
+    "name",
+    "short",
+    "family",
+    "fqbn",
+    "logic_volts",
+    "wifi",
+    "upload",
+    "order",
+    "power",
+    "analog_max",
+    "pwm_max",
+    "int_bits",
+    "led_builtin",
+    "i2c",
+    "spi",
+    "pins",
+    "pin_plan"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "id": { "$ref": "common.schema.json#/$defs/id" },
-    "name": { "type": "string", "minLength": 1, "maxLength": 60 },
-    "short": { "description": "A short name for the toolbar.", "type": "string", "minLength": 1, "maxLength": 20 },
-    "family": { "enum": ["avr", "esp8266", "esp32"] },
-    "fqbn": { "description": "The arduino-cli board name.", "type": "string", "pattern": "^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+(:[a-zA-Z0-9_=,]+)?$" },
-    "logic_volts": { "enum": [5, 3.3] },
-    "wifi": { "type": "boolean" },
-    "bluetooth": { "type": "boolean" },
-    "optional": { "description": "Hidden unless the Teacher page turns it on.", "type": "boolean" },
-    "default": { "description": "The board picked for new profiles. Exactly one board has this.", "type": "boolean" },
-    "order": { "type": "integer", "minimum": 0 },
-    "notes": { "type": "string", "maxLength": 300 },
-    "upload": { "$ref": "#/$defs/upload" },
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "short": {
+      "description": "A short name for the toolbar.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20
+    },
+    "family": {
+      "enum": [
+        "avr",
+        "esp8266",
+        "esp32"
+      ]
+    },
+    "fqbn": {
+      "description": "The arduino-cli board name.",
+      "type": "string",
+      "pattern": "^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+(:[a-zA-Z0-9_=,]+)?$"
+    },
+    "logic_volts": {
+      "enum": [
+        5,
+        3.3
+      ]
+    },
+    "wifi": {
+      "type": "boolean"
+    },
+    "bluetooth": {
+      "type": "boolean"
+    },
+    "optional": {
+      "description": "Hidden unless the Teacher page turns it on.",
+      "type": "boolean"
+    },
+    "default": {
+      "description": "The board picked for new profiles. Exactly one board has this.",
+      "type": "boolean"
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "upload": {
+      "$ref": "#/$defs/upload"
+    },
     "variants": {
       "description": "Other settings for the same board, such as the old bootloader on Nano clones.",
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "label", "fqbn", "upload"],
+        "required": [
+          "id",
+          "label",
+          "fqbn",
+          "upload"
+        ],
         "properties": {
-          "id": { "$ref": "common.schema.json#/$defs/id" },
-          "label": { "type": "string", "minLength": 1, "maxLength": 80 },
-          "fqbn": { "type": "string", "pattern": "^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+(:[a-zA-Z0-9_=,]+)?$" },
-          "upload": { "$ref": "#/$defs/upload" }
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "fqbn": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+(:[a-zA-Z0-9_=,]+)?$"
+          },
+          "upload": {
+            "$ref": "#/$defs/upload"
+          }
         }
+      }
+    },
+    "power": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vcc",
+        "pins"
+      ],
+      "properties": {
+        "vcc": {
+          "enum": [
+            "5V",
+            "3V3"
+          ]
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "5V",
+              "3V3",
+              "GND",
+              "VIN"
+            ]
+          }
+        }
+      }
+    },
+    "analog_max": {
+      "enum": [
+        1023,
+        4095
+      ]
+    },
+    "pwm_max": {
+      "enum": [
+        255
+      ]
+    },
+    "int_bits": {
+      "enum": [
+        16,
+        32
+      ]
+    },
+    "led_builtin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pin",
+        "active_low"
+      ],
+      "properties": {
+        "pin": {
+          "$ref": "#/$defs/pincode"
+        },
+        "active_low": {
+          "type": "boolean"
+        }
+      }
+    },
+    "i2c": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sda",
+        "scl"
+      ],
+      "properties": {
+        "sda": {
+          "$ref": "#/$defs/pincode"
+        },
+        "scl": {
+          "$ref": "#/$defs/pincode"
+        }
+      }
+    },
+    "spi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mosi",
+        "miso",
+        "sck",
+        "ss"
+      ],
+      "properties": {
+        "mosi": {
+          "$ref": "#/$defs/pincode"
+        },
+        "miso": {
+          "$ref": "#/$defs/pincode"
+        },
+        "sck": {
+          "$ref": "#/$defs/pincode"
+        },
+        "ss": {
+          "$ref": "#/$defs/pincode"
+        }
+      }
+    },
+    "pins": {
+      "description": "Every usable pin.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "number",
+          "label",
+          "modes"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "#/$defs/pincode"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8
+          },
+          "modes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "digital",
+                "pwm",
+                "analog",
+                "input"
+              ]
+            }
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 120
+          }
+        }
+      }
+    },
+    "pin_plan": {
+      "description": "The standard pin plan: role → pin code.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/role"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/pincode"
       }
     }
   },
@@ -41,11 +279,39 @@
     "upload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["protocol", "baud"],
+      "required": [
+        "protocol",
+        "baud"
+      ],
       "properties": {
-        "protocol": { "enum": ["stk500v1", "stk500v2", "esptool", "uno-r4"] },
-        "baud": { "type": "integer", "enum": [57600, 115200, 230400, 460800, 921600] }
+        "protocol": {
+          "enum": [
+            "stk500v1",
+            "stk500v2",
+            "esptool",
+            "uno-r4"
+          ]
+        },
+        "baud": {
+          "type": "integer",
+          "enum": [
+            57600,
+            115200,
+            230400,
+            460800,
+            921600
+          ]
+        }
       }
+    },
+    "pincode": {
+      "description": "A pin as written in code: 13, A0, D5, 23.",
+      "type": "string",
+      "pattern": "^(A?[0-9]{1,2}|D[0-9])$"
+    },
+    "role": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{1,30}$"
     }
   }
 }

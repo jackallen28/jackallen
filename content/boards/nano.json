@@ -9,13 +9,283 @@
   "wifi": false,
   "order": 2,
   "notes": "A small Arduino that plugs into the breadboard. Many clones use the old bootloader.",
-  "upload": { "protocol": "stk500v1", "baud": 115200 },
+  "upload": {
+    "protocol": "stk500v1",
+    "baud": 115200
+  },
   "variants": [
     {
       "id": "old-bootloader",
       "label": "Old bootloader (most Nano clones)",
       "fqbn": "arduino:avr:nano:cpu=atmega328old",
-      "upload": { "protocol": "stk500v1", "baud": 57600 }
+      "upload": {
+        "protocol": "stk500v1",
+        "baud": 57600
+      }
     }
-  ]
+  ],
+  "power": {
+    "vcc": "5V",
+    "pins": [
+      "5V",
+      "3V3",
+      "GND",
+      "VIN"
+    ]
+  },
+  "analog_max": 1023,
+  "pwm_max": 255,
+  "int_bits": 16,
+  "led_builtin": {
+    "pin": "13",
+    "active_low": false
+  },
+  "i2c": {
+    "sda": "A4",
+    "scl": "A5"
+  },
+  "spi": {
+    "mosi": "11",
+    "miso": "12",
+    "sck": "13",
+    "ss": "10"
+  },
+  "pins": [
+    {
+      "code": "0",
+      "number": 0,
+      "label": "0",
+      "modes": [
+        "digital"
+      ],
+      "note": "used by USB serial: avoid"
+    },
+    {
+      "code": "1",
+      "number": 1,
+      "label": "1",
+      "modes": [
+        "digital"
+      ],
+      "note": "used by USB serial: avoid"
+    },
+    {
+      "code": "2",
+      "number": 2,
+      "label": "2",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "3",
+      "number": 3,
+      "label": "3",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "4",
+      "number": 4,
+      "label": "4",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "5",
+      "number": 5,
+      "label": "5",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "6",
+      "number": 6,
+      "label": "6",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "7",
+      "number": 7,
+      "label": "7",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "8",
+      "number": 8,
+      "label": "8",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "9",
+      "number": 9,
+      "label": "9",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "10",
+      "number": 10,
+      "label": "10",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "11",
+      "number": 11,
+      "label": "11",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "12",
+      "number": 12,
+      "label": "12",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "13",
+      "number": 13,
+      "label": "13",
+      "modes": [
+        "digital"
+      ]
+    },
+    {
+      "code": "A0",
+      "number": 14,
+      "label": "A0",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A1",
+      "number": 15,
+      "label": "A1",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A2",
+      "number": 16,
+      "label": "A2",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A3",
+      "number": 17,
+      "label": "A3",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A4",
+      "number": 18,
+      "label": "A4",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A5",
+      "number": 19,
+      "label": "A5",
+      "modes": [
+        "analog",
+        "digital"
+      ]
+    },
+    {
+      "code": "A6",
+      "number": 20,
+      "label": "A6",
+      "modes": [
+        "analog"
+      ],
+      "note": "analog input only"
+    },
+    {
+      "code": "A7",
+      "number": 21,
+      "label": "A7",
+      "modes": [
+        "analog"
+      ],
+      "note": "analog input only"
+    }
+  ],
+  "pin_plan": {
+    "LED_PIN": "13",
+    "LED_RED": "12",
+    "LED_YELLOW": "11",
+    "LED_GREEN": "10",
+    "LED_BLUE": "9",
+    "RGB_RED": "9",
+    "RGB_GREEN": "10",
+    "RGB_BLUE": "11",
+    "BUTTON_PIN": "2",
+    "BUTTON2_PIN": "3",
+    "BUTTON_RED": "2",
+    "BUTTON_YELLOW": "3",
+    "BUTTON_GREEN": "4",
+    "BUTTON_BLUE": "5",
+    "BUZZER_PIN": "8",
+    "SERVO_PIN": "9",
+    "POT_PIN": "A0",
+    "LDR_PIN": "A1",
+    "SOIL_PIN": "A2",
+    "JOY_X_PIN": "A0",
+    "JOY_Y_PIN": "A1",
+    "JOY_SW_PIN": "7",
+    "PIR_PIN": "7",
+    "DHT_PIN": "4",
+    "TRIG_PIN": "6",
+    "ECHO_PIN": "7",
+    "NEOPIXEL_PIN": "6",
+    "TM1637_CLK": "6",
+    "TM1637_DIO": "7",
+    "MATRIX_DIN": "11",
+    "MATRIX_CLK": "13",
+    "MATRIX_CS": "10",
+    "RFID_SS": "10",
+    "RFID_RST": "9",
+    "KEYPAD_R1": "9",
+    "KEYPAD_R2": "8",
+    "KEYPAD_R3": "7",
+    "KEYPAD_R4": "6",
+    "KEYPAD_C1": "5",
+    "KEYPAD_C2": "4",
+    "KEYPAD_C3": "3",
+    "KEYPAD_C4": "2"
+  }
 }

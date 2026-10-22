@@ -11,5 +11,202 @@
   "optional": true,
   "order": 7,
   "notes": "A very small, cheap WiFi board with built-in USB. It runs on 3.3V. (USB CDC on boot is on, so the Serial Monitor works over its USB port.)",
-  "upload": { "protocol": "esptool", "baud": 460800 }
+  "upload": {
+    "protocol": "esptool",
+    "baud": 460800
+  },
+  "power": {
+    "vcc": "3V3",
+    "pins": [
+      "3V3",
+      "5V",
+      "GND"
+    ]
+  },
+  "analog_max": 4095,
+  "pwm_max": 255,
+  "int_bits": 32,
+  "led_builtin": {
+    "pin": "8",
+    "active_low": true
+  },
+  "i2c": {
+    "sda": "8",
+    "scl": "9"
+  },
+  "spi": {
+    "mosi": "6",
+    "miso": "5",
+    "sck": "4",
+    "ss": "7"
+  },
+  "pins": [
+    {
+      "code": "0",
+      "number": 0,
+      "label": "0",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ]
+    },
+    {
+      "code": "1",
+      "number": 1,
+      "label": "1",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ]
+    },
+    {
+      "code": "2",
+      "number": 2,
+      "label": "2",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ],
+      "note": "strapping pin"
+    },
+    {
+      "code": "3",
+      "number": 3,
+      "label": "3",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ]
+    },
+    {
+      "code": "4",
+      "number": 4,
+      "label": "4",
+      "modes": [
+        "digital",
+        "pwm",
+        "analog"
+      ],
+      "note": "SPI SCK"
+    },
+    {
+      "code": "5",
+      "number": 5,
+      "label": "5",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI MISO"
+    },
+    {
+      "code": "6",
+      "number": 6,
+      "label": "6",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI MOSI"
+    },
+    {
+      "code": "7",
+      "number": 7,
+      "label": "7",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "SPI SS"
+    },
+    {
+      "code": "8",
+      "number": 8,
+      "label": "8",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "built-in LED (on when LOW); I2C SDA; strapping pin"
+    },
+    {
+      "code": "9",
+      "number": 9,
+      "label": "9",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "BOOT button; I2C SCL"
+    },
+    {
+      "code": "10",
+      "number": 10,
+      "label": "10",
+      "modes": [
+        "digital",
+        "pwm"
+      ]
+    },
+    {
+      "code": "20",
+      "number": 20,
+      "label": "20",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "UART RX"
+    },
+    {
+      "code": "21",
+      "number": 21,
+      "label": "21",
+      "modes": [
+        "digital",
+        "pwm"
+      ],
+      "note": "UART TX"
+    }
+  ],
+  "pin_plan": {
+    "LED_PIN": "10",
+    "LED_RED": "10",
+    "LED_YELLOW": "7",
+    "LED_GREEN": "6",
+    "LED_BLUE": "5",
+    "RGB_RED": "10",
+    "RGB_GREEN": "7",
+    "RGB_BLUE": "6",
+    "BUTTON_PIN": "20",
+    "BUTTON2_PIN": "21",
+    "BUTTON_RED": "20",
+    "BUTTON_YELLOW": "21",
+    "BUTTON_GREEN": "3",
+    "BUTTON_BLUE": "4",
+    "BUZZER_PIN": "2",
+    "SERVO_PIN": "7",
+    "POT_PIN": "0",
+    "LDR_PIN": "1",
+    "SOIL_PIN": "3",
+    "JOY_X_PIN": "0",
+    "JOY_Y_PIN": "1",
+    "JOY_SW_PIN": "20",
+    "PIR_PIN": "21",
+    "DHT_PIN": "3",
+    "TRIG_PIN": "20",
+    "ECHO_PIN": "21",
+    "NEOPIXEL_PIN": "10",
+    "TM1637_CLK": "20",
+    "TM1637_DIO": "21",
+    "MATRIX_DIN": "6",
+    "MATRIX_CLK": "4",
+    "MATRIX_CS": "7",
+    "RFID_SS": "7",
+    "RFID_RST": "10"
+  }
 }
