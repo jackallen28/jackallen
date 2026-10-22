@@ -28,7 +28,7 @@ type Progress struct {
 func (s *Store) PutSketch(ctx context.Context, studentID int64, projectID, code string) (int64, error) {
 	now := s.millis()
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO sketches (student_id, project_id, code, updated_at) VALUES (?, ?, ?, ?)
+		INSERT INTO sketches (student_id, project_id, code, updated_at) VALUES ($1, $2, $3, $4)
 		ON CONFLICT (student_id, project_id) DO UPDATE SET code = excluded.code, updated_at = excluded.updated_at`,
 		studentID, projectID, code, now)
 	return now, err
@@ -38,7 +38,7 @@ func (s *Store) PutSketch(ctx context.Context, studentID int64, projectID, code 
 func (s *Store) GetSketch(ctx context.Context, studentID int64, projectID string) (Sketch, error) {
 	sk := Sketch{ProjectID: projectID}
 	err := s.db.QueryRowContext(ctx,
-		"SELECT code, updated_at FROM sketches WHERE student_id = ? AND project_id = ?", studentID, projectID).
+		"SELECT code, updated_at FROM sketches WHERE student_id = $1 AND project_id = $2", studentID, projectID).
 		Scan(&sk.Code, &sk.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Sketch{}, ErrNotFound
@@ -49,7 +49,7 @@ func (s *Store) GetSketch(ctx context.Context, studentID int64, projectID string
 // ListSketches loads all of a student's sketches.
 func (s *Store) ListSketches(ctx context.Context, studentID int64) ([]Sketch, error) {
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT project_id, code, updated_at FROM sketches WHERE student_id = ? ORDER BY project_id", studentID)
+		"SELECT project_id, code, updated_at FROM sketches WHERE student_id = $1 ORDER BY project_id", studentID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *Store) ListSketches(ctx context.Context, studentID int64) ([]Sketch, er
 func (s *Store) PutProgress(ctx context.Context, studentID int64, projectID string, data json.RawMessage) (int64, error) {
 	now := s.millis()
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO progress (student_id, project_id, data, updated_at) VALUES (?, ?, ?, ?)
+		INSERT INTO progress (student_id, project_id, data, updated_at) VALUES ($1, $2, $3, $4)
 		ON CONFLICT (student_id, project_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
 		studentID, projectID, string(data), now)
 	return now, err
@@ -78,7 +78,7 @@ func (s *Store) PutProgress(ctx context.Context, studentID int64, projectID stri
 // ListProgress loads a student's progress in every project.
 func (s *Store) ListProgress(ctx context.Context, studentID int64) ([]Progress, error) {
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT project_id, data, updated_at FROM progress WHERE student_id = ? ORDER BY project_id", studentID)
+		"SELECT project_id, data, updated_at FROM progress WHERE student_id = $1 ORDER BY project_id", studentID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (s *Store) ImportWork(ctx context.Context, studentID int64, sketches []Sket
 	defer tx.Rollback()
 	for _, sk := range sketches {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO sketches (student_id, project_id, code, updated_at) VALUES (?, ?, ?, ?)
+			INSERT INTO sketches (student_id, project_id, code, updated_at) VALUES ($1, $2, $3, $4)
 			ON CONFLICT (student_id, project_id) DO UPDATE SET code = excluded.code, updated_at = excluded.updated_at`,
 			studentID, sk.ProjectID, sk.Code, sk.UpdatedAt); err != nil {
 			return err
@@ -114,7 +114,7 @@ func (s *Store) ImportWork(ctx context.Context, studentID int64, sketches []Sket
 	}
 	for _, p := range progress {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO progress (student_id, project_id, data, updated_at) VALUES (?, ?, ?, ?)
+			INSERT INTO progress (student_id, project_id, data, updated_at) VALUES ($1, $2, $3, $4)
 			ON CONFLICT (student_id, project_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
 			studentID, p.ProjectID, string(p.Data), p.UpdatedAt); err != nil {
 			return err
