@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Which program suits my class? | Banyule Nillumbik Tech School</title>
+<style>
+/* ------------------------------------------------------------------
+   Theme. Colours are taken from the Banyule Nillumbik Tech School logo.
+   ------------------------------------------------------------------ */
+:root{
+  --teal:#13bdc6; --teal-2:#00b6bf; --teal-light:#65d2d8;
+  --purple:#704789; --purple-2:#815a99; --lilac:#c5b4d6; --lilac-2:#d2c4e0; --lilac-3:#dcd0e7;
+  --bg:#f6f4f9; --card:#ffffff; --card-2:#faf9fc;
+  --ink:#171717; --muted:#505058; --line:#cfc8d8; --line-strong:#8f879c;
+  --teal-soft:#dff5f6; --track:#d9d3e2;
+  --action:#704789; --action-ink:#ffffff; --action-hover:#5a3871;
+  --link:#5a3871; --focus:#0b6f76; --ok:#17734a; --warn:#8a5a00;
+  --shadow:0 1px 2px rgba(23,23,23,.06),0 8px 24px rgba(60,40,80,.08);
+  --wordmark-top:#8d8d8d; --wordmark:#171717; --thumb:#704789;
+  --font:"Segoe UI","Helvetica Neue",Arial,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#131018; --card:#1c1824; --card-2:#221d2c;
+    --ink:#f3f0f7; --muted:#b9b2c5; --line:#3a3347; --line-strong:#7b728a;
+    --teal-soft:#0f3a3e; --track:#3a3347;
+    --action:#19bcc4; --action-ink:#0b1417; --action-hover:#65d2d8;
+    --link:#c5b4d6; --focus:#65d2d8; --ok:#5fd09a; --warn:#e0b25a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    --wordmark-top:#a39cb0; --wordmark:#f3f0f7; --thumb:#c5b4d6;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:16px/1.5 var(--font)}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+a{color:var(--link)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.skip{position:absolute;left:8px;top:-60px;background:var(--card);padding:8px 14px;border:2px solid var(--focus);z-index:10}
+.skip:focus{top:8px}
+
+/* Header: logo and progress */
+.top{position:relative;background:var(--card);border-bottom:1px solid var(--line);padding:14px 28px 12px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.top::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;
+  background:linear-gradient(90deg,#13bdc6 0 12.5%,#65d2d8 12.5% 25%,#704789 25% 37.5%,#c5b4d6 37.5% 50%,#00b6bf 50% 62.5%,#dcd0e7 62.5% 75%,#815a99 75% 87.5%,#0abac4 87.5% 100%)}
+.brand{display:flex;align-items:center;gap:18px;min-width:0}
+.brand svg{height:58px;width:auto;display:block}
+.brand .product{border-left:1px solid var(--line);padding-left:18px;line-height:1.25}
+.brand .product strong{display:block;font-size:1.05rem;font-weight:600;letter-spacing:.01em}
+.brand .product span{color:var(--muted);font-size:.85rem}
+.wm-top{fill:var(--wordmark-top)} .wm{fill:var(--wordmark)}
+#progress{flex:1 1 380px;min-width:260px}
+.steps{list-style:none;margin:0;padding:0;display:flex;align-items:center}
+.steps li{display:flex;align-items:center;flex:1 1 0}
+.steps li:last-child{flex:0 0 auto}
+.steps li:not(:last-child)::after{content:"";flex:1;height:2px;margin:0 6px;background:var(--line);transition:background .4s}
+.steps li.done:not(:last-child)::after{background:var(--teal)}
+.node{width:34px;height:34px;border:2px solid var(--line-strong);background:var(--card);color:var(--muted);font:600 .85rem var(--font);display:grid;place-items:center;padding:0;border-radius:3px;cursor:default;transition:background .3s,border-color .3s,color .3s}
+button.node{cursor:pointer}
+.node.done{background:var(--teal);border-color:var(--teal);color:#0b1417}
+.node.now{background:var(--purple);border-color:var(--purple);color:#fff}
+@media (prefers-color-scheme:dark){.node.now{background:var(--lilac);border-color:var(--lilac);color:#1c1824}}
+.node.final.done{background:var(--purple);border-color:var(--purple);color:#fff}
+.node svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:3}
+
+/* Stage */
+main{flex:1;width:100%;max-width:1000px;margin:0 auto;padding:22px 20px 28px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);padding:26px 32px 22px;animation:enter .35s ease both}
+@keyframes enter{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.eyebrow{margin:0 0 4px;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--purple)}
+@media (prefers-color-scheme:dark){.eyebrow{color:var(--lilac)}}
+h1{margin:0 0 6px;font-size:1.75rem;line-height:1.2;font-weight:600;letter-spacing:-.005em}
+h1:focus{outline:none}
+.lead{margin:0 0 20px;color:var(--muted);max-width:68ch}
+h2{font-size:1.05rem;margin:0 0 8px;font-weight:600}
+.field{margin:0 0 18px}
+.field>label,.field>.lab{display:block;font-weight:600;margin-bottom:6px}
+.hint{color:var(--muted);font-size:.9rem}
+
+/* Buttons */
+.btn{font:600 1rem var(--font);min-height:48px;padding:10px 26px;border:2px solid var(--action);background:var(--action);color:var(--action-ink);border-radius:3px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn:hover{background:var(--action-hover);border-color:var(--action-hover)}
+.btn.secondary{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn.secondary:hover{background:var(--card-2);border-color:var(--ink)}
+.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.linkbtn{background:none;border:0;padding:10px 6px;font:inherit;color:var(--link);text-decoration:underline;cursor:pointer;min-height:44px}
+.actions{display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.actions .spacer{flex:1}
+#status{min-height:1.4em;margin:10px 0 0;color:var(--muted);font-size:.9rem}
+
+/* Options: chips, tiles, cards */
+.opts{display:grid;gap:12px}
+.opt{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:3px;min-height:56px;padding:10px 14px;cursor:pointer;text-align:left;position:relative;display:flex;flex-direction:column;justify-content:center;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--line-strong)}
+.opt[aria-checked="true"],.opt[aria-pressed="true"]{background:var(--teal-soft);border-color:var(--teal-2);box-shadow:inset 0 0 0 1px var(--teal-2)}
+.opt[aria-checked="true"]::after,.opt[aria-pressed="true"]::after{content:"";position:absolute;top:6px;right:6px;width:10px;height:10px;background:var(--purple)}
+@media (prefers-color-scheme:dark){.opt[aria-checked="true"]::after,.opt[aria-pressed="true"]::after{background:var(--lilac)}}
+.opt .t{font-weight:600}
+.opt .d{font-size:.88rem;color:var(--muted);margin-top:2px}
+.opt kbd{position:absolute;left:8px;bottom:4px;font:600 .7rem var(--font);color:var(--muted)}
+.years{grid-template-columns:repeat(6,1fr)}
+.years .opt{align-items:center;text-align:center;min-height:84px;font-size:1.5rem;font-weight:600}
+.years .opt .d{font-size:.8rem;font-weight:400}
+.tiles{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.projects{grid-template-columns:repeat(4,1fr)}
+.projects .opt{min-height:96px}
+.times{grid-template-columns:repeat(3,1fr);margin-top:6px}
+.group-label{font-weight:600;margin:14px 0 8px}
+.group-label:first-child{margin-top:0}
+.subj{display:flex;flex-direction:column}
+.subj .opt{min-height:60px;width:100%}
+.subj .weight{padding:2px 2px 0}
+.subj .weight .row{margin:0}
+.subj .weight label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.subj .weight .val{font-size:.85rem;text-align:left}
+.subj .weight input[type=range]{height:26px}
+.pathgrid{grid-template-columns:repeat(4,1fr);align-items:start}
+
+/* Sliders */
+.slider{margin:0 0 6px}
+.slider .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}
+.slider .row label{font-weight:600}
+.slider .val{font-weight:600;color:var(--purple);text-align:right}
+@media (prefers-color-scheme:dark){.slider .val{color:var(--lilac)}}
+.slider .detail{color:var(--muted);font-size:.9rem;min-height:1.4em}
+.slider .ends{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem;margin-top:2px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:32px;background:transparent;margin:0;cursor:pointer;--pct:0%}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:2px;background:linear-gradient(90deg,var(--teal) var(--pct),var(--track) var(--pct))}
+input[type=range]::-moz-range-track{height:8px;border-radius:2px;background:linear-gradient(90deg,var(--teal) var(--pct),var(--track) var(--pct))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-10px;background:var(--thumb);border:3px solid var(--card);border-radius:3px;box-shadow:0 0 0 1px var(--thumb),0 2px 8px rgba(0,0,0,.35)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--thumb);border:3px solid var(--card);border-radius:3px;box-shadow:0 0 0 1px var(--thumb),0 2px 8px rgba(0,0,0,.35)}
+input[type=range]:focus-visible{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{outline:3px solid var(--focus);outline-offset:2px}
+input[type=range]:focus-visible::-moz-range-thumb{outline:3px solid var(--focus);outline-offset:2px}
+.meter{display:inline-flex;gap:3px;vertical-align:middle;margin-right:8px}
+.meter i{width:12px;height:12px;background:var(--track);display:block}
+.meter i.on{background:var(--teal)}
+.meter i.on:last-child{background:var(--purple)}
+.goalgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 36px}
+.spreadnote{color:var(--muted);font-size:.9rem;margin-top:4px}
+.divider{height:1px;background:var(--line);margin:18px 0}
+
+/* Result */
+.result{display:grid;gap:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);padding:20px 24px;animation:enter .5s ease both;animation-delay:calc(var(--i,0)*.12s)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:24px;align-items:center;border-top:6px solid var(--teal)}
+.hero .tag{display:flex;align-items:center;gap:10px;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lit{width:14px;height:14px;background:var(--line);display:inline-block;animation:light .6s ease .9s both}
+@keyframes light{to{background:var(--teal);box-shadow:0 0 0 4px rgba(19,189,198,.25)}}
+.hero h1{margin:6px 0 4px;font-size:1.9rem}
+.hero .meta{font-weight:600;color:var(--purple);margin:0 0 8px}
+@media (prefers-color-scheme:dark){.hero .meta{color:var(--lilac)}}
+.hero ul,.panel ul{margin:8px 0 0;padding-left:20px}
+.hero li,.panel li{margin:3px 0}
+.art{background:var(--card-2);border:1px solid var(--line);border-radius:4px;padding:10px}
+.art svg{width:100%;height:auto;display:block}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.panel h2{display:flex;align-items:center;gap:10px}
+.panel h2::before{content:"";width:10px;height:10px;background:var(--teal);flex:none}
+.panel.stretch h2::before{background:var(--purple)}
+.panel.alt h2::before{background:var(--lilac)}
+.codes{list-style:none;padding:0!important}
+.codes li{display:flex;gap:12px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line)}
+.codes li:last-child{border-bottom:0}
+.codes code{font:600 .85rem Consolas,"Courier New",monospace;min-width:13ch;color:var(--purple)}
+.codes .pw{font-weight:600;min-width:13ch;color:var(--purple)}
+@media (prefers-color-scheme:dark){.codes code,.codes .pw{color:var(--lilac)}}
+.note{color:var(--muted);font-size:.88rem}
+.warn{color:var(--warn);font-size:.9rem;font-weight:600}
+.nextrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+details.sum{margin-top:14px} details.sum summary{cursor:pointer;color:var(--link)}
+textarea.sumtext{width:100%;min-height:200px;margin-top:8px;font:.85rem/1.5 Consolas,"Courier New",monospace;background:var(--card-2);color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:10px}
+
+/* Debug */
+.debug{margin-top:18px;border:2px dashed var(--line-strong);padding:10px 14px;background:var(--card-2);font-size:.8rem}
+.debug table{border-collapse:collapse;width:100%} .debug th,.debug td{padding:3px 6px;text-align:right;border-bottom:1px solid var(--line)}
+.debug th:first-child,.debug td:first-child{text-align:left} .debug tr.best{font-weight:700;background:var(--teal-soft)}
+
+footer{padding:14px 20px 22px;text-align:center;color:var(--muted);font-size:.8rem}
+
+@media (max-width:860px){
+  .years{grid-template-columns:repeat(3,1fr)} .projects,.pathgrid{grid-template-columns:repeat(2,1fr)}
+  .hero,.cols{grid-template-columns:1fr} .hero .art{max-width:220px}
+  .goalgrid{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .top{padding:12px 16px 10px;gap:14px} .brand svg{height:44px} .brand .product{display:none}
+  main{padding:14px 10px 20px} .card{padding:18px 16px} h1{font-size:1.45rem}
+  .times{grid-template-columns:1fr} .node{width:28px;height:28px;font-size:.75rem}
+  .actions{flex-wrap:wrap} .actions .btn{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.lit{background:var(--teal)}}
+@media print{
+  body{background:#fff;color:#000} .top::before,#progress,.actions,.nextrow,.debug,details.sum,footer,#status,.skip{display:none!important}
+  .top{border:0;padding:0 0 10px} main{max-width:none;padding:0} .panel,.card{box-shadow:none;animation:none;break-inside:avoid;border-color:#999}
+  :root{--ink:#000;--muted:#333;--card:#fff;--card-2:#fff;--wordmark-top:#8d8d8d;--wordmark:#171717;--purple:#704789;--teal-soft:#fff}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the question</a>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 480 112" role="img" aria-label="Banyule Nillumbik Tech School"><g transform="translate(8 8)"><rect x="0" y="24" width="24" height="24" fill="#13bdc6"/><rect x="24" y="0" width="24" height="24" fill="#65d2d8"/><rect x="48" y="24" width="24" height="24" fill="#00b6bf"/><rect x="72" y="0" width="24" height="24" fill="#704789"/><rect x="96" y="24" width="24" height="24" fill="#c5b4d6"/><rect x="120" y="0" width="24" height="24" fill="#d2c4e0"/><rect x="144" y="24" width="24" height="24" fill="#0abac4"/><rect x="168" y="0" width="24" height="24" fill="#19bcc4"/><rect x="24" y="48" width="24" height="24" fill="#dcd0e7"/><rect x="24" y="72" width="24" height="24" fill="#815a99"/></g><g font-family="Arial, Helvetica, sans-serif" font-weight="400"><text class="wm-top" x="220" y="32" font-size="17" letter-spacing="1">BANYULE NILLUMBIK</text><text class="wm" x="220" y="64" font-size="31" letter-spacing="2">TECH</text><text class="wm" x="220" y="99" font-size="31" letter-spacing="2">SCHOOL</text></g></svg>
+    <div class="product"><strong>Circuit Pathways</strong><span>Program finder</span></div>
+  </div>
+  <nav id="progress" aria-label="Progress"></nav>
+</header>
+<main id="main"><div id="stage"></div><div id="debug"></div></main>
+<footer>This page stores nothing and sends nothing. Refreshing it clears your answers.</footer>
+
+<script type="application/json" id="finder-config">
+{
+"meta":{
+  "bookingUrl":"",
+  "bookingLabel":"Book this program",
+  "stepsIntro":"Seven short questions about your class. We will recommend a project, a platform and a version to start with."
+},
+"scoring":{
+  "readiness":{"yearBase":{"7":0.5,"8":1.0,"9":1.5,"10":2.0,"11-12":2.5,"mixed":1.5},"codingWeight":0.6,"electronicsWeight":0.4,"toolBonusEach":0.2,"toolBonusCap":0.6,"max":5},
+  "fitPenaltyPerLevel":2.5,
+  "projectBonus":3,
+  "timePenalty":6,
+  "codingGapPenalty":3,
+  "platformFamiliarityBonus":1.5,
+  "mixedThreshold":60,
+  "stretchLevelStep":1.5,
+  "stretchNearGap":1.0,
+  "notSureSubjectWeight":0.5
+},
+"years":[
+  {"id":"7","label":"7","detail":"Year"},{"id":"8","label":"8","detail":"Year"},{"id":"9","label":"9","detail":"Year"},
+  {"id":"10","label":"10","detail":"Year"},{"id":"11-12","label":"11-12","detail":"Years"},{"id":"mixed","label":"Mixed","detail":"Several years"}
+],
+"pathwayYears":["9","10","11-12","mixed"],
+"codingLevels":[
+  {"label":"Never coded","detail":"No programming experience yet"},
+  {"label":"Block coding","detail":"Scratch or MakeCode"},
+  {"label":"A bit of typed code","detail":"Some experience typing code"},
+  {"label":"Comfortable with Python or C++","detail":"Can read and write short programs"},
+  {"label":"Writes their own programs","detail":"Confident with typed code"}
+],
+"spreadCaptions":[
+  {"max":20,"label":"All about the same"},{"max":40,"label":"Fairly similar"},{"max":60,"label":"A mix of levels"},
+  {"max":80,"label":"Quite a range"},{"max":100,"label":"Huge range"}
+],
+"electronicsLevels":[
+  {"label":"Never wired anything","detail":"No circuit experience yet"},
+  {"label":"Lit an LED or built a basic circuit","detail":"Battery, switch and LED level"},
+  {"label":"Confident with a breadboard","detail":"Can follow a wiring diagram"},
+  {"label":"Has used sensors and motors","detail":"Has built a working project"}
+],
+"tools":{
+  "hardware":[
+    {"id":"microbit","label":"micro:bit","platforms":["microbit"]},
+    {"id":"arduino","label":"Arduino","platforms":["arduino","arduino-wifi"]},
+    {"id":"pi","label":"Raspberry Pi","platforms":["pi"]},
+    {"id":"grove","label":"Grove","platforms":["arduino","arduino-wifi"]},
+    {"id":"lego","label":"LEGO or robotics kits","platforms":[]}
+  ],
+  "software":[
+    {"id":"makecode","label":"Scratch or MakeCode","platforms":["microbit"]},
+    {"id":"python","label":"Python","platforms":["pi"]},
+    {"id":"arduinoide","label":"Arduino IDE","platforms":["arduino","arduino-wifi"]},
+    {"id":"tinkercad","label":"Tinkercad Circuits","platforms":["arduino","arduino-wifi"]},
+    {"id":"sheets","label":"Spreadsheets","platforms":[]}
+  ],
+  "none":{"id":"none","label":"None yet"}
+},
+"goals":[
+  {"id":"quick","label":"Quick wins and confidence","detail":"Early success for every student","default":2},
+  {"id":"build","label":"Building and engineering","detail":"Wiring, assembling and testing","default":1},
+  {"id":"code","label":"Deeper coding","detail":"Logic, structure and debugging","default":1},
+  {"id":"data","label":"Data and AI","detail":"Sensors, data and machine learning","default":1}
+],
+"goalCaptions":["Not a focus","A little","Quite a bit","A major focus"],
+"subjects":[
+  {"id":"syseng","label":"Systems Engineering","link":"sensors and control systems"},
+  {"id":"acsd","label":"Applied Computing (Software Development)","link":"software development and programming"},
+  {"id":"acda","label":"Applied Computing (Data Analytics)","link":"data collection and analysis"},
+  {"id":"algo","label":"Algorithmics","link":"algorithms and state graphs"},
+  {"id":"physics","label":"Physics","link":"circuits, motion and measurement"},
+  {"id":"maths","label":"Maths (Methods or Specialist)","link":"measurement, rates and modelling"},
+  {"id":"pdt","label":"Product Design and Technologies","link":"designing and prototyping a product"}
+],
+"subjectWeightCaptions":{"1":"A bit of interest","2":"A strong interest","3":"Main pathway"},
+"projects":[
+  {"id":"bin","label":"Smart Bin","detail":"A lid that opens and reports"},
+  {"id":"car","label":"Smart Car","detail":"Traffic lights and sensors"},
+  {"id":"either","label":"Either project","detail":"We will choose the best fit"},
+  {"id":"own","label":"Students' own ideas","detail":"Students define the problem"}
+],
+"times":[
+  {"id":"half","label":"Half day","rank":1},
+  {"id":"full","label":"Full day","rank":2},
+  {"id":"several","label":"Several sessions","rank":3}
+],
+"screens":[
+  {"id":"year","type":"year","title":"Who is attending?","lead":"Choose the year level of the class. If the group spans several years, choose Mixed."},
+  {"id":"coding","type":"coding","title":"Confidence with code","lead":"Think about a typical student in the class, then tell us how much the group varies."},
+  {"id":"electronics","type":"electronics","title":"Hands-on electronics","lead":"How much practical electronics has the class done?"},
+  {"id":"tools","type":"tools","title":"Previous experience","lead":"Select everything the class has used before. You can skip this step.","skippable":true},
+  {"id":"goals","type":"goals","title":"Goals for the day","lead":"Show how much each outcome matters to you. You can skip this step.","skippable":true},
+  {"id":"pathway","type":"pathway","title":"Where are they heading?","lead":"Select the subjects your students are likely to study, then set how strong each pathway is. You can skip this step.","skippable":true,"onlyWhenPathway":true},
+  {"id":"project","type":"project","title":"Project and time","lead":"Choose a project and how long you have. Time limits how ambitious the starting point can be."}
+],
+"variants":[
+  {"id":"bin-mb-buttons","project":"bin","projectLabel":"Smart Bin","platformKey":"microbit","platform":"micro:bit","version":"Button-opened lid","level":1,"minTime":"half","minCoding":0,
+   "goals":[3,1,0,0],"subj":{"syseng":1,"acsd":0,"acda":0,"algo":0,"physics":0,"maths":0,"pdt":1},"tags":[],"stretchTo":"bin-mb-radio",
+   "blurb":"A first bin that opens its lid at the press of a button.",
+   "dotpoints":["Buttons open and close the lid","The display shows whether the lid is open","Block code, achievable in a single session"]},
+  {"id":"bin-mb-radio","project":"bin","projectLabel":"Smart Bin","platformKey":"microbit","platform":"micro:bit x2","version":"Remote-control lid","level":1.5,"minTime":"half","minCoding":0,
+   "goals":[3,1,1,0],"subj":{"syseng":1,"acsd":1,"acda":0,"algo":0,"physics":0,"maths":0,"pdt":1},"tags":[],"stretchTo":"bin-ard-ultra",
+   "blurb":"Two micro:bits talk over radio so the lid opens from a remote.",
+   "dotpoints":["Buttons open the lid","A radio remote opens the lid","The display shows bin status"]},
+  {"id":"bin-ard-ultra","project":"bin","projectLabel":"Smart Bin","platformKey":"arduino","platform":"Arduino","version":"Hands-free sensor lid","level":2.5,"minTime":"half","minCoding":2,
+   "goals":[2,3,1,0],"subj":{"syseng":3,"acsd":1,"acda":0,"algo":0,"physics":1,"maths":1,"pdt":2},"tags":[],"stretchTo":"bin-esp-fill",
+   "blurb":"An ultrasonic sensor and servo open the lid without touching it.",
+   "dotpoints":["A sensor detects your hand","A servo opens, then closes the lid","Typed code decides when to open and for how long"]},
+  {"id":"bin-esp-fill","project":"bin","projectLabel":"Smart Bin","platformKey":"arduino-wifi","platform":"Arduino WiFi","version":"Sensor lid with remote fill level","level":3.5,"minTime":"full","minCoding":2,
+   "goals":[1,2,2,2],"subj":{"syseng":2,"acsd":2,"acda":3,"algo":1,"physics":0,"maths":1,"pdt":1},"tags":["wifi","data"],"stretchTo":"bin-pi-ml",
+   "blurb":"The hands-free bin also reports how full it is over WiFi.",
+   "dotpoints":["The hands-free sensor lid, as above","WiFi reports the fill level","A web page shows how full the bin is"]},
+  {"id":"bin-pi-ml","project":"bin","projectLabel":"Smart Bin","platformKey":"pi","platform":"Raspberry Pi","version":"AI recycling sorter","level":4.5,"minTime":"full","minCoding":3,
+   "goals":[0,1,3,3],"subj":{"syseng":1,"acsd":3,"acda":2,"algo":3,"physics":0,"maths":1,"pdt":0},"tags":["data","ml"],"stretchTo":null,
+   "blurb":"A camera and a trained model decide which bin each item belongs in.",
+   "dotpoints":["A camera identifies each item","AI accepts or rejects the item","Data is logged and accuracy is checked"]},
+  {"id":"car-mb-timing","project":"car","projectLabel":"Smart Car","platformKey":"microbit","platform":"micro:bit","version":"Timed intersection","level":1,"minTime":"half","minCoding":0,
+   "goals":[3,1,1,0],"subj":{"syseng":1,"acsd":0,"acda":0,"algo":1,"physics":0,"maths":0,"pdt":0},"tags":[],"stretchTo":"car-ard-sensor",
+   "blurb":"Traffic lights that change on a timer, with a pedestrian button.",
+   "dotpoints":["Lights cycle on a timer","A button requests a pedestrian crossing","The display counts down the wait"]},
+  {"id":"car-ard-sensor","project":"car","projectLabel":"Smart Car","platformKey":"arduino","platform":"Arduino","version":"Sensor-controlled intersection","level":2.5,"minTime":"half","minCoding":2,
+   "goals":[2,3,2,0],"subj":{"syseng":3,"acsd":1,"acda":0,"algo":2,"physics":1,"maths":1,"pdt":1},"tags":[],"stretchTo":"car-ard-speed",
+   "blurb":"Sensors detect waiting cars and the lights respond to the traffic.",
+   "dotpoints":["A sensor detects a waiting car","The lights change based on traffic","Test cases check every rule"]},
+  {"id":"car-ard-speed","project":"car","projectLabel":"Smart Car","platformKey":"arduino","platform":"Arduino","version":"Two-sensor speed camera (extension)","level":3,"minTime":"full","minCoding":2,
+   "goals":[1,2,2,2],"subj":{"syseng":2,"acsd":1,"acda":2,"algo":1,"physics":3,"maths":3,"pdt":0},"tags":["speed","data"],"stretchTo":"car-esp-web",
+   "blurb":"Two sensors time each car so the program can calculate its speed.",
+   "dotpoints":["Two sensors time each car","Maths turns time and distance into speed","Cars over the limit are flagged"]},
+  {"id":"car-esp-web","project":"car","projectLabel":"Smart Car","platformKey":"arduino-wifi","platform":"Arduino WiFi","version":"Web-controlled lights","level":3.5,"minTime":"full","minCoding":2,
+   "goals":[1,2,3,1],"subj":{"syseng":2,"acsd":3,"acda":1,"algo":1,"physics":0,"maths":0,"pdt":0},"tags":["wifi"],"stretchTo":"car-pi-ml",
+   "blurb":"The intersection is controlled from a web page over WiFi.",
+   "dotpoints":["The lights are controlled from a web page","WiFi joins the board to a network","The page is tested on a phone"]},
+  {"id":"car-pi-ml","project":"car","projectLabel":"Smart Car","platformKey":"pi","platform":"Raspberry Pi","version":"AI traffic counter","level":4.5,"minTime":"full","minCoding":3,
+   "goals":[0,1,3,3],"subj":{"syseng":1,"acsd":2,"acda":3,"algo":3,"physics":1,"maths":2,"pdt":0},"tags":["data","ml"],"stretchTo":null,
+   "blurb":"A camera and a trained model count and classify passing vehicles.",
+   "dotpoints":["A camera spots each vehicle","AI counts vehicles by type","Charts show traffic and model accuracy"]},
+  {"id":"own-guided","special":"own","project":"own","projectLabel":"Students' own project","platformKey":"any","platform":"Any","version":"My own project mode","level":null,"minTime":"full",
+   "blurb":"Students choose a problem they care about and build their own solution, with guidance from the program team.",
+   "dotpoints":["Students define a problem worth solving","They plan, build and test a prototype","They present the result and explain their choices"]}
+],
+"reasons":[
+  {"id":"coding-high","only":"set","strength":6,"when":{"coding":{"gte":3}},"text":"Your students are comfortable with typed code"},
+  {"id":"coding-mid","only":"set","strength":4,"when":{"coding":{"eq":2},"variantLevel":{"gte":2}},"text":"Builds on some typed code with a clear next step"},
+  {"id":"coding-low","only":"set","strength":6,"when":{"coding":{"lte":1},"variantLevel":{"lte":1.5}},"text":"Uses block coding, so students can begin without typed code"},
+  {"id":"elec-low","only":"set","strength":5,"when":{"electronics":{"lte":1},"variantLevel":{"lte":2.5}},"text":"Starts with simple, safe wiring"},
+  {"id":"elec-high","only":"set","strength":4,"when":{"electronics":{"gte":2}},"text":"Uses the wiring skills your students already have"},
+  {"id":"time-half","strength":5,"when":{"time":{"eq":"half"}},"text":"Fits comfortably in half a day"},
+  {"id":"time-full","strength":3,"when":{"time":{"eq":"full"}},"text":"Makes good use of a full day"},
+  {"id":"time-several","strength":4,"when":{"time":{"eq":"several"}},"text":"Leaves room to build, test and improve across several sessions"},
+  {"id":"spread-high","only":"set","strength":7,"when":{"spread":{"gt":60}},"text":"Groups can work on different platforms on the same project"},
+  {"id":"platform-used","strength":6,"when":{"platformUsed":{"eq":true}},"text":"Your students have already used {platformUsed}"},
+  {"id":"own-ownership","only":"own","strength":9,"when":{},"text":"Students define their own problem, which builds ownership of the result"},
+  {"id":"own-platform","only":"own","strength":8,"when":{},"text":"{platform} suits the class's coding and electronics experience"},
+  {"id":"year-fit","strength":1,"when":{},"text":"Pitched at the right level for {yearPhrase}"}
+],
+"goalReason":"Matches your focus on {goal}",
+"subjectReason":"Leads into {subject}: {link}",
+"projectReason":"A strong version of your chosen project: {project}",
+"curriculum":{
+  "note":"Codes are seeded from the Circuit Pathways curriculum links spreadsheet. Check the wording against the spreadsheet before publishing.",
+  "bands":{
+    "7-8":{"label":"Years 7-8","items":[
+      {"code":"VC2TDI8C02","text":"Algorithms"},
+      {"code":"VC2TDI8C04","text":"Programming"},
+      {"code":"VC2S8U17","text":"Circuits"},
+      {"code":"VC2TDE8D03","text":"Safe production"},
+      {"code":"VC2M8M07","text":"Speed (speed camera version only)","needsTag":"speed"}]},
+    "9-10":{"label":"Years 9-10","items":[
+      {"code":"VC2TDI10C02","text":"Logic and test cases"},
+      {"code":"VC2M9M04","text":"Measurement error"},
+      {"code":"VC2TDI10S01","text":"Networks (WiFi versions)","needsTag":"wifi"},
+      {"code":"VC2TDI10D04","text":"Data (Raspberry Pi and WiFi versions)","needsTag":"data"},
+      {"code":"VC2S10I06","text":"Validity and bias (Raspberry Pi versions)","needsTag":"ml"}]}
+  },
+  "pathways":[
+    {"subjects":["syseng"],"label":"Systems Engineering","text":"Unit 1 AOS 2: program microcontrollers, Ohm's law"},
+    {"subjects":["acsd","acda"],"label":"Applied Computing","text":"Unit 2 AOS 1: Internet of Things, image classification"},
+    {"subjects":["algo"],"label":"Algorithmics","text":"Unit 3 AOS 1: state graphs, queues. Unit 4 AOS 3: training data, overfitting"}
+  ]
+}
+}
+</script>
+
+<script>
+'use strict';
+/* ==================================================================
+   State, scoring and rendering. No network, no storage.
+   ================================================================== */
+const CFG = JSON.parse(document.getElementById('finder-config').textContent);
+const SC = CFG.scoring;
+const DEBUG = /(?:^|[?&])debug=1(?:&|$)/.test(location.search);
+const $ = (s, r = document) => r.querySelector(s);
+
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); }
+  return e;
+}
+const svgEl = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = (n) => (Math.round(n * 100) / 100).toString();
+
+function freshState() {
+  return {
+    year: null, coding: 1, spread: 50, electronics: 0, tools: [],
+    goals: Object.fromEntries(CFG.goals.map(g => [g.id, g.default])),
+    subjects: {}, project: 'either', time: 'full'
+  };
+}
+let state = freshState();
+let idx = 0, onResult = false, maxReached = 0;
+
+/* ---------- scoring (pure) ---------- */
+const pathwayVisible = (s) => CFG.pathwayYears.includes(s.year);
+const timeRank = (id) => CFG.times.find(t => t.id === id).rank;
+const yearLabel = (id) => (CFG.years.find(y => y.id === id) || {}).label || '';
+const allTools = () => CFG.tools.hardware.concat(CFG.tools.software);
+
+function effectiveSubjects(s) {
+  if (!pathwayVisible(s)) return {};
+  if (s.subjects.notsure) return Object.fromEntries(CFG.subjects.map(x => [x.id, SC.notSureSubjectWeight]));
+  const out = {};
+  for (const x of CFG.subjects) if (s.subjects[x.id]) out[x.id] = s.subjects[x.id];
+  return out;
+}
+function usedPlatforms(s) {
+  const set = new Set();
+  for (const t of allTools()) if (s.tools.includes(t.id)) t.platforms.forEach(p => set.add(p));
+  return set;
+}
+function readiness(s) {
+  const c = SC.readiness;
+  const matching = s.tools.filter(t => t !== 'none').length;
+  const r = c.yearBase[s.year] + s.coding * c.codingWeight + s.electronics * c.electronicsWeight
+    + Math.min(c.toolBonusCap, c.toolBonusEach * matching);
+  return clamp(r, 0, c.max);
+}
+function scoreVariant(v, s, r, subj, used) {
+  const goalIds = CFG.goals.map(g => g.id);
+  const p = { fit: 10 - SC.fitPenaltyPerLevel * Math.abs(v.level - r), goals: {}, subjects: {}, project: 0, time: 0, coding: 0, platform: 0 };
+  goalIds.forEach((g, i) => { p.goals[g] = s.goals[g] * v.goals[i]; });
+  for (const [id, w] of Object.entries(subj)) p.subjects[id] = w * (v.subj[id] || 0);
+  if (s.project === v.project) p.project = SC.projectBonus;
+  if (timeRank(v.minTime) > timeRank(s.time)) p.time = -SC.timePenalty;
+  p.coding = -SC.codingGapPenalty * Math.max(0, v.minCoding - s.coding);
+  if (used.has(v.platformKey)) p.platform = SC.platformFamiliarityBonus;
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  p.total = p.fit + sum(p.goals) + sum(p.subjects) + p.project + p.time + p.coding + p.platform;
+  return p;
+}
+function rank(s) {
+  const r = readiness(s), subj = effectiveSubjects(s), used = usedPlatforms(s);
+  return CFG.variants.filter(v => !v.special)
+    .map(v => ({ v, p: scoreVariant(v, s, r, subj, used) }))
+    .sort((a, b) => (b.p.total - a.p.total) || (a.v.level - b.v.level));
+}
+const byId = (id) => CFG.variants.find(v => v.id === id);
+
+function pickStretch(start, s, r) {
+  const mixed = s.spread > SC.mixedThreshold;
+  const fits = (v) => timeRank(v.minTime) <= timeRank(s.time);
+  const real = CFG.variants.filter(v => !v.special);
+  let pick = null;
+  if (mixed) {
+    const target = start.level + SC.stretchLevelStep;
+    const closest = (list) => list.slice().sort((a, b) => Math.abs(a.level - target) - Math.abs(b.level - target) || a.level - b.level)[0] || null;
+    const same = real.filter(v => v.project === start.project && v.level > start.level);
+    pick = closest(same.filter(fits)) || closest(same);
+    if (!pick) {
+      const order = ['microbit', 'arduino', 'arduino-wifi', 'pi'];
+      const next = order[order.indexOf(start.platformKey) + 1];
+      pick = real.filter(v => v.platformKey === next).sort((a, b) => a.level - b.level)[0] || null;
+    }
+  } else if (start.stretchTo) {
+    const cand = byId(start.stretchTo);
+    if (cand.level - r <= SC.stretchNearGap) pick = cand;
+  }
+  return pick ? { v: pick, mixed, needsMoreTime: !fits(pick) } : null;
+}
+
+function condMatch(when, ctx) {
+  return Object.entries(when).every(([k, ops]) => Object.entries(ops).every(([op, val]) => {
+    const x = ctx[k];
+    if (x == null) return false;
+    return op === 'gte' ? x >= val : op === 'lte' ? x <= val : op === 'gt' ? x > val : op === 'eq' ? x === val : false;
+  }));
+}
+
+function buildResult(s) {
+  const r = readiness(s), ranked = rank(s), own = s.project === 'own';
+  const best = ranked[0];
+  const start = own ? byId('own-guided') : best.v;
+  const suggested = best.v;
+  const stretch = own ? null : pickStretch(best.v, s, r);
+  const alt = (own ? ranked.find(x => true) : ranked.find(x => x.v.project !== best.v.project));
+  const subj = effectiveSubjects(s);
+  const used = usedPlatforms(s);
+  const usedLabels = allTools().filter(t => s.tools.includes(t.id) && t.platforms.includes(suggested.platformKey)).map(t => t.label);
+  const ctx = {
+    coding: s.coding, electronics: s.electronics, time: s.time, spread: s.spread, year: s.year,
+    variantLevel: suggested.level, platformUsed: usedLabels.length > 0
+  };
+  const fill = (t, o) => t.replace(/\{(\w+)\}/g, (_, k) => o[k]);
+  const yearPhrase = s.year === 'mixed' ? 'a mixed-year group' : s.year === '11-12' ? 'Years 11-12' : 'Year ' + s.year;
+  const vars = { platformUsed: usedLabels[0], platform: suggested.platform, yearPhrase };
+  const cands = [];
+  for (const rs of CFG.reasons) {
+    if (rs.only === 'own' && !own) continue;
+    if (rs.only === 'set' && own) continue;
+    if (condMatch(rs.when, ctx)) cands.push({ text: fill(rs.text, vars), strength: rs.strength });
+  }
+  if (!own) {
+    const p = best.p;
+    const g = CFG.goals.map(x => ({ x, c: p.goals[x.id] })).sort((a, b) => b.c - a.c)[0];
+    if (g && g.c > 0 && s.goals[g.x.id] >= 2) cands.push({ text: fill(CFG.goalReason, { goal: g.x.label.toLowerCase() }), strength: g.c });
+    const sb = CFG.subjects.map(x => ({ x, c: p.subjects[x.id] || 0 })).sort((a, b) => b.c - a.c)[0];
+    if (sb && sb.c > 0 && !s.subjects.notsure) cands.push({ text: fill(CFG.subjectReason, { subject: sb.x.label, link: sb.x.link }), strength: sb.c });
+    if (s.project !== 'either') cands.push({ text: fill(CFG.projectReason, { project: CFG.projects.find(x => x.id === s.project).label }), strength: SC.projectBonus - 1 });
+  }
+  const reasons = cands.sort((a, b) => b.strength - a.strength).slice(0, 3).map(c => c.text);
+  return { readiness: r, ranked, own, start, suggested, stretch, alt: alt ? alt.v : null, reasons, curriculum: buildCurriculum(s, suggested) };
+}
+
+function buildCurriculum(s, v) {
+  const out = { items: [], bandLabel: '', topUp: [], pathways: [] };
+  const C = CFG.curriculum;
+  const okTag = (it) => !it.needsTag || v.tags.includes(it.needsTag);
+  if (s.year !== '11-12') {
+    const key = (s.year === '7' || s.year === '8') ? '7-8' : '9-10';
+    const other = key === '7-8' ? '9-10' : '7-8';
+    out.bandLabel = C.bands[key].label;
+    out.items = C.bands[key].items.filter(okTag).slice(0, 5);
+    if (out.items.length < 3) {
+      out.topUp = C.bands[other].items.filter(okTag).slice(0, 3 - out.items.length);
+      out.topUpLabel = C.bands[other].label;
+    }
+  }
+  if (s.year === '9' || s.year === '10' || s.year === 'mixed' || s.year === '11-12') {
+    const chosen = Object.keys(effectiveSubjects(s)).filter(id => !s.subjects.notsure && s.subjects[id]);
+    let list = C.pathways.filter(p => p.subjects.some(id => chosen.includes(id)));
+    if (s.year === '11-12' && !list.length) list = C.pathways;
+    out.pathways = list;
+  }
+  return out;
+}
+
+/* ---------- reusable controls ---------- */
+function meter(n, total) {
+  const m = h('span', { class: 'meter', 'aria-hidden': 'true' });
+  for (let i = 0; i < total; i++) m.append(h('i', { class: i <= n ? 'on' : '' }));
+  return m;
+}
+function slider({ id, label, min, max, step = 1, value, format, onInput, ends, withMeter }) {
+  const input = h('input', { type: 'range', id, min, max, step, value });
+  const val = h('span', { class: 'val' });
+  const detail = h('div', { class: 'detail' });
+  const m = withMeter ? h('span') : null;
+  const update = () => {
+    const v = Number(input.value), f = format(v);
+    input.style.setProperty('--pct', ((v - min) / (max - min) * 100) + '%');
+    input.setAttribute('aria-valuetext', f.title);
+    val.replaceChildren(...(withMeter ? [meter(v - min, max - min + 1)] : []), f.title);
+    detail.textContent = f.detail || '';
+    return v;
+  };
+  input.addEventListener('input', () => onInput(update()));
+  update();
+  return h('div', { class: 'slider' },
+    h('div', { class: 'row' }, h('label', { for: id }, label), val),
+    input, detail,
+    ends ? h('div', { class: 'ends', 'aria-hidden': 'true' }, h('span', {}, ends[0]), h('span', {}, ends[1])) : null);
+}
+function radioGroup({ label, options, value, onChange, cls, keyStart }) {
+  const wrap = h('div', { class: 'opts ' + cls, role: 'radiogroup', 'aria-label': label });
+  const btns = options.map((o, i) => {
+    const b = h('button', {
+      type: 'button', role: 'radio', class: 'opt', 'data-id': o.id, 'data-key': keyStart ? keyStart + i : null,
+      'aria-checked': String(o.id === value), tabindex: (o.id === value || (value == null && i === 0)) ? '0' : '-1'
+    }, h('span', { class: 't' }, o.label), o.detail ? h('span', { class: 'd' }, o.detail) : null,
+      keyStart ? h('kbd', { 'aria-hidden': 'true' }, String(keyStart + i)) : null);
+    return b;
+  });
+  const select = (id) => {
+    btns.forEach(b => { const on = b.dataset.id === id; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+    onChange(id);
+  };
+  btns.forEach((b, i) => {
+    b.addEventListener('click', () => select(b.dataset.id));
+    b.addEventListener('keydown', (e) => {
+      const move = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (move) { e.preventDefault(); const n = btns[(i + move + btns.length) % btns.length]; n.focus(); select(n.dataset.id); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (b.getAttribute('aria-checked') === 'true') next(); else select(b.dataset.id); }
+    });
+  });
+  wrap.append(...btns);
+  return wrap;
+}
+function tile(label, pressed, onToggle) {
+  const b = h('button', { type: 'button', class: 'opt', 'aria-pressed': String(pressed) }, h('span', { class: 't' }, label));
+  b.addEventListener('click', () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); onToggle(on); });
+  return b;
+}
+
+/* ---------- screens ---------- */
+const SCREEN = {
+  year(sc) {
+    return h('div', {}, radioGroup({
+      label: 'Year level', cls: 'years', keyStart: 1, value: state.year,
+      options: CFG.years, onChange: (id) => { state.year = id; if (!pathwayVisible(state)) state.subjects = {}; renderProgress(); renderDebug(); setStatus(''); $('#next').setAttribute('aria-disabled', 'false'); }
+    }), h('p', { class: 'hint', style: 'margin-top:14px' }, 'Press 1 to 6 to choose a year level.'));
+  },
+  coding() {
+    const ns = CFG.codingLevels.length - 1;
+    const note = h('p', { class: 'spreadnote' });
+    const spreadNote = () => { note.textContent = state.spread > SC.mixedThreshold ? 'A wide range means we will also suggest a stretch option for confident groups.' : ''; };
+    const el = h('div', {},
+      h('div', { class: 'field' }, slider({
+        id: 'coding', label: 'Typical confidence with code', min: 0, max: ns, value: state.coding, withMeter: true,
+        ends: [CFG.codingLevels[0].label, CFG.codingLevels[ns].label],
+        format: (v) => ({ title: CFG.codingLevels[v].label, detail: CFG.codingLevels[v].detail }),
+        onInput: (v) => { state.coding = v; renderDebug(); }
+      })),
+      h('div', { class: 'divider' }),
+      h('div', { class: 'field' }, slider({
+        id: 'spread', label: 'How mixed is the class?', min: 0, max: 100, step: 5, value: state.spread,
+        ends: ['All about the same', 'Huge range'],
+        format: (v) => ({ title: CFG.spreadCaptions.find(c => v <= c.max).label }),
+        onInput: (v) => { state.spread = v; spreadNote(); renderDebug(); }
+      }), note));
+    spreadNote();
+    return el;
+  },
+  electronics() {
+    const ns = CFG.electronicsLevels.length - 1;
+    return h('div', { class: 'field' }, slider({
+      id: 'electronics', label: 'Typical electronics experience', min: 0, max: ns, value: state.electronics, withMeter: true,
+      ends: [CFG.electronicsLevels[0].label, CFG.electronicsLevels[ns].label],
+      format: (v) => ({ title: CFG.electronicsLevels[v].label, detail: CFG.electronicsLevels[v].detail }),
+      onInput: (v) => { state.electronics = v; renderDebug(); }
+    }));
+  },
+  tools() {
+    const none = CFG.tools.none;
+    const all = [];
+    const refresh = () => all.forEach(([id, b]) => b.setAttribute('aria-pressed', String(state.tools.includes(id))));
+    const mk = (t) => {
+      const b = tile(t.label, state.tools.includes(t.id), (on) => {
+        state.tools = state.tools.filter(x => x !== t.id && x !== 'none');
+        if (on) state.tools.push(t.id);
+        refresh(); renderDebug();
+      });
+      all.push([t.id, b]); return b;
+    };
+    const noneBtn = tile(none.label, state.tools.includes('none'), (on) => { state.tools = on ? ['none'] : []; refresh(); renderDebug(); });
+    all.push(['none', noneBtn]);
+    return h('div', {},
+      h('div', { class: 'group-label', id: 'hw-l' }, 'Hardware'),
+      h('div', { class: 'opts tiles', role: 'group', 'aria-labelledby': 'hw-l' }, CFG.tools.hardware.map(mk), noneBtn),
+      h('div', { class: 'group-label', id: 'sw-l' }, 'Software'),
+      h('div', { class: 'opts tiles', role: 'group', 'aria-labelledby': 'sw-l' }, CFG.tools.software.map(mk)));
+  },
+  goals() {
+    return h('div', { class: 'goalgrid' }, CFG.goals.map(g => h('div', { class: 'field' }, slider({
+      id: 'goal-' + g.id, label: g.label, min: 0, max: 3, value: state.goals[g.id], withMeter: true,
+      format: (v) => ({ title: CFG.goalCaptions[v], detail: g.detail }),
+      onInput: (v) => { state.goals[g.id] = v; renderDebug(); }
+    }))));
+  },
+  pathway() {
+    const notSure = h('button', { type: 'button', class: 'opt', 'aria-pressed': String(!!state.subjects.notsure) }, h('span', { class: 't' }, 'Not sure yet'));
+    const cells = [];
+    const refresh = () => {
+      cells.forEach(({ id, btn, wt }) => { const on = !!state.subjects[id]; btn.setAttribute('aria-pressed', String(on)); wt.hidden = !on; });
+      notSure.setAttribute('aria-pressed', String(!!state.subjects.notsure));
+    };
+    const tiles = CFG.subjects.map(sub => {
+      const btn = tile(sub.label, !!state.subjects[sub.id], (on) => {
+        delete state.subjects.notsure;
+        if (on) state.subjects[sub.id] = state.subjects[sub.id] || 2; else delete state.subjects[sub.id];
+        refresh(); renderDebug();
+      });
+      const wt = h('div', { class: 'weight', hidden: !state.subjects[sub.id] }, slider({
+        id: 'w-' + sub.id, label: 'How strong a pathway is ' + sub.label + '?', min: 1, max: 3, value: state.subjects[sub.id] || 2,
+        format: (v) => ({ title: CFG.subjectWeightCaptions[v] }),
+        onInput: (v) => { state.subjects[sub.id] = v; renderDebug(); }
+      }));
+      cells.push({ id: sub.id, btn, wt });
+      return h('div', { class: 'subj' }, btn, wt);
+    });
+    notSure.addEventListener('click', () => {
+      const on = notSure.getAttribute('aria-pressed') !== 'true';
+      state.subjects = on ? { notsure: 1 } : {};
+      refresh(); renderDebug();
+    });
+    refresh();
+    return h('div', { class: 'opts pathgrid', role: 'group', 'aria-label': 'Pathway subjects' }, tiles, h('div', { class: 'subj' }, notSure));
+  },
+  project() {
+    return h('div', {},
+      h('div', { class: 'group-label', id: 'pj-l' }, 'Project'),
+      radioGroup({ label: 'Project', cls: 'projects', keyStart: 1, value: state.project, options: CFG.projects, onChange: (id) => { state.project = id; renderDebug(); } }),
+      h('div', { class: 'group-label', id: 'tm-l', style: 'margin-top:18px' }, 'Time available'),
+      radioGroup({ label: 'Time available', cls: 'times', keyStart: 5, value: state.time, options: CFG.times, onChange: (id) => { state.time = id; renderDebug(); } }),
+      h('p', { class: 'hint', style: 'margin-top:12px' }, 'Press 1 to 4 to choose a project and 5 to 7 to choose the time.'));
+  }
+};
+
+const visibleScreens = () => CFG.screens.filter(sc => !sc.onlyWhenPathway || pathwayVisible(state));
+function setStatus(t) { $('#status') && ($('#status').textContent = t); }
+
+function renderProgress() {
+  const list = visibleScreens();
+  const nav = $('#progress');
+  const ol = h('ol', { class: 'steps' });
+  list.forEach((sc, i) => {
+    const st = onResult || i < idx ? 'done' : i === idx ? 'now' : '';
+    const can = onResult || i <= maxReached;
+    const label = 'Step ' + (i + 1) + ': ' + sc.title;
+    const node = can
+      ? h('button', { type: 'button', class: 'node ' + st, 'aria-label': label, 'aria-current': (!onResult && i === idx) ? 'step' : null, onclick: () => { onResult = false; idx = i; render(); } }, String(i + 1))
+      : h('span', { class: 'node ' + st, 'aria-label': label + ' (not reached yet)' }, String(i + 1));
+    ol.append(h('li', { class: st }, node));
+  });
+  const fin = h('span', { class: 'node final ' + (onResult ? 'done' : ''), 'aria-label': 'Result' },
+    svgEl('<svg viewBox="0 0 16 16" aria-hidden="true"><polyline points="3,8.5 6.5,12 13,4"/></svg>'));
+  ol.append(h('li', { class: onResult ? 'done' : '' }, fin));
+  nav.replaceChildren(ol);
+}
+
+function render() {
+  const list = visibleScreens();
+  idx = clamp(idx, 0, list.length - 1);
+  maxReached = Math.max(maxReached, idx);
+  const sc = list[idx];
+  const isLast = idx === list.length - 1;
+  const card = h('section', { class: 'card', 'aria-labelledby': 'title' },
+    h('p', { class: 'eyebrow' }, 'Step ' + (idx + 1) + ' of ' + list.length),
+    h('h1', { id: 'title', tabindex: '-1' }, sc.title),
+    h('p', { class: 'lead' }, sc.lead),
+    SCREEN[sc.type](sc),
+    h('p', { id: 'status', role: 'status', 'aria-live': 'polite' }),
+    h('div', { class: 'actions' },
+      idx > 0 ? h('button', { type: 'button', class: 'btn secondary', onclick: back }, 'Back') : null,
+      h('span', { class: 'spacer' }),
+      sc.skippable ? h('button', { type: 'button', class: 'linkbtn', onclick: skip }, 'Skip') : null,
+      h('button', { type: 'button', class: 'btn', id: 'next', 'aria-disabled': String(sc.type === 'year' && !state.year), onclick: next }, isLast ? 'See my recommendation' : 'Next')));
+  $('#stage').replaceChildren(card);
+  renderProgress(); renderDebug();
+  $('#title').focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+}
+function next() {
+  if (onResult) return;
+  const list = visibleScreens(), sc = list[idx];
+  if (sc.type === 'year' && !state.year) { setStatus('Choose a year level to continue.'); return; }
+  if (idx === list.length - 1) { showResult(); return; }
+  idx++; render();
+}
+function back() { if (idx > 0) { idx--; render(); } }
+function skip() {
+  const sc = visibleScreens()[idx], d = freshState();
+  if (sc.type === 'tools') state.tools = d.tools;
+  if (sc.type === 'goals') state.goals = d.goals;
+  if (sc.type === 'pathway') state.subjects = d.subjects;
+  next();
+}
+
+/* ---------- result ---------- */
+const ART = {
+  microbit: () => { let dots = ''; for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) dots += `<rect x="${52 + x * 14}" y="${24 + y * 12}" width="9" height="8" fill="${(x + y) % 3 === 0 ? '#13bdc6' : '#c5b4d6'}"/>`; return `<svg viewBox="0 0 200 130" role="img" aria-label="micro:bit board"><rect x="14" y="12" width="172" height="104" rx="8" fill="#2a2433"/><rect x="40" y="16" width="120" height="68" fill="#1c1824"/>${dots}<circle cx="34" cy="62" r="9" fill="#dcd0e7"/><circle cx="166" cy="62" r="9" fill="#dcd0e7"/><g fill="#d9c27a">${[0,1,2,3,4].map(i => `<rect x="${30 + i * 32}" y="100" width="14" height="14"/>`).join('')}</g></svg>`; },
+  arduino: () => `<svg viewBox="0 0 200 130" role="img" aria-label="Arduino board"><rect x="14" y="14" width="172" height="102" rx="8" fill="#0f7f87"/><rect x="26" y="22" width="150" height="8" fill="#0a3f44"/><rect x="26" y="100" width="150" height="8" fill="#0a3f44"/><rect x="78" y="48" width="46" height="34" fill="#1c1824"/><rect x="26" y="46" width="30" height="38" fill="#c5b4d6"/><circle cx="162" cy="66" r="9" fill="#dcd0e7"/></svg>`,
+  'arduino-wifi': () => `<svg viewBox="0 0 200 130" role="img" aria-label="Arduino board with WiFi"><rect x="14" y="30" width="172" height="90" rx="8" fill="#0f7f87"/><rect x="26" y="38" width="150" height="7" fill="#0a3f44"/><rect x="26" y="106" width="150" height="7" fill="#0a3f44"/><rect x="78" y="60" width="46" height="32" fill="#1c1824"/><g fill="none" stroke="#704789" stroke-width="5" stroke-linecap="square"><path d="M70 22 a40 40 0 0 1 60 0"/><path d="M82 12 a24 24 0 0 1 36 0"/></g><rect x="96" y="2" width="8" height="8" fill="#704789"/></svg>`,
+  pi: () => `<svg viewBox="0 0 200 130" role="img" aria-label="Raspberry Pi board"><rect x="14" y="14" width="172" height="102" rx="8" fill="#5a3871"/><rect x="82" y="40" width="40" height="40" fill="#c5b4d6"/><rect x="132" y="22" width="44" height="26" fill="#dcd0e7"/><rect x="132" y="54" width="44" height="26" fill="#dcd0e7"/><rect x="26" y="22" width="90" height="8" fill="#2a1a38"/><rect x="26" y="92" width="50" height="14" fill="#13bdc6"/></svg>`,
+  any: () => `<svg viewBox="0 0 200 130" role="img" aria-label="Open project"><g>${[[20,60,'#13bdc6'],[56,30,'#65d2d8'],[92,60,'#00b6bf'],[128,30,'#704789'],[164,60,'#c5b4d6'],[56,90,'#dcd0e7'],[128,90,'#815a99']].map(([x, y, c]) => `<rect x="${x}" y="${y}" width="24" height="24" fill="${c}"/>`).join('')}</g></svg>`
+};
+
+function showResult() {
+  onResult = true; maxReached = visibleScreens().length;
+  const res = buildResult(state);
+  $('#stage').replaceChildren(resultView(res));
+  renderProgress(); renderDebug();
+  $('#result-title').focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+}
+function variantLine(v) { return v.platform === 'Any' ? v.projectLabel : v.projectLabel + ' · ' + v.platform + ' · ' + v.version; }
+function bullets(arr) { return h('ul', {}, arr.map(x => h('li', {}, x))); }
+
+function resultView(res) {
+  const own = res.own, start = res.start, sug = res.suggested;
+  const timeLabel = CFG.times.find(t => t.id === state.time).label;
+  let i = 0;
+  const panel = (cls, ...kids) => h('section', { class: 'panel ' + cls, style: '--i:' + (i++) }, ...kids);
+  const out = h('div', { class: 'result' });
+
+  out.append(panel('hero',
+    h('div', {},
+      h('div', { class: 'tag' }, h('span', { class: 'lit', 'aria-hidden': 'true' }), 'Recommended starting point'),
+      h('h1', { id: 'result-title', tabindex: '-1' }, own ? 'Start here: Students\' own project' : 'Start here: ' + variantLine(start)),
+      h('p', { class: 'meta' }, own ? 'Suggested platform: ' + sug.platform : start.blurb),
+      own ? h('p', {}, start.blurb) : null,
+      bullets(start.dotpoints),
+      own && state.time === 'half' ? h('p', { class: 'warn' }, 'Own projects work best with a full day or several sessions.') : null),
+    h('div', { class: 'art', 'aria-hidden': 'false' }, svgEl(ART[own ? sug.platformKey : start.platformKey]()))));
+
+  out.append(panel('why', h('h2', {}, 'Why this fits'), bullets(res.reasons)));
+
+  const cols = h('div', { class: 'cols' });
+  if (res.stretch) {
+    const st = res.stretch.v;
+    cols.append(panel('stretch',
+      h('h2', {}, 'Stretch option'),
+      h('p', {}, res.stretch.mixed ? 'Because the class has a wide range, confident groups can step up to:' : 'Confident groups can step up to:'),
+      h('p', {}, h('strong', {}, st.platform + ' · ' + st.version)),
+      h('p', { class: 'note' }, st.blurb),
+      res.stretch.needsMoreTime ? h('p', { class: 'warn' }, 'This version needs a full day, so it suits a longer visit.') : null));
+  }
+  if (res.alt) {
+    cols.append(panel('alt',
+      h('h2', {}, own ? 'If you prefer a set project' : 'Also worth considering'),
+      h('p', {}, h('strong', {}, variantLine(res.alt))),
+      h('p', { class: 'note' }, res.alt.blurb)));
+  }
+  if (cols.children.length) out.append(cols);
+
+  const cur = res.curriculum;
+  const curKids = [h('h2', {}, 'Curriculum links')];
+  if (cur.items.length) {
+    curKids.push(h('p', { class: 'note' }, cur.bandLabel + ' (Victorian Curriculum)'),
+      h('ul', { class: 'codes' }, cur.items.map(c => h('li', {}, h('code', {}, c.code), c.text))));
+    if (cur.topUp.length) curKids.push(h('p', { class: 'note' }, 'Also supports (' + cur.topUpLabel + ')'),
+      h('ul', { class: 'codes' }, cur.topUp.map(c => h('li', {}, h('code', {}, c.code), c.text))));
+  }
+  if (cur.pathways.length) {
+    curKids.push(h('p', { class: 'note' }, 'VCE pathway links'),
+      h('ul', { class: 'codes' }, cur.pathways.map(p => h('li', {}, h('span', { class: 'pw' }, p.label), p.text))));
+  }
+  curKids.push(h('p', { class: 'note' }, CFG.curriculum.note));
+  out.append(panel('curr', ...curKids));
+
+  const text = summaryText(res);
+  const book = CFG.meta.bookingUrl ? h('a', { class: 'btn', href: CFG.meta.bookingUrl }, CFG.meta.bookingLabel) : null; /* TODO: set meta.bookingUrl in the config */
+  const ta = h('textarea', { class: 'sumtext', readonly: true, 'aria-label': 'Summary text', rows: 12 }); ta.value = text;
+  out.append(panel('next', h('h2', {}, 'Next steps'),
+    h('div', { class: 'nextrow' },
+      h('button', { type: 'button', class: 'btn', onclick: () => copySummary(ta) }, 'Copy summary'),
+      h('button', { type: 'button', class: 'btn secondary', onclick: () => window.print() }, 'Print'),
+      h('button', { type: 'button', class: 'btn secondary', onclick: () => { onResult = false; idx = visibleScreens().length - 1; render(); } }, 'Adjust answers'),
+      book),
+    h('p', { id: 'status', role: 'status', 'aria-live': 'polite', class: 'note' }),
+    h('details', { class: 'sum' }, h('summary', {}, 'View the summary text'), ta)));
+  return out;
+}
+
+function summaryText(res) {
+  const s = state, own = res.own;
+  const L = [];
+  const used = allTools().concat([CFG.tools.none]).filter(t => s.tools.includes(t.id)).map(t => t.label);
+  const goals = CFG.goals.map(g => g.label + ' (' + CFG.goalCaptions[s.goals[g.id]].toLowerCase() + ')');
+  const subj = pathwayVisible(s) ? (s.subjects.notsure ? 'Not sure yet' : CFG.subjects.filter(x => s.subjects[x.id]).map(x => x.label + ' (' + CFG.subjectWeightCaptions[s.subjects[x.id]].toLowerCase() + ')').join('; ')) : '';
+  L.push('Circuit Pathways program finder: summary');
+  L.push('Banyule Nillumbik Tech School');
+  L.push('Date: ' + new Date().toLocaleDateString('en-AU'));
+  L.push('');
+  L.push('CLASS PROFILE');
+  L.push('Year level: ' + (s.year === 'mixed' ? 'Mixed years' : s.year === '11-12' ? 'Years 11-12' : 'Year ' + s.year));
+  L.push('Coding: ' + CFG.codingLevels[s.coding].label + '; class range: ' + CFG.spreadCaptions.find(c => s.spread <= c.max).label.toLowerCase());
+  L.push('Electronics: ' + CFG.electronicsLevels[s.electronics].label);
+  L.push('Used before: ' + (used.length ? used.join(', ') : 'Not specified'));
+  L.push('Goals: ' + goals.join('; '));
+  if (pathwayVisible(s)) L.push('Pathways: ' + (subj || 'Not specified'));
+  L.push('Project: ' + CFG.projects.find(x => x.id === s.project).label + '; time: ' + CFG.times.find(x => x.id === s.time).label);
+  L.push('');
+  L.push('RECOMMENDED START');
+  L.push(own ? 'Students\' own project (suggested platform: ' + res.suggested.platform + ')' : variantLine(res.start));
+  res.start.dotpoints.forEach(d => L.push('- ' + d));
+  L.push('');
+  L.push('WHY THIS FITS');
+  res.reasons.forEach(r => L.push('- ' + r));
+  if (res.stretch) { L.push(''); L.push('STRETCH OPTION'); L.push(res.stretch.v.platform + ' · ' + res.stretch.v.version + (res.stretch.needsMoreTime ? ' (needs a full day)' : '')); }
+  if (res.alt) { L.push(''); L.push(own ? 'IF A SET PROJECT IS PREFERRED' : 'ALSO WORTH CONSIDERING'); L.push(variantLine(res.alt)); }
+  const cur = res.curriculum;
+  const codes = cur.items.concat(cur.topUp).map(c => c.code + ' ' + c.text).concat(cur.pathways.map(p => p.label + ': ' + p.text));
+  if (codes.length) { L.push(''); L.push('CURRICULUM LINKS'); codes.forEach(c => L.push('- ' + c)); }
+  return L.join('\n');
+}
+async function copySummary(ta) {
+  const t = ta.value, st = () => $('#status');
+  try { await navigator.clipboard.writeText(t); st().textContent = 'Summary copied. You can paste it into your booking request.'; return; } catch (e) { /* fall through */ }
+  try {
+    const d = ta.closest('details'); d.open = true; ta.focus(); ta.select();
+    st().textContent = document.execCommand('copy') ? 'Summary copied. You can paste it into your booking request.' : 'Select the text below and copy it.';
+  } catch (e) { st().textContent = 'Select the text below and copy it.'; }
+}
+
+/* ---------- debug panel (?debug=1) ---------- */
+function renderDebug() {
+  if (!DEBUG) return;
+  const box = $('#debug');
+  if (!state.year) { box.replaceChildren(h('div', { class: 'debug' }, 'Debug: choose a year level to see scores.')); return; }
+  const r = readiness(state), ranked = rank(state);
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  const rows = ranked.map((x, i) => h('tr', { class: i === 0 ? 'best' : '' },
+    h('td', {}, x.v.id), h('td', {}, fmt(x.p.total)), h('td', {}, fmt(x.p.fit)), h('td', {}, fmt(sum(x.p.goals))), h('td', {}, fmt(sum(x.p.subjects))),
+    h('td', {}, fmt(x.p.project)), h('td', {}, fmt(x.p.time)), h('td', {}, fmt(x.p.coding)), h('td', {}, fmt(x.p.platform))));
+  box.replaceChildren(h('div', { class: 'debug' }, h('div', {}, 'Debug. Readiness ' + fmt(r) + '; spread ' + state.spread + '; time ' + state.time),
+    h('table', {}, h('tr', {}, ['variant', 'total', 'fit', 'goals', 'subjects', 'project', 'time', 'coding', 'platform'].map(t => h('th', {}, t))), rows)));
+}
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey || onResult) return;
+  const tag = e.target.tagName;
+  if (e.key === 'Enter') {
+    if (tag === 'BUTTON' || tag === 'A' || tag === 'TEXTAREA' || tag === 'SUMMARY') return;
+    e.preventDefault(); next();
+  } else if (/^[1-9]$/.test(e.key) && tag !== 'INPUT' && tag !== 'TEXTAREA') {
+    const b = $('[data-key="' + e.key + '"]');
+    if (b) { b.click(); }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
