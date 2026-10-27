@@ -49,6 +49,28 @@ const personas = [
     if (name.startsWith('H')) check('H suggests a platform', () => assert(['arduino', 'arduino-wifi', 'microbit', 'pi'].includes(res.platform)));
   }
 
+  // Curriculum links come from the workbook rows (see import-curriculum.py).
+  const cur = (o, id) => page.evaluate(([s, vid]) => { const v = CFG.variants.find(x => x.id === vid); const c = buildCurriculum(s, v); return { codes: c.items.concat(c.topUp).map(x => x.code), pathways: c.pathways.map(x => x.study), n: c.items.length + c.topUp.length, links: c.items.concat(c.topUp).concat(c.pathways).every(x => x.link) }; }, [mk(o), id]);
+  for (const year of ['7', '8', '9', '10', 'mixed']) {
+    for (const vid of ['bin-mb-buttons', 'bin-mb-radio', 'bin-ard-ultra', 'bin-esp-fill', 'bin-pi-ml', 'car-mb-timing', 'car-ard-sensor', 'car-ard-speed', 'car-esp-web', 'car-pi-ml']) {
+      const c = await cur({ year }, vid);
+      check('curriculum ' + year + ' ' + vid + ' (' + c.codes.length + ' codes)', () => { assert(c.n >= 3 && c.n <= 5, 'got ' + c.n); assert(new Set(c.codes).size === c.codes.length); assert(c.codes.every(x => /^VC2/.test(x))); assert(c.links); });
+    }
+  }
+  const has = async (o, id, code) => (await cur(o, id)).codes.includes(code);
+  assert(await has({ year: '8' }, 'car-ard-speed', 'VC2M8M07') && !(await has({ year: '8' }, 'car-ard-sensor', 'VC2M8M07')));
+  assert(await has({ year: '9' }, 'bin-esp-fill', 'VC2TDI10S01'));
+  assert(await has({ year: '10' }, 'bin-pi-ml', 'VC2S10I06'));
+  const pw = async (o, id) => (await cur(o, id)).pathways;
+  const sePw = await pw({ year: '10', subjects: { syseng: 3 } }, 'bin-ard-ultra');
+  assert(sePw.length >= 1 && sePw.every(x => x === 'Systems Engineering'), 'SE: ' + sePw);
+  const acPw = await pw({ year: '10', subjects: { acsd: 3, algo: 2 } }, 'bin-pi-ml');
+  assert(acPw.includes('Applied Computing') && acPw.includes('Algorithmics') && !acPw.includes('Systems Engineering'), 'AC: ' + acPw);
+  const vce = await pw({ year: '11-12' }, 'bin-pi-ml');
+  assert(['Systems Engineering', 'Applied Computing', 'Algorithmics'].every(x => vce.includes(x)), 'VCE: ' + vce);
+  assert((await pw({ year: '7' }, 'bin-mb-buttons')).length === 0);
+  console.log('ok   curriculum selection rules');
+
   // Flow: Years 7-8 never see the pathway screen; defaults tap through quickly.
   const flow = async (year) => {
     const p = await ctx.newPage();
