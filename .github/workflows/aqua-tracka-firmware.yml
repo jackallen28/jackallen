@@ -34,9 +34,7 @@ jobs:
           python-version: '3.12'
 
       - name: Check the web page is packed (web_page.h is up to date)
-        run: |
-          python3 $SKETCH/tools/make_page.py
-          git diff --exit-code -- $SKETCH/web_page.h
+        run: python3 $SKETCH/tools/make_page.py --check
 
       - uses: arduino/setup-arduino-cli@v2
 

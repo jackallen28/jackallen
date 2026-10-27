@@ -1,6 +1,7 @@
 """Packs the dashboard into the firmware.
 
-    python3 tools/make_page.py
+    python3 tools/make_page.py            pack the page
+    python3 tools/make_page.py --check    only check that web_page.h holds the current page
 
 Reads web/index.html and the logo (web/logo.svg), puts the logo into the page with the
 water drop in blue and the lettering in the page's text colour, and writes:
@@ -12,6 +13,7 @@ water drop in blue and the lettering in the page's text colour, and writes:
 import gzip
 import os
 import re
+import sys
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEB = os.path.join(HERE, 'web')
@@ -37,9 +39,22 @@ def logo_svg():
             'xmlns="http://www.w3.org/2000/svg">' + ''.join(out) + '</svg>')
 
 
+def packed_page():
+    """The page in web_page.h, unpacked (gzip output differs between Python versions, so the
+    check compares the page itself)."""
+    text = open(os.path.join(HERE, 'web_page.h')).read()
+    body = text[text.index('{') + 1:text.rindex('}')]
+    return gzip.decompress(bytes(int(b) for b in body.replace('\n', '').split(',') if b.strip())).decode('utf-8')
+
+
 def main():
     page = open(os.path.join(WEB, 'index.html'), encoding='utf-8').read()
     page = page.replace('<!--LOGO-->', logo_svg())
+    if '--check' in sys.argv:
+        if packed_page() != page:
+            sys.exit('web_page.h is out of date: run python3 tools/make_page.py and commit it')
+        print('web_page.h is up to date')
+        return
     data = gzip.compress(page.encode('utf-8'), 9, mtime=0)
 
     lines = ['// Made by tools/make_page.py from web/index.html - edit those, not this file.',
