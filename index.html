@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f0">
+  <meta name="description" content="Big ideas. Small circuits. Explore PiPath and ArduinoPath, the hands-on coding pathways from Banyule Nillumbik Tech School.">
+  <title>CircuitPathways — Make a little something happen.</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#playground">Skip to the interactive demo</a>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="CircuitPathways home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Circuit<span class="brand-light">Pathways</span><span class="brand-dot">.</span></span></a>
+    <nav aria-label="Main navigation"><a href="#pathways">The pathways</a><a href="#how-it-works">How it works</a><a class="nav-cta" href="#playground">Have a play <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot"></span> A LITTLE CURIOSITY GOES A LONG WAY</p>
+        <h1 id="hero-title">Big ideas.<br>Small circuits.<br><span class="serif-word">Your move.</span><svg class="title-spark" viewBox="0 0 80 80" aria-hidden="true"><path d="M40 4v72M4 40h72M14 14l52 52M14 66l52-52"/></svg></h1>
+        <p class="hero-description">From “what does this do?” to “I made that.”<br>Meet two playful ways to learn code, build confidence,<br class="desktop-break"> and make something happen.</p>
+        <p class="hero-question">Where would you like to explore?</p><div class="hero-actions"><button class="button button-dark" data-path="pi">Explore PiPath <span aria-hidden="true">↗</span></button><button class="button button-outline" data-path="arduino">Explore ArduinoPath <span aria-hidden="true">↗</span></button></div>
+        <div class="hero-note"><span class="tiny-pixels" aria-hidden="true">▪ ▪ ▪</span> Made for curious minds. Built by BNTS.</div>
+      </div>
+      <div class="hero-art" aria-label="Floating Banyule Nillumbik Tech School logo">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <span class="float-tag tag-one"><span class="tag-dot"></span> a spark of curiosity</span>
+        <div class="glass-logo" id="glass-logo"><div class="glass-shine"></div><img src="assets/bnts-logo.png" alt="Banyule Nillumbik Tech School" width="300" height="187"></div>
+        <span class="float-tag tag-two"><span aria-hidden="true">↗</span> a world of possibilities</span>
+        <span class="art-pixel pixel-one"></span><span class="art-pixel pixel-two"></span><span class="art-pixel pixel-three"></span><span class="art-pixel pixel-four"></span>
+        <div class="art-caption"><span>01 / THE SPARK</span><span>SCROLL TO CONNECT ↓</span></div>
+      </div>
+    </section>
+    <div class="ticker" aria-label="Learn by doing"><div><span>MAKE IT BLINK</span><b>✦</b><span>TRY. TWEAK. TRY AGAIN.</span><b>✦</b><span>SMALL STEPS. BIG AHA’S.</span><b>✦</b><span>YOUR CURIOSITY, CONNECTED</span><b>✦</b></div></div>
+
+    <section class="pathways section-wrap" id="pathways" aria-labelledby="pathways-title">
+      <div class="section-heading"><div><p class="eyebrow">01 / PICK YOUR ADVENTURE</p><h2 id="pathways-title">Two paths.<br>The same <span class="serif-word">“aha!”</span></h2></div><p>No experience? Perfect.<br>Choose a starting point. We’ll take it<br>one little discovery at a time.</p></div>
+      <div class="pathway-grid">
+        <button class="pathway-card pi-card" data-path="pi" aria-label="Explore PiPath traffic lights">
+          <div class="card-topline"><span class="mini-label">THE PYTHON PATHWAY</span><span class="round-arrow" aria-hidden="true">↗</span></div>
+          <div class="card-illustration pi-illustration" aria-hidden="true"><div class="pi-board"><span class="board-label">raspberry pi</span><div class="chip"></div><div class="gpio-pins"></div><div class="board-ports"></div></div><div class="small-traffic"><i class="lit"></i><i></i><i></i></div><svg viewBox="0 0 300 160"><path d="M155 65H240V95M140 78H225V120M125 90H210V145"/></svg><span class="illustration-label">hello, real world.</span></div>
+          <div class="card-bottom"><h3>PiPath<span>↗</span></h3><p>A little Python. A lot of possibilities.<br>Bring a set of traffic lights to life.</p><div class="card-pills"><span>Raspberry Pi</span><span>Python</span><span>Traffic lights</span></div></div>
+        </button>
+        <button class="pathway-card arduino-card" data-path="arduino" aria-label="Explore ArduinoPath ultrasonic sensor">
+          <div class="card-topline"><span class="mini-label">THE ARDUINO PATHWAY</span><span class="round-arrow" aria-hidden="true">↗</span></div>
+          <div class="card-illustration arduino-illustration" aria-hidden="true"><div class="uno-board"><span class="board-label">ARDUINO <b>∞</b></span><div class="uno-chip"></div><div class="uno-pins"></div><div class="usb-port"></div></div><div class="mini-sensor"><i></i><i></i><small>HC-SR04</small></div><span class="sonar-wave wave-one"></span><span class="sonar-wave wave-two"></span><span class="illustration-label">a sixth sense, built by you.</span></div>
+          <div class="card-bottom"><h3>ArduinoPath<span>↗</span></h3><p>Start with blocks. Grow into text.<br>Help a sensor see what’s getting closer.</p><div class="card-pills"><span>Arduino & ESP</span><span>Blocks + text</span><span>Distance sensor</span></div></div>
+        </button>
+      </div>
+    </section>
+
+    <section class="story-intro section-wrap" id="how-it-works"><p class="eyebrow">02 / LITTLE STEPS, REAL CONFIDENCE</p><h2>You bring the curiosity.<br>We bring the <span class="serif-word">“you’ve got this.”</span></h2><p>There’s more than one way to learn. Explore the support that helps students<br class="desktop-break"> go from following along to finding their own way.</p><div class="journey-line"><span><b>01</b> Connect</span><i></i><span><b>02</b> Create</span><i></i><span><b>03</b> Try it</span><i></i><span><b>04</b> Keep growing</span></div></section>
+
+    <section class="playground section-wrap" id="playground" aria-labelledby="play-title">
+      <div class="lab-top"><p class="eyebrow"><span class="status-dot"></span> 03 / LESS WATCHING. MORE DOING.</p><div class="path-switch" role="group" aria-label="Choose demo"><button data-demo="pi" aria-pressed="true">PiPath</button><button data-demo="arduino" aria-pressed="false">ArduinoPath</button></div></div>
+      <div class="lab-layout">
+        <div class="lab-story"><span class="handwritten">a tiny taste of the real thing ↴</span><h2 id="play-title">Ready,<br>set, <span class="serif-word" id="play-word">glow.</span></h2><p id="play-description">Three lights. A few lines of Python. One very satisfying first “I did that.”</p>
+          <div class="story-steps" role="group" aria-label="Demo stages"><button data-step="0" class="active" aria-pressed="true"><span>01</span><div><strong>Meet your circuit</strong><small>Connect the dots, literally.</small></div><b>↗</b></button><button data-step="1" aria-pressed="false"><span>02</span><div><strong>Make it your own</strong><small>A little help, your way.</small></div><b>↗</b></button><button data-step="2" aria-pressed="false"><span>03</span><div><strong>The moment it clicks</strong><small>Run it. Tweak it. Smile.</small></div><b>↗</b></button></div>
+          <div class="story-annotation" aria-live="polite"><span class="annotation-icon" aria-hidden="true">✦</span><p id="annotation-text">The Wiring Wizard breaks a circuit into small connections. You meet each part before you start coding.</p></div>
+        </div>
+        <div class="demo-shell">
+          <div class="demo-titlebar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><span id="demo-app-name">PiPath · Traffic lights</span><span class="demo-tag">INTERACTIVE TASTER</span></div>
+          <div class="demo-toolbar"><span id="demo-project">🚦 Traffic lights</span><span class="sim-badge"><i></i> SIMULATOR</span></div>
+          <div class="demo-body">
+            <div class="demo-stage" id="stage-connect">
+              <div class="demo-step-label">FIRST, A LITTLE CONNECTION</div><h3 id="connect-title">Every big idea starts here.</h3><p id="connect-description">Tap each connection to build your first circuit.</p>
+              <div class="circuit-scene"><div class="breadboard"><div class="bb-rail"></div><div class="bb-holes"></div><div class="bb-rail bottom"></div></div><div class="demo-pi-board" id="controller"><span id="controller-name">Raspberry Pi</span><div class="controller-chip"></div><div class="controller-pins"></div><small id="controller-pins-text">17 · 27 · 22 · GND</small></div><svg class="circuit-wires" viewBox="0 0 520 230" preserveAspectRatio="none" aria-hidden="true"><path class="wire wire-0" d="M145 105V38H330V92"/><path class="wire wire-1" d="M158 105V51H375V92"/><path class="wire wire-2" d="M171 105V64H420V92"/></svg><div class="scene-leds" id="scene-leds"><span class="led red"></span><span class="led amber"></span><span class="led green"></span><small>RED · AMBER · GREEN</small></div><div class="scene-sensor" id="scene-sensor" hidden><i></i><i></i><small>ULTRASONIC SENSOR</small></div></div>
+              <div class="connection-buttons" id="connection-buttons"></div><div class="connection-status" id="connection-status" aria-live="polite">0 of 3 connections made. You’ve got this.</div><button class="button button-dark demo-next" id="connect-next" disabled>Connected! Let’s code <span>→</span></button>
+            </div>
+            <div class="demo-stage" id="stage-code" hidden>
+              <div class="demo-step-label">THE SAME GOAL. YOUR WAY THERE.</div><h3>How much help feels right?</h3><p>Try a support level. Watch the instructions change.</p><div class="level-switch" role="group" aria-label="Support level"><button data-level="beginner" aria-pressed="true">Beginner</button><button data-level="moderate" aria-pressed="false">Moderate</button><button data-level="advanced" aria-pressed="false">Advanced</button></div><div class="level-message" id="level-message" aria-live="polite"></div><div class="code-view-switch" id="code-view-switch" role="group" aria-label="Code view" hidden><button data-view="blocks" aria-pressed="true">Blocks</button><button data-view="text" aria-pressed="false">Text</button></div><div class="code-editor"><div class="code-filename" id="code-filename">traffic_lights.py <span>● YOUR FIRST PROGRAM</span></div><pre><code id="demo-code"></code></pre><div id="block-code" hidden></div></div><div class="coach-box"><span aria-hidden="true">✦</span><div><strong>Your Coach is in your corner.</strong><p id="coach-message" aria-live="polite">Stuck is just a step on the way. Ask for a nudge.</p><button id="hint-button">Give me a hint <span>↗</span></button></div></div><button class="button button-dark demo-next" id="code-next">Let’s try it <span>→</span></button>
+            </div>
+            <div class="demo-stage" id="stage-run" hidden>
+              <div class="demo-step-label">THE AHA! MOMENT</div><h3 id="run-title">You’re in the driving seat.</h3><p id="run-description">Press Run and watch your traffic lights cycle.</p>
+              <div class="run-scene" id="run-scene"><div class="traffic-housing" id="traffic-housing"><i data-light="red"></i><i data-light="amber"></i><i data-light="green"></i><div class="traffic-pole"></div></div><div class="road" id="road"><span></span><span></span><span></span><div class="toy-car" id="toy-car" aria-hidden="true">▰</div></div><div class="distance-demo" id="distance-demo" hidden><div class="distance-object" aria-hidden="true">▥</div><div class="distance-line"><span id="distance-value">60 cm</span></div><div class="distance-sensor"><i></i><i></i></div><span class="sensor-indicator" id="sensor-indicator">ALL CLEAR</span></div><div class="live-readout" id="live-readout" role="status">Your circuit is ready.</div></div>
+              <div class="range-control"><label for="demo-range" id="range-label">Light timing <output id="range-output" for="demo-range">1.5 seconds</output></label><input type="range" id="demo-range" min="5" max="30" value="15"><div class="range-ends"><span id="range-min">QUICK CHANGE</span><span id="range-max">TAKE YOUR TIME</span></div></div><button class="button button-dark run-button" id="run-button"><span aria-hidden="true">▶</span> Run my circuit</button><div class="success-message" id="success-message" hidden><span>✦</span><p><strong>That little moment? That’s learning.</strong><br>You changed something. Your circuit responded.</p></div>
+            </div>
+          </div>
+          <div class="demo-footer"><span>● No kit needed. No sign-up. Just curiosity.</span><button id="reset-demo">Start again ↺</button></div>
+        </div>
+      </div>
+      <p class="demo-disclaimer">A simplified website taster inspired by the apps. The full programs include guided lessons, code editing, progress saving and real hardware.</p>
+    </section>
+
+    <section class="real-apps section-wrap" aria-labelledby="real-title"><div class="section-heading"><div><p class="eyebrow">04 / THE REAL THING, UP CLOSE</p><h2 id="real-title">Small nudges.<br><span class="serif-word">Growing independence.</span></h2></div><p>Peek inside the apps. Follow the callouts<br>to see how the experience supports<br>students at every stage.</p></div>
+      <div class="app-peek"><div class="peek-sidebar"><div class="peek-tabs" role="group" aria-label="Walkthrough application"><button data-peek="pi" aria-pressed="true">PiPath</button><button data-peek="blocks" aria-pressed="false">Arduino · blocks</button><button data-peek="text" aria-pressed="false">Arduino · text</button></div><h3 id="peek-title">A helpful next step.<br>Always within reach.</h3><p id="peek-copy">A clear goal, bite-sized steps and a simulator bring Python into the real world.</p><ol class="peek-notes"><li><span>1</span><div><strong>A goal you can picture</strong><p id="peek-note-1">See what you’re making before you begin.</p></div></li><li><span>2</span><div><strong>Support that meets you there</strong><p id="peek-note-2">Step-by-step guidance and a Coach when you need a nudge.</p></div></li><li><span>3</span><div><strong>A safe space to try</strong><p id="peek-note-3">Experiment in the simulator before moving to real hardware.</p></div></li></ol><button class="text-button" id="watch-walkthrough">Watch the walkthrough <span>▶</span></button><small class="video-note">Original app recording · captions included</small></div><div class="peek-window"><div class="peek-window-bar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="peek-window-label">Inside PiPath</span><span>↗</span></div><div class="screenshot-wrap"><img id="app-screenshot" src="assets/pipath-screen.webp" alt="PiPath traffic lights lesson with instructions, Python code and simulator" width="1280" height="720" loading="lazy"><button class="hotspot hotspot-one" data-hotspot="0" aria-label="Annotation 1: a goal you can picture" aria-expanded="false">1</button><button class="hotspot hotspot-two" data-hotspot="1" aria-label="Annotation 2: support that meets you there" aria-expanded="false">2</button><button class="hotspot hotspot-three" data-hotspot="2" aria-label="Annotation 3: a safe space to try" aria-expanded="false">3</button><div class="hotspot-tooltip" id="hotspot-tooltip" hidden role="status"></div></div><div class="screenshot-caption"><span>ACTUAL APP. REAL LEARNING.</span><span>Tap a number to take a closer look ↗</span></div></div></div>
+    </section>
+
+    <section class="beyond section-wrap" id="beyond"><div class="beyond-heading"><p class="eyebrow">05 / THIS IS ONLY THE BEGINNING</p><h2>A little spark.<br><span class="serif-word">A whole lot of next.</span></h2><p>Keep this website simple. Take the bigger adventures into the apps.</p></div><div class="project-grid"><article class="project-card"><div class="project-icon icon-bin" aria-hidden="true">♻</div><span class="mini-label">ARDUINOPATH</span><h3>A bin with a brain.</h3><p>Turn a distance reading into a Smart Bin. Explore the idea in the walkthrough.</p><span class="release-label">↗ In the CircuitPathways release app</span></article><article class="project-card"><div class="project-icon icon-camera" aria-hidden="true">◎</div><span class="mini-label">PIPATH</span><h3>See things differently.</h3><p>Explore camera activities, collect examples and try your own ideas.</p><span class="release-label">↗ In the CircuitPathways release app</span></article><article class="project-card"><div class="project-icon icon-freeplay" aria-hidden="true">✦</div><span class="mini-label">YOUR NEXT IDEA</span><h3>What if you tried…?</h3><p>Take your curiosity further with Free Play and projects in the full programs.</p><span class="release-label">↗ In the CircuitPathways release app</span></article></div><div class="release-callout"><div><span class="eyebrow">FROM A TASTER TO YOUR NEXT BIG IDEA</span><h3>Keep the curiosity going.</h3><p>Explore the full CircuitPathways programs, lessons and release downloads.</p></div><div class="release-links"><a class="button button-dark" href="https://github.com/jackallen28/BNTS_PIPath" target="_blank" rel="noopener noreferrer">Get PiPath <span>↗</span></a><a class="button button-outline" href="https://github.com/jackallen28/BNTS_ArduinoPath/releases" target="_blank" rel="noopener noreferrer">Get ArduinoPath <span>↗</span></a></div></div></section>
+    <section class="closing section-wrap"><span class="closing-spark" aria-hidden="true">✦</span><p>Every “I can’t code”<br>starts somewhere.</p><h2>Let’s start with<br><span class="serif-word">“what if?”</span></h2><a href="#pathways" class="text-button">Find your first spark <span>↑</span></a></section>
+  </main>
+  <footer class="site-footer"><a class="brand" href="#">Circuit<span class="brand-light">Pathways</span><span class="brand-dot">.</span></a><p>A little code. A lot of possibility.</p><img src="assets/bnts-wordmark.png" width="240" height="50" alt="Banyule Nillumbik Tech School"><a href="#">Back to top ↑</a></footer>
+  <dialog id="video-dialog" aria-labelledby="video-dialog-title"><div class="dialog-header"><div><p class="eyebrow">A LOOK INSIDE THE REAL APP</p><h2 id="video-dialog-title">PiPath walkthrough</h2></div><button id="close-video" aria-label="Close walkthrough">✕</button></div><video id="walkthrough-video" controls preload="none" playsinline><source src="assets/pipath-walkthrough.mp4" type="video/mp4"></video><p>Original walkthrough, with on-screen captions. This full recording shows the app beyond the website taster.</p></dialog>
+</body>
+</html>
