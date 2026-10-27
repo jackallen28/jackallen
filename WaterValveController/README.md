@@ -5,7 +5,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 
 - Choose **25 L**, **50 L**, **100 L** or **FREE FLOW** with the push button or the 433 MHz remote
   (button A = 25 L, B = 50 L, C = 100 L, D = FREE FLOW; the valve clicks twice to confirm).
-  The three volumes can be changed in the sketch (see [Changing the limit volumes](#changing-the-limit-volumes)).
+  The three volumes can be changed on the Aqua Tracka web page or in the sketch (see [Changing the limit volumes](#changing-the-limit-volumes)).
 - When the limit is reached, the valve shuts and opens 4 times (0.5 s shut, 0.5 s open),
   then water keeps flowing and the count starts again at 0 L.
 - A press of the push button resets the count to 0 L. On the remote, hold any button
@@ -13,9 +13,11 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 - Hold the push button, or remote button D (FREE FLOW), for 20 s to calibrate with a
   7 L bucket. The calibration is saved and survives power cuts. The water count always
   starts at 0 L after power-up.
-- Flow rate, limit and count are printed to the Serial Monitor and sent to an ESP32 board
-  (Waveshare ESP32-C3-Zero) over a two-way serial link, so the ESP can also send commands
-  to the Nano in a later version.
+- Flow rate, limit and count are printed to the Serial Monitor and sent to an ESP32-C3 board
+  (Waveshare ESP32-C3-Zero) running **Aqua Tracka**: its own Wi-Fi network, **VAT_Aqua_Tracka**,
+  with a phone dashboard at http://192.168.4.1 for the live readings, calibration, all the
+  settings, diagnostics and instructions. See [`esp32/README.md`](esp32/README.md). The
+  controller works the same without it.
 
 ## Parts
 
@@ -28,7 +30,7 @@ chosen amount has been used by briefly pulsing the solenoid valve shut.
 | 3 × panel LED | 25 L, 50 L, 100 L. Plain LEDs: the resistors are on the PCB |
 | Illuminated rocker switch (12 V lamp) + 2 A ATO blade fuse | Main power switch and fuse (PCB version) |
 | 433 MHz RX480E-4 receiver module + 4-button remote (A–D) | 5 V logic outputs |
-| Waveshare ESP32-C3-Zero (optional, later) | Powered from 5 V; its data pins are 3.3 V only, so it needs a divider |
+| Waveshare ESP32-C3-Zero (optional) | Powered from 5 V; its data pins are 3.3 V only, so it needs a divider |
 
 ## Wiring
 
@@ -51,7 +53,7 @@ hand-built version.
 | **A3** | Receiver D3 (button A = 25 L) |
 | **5V / GND** | Receiver +V and GND (VT is not used) |
 | **D11** | Data out to the ESP, through a 1 kΩ / 2 kΩ divider (see below) |
-| **D12** | Data from the ESP (ESP TX), through 1 kΩ. For ESP control later; not used by the sketch yet |
+| **D12** | Commands from the ESP (ESP GPIO21), through 1 kΩ |
 
 **Solenoid:** on the PCB, the valve goes to terminal J3: pin 1 = valve +, pin 2 = valve −. A
 MOSFET switches the 12 V to the valve and the flyback diode is on the board. In a hand-built
@@ -186,7 +188,8 @@ const uint16_t LIMIT_2_LITRES = 50;
 const uint16_t LIMIT_3_LITRES = 100;
 ```
 
-Change the numbers (whole litres) and upload again. The LEDs, remote buttons, Serial
+Change the numbers (whole litres) and upload again, or change them on the Aqua Tracka page
+(Settings), which needs no upload. (See [Settings from the web page](#settings-from-the-web-page).) The LEDs, remote buttons, Serial
 Monitor and ESP data all follow these values.
 
 ### Resetting the count
@@ -202,7 +205,7 @@ selected LED blinks along with it. When the pulses finish, the count starts agai
 0 L, so the next warning comes after another full limit's worth of water (water that ran
 during the warning isn't counted towards it, but is still in the session total). The
 warning repeats every limit until the count is reset. The number of pulses and their
-timing are `ALERT_PULSES` and `ALERT_PHASE_MS` in the sketch. A push-button press
+timing are `ALERT_PULSES` and `ALERT_PHASE_MS` in the sketch, or Settings on the web page. A push-button press
 or a 2 s remote hold during the warning stops it straight away.
 
 ### Calibration (7 L bucket)
@@ -264,26 +267,21 @@ Flow: 10.00 L/min | Limit: 25L | Count: 0.15 L | Session: 25.15 L | Valve: SHUT 
 
 ## ESP data link (D11 out, D12 in)
 
-D11 sends one JSON line every second at **9600 baud** (8N1, 5 V logic: the PCB divides it to 3.2 V;
-in a hand-built version use the divider above):
+D11 sends the Nano's status (every second) and settings (every 10 s) as JSON lines at
+**9600 baud** (8N1, 5 V logic: the PCB divides it to 3.2 V; in a hand-built version use the
+divider above), and D12 receives commands from the ESP: choose the limit, reset the count,
+calibrate, change the settings, restore the defaults and test the valve. The line formats and
+commands are in [`esp32/README.md`](esp32/README.md#how-it-works).
 
-```json
-{"flow_lpm":10.00,"limit":"25L","limit_l":25,"count_l":0.15,"session_l":25.15,"valve":"SHUT","state":"LIMIT REACHED","ppl":64.80,"calibrated":false}
-```
+### Settings from the web page
 
-| Field | Meaning |
-|-------|---------|
-| `flow_lpm` | Current flow rate, L/min |
-| `limit` | `"25L"`, `"50L"`, `"100L"` or `"FREE FLOW"` |
-| `limit_l` | Limit in litres (`0` = free flow) |
-| `count_l` | Current count towards the limit, L |
-| `session_l` | Total since power-up or last count reset, L |
-| `valve` | `"OPEN"` or `"SHUT"` |
-| `state` | `"NORMAL"`, `"LIMIT REACHED"`, `"CONFIRM CLICKS"` (during the 2 clicks) or `"CALIBRATING"` |
-| `ppl` | Calibration in pulses per litre |
-| `calibrated` | `false` = datasheet default, `true` = user calibration |
+The limits, warning pulses, clicks, hold times, calibration bucket and hardware options at the top
+of the sketch are the **defaults**. Settings changed on the Aqua Tracka page are saved in the
+Nano's EEPROM and used instead, also after a power cut and without the ESP. **Reset to defaults**
+on the page brings back the values in the sketch; **Factory reset** also clears the calibration.
+After you change a default in the sketch and upload it, press **Reset to defaults** on the page
+for the new value to take effect (or it keeps the value saved from the page).
 
-On an ESP32-C3, read the lines with a hardware serial port, for example
-`Serial1.begin(9600, SERIAL_8N1, 20, 21);` (receive on GPIO20, transmit on GPIO21), and parse
-them with ArduinoJson. The return path (ESP GPIO21 → Nano D12) is wired on the PCB for a later
-version where the ESP's web page sends commands to the Nano; the sketch does not read it yet.
+The page can also make the valve **stay shut after the limit** (until the count is reset with the
+button, the remote or the page) instead of letting the water flow on. While it is held shut, the
+selected light blinks slowly.

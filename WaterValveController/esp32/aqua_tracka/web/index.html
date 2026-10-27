@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a7fd0">
+<title>Aqua Tracka</title>
+<style>
+:root{
+  --bg:#eaf4fb;--bg2:#d8ebf8;--card:#ffffff;--text:#0b2236;--muted:#5b7186;--line:#d5e3ee;
+  --water:#1e9be6;--water2:#0a6fc2;--teal:#10b5bd;--ok:#16a05a;--warn:#e98b0c;--bad:#e0444b;
+  --chip:#eef5fb;--shadow:0 6px 20px rgba(10,60,110,.10);--nav:rgba(255,255,255,.92);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#06121d;--bg2:#0a1d2e;--card:#0f2335;--text:#e5f1fa;--muted:#8ea6ba;--line:#1d3850;
+  --water:#3fb2f5;--water2:#1883d4;--teal:#2fd0d6;--ok:#33c47a;--warn:#f5a524;--bad:#ff6369;
+  --chip:#132c42;--shadow:0 6px 20px rgba(0,0,0,.35);--nav:rgba(10,26,40,.94);
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;background:linear-gradient(180deg,var(--bg2),var(--bg) 320px);padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px 6px;max-width:640px;margin:0 auto}
+.logo{height:54px;width:auto;color:var(--text)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--card);box-shadow:var(--shadow);white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.pill.ok .dot{background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:ping 2s infinite}
+.pill.bad .dot{background:var(--bad)}
+.pill.warn .dot{background:var(--warn)}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(22,160,90,.6)}70%{box-shadow:0 0 0 8px rgba(22,160,90,0)}100%{box-shadow:0 0 0 0 rgba(22,160,90,0)}}
+main{max-width:640px;margin:0 auto;padding:4px 16px 16px}
+section.tab{display:none;animation:fade .25s ease}
+section.tab.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2{font-size:20px;margin:14px 2px 8px}
+h3{font-size:16px;margin:0 0 8px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;gap:10px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;border:0;border-radius:14px;padding:12px 16px;font-weight:650;cursor:pointer;background:var(--chip);color:var(--text);transition:transform .08s,opacity .2s}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.45}
+button.primary{background:linear-gradient(135deg,var(--water),var(--water2));color:#fff}
+button.danger{background:transparent;color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+button.wide{width:100%}
+button.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+/* banner */
+.banner{display:none;border-radius:16px;padding:12px 14px;margin:10px 0;font-weight:600;align-items:center;gap:10px}
+.banner.show{display:flex}
+.banner.warn{background:rgba(233,139,12,.14);color:var(--warn)}
+.banner.bad{background:rgba(224,68,75,.13);color:var(--bad)}
+.banner.info{background:rgba(30,155,230,.13);color:var(--water2)}
+.banner button{margin-left:auto;padding:8px 12px;font-size:14px}
+/* gauge */
+.gaugewrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px}
+.gauge{position:relative;width:min(72vw,260px);aspect-ratio:1}
+.gauge svg{width:100%;height:100%;display:block}
+.gauge .ring{fill:none;stroke:var(--line);stroke-width:7}
+.gauge .prog{fill:none;stroke:var(--water);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .8s ease,stroke .4s}
+.wave{transition:transform 1s ease}
+.wa{animation:wave 3.2s linear infinite}
+.wb{animation:wave 5s linear infinite reverse;opacity:.55}
+@keyframes wave{from{transform:translateX(0)}to{transform:translateX(-200px)}}
+.gtext{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.big{font-size:clamp(38px,12vw,54px);font-weight:800;letter-spacing:-1px;line-height:1;text-shadow:0 1px 8px var(--card)}
+.big small{font-size:.42em;font-weight:700;letter-spacing:0}
+.of{font-weight:650;margin-top:6px;background:var(--card);padding:2px 10px;border-radius:99px;font-size:14px;opacity:.92}
+.gauge.near .prog{stroke:var(--warn)}
+.gauge.hit .prog{stroke:var(--bad)}
+.gauge.hit{animation:shake .5s 2}
+@keyframes shake{25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+.drops{position:absolute;left:50%;top:-6px;width:40px;margin-left:-20px;height:60px;overflow:visible;pointer-events:none}
+.drops i{position:absolute;left:16px;width:8px;height:12px;background:var(--water);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;opacity:0}
+.flowing .drops i{animation:drop var(--dropt,1s) linear infinite}
+.flowing .drops i:nth-child(2){animation-delay:calc(var(--dropt,1s)/3);left:8px}
+.flowing .drops i:nth-child(3){animation-delay:calc(var(--dropt,1s)*2/3);left:24px}
+@keyframes drop{0%{transform:translateY(-10px);opacity:0}15%{opacity:1}100%{transform:translateY(70px);opacity:0}}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px}
+.stat{background:var(--chip);border-radius:14px;padding:10px 8px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:12px;color:var(--muted)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.chip{padding:12px 4px;border-radius:14px;text-align:center;font-weight:750;background:var(--chip);color:var(--text);position:relative}
+.chip small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+.chip.on{background:linear-gradient(135deg,var(--water),var(--water2));color:#fff}
+.chip.on small{color:rgba(255,255,255,.85)}
+.fun{display:flex;gap:12px;align-items:center}
+.fun .emo{font-size:30px}
+.spark{width:100%;height:70px;display:block}
+.spark path.l{fill:none;stroke:var(--water);stroke-width:2}
+.spark path.a{fill:url(#sg);opacity:.35}
+/* forms */
+.field{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:0}
+.field{flex-wrap:wrap}
+.field>label:first-child{flex:1 1 150px;font-weight:600;font-size:15px}
+.field>label:first-child small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.step{display:flex;align-items:center;background:var(--chip);border-radius:12px}
+.step button{padding:8px 12px;background:transparent;font-size:18px;line-height:1}
+.step input{width:64px;text-align:center;border:0;background:transparent;color:var(--text);font:inherit;font-weight:700;padding:6px 0;-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button{display:none}
+.step .u{font-size:12px;color:var(--muted);padding-right:8px;margin-left:-4px}
+.field.changed label{color:var(--water2)}
+.field.changed .step{box-shadow:inset 0 0 0 2px var(--water)}
+.seg{display:flex;background:var(--chip);border-radius:12px;padding:3px}
+.seg button{padding:7px 10px;font-size:13px;border-radius:10px;background:transparent;font-weight:650}
+.seg button.on{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.15);color:var(--water2)}
+.switch{position:relative;width:52px;height:30px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line);border-radius:99px;transition:.2s}
+.switch span:before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch input:checked+span{background:var(--water)}
+.switch input:checked+span:before{transform:translateX(22px)}
+input.txt{width:100%;font:inherit;font-size:22px;font-weight:700;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--text)}
+.savebar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));display:none;gap:10px;background:var(--card);padding:10px;border-radius:16px;box-shadow:0 -2px 20px rgba(0,0,0,.18);margin-top:10px;z-index:5}
+.savebar.show{display:flex}
+.savebar button{flex:1}
+details{border-top:1px solid var(--line);padding:10px 0}
+details:first-of-type{border-top:0}
+summary{font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+summary:after{content:"+";color:var(--muted);font-size:20px;line-height:1}
+details[open] summary:after{content:"–"}
+details p,details li{color:var(--muted);font-size:14.5px}
+details ul,details ol{padding-left:20px;margin:6px 0}
+/* calibration */
+.steps{counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{counter-increment:s;display:flex;gap:12px;padding:8px 0;color:var(--muted)}
+.steps li:before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--chip);font-weight:800;color:var(--text)}
+.steps li.now{color:var(--text);font-weight:600}
+.steps li.now:before{background:var(--water);color:#fff}
+.steps li.done:before{content:"✓";background:var(--ok);color:#fff}
+.bucket{display:flex;justify-content:center;margin:6px 0}
+.bucket svg{width:150px;height:150px}
+.calnum{text-align:center;font-size:42px;font-weight:800;line-height:1.1}
+/* diagnostics */
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+td{padding:7px 2px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td:last-child{text-align:right;font-weight:650;font-variant-numeric:tabular-nums}
+.leds{display:flex;gap:8px;justify-content:flex-end}
+.led{width:30px;height:30px;border-radius:9px;background:var(--chip);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--muted)}
+.led.on{background:var(--ok);color:#fff;box-shadow:0 0 12px var(--ok)}
+.log{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}
+.log li{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.log li:last-child{border-bottom:0}
+.log .ic{flex:none;width:30px;height:30px;border-radius:10px;background:var(--chip);display:grid;place-items:center}
+.log .t{margin-left:auto;color:var(--muted);font-size:12.5px;white-space:nowrap}
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--nav);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:9}
+nav .in{display:flex;max-width:640px;width:100%}
+nav button{flex:1;background:transparent;padding:6px 2px;border-radius:12px;font-size:11.5px;font-weight:650;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--water2)}
+nav button.on svg{transform:translateY(-1px)}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;background:#0b2236;color:#fff;padding:10px 16px;border-radius:14px;font-weight:600;font-size:14.5px;transition:.25s;z-index:20;max-width:90vw;text-align:center;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%)}
+#toast.bad{background:var(--bad)}
+#toast.ok{background:var(--ok)}
+dialog{border:0;border-radius:20px;padding:20px;max-width:340px;width:90vw;background:var(--card);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(3,15,25,.55)}
+dialog .row{margin-top:16px}
+dialog .row button{flex:1}
+.kbd{display:inline-block;min-width:24px;padding:1px 7px;border-radius:7px;background:var(--chip);font-weight:800;text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4cc3ff"/><stop offset="1" stop-color="#0a6fc2"/></linearGradient>
+<linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e9be6"/><stop offset="1" stop-color="#1e9be6" stop-opacity="0"/></linearGradient>
+<linearGradient id="dropg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#45c1ff"/><stop offset="1" stop-color="#0a6fc2"/></linearGradient>
+<clipPath id="gc"><circle cx="100" cy="100" r="86"/></clipPath>
+</defs></svg>
+
+<header>
+  <!--LOGO-->
+  <span id="pill" class="pill"><span class="dot"></span><span id="pilltxt">Connecting…</span></span>
+</header>
+
+<main>
+<!-- ======================= HOME ======================= -->
+<section id="t-home" class="tab on">
+  <div id="banner" class="banner"></div>
+  <div class="card">
+    <div class="gaugewrap">
+      <div id="gauge" class="gauge">
+        <div class="drops"><i></i><i></i><i></i></div>
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="96" class="ring"/>
+          <circle id="prog" cx="100" cy="100" r="96" class="prog" transform="rotate(-90 100 100)" stroke-dasharray="603.2" stroke-dashoffset="603.2"/>
+          <circle cx="100" cy="100" r="86" fill="var(--chip)"/>
+          <g clip-path="url(#gc)">
+            <g id="wave" class="wave" style="transform:translateY(190px)">
+              <path class="wb" fill="url(#wg)" d="M0 10 Q25 0 50 10 T100 10 T150 10 T200 10 T250 10 T300 10 T350 10 T400 10 V220 H0Z"/>
+              <path class="wa" fill="url(#wg)" d="M0 10 Q25 20 50 10 T100 10 T150 10 T200 10 T250 10 T300 10 T350 10 T400 10 V220 H0Z"/>
+            </g>
+          </g>
+        </svg>
+        <div class="gtext">
+          <div class="big" id="count">–<small> L</small></div>
+          <div class="of" id="of">waiting for the controller</div>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="flow">–</b><span>L/min now</span></div>
+      <div class="stat"><b id="session">–</b><span>L this session</span></div>
+      <div class="stat"><b id="eta">–</b><span id="etalbl">to the limit</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Water limit</h3>
+    <div class="chips" id="chips"></div>
+    <p class="small muted" style="margin:10px 2px 0">Tap to choose. The count carries on; press <b>Reset count</b> to start again from 0 L.</p>
+  </div>
+
+  <div class="grid2">
+    <button class="primary" onclick="askReset()">↺ Reset count</button>
+    <button class="ghost" onclick="go('cal')">🧪 Calibrate</button>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0">Flow, last 5 minutes</h3><span class="small muted" id="peak"></span></div>
+    <svg class="spark" id="spark" viewBox="0 0 300 70" preserveAspectRatio="none"><path class="a"/><path class="l"/></svg>
+  </div>
+
+  <div class="card fun"><div class="emo" id="funemo">🪣</div><div><b id="funtitle">Every drop counts</b><div class="small muted" id="funtxt">Turn on the tap and watch it fill up.</div></div></div>
+</section>
+
+<!-- ======================= CALIBRATE ======================= -->
+<section id="t-cal" class="tab">
+  <h2>Calibrate the flow sensor</h2>
+  <div class="card">
+    <p class="muted small" style="margin-top:0">The sensor gives a number of pulses for every litre. Run a known amount of water through it and the controller works out the exact number for your sensor and pipes.</p>
+    <ol class="steps" id="calsteps">
+      <li><span>Turn the water off and put an empty bucket of known size under the outlet.</span></li>
+      <li><span>Press <b>Start</b>. The count of pulses starts at 0.</span></li>
+      <li><span>Turn the water on, fill the bucket to the mark, turn it off.</span></li>
+      <li><span>Type how many litres went in and press <b>Save</b>.</span></li>
+    </ol>
+    <div id="calidle">
+      <button class="primary wide" onclick="calStart()">Start calibration</button>
+    </div>
+    <div id="calrun" style="display:none">
+      <div class="bucket"><svg viewBox="0 0 120 120">
+        <defs><clipPath id="bc"><path d="M22 30 L32 108 H88 L98 30 Z"/></clipPath></defs>
+        <g clip-path="url(#bc)"><rect id="bfill" x="0" y="120" width="120" height="120" fill="url(#wg)"/></g>
+        <path d="M22 30 L32 108 H88 L98 30 Z" fill="none" stroke="var(--muted)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M18 30 H102" stroke="var(--muted)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M30 30 Q60 -6 90 30" fill="none" stroke="var(--muted)" stroke-width="3"/>
+      </svg></div>
+      <div class="calnum"><span id="calp">0</span> <span class="small muted">pulses</span></div>
+      <p class="center small muted" style="text-align:center;margin:2px 0 12px">≈ <b id="call">0.00</b> L at the current setting · <span id="calflow">0.0</span> L/min</p>
+      <label class="small muted" for="callitres">Litres that went into the bucket</label>
+      <div class="row" style="margin-top:6px"><input class="txt" id="callitres" type="number" inputmode="decimal" step="0.01" min="0.1"><span class="muted" style="font-weight:700">L</span></div>
+      <div class="grid2" style="margin-top:12px">
+        <button class="ghost" onclick="calCancel()">Cancel</button>
+        <button class="primary" onclick="calSave()">Save</button>
+      </div>
+    </div>
+    <div id="calresult" class="banner info" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Current calibration</h3>
+    <div class="row" style="justify-content:space-between"><span class="muted">Pulses per litre</span><b id="pplnow">–</b></div>
+    <div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">Source</span><b id="pplsrc">–</b></div>
+    <details style="margin-top:8px"><summary>Type the number in yourself</summary>
+      <p>If you already know it (for example from an earlier calibration), enter it here. The YF-G1 spec sheet value is 64.8.</p>
+      <div class="row"><input class="txt" id="pplin" type="number" inputmode="decimal" step="0.01" min="5" max="1000"><button class="primary" onclick="setPpl()">Set</button></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h3>Calibrating with the button or remote</h3>
+    <p class="small muted" style="margin-top:0">Hold the push button (or remote button D) for <b id="chold">20</b> s until all three lights flash, fill a <b id="cbucket">7</b> L bucket, then press it again. Change the bucket size and hold time in <a href="#" onclick="go('set');return false">Settings</a>.</p>
+  </div>
+</section>
+
+<!-- ======================= SETTINGS ======================= -->
+<section id="t-set" class="tab">
+  <h2>Settings</h2>
+  <div id="setwait" class="banner info show">Waiting for the controller's settings…</div>
+  <div id="setforms"></div>
+  <div class="savebar" id="savebar">
+    <button class="ghost" onclick="undoSettings()">Undo</button>
+    <button class="primary" id="savebtn" onclick="saveSettings()">Save changes</button>
+  </div>
+  <div class="card">
+    <h3>Start again</h3>
+    <p class="small muted" style="margin-top:0">Back to the values set in the controller's sketch: limits 25 / 50 / 100 L, 4 warning pulses and so on.</p>
+    <button class="ghost wide" onclick="askDefaults(0)">Reset settings to defaults</button>
+    <p class="small muted">A factory reset also forgets the calibration (back to 64.8 pulses/L) and the chosen limit.</p>
+    <button class="danger wide" onclick="askDefaults(1)">Factory reset</button>
+  </div>
+</section>
+
+<!-- ======================= DIAGNOSTICS ======================= -->
+<section id="t-diag" class="tab">
+  <h2>Diagnostics</h2>
+  <div class="card">
+    <h3>Water</h3>
+    <table id="dwater"></table>
+  </div>
+  <div class="card">
+    <h3>Inputs, live</h3>
+    <table>
+      <tr><td>Push button</td><td><div class="leds"><span class="led" id="in0">●</span></div></td></tr>
+      <tr><td>Remote buttons</td><td><div class="leds"><span class="led" id="in1">A</span><span class="led" id="in2">B</span><span class="led" id="in3">C</span><span class="led" id="in4">D</span></div></td></tr>
+    </table>
+    <p class="small muted" style="margin-bottom:0">Press a button: its square lights up here within a second.</p>
+  </div>
+  <div class="card">
+    <h3>Try it</h3>
+    <div class="grid2">
+      <button onclick="cmd('T','Valve test: listen for two clicks')">🔊 Test valve</button>
+      <button onclick="askReset()">↺ Reset count</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Link between the boards</h3>
+    <table id="dlink"></table>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0">Event log</h3><span class="small muted">newest first</span></div>
+    <ul class="log" id="log"></ul>
+  </div>
+  <button class="ghost wide" onclick="copyDiag()">📋 Copy all readings</button>
+</section>
+
+<!-- ======================= HELP ======================= -->
+<section id="t-help" class="tab">
+  <h2>How to use Aqua Tracka</h2>
+  <div class="card">
+    <details open><summary>What it does</summary>
+      <p>Aqua Tracka counts the water through the flow sensor. Choose a limit and, when that much water has run, the valve <b>pulses shut a few times</b> to warn you. Then the count starts again from 0 L (or, if you choose so in Settings, the valve stays shut until you reset the count).</p>
+    </details>
+    <details><summary>Choosing a limit</summary>
+      <ul>
+        <li><b>This page:</b> tap a limit on the Home tab.</li>
+        <li><b>Push button:</b> each short press moves to the next limit and resets the count.</li>
+        <li><b>Remote:</b> <span class="kbd">A</span> <span class="kbd">B</span> <span class="kbd">C</span> = the three limits, <span class="kbd">D</span> = free flow. The valve clicks to confirm.</li>
+      </ul>
+      <p>The lights on the box show the limit: one light per limit, all off = free flow.</p>
+    </details>
+    <details><summary>Resetting the count</summary>
+      <ul>
+        <li><b>This page:</b> the Reset count button.</li>
+        <li><b>Push button:</b> a short press (it also moves to the next limit).</li>
+        <li><b>Remote:</b> hold any button for 2 seconds; the valve clicks to confirm.</li>
+      </ul>
+    </details>
+    <details><summary>When the limit is reached</summary>
+      <p>The valve shuts and opens 4 times (half a second each) and the limit's light blinks with it. The number of pulses and their length can be changed in Settings. If the valve is set to <b>stay shut</b>, the light blinks slowly until the count is reset.</p>
+    </details>
+    <details><summary>Calibrating</summary>
+      <p>Use the Calibrate tab: start, fill a bucket, type in the litres, save. Or hold the push button (or remote D) for 20 seconds until all three lights flash, fill a 7 L bucket, and press again. All lights on for 2 s = saved; fast flashing = not sensible (nothing changed).</p>
+    </details>
+    <details><summary>The lights on the box</summary>
+      <ul>
+        <li>One light on: that limit is chosen. All off: free flow.</li>
+        <li>Blinking with the valve: limit reached.</li>
+        <li>Blinking slowly: the valve is held shut, reset the count.</li>
+        <li>All three flashing: calibrating.</li>
+      </ul>
+    </details>
+    <details><summary>After a power cut</summary>
+      <p>The calibration, the settings and the chosen limit are kept; the count starts again at 0 L. A normally open valve lets water through while the power is off.</p>
+    </details>
+    <details><summary>Connecting to this page</summary>
+      <ol>
+        <li>Join the Wi-Fi network <b>VAT_Aqua_Tracka</b> (no password).</li>
+        <li>If the phone says "no internet", choose to <b>stay connected</b>. Turning off mobile data helps.</li>
+        <li>Open <b>http://192.168.4.1</b> (type the http://). Many phones open it by themselves from the "sign in to network" message.</li>
+      </ol>
+      <p>Add it to your home screen from the browser menu to open it like an app.</p>
+    </details>
+  </div>
+  <div class="card">
+    <h3>Something not right?</h3>
+    <details><summary>"Controller offline" at the top</summary>
+      <p>The Wi-Fi board isn't hearing the controller. Check the controller has power, and the wires between them: Nano D11 → divider → ESP GPIO20, ESP GPIO21 → 1 kΩ → Nano D12, and a shared GND. Diagnostics shows the bytes and lines received.</p>
+    </details>
+    <details><summary>"Dashboard offline" at the top</summary>
+      <p>The phone has lost the Wi-Fi network. Rejoin VAT_Aqua_Tracka and reload the page.</p>
+    </details>
+    <details><summary>Buttons on this page do nothing</summary>
+      <p>Look at Diagnostics → Link. "Commands failed" going up means the controller isn't answering: check the ESP GPIO21 → Nano D12 wire, and that the controller has the web-ready sketch (firmware 2 or later).</p>
+    </details>
+    <details><summary>The litres are wrong</summary>
+      <p>Calibrate with a bucket you have measured. A bigger bucket gives a more accurate result.</p>
+    </details>
+    <details><summary>The flow reads while the tap is off</summary>
+      <p>Electrical noise on the sensor wire, often from the valve. Diagnostics → "Noise pulses ignored" counts what is filtered out. Keep the sensor cable away from the valve wires and check the valve's flyback diode.</p>
+    </details>
+  </div>
+  <p class="small muted" style="text-align:center">Aqua Tracka by VAT Watering · Wi-Fi board <span id="espver"></span> · controller <span id="nanover">–</span></p>
+</section>
+</main>
+
+<nav><div class="in">
+  <button data-t="home" class="on" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>Home</button>
+  <button data-t="cal" onclick="go('cal')"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 13h-11z"/><path d="M8 7a4 4 0 0 1 8 0"/></svg>Calibrate</button>
+  <button data-t="set" onclick="go('set')"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Settings</button>
+  <button data-t="diag" onclick="go('diag')"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Diagnostics</button>
+  <button data-t="help" onclick="go('help')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5V14M12 17.5h0"/></svg>Help</button>
+</div></nav>
+
+<div id="toast"></div>
+<dialog id="dlg"><h3 id="dlgt"></h3><p class="muted" id="dlgm"></p><div class="row"><button class="ghost" id="dlgno">Cancel</button><button class="primary" id="dlgyes">OK</button></div></dialog>
+
+<script>
+"use strict";
+// ---- what the controller sends (see the Nano sketch) ----
+const MODES = ["Limit 1", "Limit 2", "Limit 3", "Free flow"];
+const STATES = ["Normal", "Limit reached", "Confirm clicks", "Calibrating", "Valve held shut"];
+const DEFAULTS = {l1:25,l2:50,l3:100,ap:4,am:500,ah:0,cc:2,cm:250,rs:0,rl:1,rh:2000,ch:20,bk:70,vn:0,va:0,ra:0};
+const CMD_TEXT = ["queued", "sent", "done", "not accepted", "not possible right now", "not known by the controller", "no answer from the controller"];
+const SOURCES = ["push button", "remote", "this page", "", "", "", "", "", "", "Wi-Fi board"];
+// Settings: key, label, help, unit, scale (stored value = shown x scale), min, max, step, kind
+const GROUPS = [
+  ["💧 Limits", [
+    ["l1", "Limit 1", "Light 1 · remote A", "L", 1, 1, 9999, 1],
+    ["l2", "Limit 2", "Light 2 · remote B", "L", 1, 1, 9999, 1],
+    ["l3", "Limit 3", "Light 3 · remote C", "L", 1, 1, 9999, 1],
+  ]],
+  ["🚨 When the limit is reached", [
+    ["ap", "Warning pulses", "Times the valve shuts and opens (0 = none)", "", 1, 0, 20, 1],
+    ["am", "Pulse length", "Shut for this long, then open for this long", "s", 1000, 0.1, 5, 0.1],
+    ["ah", "Then", "", "", 1, 0, 1, 1, "seg", ["Keep flowing", "Stay shut"]],
+  ]],
+  ["🎛️ Button and remote", [
+    ["cc", "Confirm clicks", "Valve clicks after a remote press (0 = none)", "", 1, 0, 10, 1],
+    ["cm", "Click length", "", "s", 1000, 0.05, 2, 0.05],
+    ["rh", "Remote hold to reset", "Hold any remote button this long", "s", 1000, 0.5, 10, 0.5],
+    ["rs", "Remote limit choice resets the count", "", "", 1, 0, 1, 1, "switch"],
+    ["ch", "Hold to calibrate", "Push button or remote D", "s", 1, 5, 120, 1],
+    ["bk", "Calibration bucket", "For calibrating with the button or remote", "L", 10, 0.5, 100, 0.5],
+    ["rl", "Remember the limit after a power cut", "", "", 1, 0, 1, 1, "switch"],
+  ]],
+  ["⚙️ Hardware (advanced)", [
+    ["vn", "Valve type", "Wrong = the valve works backwards", "", 1, 0, 1, 1, "seg", ["Normally open", "Normally closed"]],
+    ["va", "Relay switches on when LOW", "Most cheap relay modules; off for the PCB", "", 1, 0, 1, 1, "switch"],
+    ["ra", "Relay-output remote receiver", "Off for the RX480E (logic outputs)", "", 1, 0, 1, 1, "switch"],
+  ]],
+];
+const EVENTS = {
+  1: ["🔌", e => "Controller started"],
+  2: ["🚰", e => `Limit of ${e[3]} L reached`],
+  3: ["↺", e => "Count reset"],
+  4: ["🎯", e => `${MODES[e[3]] || "Limit"} chosen`],
+  5: ["🧪", e => "Calibration started"],
+  6: ["✅", e => `Calibration saved: ${(e[3] / 100).toFixed(2)} pulses/L`],
+  7: ["⚠️", e => `Calibration not sensible (${e[3]} pulses): not saved`],
+  8: ["✖️", e => "Calibration cancelled"],
+  9: ["⚙️", e => "Settings changed"],
+  10: ["🧹", e => e[3] == 1 ? "Factory reset" : "Settings back to defaults"],
+  11: ["🔊", e => "Valve test"],
+  12: ["⛔", e => `Valve held shut at the ${e[3]} L limit`],
+  13: ["✍️", e => `Pulses per litre set to ${(e[3] / 100).toFixed(2)}`],
+  100: ["📶", e => e[3] ? "Wi-Fi started" : "Wi-Fi failed to start"],
+  101: ["🔗", e => "Controller connected"],
+  102: ["⛓️", e => "Lost the controller"],
+};
+
+const $ = id => document.getElementById(id);
+let D = null;            // last /api/status
+let fetchOk = false, lastFetch = 0;
+let tab = "home";
+let draft = {}, draftBase = null;
+const pending = {};      // command id -> {label, resolve}
+let lastEvShown = -1, lastLimitEv = null;
+
+// ---------- helpers ----------
+function fmtL(v) { return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2); }
+function ago(ms) {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return s + " s ago";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  return (s / 3600).toFixed(1) + " h ago";
+}
+function dur(s) {
+  if (!isFinite(s) || s < 0) return "–";
+  if (s < 60) return Math.round(s) + " s";
+  if (s < 3600) return Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0");
+  return (s / 3600).toFixed(1) + " h";
+}
+function toast(msg, kind) {
+  const t = $("toast");
+  t.textContent = msg; t.className = "show " + (kind || "");
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = "", 2600);
+}
+function ask(title, msg, yes, danger) {
+  return new Promise(res => {
+    const d = $("dlg");
+    $("dlgt").textContent = title; $("dlgm").textContent = msg;
+    $("dlgyes").textContent = yes || "OK";
+    $("dlgyes").className = danger ? "danger" : "primary";
+    $("dlgyes").onclick = () => { d.close(); res(true); };
+    $("dlgno").onclick = () => { d.close(); res(false); };
+    d.showModal ? d.showModal() : res(confirm(title + "\n" + msg));
+  });
+}
+function go(t) {
+  tab = t;
+  document.querySelectorAll("section.tab").forEach(s => s.classList.toggle("on", s.id == "t-" + t));
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.t == t));
+  scrollTo(0, 0);
+  render();
+}
+const cfgVal = k => (D && D.cfg && D.cfg[k] != null) ? D.cfg[k] : DEFAULTS[k];
+const ppl = () => D && D.s ? D.s.ppl / 100 : 64.8;
+const limitL = m => m < 3 ? cfgVal("l" + (m + 1)) : 0;
+const linkOk = () => fetchOk && D && D.link.state == "ok";
+
+// ---------- commands ----------
+async function cmd(body, label) {
+  try {
+    const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "c=" + encodeURIComponent(body) });
+    const j = await r.json();
+    if (!r.ok) { toast(j.err == "busy" ? "Too many commands waiting, try again" : "Command not accepted", "bad"); return 3; }
+    toast((label || "Sending") + "…");
+    return await new Promise(res => { pending[j.id] = { label, res, at: Date.now() }; });
+  } catch (e) { toast("No connection to Aqua Tracka", "bad"); return 6; }
+}
+function checkPending() {
+  if (!D) return;
+  for (const [id, st] of D.cmds) {
+    const p = pending[id];
+    if (!p || st < 2) continue;
+    delete pending[id];
+    if (st == 2) toast("✓ " + (p.label || "Done"), "ok");
+    else toast((p.label || "Command") + ": " + CMD_TEXT[st], "bad");
+    p.res(st);
+  }
+  for (const id in pending) if (Date.now() - pending[id].at > 20000) { pending[id].res(6); delete pending[id]; }
+}
+async function askReset() {
+  if (await ask("Reset the count?", "The count and the session total go back to 0 L.", "Reset")) cmd("R", "Count reset");
+}
+function chooseMode(m) {
+  if (D && D.s && D.s.m == m) return;
+  cmd("M," + m, MODES[m] + (m < 3 ? " (" + limitL(m) + " L)" : "") + " chosen");
+}
+
+// ---------- calibration ----------
+let calOldPpl = null;
+async function calStart() {
+  calOldPpl = ppl();
+  $("calresult").classList.remove("show");
+  $("callitres").value = (cfgVal("bk") / 10).toString();
+  await cmd("CS", "Calibration started");
+}
+async function calCancel() { await cmd("CX", "Calibration cancelled"); }
+async function calSave() {
+  const l = parseFloat($("callitres").value);
+  if (!(l >= 0.1 && l <= 1000)) { toast("Type the litres first", "bad"); return; }
+  const before = calOldPpl || ppl();
+  const p = D && D.s ? D.s.cp : 0;
+  const st = await cmd("CF," + Math.round(l * 100), "Calibration saved");
+  const r = $("calresult");
+  if (st == 2) {
+    const now = p / l, diff = (now - before) / before * 100;
+    r.className = "banner info show";
+    r.innerHTML = `🎉 ${p} pulses for ${l} L = <b>${now.toFixed(2)} pulses/L</b> (was ${before.toFixed(2)}, ${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%).`;
+  } else if (st == 3) {
+    r.className = "banner bad show";
+    r.textContent = `${p} pulses for ${l} L isn't sensible (5 to 1000 pulses per litre), so nothing changed. Did the water run?`;
+  }
+}
+async function setPpl() {
+  const v = parseFloat($("pplin").value);
+  if (!(v >= 5 && v <= 1000)) { toast("Between 5 and 1000", "bad"); return; }
+  cmd("P," + Math.round(v * 100), "Pulses per litre set to " + v);
+}
+
+// ---------- settings ----------
+function buildSettings() {
+  let h = "";
+  for (const [title, fields] of GROUPS) {
+    h += `<div class="card"><h3>${title}</h3>`;
+    for (const f of fields) {
+      const [k, label, help, unit, , min, max, step, kind, opts] = f;
+      h += `<div class="field" id="f-${k}"><label>${label}${help ? `<small>${help}</small>` : ""}</label>`;
+      if (kind == "switch") h += `<label class="switch"><input type="checkbox" id="i-${k}" onchange="setDraft('${k}',this.checked?1:0)"><span></span></label>`;
+      else if (kind == "seg") h += `<div class="seg">${opts.map((o, i) => `<button id="i-${k}-${i}" onclick="setDraft('${k}',${i})">${o}</button>`).join("")}</div>`;
+      else h += `<div class="step"><button onclick="bump('${k}',-1)">−</button><input id="i-${k}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" onchange="typed('${k}',this.value)"><span class="u">${unit}</span><button onclick="bump('${k}',1)">+</button></div>`;
+      h += `</div>`;
+    }
+    h += `</div>`;
+  }
+  $("setforms").innerHTML = h;
+}
+const FIELD = {};
+GROUPS.forEach(g => g[1].forEach(f => FIELD[f[0]] = f));
+function shown(k, v) { const f = FIELD[k]; return Math.round(v / f[4] * 1000) / 1000; }
+function setDraft(k, stored) { draft[k] = stored; renderSettings(); }
+function typed(k, val) {
+  const f = FIELD[k];
+  let v = parseFloat(val);
+  if (isNaN(v)) v = shown(k, draft[k]);
+  v = Math.min(f[6], Math.max(f[5], v));
+  setDraft(k, Math.round(v * f[4]));
+}
+function bump(k, dir) {
+  const f = FIELD[k];
+  let v = shown(k, draft[k]) + dir * f[7];
+  v = Math.min(f[6], Math.max(f[5], Math.round(v / f[7]) * f[7]));
+  setDraft(k, Math.round(v * f[4]));
+}
+function changedKeys() { return Object.keys(DEFAULTS).filter(k => draftBase && draft[k] != draftBase[k]); }
+function renderSettings() {
+  const has = D && D.cfg;
+  $("setwait").classList.toggle("show", !has);
+  if (!has) return;
+  const ch = changedKeys();
+  if (!draftBase || (!ch.length && JSON.stringify(pick(D.cfg)) != JSON.stringify(draftBase))) {
+    draftBase = pick(D.cfg); draft = Object.assign({}, draftBase);
+  }
+  for (const k in FIELD) {
+    const f = FIELD[k], v = draft[k];
+    if (f[8] == "switch") $("i-" + k).checked = !!v;
+    else if (f[8] == "seg") f[9].forEach((o, i) => $(`i-${k}-${i}`).classList.toggle("on", v == i));
+    else { const inp = $("i-" + k); if (document.activeElement != inp) inp.value = shown(k, v); }
+    $("f-" + k).classList.toggle("changed", draft[k] != draftBase[k]);
+  }
+  $("savebar").classList.toggle("show", changedKeys().length > 0);
+}
+function pick(c) { const o = {}; for (const k in DEFAULTS) o[k] = c[k]; return o; }
+function undoSettings() { draft = Object.assign({}, draftBase); renderSettings(); }
+async function saveSettings() {
+  const ch = changedKeys();
+  if (!ch.length) return;
+  if ((ch.includes("vn") || ch.includes("va")) && !await ask("Change the valve options?", "If these don't match your valve and driver, the valve will shut when it should be open. Only change them if you have changed the hardware.", "Change", true)) return;
+  $("savebtn").disabled = true;
+  let ok = true;
+  for (let i = 0; i < ch.length; i += 5) {
+    const part = ch.slice(i, i + 5);
+    const st = await cmd("S," + part.map(k => k + "=" + draft[k]).join(","), "Settings saved");
+    if (st != 2) { ok = false; break; }
+    part.forEach(k => draftBase[k] = draft[k]);
+  }
+  $("savebtn").disabled = false;
+  if (ok) { draftBase = null; await cmd("Q"); }
+  renderSettings();
+}
+async function askDefaults(full) {
+  const yes = full
+    ? await ask("Factory reset?", "All settings go back to the defaults, the calibration is forgotten (64.8 pulses/L) and the limit goes to free flow.", "Factory reset", true)
+    : await ask("Reset settings to defaults?", "Limits, warning pulses, clicks and hold times go back to the defaults. The calibration is kept.", "Reset");
+  if (yes) { await cmd("D," + full, full ? "Factory reset done" : "Settings back to defaults"); draftBase = null; }
+}
+
+// ---------- rendering ----------
+function render() {
+  const s = D && D.s, live = linkOk();
+  // connection pill
+  const pill = $("pill");
+  if (!fetchOk) { pill.className = "pill bad"; $("pilltxt").textContent = "Dashboard offline"; }
+  else if (!D.s || D.link.state != "ok") { pill.className = "pill warn"; $("pilltxt").textContent = "Controller offline"; }
+  else { pill.className = "pill ok"; $("pilltxt").textContent = "Live"; }
+
+  if (tab == "home") renderHome(s, live);
+  if (tab == "cal") renderCal(s);
+  if (tab == "set") renderSettings();
+  if (tab == "diag") renderDiag(s);
+  if (tab == "help") { $("espver").textContent = D ? D.esp : ""; $("nanover").textContent = D && D.cfg ? "v" + D.cfg.fw : "–"; }
+}
+
+function renderHome(s, live) {
+  const b = $("banner");
+  const g = $("gauge");
+  if (!s) {
+    b.className = "banner warn show";
+    b.innerHTML = fetchOk ? "🔌 Waiting for the controller. See Help if this stays." : "📶 Can't reach Aqua Tracka. Rejoin the VAT_Aqua_Tracka Wi-Fi.";
+    return;
+  }
+  const p = s.ppl / 100, count = s.c / p, sess = s.s / p, lpm = s.hz / 100 * 60 / p;
+  const lim = limitL(s.m), free = s.m == 3;
+  // banner
+  if (!live) { b.className = "banner warn show"; b.innerHTML = "⏸️ Not hearing the controller: these readings are from " + ago(D.link.age) + "."; }
+  else if (s.st == 4) { b.className = "banner bad show"; b.innerHTML = "⛔ Limit reached: the valve is held shut. <button class='primary' onclick=\"cmd('R','Count reset, water on')\">Turn water back on</button>"; }
+  else if (s.st == 1) { b.className = "banner bad show"; b.innerHTML = "🚨 Limit reached! The valve is pulsing to let you know."; }
+  else if (s.st == 3) { b.className = "banner info show"; b.innerHTML = "🧪 Calibrating. <button onclick=\"go('cal')\">Open</button>"; }
+  else b.className = "banner";
+  // gauge
+  const frac = free ? Math.min(1, (sess % 10) / 10) : Math.min(1, count / lim);
+  const shownFrac = free ? 0.15 + 0.7 * Math.min(1, lpm / 30) : frac;
+  $("wave").style.transform = `translateY(${(190 - shownFrac * 182).toFixed(1)}px)`;
+  $("prog").setAttribute("stroke-dashoffset", (603.2 * (1 - (free ? 0 : frac))).toFixed(1));
+  g.classList.toggle("near", !free && frac >= 0.8 && frac < 1);
+  g.classList.toggle("hit", s.st == 1 || s.st == 4);
+  g.classList.toggle("flowing", lpm > 0.05);
+  g.style.setProperty("--dropt", Math.max(0.35, 1.6 - lpm / 15).toFixed(2) + "s");
+  $("count").innerHTML = fmtL(free ? sess : count) + "<small> L</small>";
+  $("of").textContent = free ? "free flow · no limit" : `of ${lim} L · ${Math.round(frac * 100)}%`;
+  $("flow").textContent = lpm.toFixed(1);
+  $("session").textContent = fmtL(sess);
+  if (free) { $("eta").textContent = "∞"; $("etalbl").textContent = "no limit"; }
+  else { $("eta").textContent = lpm > 0.05 ? dur((lim - count) / lpm * 60) : "–"; $("etalbl").textContent = lpm > 0.05 ? "to the limit" : "tap is off"; }
+  // chips
+  $("chips").innerHTML = [0, 1, 2, 3].map(m => `<button class="chip ${s.m == m ? "on" : ""}" onclick="chooseMode(${m})">${m < 3 ? limitL(m) + " L" : "∞"}<small>${m < 3 ? "ABC"[m] + " · light " + (m + 1) : "D · free"}</small></button>`).join("");
+  // flow sparkline
+  const h = D.hist || [];
+  if (h.length > 1) {
+    const max = Math.max(100, ...h);
+    const pts = h.map((v, i) => [(i / (h.length - 1) * 300).toFixed(1), (66 - v / max * 60).toFixed(1)]);
+    const line = "M" + pts.map(q => q.join(" ")).join(" L");
+    document.querySelector("#spark .l").setAttribute("d", line);
+    document.querySelector("#spark .a").setAttribute("d", line + " L300 70 L0 70Z");
+    $("peak").textContent = "peak " + (max / 100).toFixed(1) + " L/min";
+  }
+  // fun fact
+  const facts = [
+    [0, "🌱", "Ready when you are", "Turn on the tap and watch it fill up."],
+    [0.5, "🥤", "Off to a start", () => `That's about ${Math.round(sess / 0.25)} glasses of water.`],
+    [9, "🪴", "Watering can territory", () => `About ${(sess / 9).toFixed(1)} watering cans so far.`],
+    [50, "🛁", "Getting serious", () => `Around ${(sess / 150 * 100).toFixed(0)}% of a full bathtub.`],
+    [200, "🌳", "Big drink for the garden", () => `${fmtL(sess)} L: that's ${(sess / 1000).toFixed(2)} cubic metres.`],
+  ];
+  let f = facts[0];
+  for (const x of facts) if (sess >= x[0]) f = x;
+  $("funemo").textContent = lpm > 0.05 && sess < 0.5 ? "💧" : f[1];
+  $("funtitle").textContent = f[2];
+  $("funtxt").textContent = typeof f[3] == "function" ? f[3]() : f[3];
+  // vibrate once at a new limit event
+  const le = (D.ev || []).filter(e => e[1] == 2 || e[1] == 12).length;
+  if (lastLimitEv != null && le > lastLimitEv && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  lastLimitEv = le;
+}
+
+function renderCal(s) {
+  const cal = s && s.st == 3;
+  $("calidle").style.display = cal ? "none" : "block";
+  $("calrun").style.display = cal ? "block" : "none";
+  const li = document.querySelectorAll("#calsteps li");
+  const step = cal ? (s.cp > 0 ? (s.hz > 0 ? 2 : 3) : 2) : 0;
+  li.forEach((x, i) => { x.className = i < step ? "done" : i == step ? "now" : ""; });
+  if (s) {
+    const p = s.ppl / 100;
+    $("pplnow").textContent = p.toFixed(2);
+    $("pplsrc").textContent = s.cal ? "your calibration" : "spec sheet default";
+    if (document.activeElement != $("pplin") && !$("pplin").value) $("pplin").value = p.toFixed(2);
+    if (cal) {
+      if (!$("callitres").value) $("callitres").value = cfgVal("bk") / 10;
+      $("calp").textContent = s.cp;
+      const l = s.cp / p, target = parseFloat($("callitres").value) || cfgVal("bk") / 10;
+      $("call").textContent = l.toFixed(2);
+      $("calflow").textContent = (s.hz / 100 * 60 / p).toFixed(1);
+      const fr = Math.min(1, l / target);
+      $("bfill").setAttribute("y", (108 - fr * 78).toFixed(1));
+    }
+  }
+  $("chold").textContent = cfgVal("ch");
+  $("cbucket").textContent = cfgVal("bk") / 10;
+}
+
+function row(a, b) { return `<tr><td>${a}</td><td>${b}</td></tr>`; }
+function renderDiag(s) {
+  if (s) {
+    const p = s.ppl / 100;
+    $("dwater").innerHTML =
+      row("State", STATES[s.st] || s.st) +
+      row("Valve", s.v ? "🟢 open" : "🔴 shut") +
+      row("Limit", MODES[s.m] + (s.m < 3 ? ` (${limitL(s.m)} L)` : "")) +
+      row("Flow rate", (s.hz / 100 * 60 / p).toFixed(2) + " L/min") +
+      row("Sensor frequency", (s.hz / 100).toFixed(2) + " Hz") +
+      row("Count", `${(s.c / p).toFixed(2)} L · ${s.c} pulses`) +
+      row("Session total", `${(s.s / p).toFixed(2)} L · ${s.s} pulses`) +
+      row("All pulses since power-up", s.n) +
+      (s.st == 3 ? row("Calibration pulses", s.cp) : "") +
+      row("Pulses per litre", p.toFixed(2) + (s.cal ? " (calibrated)" : " (default)")) +
+      row("Noise pulses ignored", s.g) +
+      row("Controller running for", dur(s.up));
+    for (let i = 0; i < 5; i++) $("in" + i).classList.toggle("on", !!(s.in & (1 << i)));
+  } else $("dwater").innerHTML = row("Controller", "no readings yet");
+  const L = D ? D.link : null;
+  const st = { ok: "🟢 OK", none: "🔴 nothing received", garbled: "🟠 data, but unreadable", lost: "🔴 lost" };
+  $("dlink").innerHTML = L ? (
+    row("Controller → Wi-Fi board", st[L.state] || L.state) +
+    row("Last good reading", L.age < 0 ? "never" : ago(L.age)) +
+    row("Readings OK / damaged", `${L.good} / ${L.bad}`) +
+    row("Bytes received", L.bytes) +
+    row("Commands sent / repeated", `${L.sent} / ${L.retries}`) +
+    row("Commands failed", L.failed) +
+    row("Commands rejected by the controller (damaged)", s ? s.bad : "–") +
+    row("Phones connected", D.clients) +
+    row("Wi-Fi board", "v" + D.esp + ", running " + dur(D.now / 1000)) +
+    row("Controller firmware", D.cfg ? "v" + D.cfg.fw : "–")
+  ) : row("Wi-Fi board", "not reachable");
+  const ev = (D && D.ev) || [];
+  $("log").innerHTML = ev.length ? ev.slice().reverse().map(e => {
+    const d = EVENTS[e[1]] || ["•", () => "Event " + e[1]];
+    const src = SOURCES[e[2]] ? ` <span class="muted small">· ${SOURCES[e[2]]}</span>` : "";
+    return `<li><span class="ic">${d[0]}</span><span>${d[1](e)}${src}</span><span class="t">${ago(e[0])}</span></li>`;
+  }).join("") : `<li class="muted">Nothing yet</li>`;
+}
+
+async function copyDiag() {
+  const txt = JSON.stringify(D, null, 1);
+  try { await navigator.clipboard.writeText(txt); toast("Copied", "ok"); }
+  catch (e) {
+    const t = document.createElement("textarea"); t.value = txt; document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); toast("Copied", "ok"); } catch (x) { toast("Copy not allowed here", "bad"); }
+    t.remove();
+  }
+}
+
+// ---------- polling ----------
+async function poll() {
+  const started = Date.now();
+  try {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 3000);
+    const r = await fetch("/api/status", { cache: "no-store", signal: ctl.signal });
+    clearTimeout(to);
+    D = await r.json();
+    fetchOk = true; lastFetch = Date.now();
+    checkPending();
+  } catch (e) {
+    if (Date.now() - lastFetch > 4000) fetchOk = false;
+  }
+  render();
+  setTimeout(poll, Math.max(200, 1000 - (Date.now() - started)));
+}
+buildSettings();
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+poll();
+</script>
+</body>
+</html>

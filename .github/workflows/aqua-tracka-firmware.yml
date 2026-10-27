@@ -1,0 +1,83 @@
+# Builds the Aqua Tracka ESP32-C3 firmware into one file to flash at address 0x0
+# (WaterValveController/esp32/firmware/aqua_tracka-flash-at-0x0.bin) and commits it back to
+# the branch, so it can be flashed from a web browser without installing anything.
+# Runs when the ESP32 code changes, or by hand from the Actions tab ("Run workflow").
+name: Aqua Tracka firmware
+
+on:
+  push:
+    paths:
+      - 'WaterValveController/esp32/aqua_tracka/**'
+      - '.github/workflows/aqua-tracka-firmware.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aqua-tracka-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ESP32_CORE: '3.0.7'
+  SKETCH: WaterValveController/esp32/aqua_tracka
+  OUT: WaterValveController/esp32/firmware
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check the web page is packed (web_page.h is up to date)
+        run: |
+          python3 $SKETCH/tools/make_page.py
+          git diff --exit-code -- $SKETCH/web_page.h
+
+      - uses: arduino/setup-arduino-cli@v2
+
+      - name: Install the ESP32 boards package
+        run: |
+          URL=https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index --additional-urls $URL
+          arduino-cli core install esp32:esp32@$ESP32_CORE --additional-urls $URL
+
+      - name: Compile (ESP32C3 Dev Module, USB CDC on boot, Huge APP, DIO 80 MHz 4 MB)
+        run: |
+          arduino-cli compile --warnings default \
+            -b esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=huge_app,FlashMode=dio,FlashFreq=80,FlashSize=4M \
+            --output-dir build $SKETCH
+          ls -l build
+
+      - name: Merge into one image for address 0x0
+        run: |
+          pip install esptool==4.8.1
+          CORE=$(ls -d ~/.arduino15/packages/esp32/hardware/esp32/*/ | head -1)
+          mkdir -p $OUT
+          python3 -m esptool --chip esp32c3 merge_bin -o $OUT/aqua_tracka-flash-at-0x0.bin \
+            --flash_mode dio --flash_freq 80m --flash_size 4MB \
+            0x0 build/aqua_tracka.ino.bootloader.bin \
+            0x8000 build/aqua_tracka.ino.partitions.bin \
+            0xe000 ${CORE}tools/partitions/boot_app0.bin \
+            0x10000 build/aqua_tracka.ino.bin
+          python3 -m esptool --chip esp32c3 image_info --version 2 build/aqua_tracka.ino.bin | head -20
+          (cd $OUT && sha256sum aqua_tracka-flash-at-0x0.bin > aqua_tracka-flash-at-0x0.bin.sha256)
+          ls -l $OUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aqua_tracka-flash-at-0x0
+          path: ${{ env.OUT }}/aqua_tracka-flash-at-0x0.bin
+
+      - name: Commit the image to the branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $OUT
+          if git diff --cached --quiet; then echo "image unchanged"; exit 0; fi
+          git commit -m "Aqua Tracka firmware image from ${GITHUB_SHA::7}"
+          git push
