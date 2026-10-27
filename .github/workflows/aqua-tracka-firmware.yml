@@ -36,6 +36,9 @@ jobs:
       - name: Check the web page is packed (web_page.h is up to date)
         run: python3 $SKETCH/tools/make_page.py --check
 
+      - name: Install esptool and pyserial (the ESP32 boards package runs esptool.py on Linux)
+        run: pip install esptool==4.8.1 pyserial
+
       - uses: arduino/setup-arduino-cli@v2
 
       - name: Install the ESP32 boards package
@@ -53,7 +56,6 @@ jobs:
 
       - name: Merge into one image for address 0x0
         run: |
-          pip install esptool==4.8.1
           CORE=$(ls -d ~/.arduino15/packages/esp32/hardware/esp32/*/ | head -1)
           mkdir -p $OUT
           python3 -m esptool --chip esp32c3 merge_bin -o $OUT/aqua_tracka-flash-at-0x0.bin \
