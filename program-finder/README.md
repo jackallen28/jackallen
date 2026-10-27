@@ -7,6 +7,7 @@ copyable summary for a booking request. Built from `Program_Finder_Build_Plan.md
 - One file, all CSS and JS inline. No network requests, cookies or storage; refreshing clears answers.
 - All content and scoring lives in the JSON block `#finder-config` at the top of the file.
 - Styled with the Banyule Nillumbik Tech School logo and colours; light and dark themes.
+- The result page leads with the recommendation (project, platform, version), then what students do, with curriculum links collapsed.
 - Add `?debug=1` to the address to see every variant's score.
 
 ## Curriculum links

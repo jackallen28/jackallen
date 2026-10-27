@@ -145,21 +145,26 @@ input[type=range]:focus-visible::-moz-range-thumb{outline:3px solid var(--focus)
 /* Result */
 .result{display:grid;gap:18px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);padding:20px 24px;animation:enter .5s ease both;animation-delay:calc(var(--i,0)*.12s)}
-.hero{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:24px;align-items:center;border-top:6px solid var(--teal)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:24px;align-items:center;border:2px solid var(--teal-2);border-top-width:8px;background:var(--teal-soft);padding:22px 28px 24px}
 .hero .tag{display:flex;align-items:center;gap:10px;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .lit{width:14px;height:14px;background:var(--line);display:inline-block;animation:light .6s ease .9s both}
 @keyframes light{to{background:var(--teal);box-shadow:0 0 0 4px rgba(19,189,198,.25)}}
-.hero h1{margin:6px 0 4px;font-size:1.9rem}
-.hero .meta{font-weight:600;color:var(--purple);margin:0 0 8px}
-@media (prefers-color-scheme:dark){.hero .meta{color:var(--lilac)}}
-.hero ul,.panel ul{margin:8px 0 0;padding-left:20px}
-.hero li,.panel li{margin:3px 0}
-.art{background:var(--card-2);border:1px solid var(--line);border-radius:4px;padding:10px}
+.hero h1{margin:6px 0 14px;font-size:1.9rem}
+.facts{margin:0;display:grid;grid-template-columns:repeat(3,auto);gap:10px 32px;justify-content:start}
+.facts dt{font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-size:1.3rem;font-weight:600;line-height:1.25;color:var(--ink)}
+.hero .art{background:var(--card);}
+.panel ul{margin:6px 0 0;padding-left:20px}
+.panel li{margin:3px 0}
+.art{border:1px solid var(--line);border-radius:4px;padding:10px}
 .art svg{width:100%;height:auto;display:block}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.panel h2{display:flex;align-items:center;gap:10px}
+.cols .panel{margin:0}
+.others{display:grid;gap:12px;margin-top:6px}
+.others .k{display:block;font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.panel h2{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .panel h2::before{content:"";width:10px;height:10px;background:var(--teal);flex:none}
-.panel.stretch h2::before{background:var(--purple)}
+.panel.does h2::before{background:var(--purple)}
 .panel.alt h2::before{background:var(--lilac)}
 .codes{list-style:none;padding:0!important}
 .codes li{display:flex;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -170,7 +175,14 @@ input[type=range]:focus-visible::-moz-range-thumb{outline:3px solid var(--focus)
 .codes li:last-child{border-bottom:0}
 
 @media (prefers-color-scheme:dark){.codes .cd{color:var(--lilac)}}
-.note{color:var(--muted);font-size:.88rem}
+.note{color:var(--muted);font-size:.88rem;margin:10px 0 2px}
+details.curr summary{cursor:pointer;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+details.curr .ttl{font-weight:600;font-size:1.05rem}
+details.curr .cnt{color:var(--muted);font-size:.9rem}
+details.curr[open] summary{margin-bottom:6px}
+details.curr summary::after{content:"Show";margin-left:auto;color:var(--link);text-decoration:underline}
+details.curr[open] summary::after{content:"Hide"}
+.note:empty{display:none}
 .warn{color:var(--warn);font-size:.9rem;font-weight:600}
 .nextrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 details.sum{margin-top:14px} details.sum summary{cursor:pointer;color:var(--link)}
@@ -185,7 +197,7 @@ footer{padding:14px 20px 22px;text-align:center;color:var(--muted);font-size:.8r
 
 @media (max-width:860px){
   .years{grid-template-columns:repeat(3,1fr)} .projects,.pathgrid{grid-template-columns:repeat(2,1fr)}
-  .hero,.cols{grid-template-columns:1fr} .hero .art{max-width:220px}
+  .hero,.cols{grid-template-columns:1fr} .hero .art{max-width:200px} .facts{grid-template-columns:1fr}
   .goalgrid{grid-template-columns:1fr}
 }
 @media (max-width:560px){
@@ -834,68 +846,63 @@ function showResult() {
   $('#result-title').focus({ preventScroll: true });
   window.scrollTo(0, 0);
 }
-function variantLine(v) { return v.platform === 'Any' ? v.projectLabel : v.projectLabel + ' · ' + v.platform + ' · ' + v.version; }
+function variantLine(v) { return v.platform === 'Any' ? v.projectLabel : v.projectLabel + ' \u00b7 ' + v.platform + ' \u00b7 ' + v.version; }
 function bullets(arr) { return h('ul', {}, arr.map(x => h('li', {}, x))); }
+const countOf = (n, word) => n + ' ' + word;
 
 function resultView(res) {
   const own = res.own, start = res.start, sug = res.suggested;
-  const timeLabel = CFG.times.find(t => t.id === state.time).label;
   let i = 0;
   const panel = (cls, ...kids) => h('section', { class: 'panel ' + cls, style: '--i:' + (i++) }, ...kids);
+  const fact = (label, value) => h('div', {}, h('dt', {}, label), h('dd', {}, value));
   const out = h('div', { class: 'result' });
 
+  // 1. The recommendation, in its own box.
   out.append(panel('hero',
     h('div', {},
       h('div', { class: 'tag' }, h('span', { class: 'lit', 'aria-hidden': 'true' }), 'Recommended starting point'),
-      h('h1', { id: 'result-title', tabindex: '-1' }, own ? 'Start here: Students\' own project' : 'Start here: ' + variantLine(start)),
-      h('p', { class: 'meta' }, own ? 'Suggested platform: ' + sug.platform : start.blurb),
-      own ? h('p', {}, start.blurb) : null,
-      bullets(start.dotpoints),
+      h('h1', { id: 'result-title', tabindex: '-1' }, 'My recommendation'),
+      h('dl', { class: 'facts' },
+        fact('Project', start.projectLabel),
+        fact('Platform', own ? 'Suggested: ' + sug.platform : start.platform),
+        fact('Version', start.version)),
       own && state.time === 'half' ? h('p', { class: 'warn' }, 'Own projects work best with a full day or several sessions.') : null),
-    h('div', { class: 'art', 'aria-hidden': 'false' }, svgEl(ART[own ? sug.platformKey : start.platformKey]()))));
+    h('div', { class: 'art' }, svgEl(ART[own ? sug.platformKey : start.platformKey]()))));
 
-  out.append(panel('why', h('h2', {}, 'Why this fits'), bullets(res.reasons)));
+  // 2. What students do.
+  out.append(panel('does', h('h2', {}, 'What students do'), bullets(start.dotpoints)));
 
-  const cols = h('div', { class: 'cols' });
+  // 3. Why it fits, and the other options, side by side.
+  const other = [];
   if (res.stretch) {
     const st = res.stretch.v;
-    cols.append(panel('stretch',
-      h('h2', {}, 'Stretch option'),
-      h('p', {}, res.stretch.mixed ? 'Because the class has a wide range, confident groups can step up to:' : 'Confident groups can step up to:'),
-      h('p', {}, h('strong', {}, st.platform + ' · ' + st.version)),
-      h('p', { class: 'note' }, st.blurb),
-      res.stretch.needsMoreTime ? h('p', { class: 'warn' }, 'This version needs a full day, so it suits a longer visit.') : null));
+    other.push(h('div', {}, h('span', { class: 'k' }, 'Stretch for confident groups'),
+      h('strong', {}, st.platform + ' \u00b7 ' + st.version), res.stretch.needsMoreTime ? h('span', { class: 'warn' }, ' (needs a full day)') : null));
   }
-  if (res.alt) {
-    cols.append(panel('alt',
-      h('h2', {}, own ? 'If you prefer a set project' : 'Also worth considering'),
-      h('p', {}, h('strong', {}, variantLine(res.alt))),
-      h('p', { class: 'note' }, res.alt.blurb)));
-  }
-  if (cols.children.length) out.append(cols);
+  if (res.alt) other.push(h('div', {}, h('span', { class: 'k' }, own ? 'If you prefer a set project' : 'Also worth considering'), h('strong', {}, variantLine(res.alt))));
+  const cols = h('div', { class: 'cols' }, panel('why', h('h2', {}, 'Why this fits'), bullets(res.reasons)));
+  if (other.length) cols.append(panel('alt', h('h2', {}, 'Other options'), h('div', { class: 'others' }, other)));
+  out.append(cols);
 
+  // 4. Curriculum links, collapsed.
   const cur = res.curriculum;
-  const item = (label, body, link, confirm) => h('li', {},
-    h('span', { class: 'cd' }, label, confirm ? h('small', {}, CFG.curriculum.confirmText) : null),
-    h('span', { class: 'body' }, body, link ? h('span', { class: 'link' }, 'In this project: ' + link) : null));
-  const curKids = [h('h2', {}, 'Curriculum links')];
-  if (cur.items.length) {
-    curKids.push(h('p', { class: 'note' }, cur.bandLabel + ' (Victorian Curriculum)'),
-      h('ul', { class: 'codes' }, cur.items.map(c => item(c.code, c.text, c.link, c.confirm))));
-    if (cur.topUp.length) curKids.push(h('p', { class: 'note' }, 'Also supports (' + cur.topUpLabel + ')'),
-      h('ul', { class: 'codes' }, cur.topUp.map(c => item(c.code, c.text, c.link, c.confirm))));
-  }
-  if (cur.pathways.length) {
-    curKids.push(h('p', { class: 'note' }, 'VCE pathway links'),
-      h('ul', { class: 'codes' }, cur.pathways.map(p => item(p.study, p.unit + ': ' + p.text, p.link, false))));
-  }
-  curKids.push(h('p', { class: 'note' }, CFG.curriculum.note));
-  out.append(panel('curr', ...curKids));
+  const row = (code, text, confirm) => h('li', {}, h('span', { class: 'cd' }, code, confirm ? h('small', {}, CFG.curriculum.confirmText) : null), h('span', { class: 'body' }, text));
+  const parts = [];
+  const f10 = cur.items.concat(cur.topUp);
+  if (f10.length) parts.push(countOf(f10.length, 'Victorian Curriculum'));
+  if (cur.pathways.length) parts.push(countOf(cur.pathways.length, 'VCE'));
+  const curBody = [];
+  if (cur.items.length) curBody.push(h('p', { class: 'note' }, cur.bandLabel), h('ul', { class: 'codes' }, cur.items.map(c => row(c.code, c.text, c.confirm))));
+  if (cur.topUp.length) curBody.push(h('p', { class: 'note' }, 'Also supports ' + cur.topUpLabel), h('ul', { class: 'codes' }, cur.topUp.map(c => row(c.code, c.text, c.confirm))));
+  if (cur.pathways.length) curBody.push(h('p', { class: 'note' }, 'VCE pathways'), h('ul', { class: 'codes' }, cur.pathways.map(p => row(p.study, p.unit + ': ' + p.text, false))));
+  curBody.push(h('p', { class: 'note' }, CFG.curriculum.note));
+  out.append(h('details', { class: 'panel curr', style: '--i:' + (i++) }, h('summary', {}, h('span', { class: 'ttl' }, 'Curriculum links'), h('span', { class: 'cnt' }, parts.join(', '))), ...curBody));
 
+  // 5. Next steps.
   const text = summaryText(res);
   const book = CFG.meta.bookingUrl ? h('a', { class: 'btn', href: CFG.meta.bookingUrl }, CFG.meta.bookingLabel) : null; /* TODO: set meta.bookingUrl in the config */
   const ta = h('textarea', { class: 'sumtext', readonly: true, 'aria-label': 'Summary text', rows: 12 }); ta.value = text;
-  out.append(panel('next', h('h2', {}, 'Next steps'),
+  out.append(panel('next',
     h('div', { class: 'nextrow' },
       h('button', { type: 'button', class: 'btn', onclick: () => copySummary(ta) }, 'Copy summary'),
       h('button', { type: 'button', class: 'btn secondary', onclick: () => window.print() }, 'Print'),
@@ -925,16 +932,20 @@ function summaryText(res) {
   if (pathwayVisible(s)) L.push('Pathways: ' + (subj || 'Not specified'));
   L.push('Project: ' + CFG.projects.find(x => x.id === s.project).label + '; time: ' + CFG.times.find(x => x.id === s.time).label);
   L.push('');
-  L.push('RECOMMENDED START');
-  L.push(own ? 'Students\' own project (suggested platform: ' + res.suggested.platform + ')' : variantLine(res.start));
+  L.push('RECOMMENDATION');
+  L.push('Project: ' + res.start.projectLabel);
+  L.push('Platform: ' + (own ? 'Suggested: ' + res.suggested.platform : res.start.platform));
+  L.push('Version: ' + res.start.version);
+  L.push('');
+  L.push('WHAT STUDENTS DO');
   res.start.dotpoints.forEach(d => L.push('- ' + d));
   L.push('');
   L.push('WHY THIS FITS');
   res.reasons.forEach(r => L.push('- ' + r));
-  if (res.stretch) { L.push(''); L.push('STRETCH OPTION'); L.push(res.stretch.v.platform + ' · ' + res.stretch.v.version + (res.stretch.needsMoreTime ? ' (needs a full day)' : '')); }
+  if (res.stretch) { L.push(''); L.push('STRETCH FOR CONFIDENT GROUPS'); L.push(res.stretch.v.platform + ' \u00b7 ' + res.stretch.v.version + (res.stretch.needsMoreTime ? ' (needs a full day)' : '')); }
   if (res.alt) { L.push(''); L.push(own ? 'IF A SET PROJECT IS PREFERRED' : 'ALSO WORTH CONSIDERING'); L.push(variantLine(res.alt)); }
   const cur = res.curriculum;
-  const codes = cur.items.concat(cur.topUp).map(c => c.code + ' ' + c.text + (c.confirm ? ' (' + CFG.curriculum.confirmText + ')' : '')).concat(cur.pathways.map(p => p.study + ', ' + p.unit + ': ' + p.text));
+  const codes = cur.items.concat(cur.topUp).map(c => c.code + ' ' + c.text + (c.confirm ? ' (' + CFG.curriculum.confirmText + ')' : '')).concat(cur.pathways.map(p => p.study + ', ' + p.unit));
   if (codes.length) { L.push(''); L.push('CURRICULUM LINKS'); codes.forEach(c => L.push('- ' + c)); }
   return L.join('\n');
 }

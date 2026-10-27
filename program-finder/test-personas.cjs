@@ -90,16 +90,31 @@ const personas = [
   const ms = Date.now() - t0;
   check('Year 8 flow has 6 question screens and no pathway screen', () => {
     assert(!y8.titles.includes('Where are they heading?'), y8.titles.join(' | '));
-    assert(/Start here/.test(y8.result), y8.result);
+    assert(/recommendation/i.test(y8.result), y8.result);
   });
   check('tapping defaults takes well under 60 seconds (' + ms + ' ms)', () => assert(ms < 10000));
   const y9 = await flow('9');
   check('Year 9 flow includes the pathway screen (7 screens)', () => assert(y9.titles.includes('Where are they heading?')));
 
+
+  // Result layout: the recommendation is its own box, then what students do; curriculum is collapsed.
+  {
+    const p = y9.p;
+    const boxes = await p.$$eval('.result > .panel, .result > .cols, .result > details', els => els.map(e => e.className.replace(/\s+/g, ' ').trim()));
+    check('result order: recommendation, what students do, why/other, curriculum, next steps', () => {
+      assert(/^panel hero/.test(boxes[0]) && /^panel does/.test(boxes[1]) && /^cols/.test(boxes[2]) && /curr/.test(boxes[3]) && /next/.test(boxes[4]), boxes.join(' | '));
+    });
+    const facts = await p.$$eval('.hero dt', e => e.map(x => x.textContent));
+    check('recommendation box has Project, Platform and Version', () => assert.deepStrictEqual(facts, ['Project', 'Platform', 'Version']));
+      assert.strictEqual(await p.$eval('details.curr', d => d.open), false);
+    const words = await p.evaluate(() => document.querySelector('.result').innerText.split(/\s+/).filter(Boolean).length);
+    check('result text is succinct (' + words + ' words with curriculum collapsed)', () => assert(words < 260, String(words)));
+  }
+
   // Copy summary: no identifying data; nothing stored; no network.
   const summary = await y9.p.inputValue('textarea.sumtext');
   check('summary has the expected sections and no contact details', () => {
-    assert(/RECOMMENDED START/.test(summary) && /CLASS PROFILE/.test(summary));
+    assert(/RECOMMENDATION/.test(summary) && /CLASS PROFILE/.test(summary));
     assert(!/@|https?:|\b\d{8,}\b/.test(summary), 'summary contains an email, link or phone-like number');
   });
   const stored = await y9.p.evaluate(() => ({ ls: localStorage.length, ss: sessionStorage.length, ck: document.cookie.length }));
