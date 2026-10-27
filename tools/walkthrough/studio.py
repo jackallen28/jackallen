@@ -452,6 +452,8 @@ def render(out_dir: Path, heading: str, sub: str, small: str):
     for enc in (full_enc, clean_enc):
         enc.stdin.close()
         enc.wait()
+    decoder.stdout.close()                               # we may stop reading early (at "end"): don't wait on it
+    decoder.kill()
     decoder.wait()
     for name in ("walkthrough_captions.mp4", "walkthrough_clean.mp4"):
         d = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
