@@ -28,11 +28,32 @@ MATRIX_X0, MATRIX_Y0 = 59.0, -6.0
 COL_PITCH, ROW_PITCH = 3.0, 2.0
 SPLIT = 6            # columns 1..6 are driven by U2, columns 7..11 by U3
 
-MCU_XY = (47.5, 0.0)
+# Free zone between the LED array and the keyring hole: the BNTS logo (art/bnts-logo.svg, turned to read
+# bottom-to-top) plus two vertical 3 mm text lines.
+LOGO_X0, LOGO_YB, LOGO_LEN = 92.0, 10.5, 21.0          # left edge, bottom end, length of the logo along the board
+LOGO_TEXT = [("CircuitPath", 101.2), ("BNTS", 105.0)]  # (text, x), 3 mm tall, read bottom-to-top
 
-# Free zone between the LED array and the keyring hole: logo box + two vertical 3 mm text lines
-LOGO_BOX = (91.8, -4.25, 100.3, 4.25)      # x0, y0, x1, y1 (silkscreen outline; drop the real logo in here)
-LOGO_TEXT = [("BNTS", 103.4), ("CircuitPath", 107.0)]   # (text, x), 3 mm tall, read bottom-to-top
+
+def logo_shapes():
+    """The logo as silkscreen: squares [(x0, y0, x1, y1, filled)] and text lines [(text, x, y, height, width)], board mm."""
+    import os, re
+    svg = open(os.path.join(os.path.dirname(__file__), "..", "art", "bnts-logo.svg")).read()
+    sc = LOGO_LEN / 480.0
+    light = {"#65d2d8", "#c5b4d6", "#d2c4e0", "#dcd0e7"}          # pale squares are outlined, strong ones are solid
+    sq = []
+    g = re.search(r'<g transform="translate\((\d+) (\d+)\)">(.*?)</g>', svg, re.S)
+    ox, oy = int(g.group(1)), int(g.group(2))
+    for x, y, w, h, fill in re.findall(r'<rect x="(\d+)" y="(\d+)" width="(\d+)" height="(\d+)" fill="(#\w+)"', g.group(3)):
+        u0, v0, u1, v1 = int(x) + ox, int(y) + oy, int(x) + ox + int(w), int(y) + oy + int(h)
+        sq.append((LOGO_X0 + v0 * sc, LOGO_YB - u1 * sc, LOGO_X0 + v1 * sc, LOGO_YB - u0 * sc, fill not in light))
+    u = 220 * sc
+    txt = [("BANYULE NILLUMBIK", LOGO_X0 + 26 * sc, LOGO_YB - 220 * sc, 1.0, 0.8),
+           ("TECH", LOGO_X0 + 53 * sc, LOGO_YB - 220 * sc, 1.3, 1.1),
+           ("SCHOOL", LOGO_X0 + 88 * sc, LOGO_YB - 220 * sc, 1.3, 1.1)]
+    return sq, txt
+
+
+MCU_XY = (47.5, 0.0)
 
 FP_LIB = "/usr/share/kicad/footprints"
 

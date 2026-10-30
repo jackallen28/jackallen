@@ -193,16 +193,23 @@ def main(out):
         add_text(board, text, x, y, rot, size, pcbnew.F_SilkS)
     for text, x, y, rot, size in D.SILK_BOT:
         add_text(board, text, x, y, rot, size, pcbnew.B_SilkS)
-    add_text(board, "USB-A", 6.0, -9.2, 0, 1.0, pcbnew.F_SilkS)
     add_text(board, "USB-C", 17.0, 7.0, 0, 1.0, pcbnew.F_SilkS)
-    # keep-clear zone for the BNTS logo (silkscreen outline) and 3 mm text beside it
-    x0, y0, x1, y1 = D.LOGO_BOX
-    for a_, b_ in (((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))):
-        sh = pcbnew.PCB_SHAPE(board)
-        sh.SetShape(pcbnew.SHAPE_T_SEGMENT)
-        sh.SetStart(P(*a_)); sh.SetEnd(P(*b_))
-        sh.SetLayer(pcbnew.F_SilkS); sh.SetWidth(MM(0.15))
-        board.Add(sh)
+    # BNTS logo from art/bnts-logo.svg as silkscreen (strong squares solid, pale squares outlined), turned to read bottom-to-top
+    squares, lines = D.logo_shapes()
+    for x0, y0, x1, y1, filled in squares:
+        r = pcbnew.PCB_SHAPE(board)
+        r.SetShape(pcbnew.SHAPE_T_RECT)
+        r.SetStart(P(x0, y0)); r.SetEnd(P(x1, y1))
+        r.SetLayer(pcbnew.F_SilkS)
+        r.SetWidth(MM(0.0 if filled else 0.12))
+        r.SetFilled(filled)
+        board.Add(r)
+    for text, x, y, h, w in lines:
+        t = pcbnew.PCB_TEXT(board)
+        t.SetText(text); t.SetPosition(P(x, y)); t.SetLayer(pcbnew.F_SilkS)
+        t.SetTextSize(pcbnew.VECTOR2I(MM(w), MM(h))); t.SetTextThickness(MM(0.15))
+        t.SetTextAngleDegrees(90); t.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_LEFT)
+        board.Add(t)
     for text, x in D.LOGO_TEXT:
         add_text(board, text, x, 0.0, 90, 3.0, pcbnew.F_SilkS)
 

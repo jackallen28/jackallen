@@ -118,3 +118,15 @@ Ask JLCPCB if they can program the chip for you. Try a single board before a bat
 
 `./build.sh` regenerates everything from `tools/design.py` (needs KiCad 7+ and `pip install kiutils`).
 Edit parts, nets and positions in `design.py`, not in the generated files.
+
+## Renders
+
+`docs/render3d-top.png`, `render3d-angle.png` and `render3d-back.png` are 3D renders made from KiCad's own STEP export
+(with KiCad's component models), finished in Blender: purple mask, glowing matrix LEDs, coloured 5 mm LEDs. KiCad 7 has no
+render command and ignores the mask colour in STEP, so the colours are applied in `tools/render3d/shot.py`. The USB-C,
+buttons, USB-A fingers and buzzer have no model in KiCad's library, so simple stand-in shapes of the correct size are used,
+and the silkscreen is redrawn from the same data. Run: `kicad-cli pcb export step --subst-models`, then
+`tools/render3d/step2glb.py`, then `blender -b -P tools/render3d/shot.py -- top|angle|back`.
+The logo comes from `art/bnts-logo.svg` (copied from the BNTS_FidgetCAD repo): the strong squares are solid silkscreen and the
+pale squares are outlined. Its small grey line ("BANYULE NILLUMBIK") is printed at 1.0 mm tall, which is the smallest
+JLCPCB recommends, so check it in their preview.
