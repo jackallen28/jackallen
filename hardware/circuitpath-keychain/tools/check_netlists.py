@@ -22,4 +22,19 @@ for k in sorted(set(sch) | set(pcb)):
         bad += 1
         print("MISMATCH", k, "schematic:", a, "pcb:", c)
 print("pads compared:", len(set(sch) | set(pcb)), "mismatches:", bad)
-sys.exit(1 if bad else 0)
+if bad: sys.exit(1)
+
+# geometry check: no two pads on the same layer may overlap unless they share a net (catches stacked pads)
+import itertools
+pads = [(fp.GetReference(), pad) for fp in b.GetFootprints() for pad in fp.Pads() if pad.GetAttribute() != pcbnew.PAD_ATTRIB_NPTH]
+ov = 0
+for (r1, p1), (r2, p2) in itertools.combinations(pads, 2):
+    if p1.GetNetname() == p2.GetNetname() and p1.GetNetname():
+        continue
+    if not (p1.GetLayerSet().Contains(pcbnew.F_Cu) and p2.GetLayerSet().Contains(pcbnew.F_Cu)) and not (p1.GetLayerSet().Contains(pcbnew.B_Cu) and p2.GetLayerSet().Contains(pcbnew.B_Cu)):
+        continue
+    if p1.GetBoundingBox().Intersects(p2.GetBoundingBox()):
+        ov += 1
+        print("PAD OVERLAP", r1, p1.GetNumber(), r2, p2.GetNumber())
+print("pad overlaps between different nets:", ov)
+sys.exit(1 if ov else 0)

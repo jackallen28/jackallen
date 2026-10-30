@@ -47,8 +47,9 @@ def usb_a_plug():
         ls.AddLayer(pcbnew.F_Mask)
         pad.SetLayerSet(ls)
         pad.SetSize(pcbnew.VECTOR2I(MM(7.5), MM(w)))
-        pad.SetPosition(P(4.75, y))
         fp.Add(pad)
+        pad.SetPos0(P(4.75, y))
+        pad.SetPosition(P(4.75, y))
     return fp
 
 

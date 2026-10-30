@@ -92,10 +92,10 @@ two("C1", "C", "15p", C0603, "C1644", "XTAL1", "GND", mx - 3.6, 10.4, ok=True, m
 two("C2", "C", "15p", C0603, "C1644", "XTAL2", "GND", mx + 3.6, 8.2, ok=True, mpn="CL10C150JB8NNNC", desc="Crystal load cap (check crystal CL)")
 two("C3", "C", "1u", C0603, "C15849", "UCAP", "GND", mx - 8.4, 1.2, ok=False, mpn="CL10A105KB8NNNC", desc="USB regulator capacitor")
 two("C4", "C", "100n", C0603, "C14663", "+5V", "GND", mx - 8.4, 3.4, ok=False, mpn="CL10B104KB8NNNC", desc="Decoupling UVCC/VBUS")
-two("C5", "C", "100n", C0603, "C14663", "+5V", "GND", mx + 4.0, -8.4, ok=False, mpn="CL10B104KB8NNNC", desc="Decoupling VCC")
-two("C6", "C", "100n", C0603, "C14663", "+5V", "GND", mx - 4.0, -8.4, ok=False, mpn="CL10B104KB8NNNC", desc="Decoupling AVCC")
-two("C7", "C", "100n", C0603, "C14663", "AREF", "GND", mx - 1.6, -8.4, ok=False, mpn="CL10B104KB8NNNC", desc="AREF filter")
-two("C8", "C", "10u", C0805, "C15850", "+5V", "GND", mx + 1.6, -8.8, ok=False, mpn="CL21A106KAYNNNE", desc="Bulk capacitor")
+two("C5", "C", "100n", C0603, "C14663", "+5V", "GND", mx + 5.0, -8.4, ok=False, mpn="CL10B104KB8NNNC", desc="Decoupling VCC")
+two("C6", "C", "100n", C0603, "C14663", "+5V", "GND", mx - 6.2, -8.4, ok=False, mpn="CL10B104KB8NNNC", desc="Decoupling AVCC")
+two("C7", "C", "100n", C0603, "C14663", "AREF", "GND", mx - 3.0, -8.4, ok=False, mpn="CL10B104KB8NNNC", desc="AREF filter")
+two("C8", "C", "10u", C0805, "C15850", "+5V", "GND", mx + 1.0, -8.9, ok=False, mpn="CL21A106KAYNNNE", desc="Bulk capacitor")
 two("R5", "R", "10k", R0603, "C25804", "+5V", "RESET", mx - 4.0, 8.6, ok=False, mpn="0603WAF1002T5E", desc="RESET pull-up")
 two("R6", "R", "10k", R0603, "C25804", "HWB", "GND", mx + 8.4, -3.6, ok=False, mpn="0603WAF1002T5E", desc="HWB pull-down")
 
@@ -152,6 +152,6 @@ SILK_TOP = [
     ("CircuitPath", 88.0, -9.6, 0, 1.2),
 ]
 SILK_BOT = [
-    ("CircuitPath", 80.0, -2.0, 0, 1.6),
-    ("Banyule Nillumbik Tech School", 80.0, 2.0, 0, 1.0),
+    ("CircuitPath", 50.0, -2.0, 0, 1.6),
+    ("Banyule Nillumbik Tech School", 50.0, 2.0, 0, 1.0),
 ]
