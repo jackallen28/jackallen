@@ -1,6 +1,6 @@
 Qty,Designators,Value,Footprint,Side,Manufacturer part,LCSC #,LCSC number status,What it is
 1,J2,USB-C (vertical),USB_C_Receptacle_G-Switch_GT-USB-7051x,Top,GT-USB-7051A,C2843970,verified on lcsc.com/jlcpcb.com,"USB-C 16P vertical SMT, G-Switch"
-2,"R1,R2",5.1k,R_0603_1608Metric,Top,0603WAF5101T5E,C23186,FROM MEMORY - check in JLCPCB parts search,USB-C CC1 pull-down
+2,"R1,R2",5.1k,R_0603_1608Metric,Bottom,0603WAF5101T5E,C23186,FROM MEMORY - check in JLCPCB parts search,USB-C CC1 pull-down
 2,"D1,D2",1N5819WS,D_SOD-323,Top,1N5819WS,C191023,verified on lcsc.com/jlcpcb.com,Schottky OR-ing diode
 1,U4,USBLC6-2SC6,SOT-23-6,Top,USBLC6-2SC6,C7519,verified on lcsc.com/jlcpcb.com,USB ESD protection
 2,"R3,R4",22,R_0603_1608Metric,Bottom,0603WAF220JT5E,C23345,verified on lcsc.com/jlcpcb.com,USB D- series resistor
@@ -18,7 +18,7 @@ Qty,Designators,Value,Footprint,Side,Manufacturer part,LCSC #,LCSC number status
 2,"R10,R11",22k,R_0603_1608Metric,Bottom,0603WAF2202T5E,C31850,FROM MEMORY - check in JLCPCB parts search,MAX7219 ISET: sets LED current (~10-15 mA peak)
 77,D6...D82,Blue 0603,LED_0603_1608Metric,Top,KT-0603B,C2288,verified on lcsc.com/jlcpcb.com,0603 blue LED (matrix)
 1,J1,USB-A plug (PCB fingers),USB_A_PCB_Plug,Top,,,NOT assembled by JLCPCB SMT,"Edge fingers on the board tongue, no part to buy"
-1,J3,ISP pads,Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical,Top,,,NOT assembled by JLCPCB SMT,Bare pads for the one-off bootloader burn (Tag-Connect TC2030-IDC-NL or pogo pins)
+1,J3,ISP pads,ISP_Pads_2x3,Top,,,NOT assembled by JLCPCB SMT,"Six bare pads (TC2030 pad layout, no alignment holes) for the one-off bootloader burn with pogo pins or probes"
 1,D3,RED 5mm,LED_D5.0mm,Top,,,NOT assembled by JLCPCB SMT,"5 mm through-hole LED, red (hand-solder or JLCPCB THT service)"
 1,D4,AMBER 5mm,LED_D5.0mm,Top,,,NOT assembled by JLCPCB SMT,"5 mm through-hole LED, amber (hand-solder or JLCPCB THT service)"
 1,D5,GREEN 5mm,LED_D5.0mm,Top,,,NOT assembled by JLCPCB SMT,"5 mm through-hole LED, green (hand-solder or JLCPCB THT service)"

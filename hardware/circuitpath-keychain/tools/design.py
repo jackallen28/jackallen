@@ -24,8 +24,8 @@ KEYRING_HOLE = (111.0, 0.0, 4.2)   # x, y, drill diameter
 
 # ------------------------------------------------------------ LED matrix (7 x 11)
 COLS, ROWS = 11, 7
-MATRIX_X0, MATRIX_Y0 = 59.0, -6.0
-COL_PITCH, ROW_PITCH = 3.0, 2.0
+MATRIX_X0, MATRIX_Y0 = 59.0, -7.2
+COL_PITCH, ROW_PITCH = 3.0, 2.4
 SPLIT = 6            # columns 1..6 are driven by U2, columns 7..11 by U3
 
 # Free zone between the LED array and the keyring hole: the BNTS logo (art/bnts-logo.svg, turned to read
@@ -82,18 +82,21 @@ part("J1", "Connector_Generic:Conn_01x04", "USB-A plug (PCB fingers)", "CircuitP
      {"1": "VBUS_A", "2": "USB_DM", "3": "USB_DP", "4": "GND"}, 0, 0, desc="Edge fingers on the board tongue, no part to buy")
 
 # ---- USB-C receptacle, vertical (opening faces up, matches the 'pill' in the sketch)
+# On the PCB only the A4/B9 VBUS pad pair is wired (see PCB_NC): a USB-C plug ties all four VBUS pins together, so one pair
+# carries the power in either orientation, and A9/B4 would need a long detour around the connector on a 2-layer board.
+PCB_NC = {("J2", "A9"), ("J2", "B4")}
 usbc = {"A1": "GND", "B12": "GND", "A12": "GND", "B1": "GND", "A4": "VBUS_C", "B9": "VBUS_C", "A9": "VBUS_C", "B4": "VBUS_C",
         "A5": "CC1", "B5": "CC2", "A6": "USB_DP", "B6": "USB_DP", "A7": "USB_DM", "B7": "USB_DM",
         "A8": None, "B8": None, "S1": "GND"}
 part("J2", "Connector:USB_C_Receptacle_USB2.0_16P", "USB-C (vertical)", "Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7051x",
      "C2843970", usbc, 17.0, 0.0, rot=90, ok=True, mpn="GT-USB-7051A", desc="USB-C 16P vertical SMT, G-Switch")
-two("R1", "R", "5.1k", R0603, "C23186", "CC1", "GND", 20.6, -10.6, ok=False, mpn="0603WAF5101T5E", desc="USB-C CC1 pull-down")
-two("R2", "R", "5.1k", R0603, "C23186", "CC2", "GND", 20.6, 10.6, ok=False, mpn="0603WAF5101T5E", desc="USB-C CC2 pull-down")
+two("R1", "R", "5.1k", R0603, "C23186", "CC1", "GND", 13.0, 1.2, side="B", ok=False, mpn="0603WAF5101T5E", desc="USB-C CC1 pull-down")
+two("R2", "R", "5.1k", R0603, "C23186", "CC2", "GND", 20.9, -1.17, side="B", ok=False, mpn="0603WAF5101T5E", desc="USB-C CC2 pull-down")
 
 # ---- power OR-ing: whichever USB port has power feeds the +5V rail
-for ref, net, y in (("D1", "VBUS_A", -9.2), ("D2", "VBUS_C", 9.2)):
+for ref, net, y in (("D1", "VBUS_A", -9.4), ("D2", "VBUS_C", 9.4)):
     part(ref, "Device:D_Schottky", "1N5819WS", "Diode_SMD:D_SOD-323", "C191023", {"1": "+5V", "2": net},
-         14.2, y, ok=True, mpn="1N5819WS", desc="Schottky OR-ing diode")
+         16.5, y, ok=True, mpn="1N5819WS", desc="Schottky OR-ing diode")
 
 # ---- USB data protection and series resistors
 part("U4", "Power_Protection:USBLC6-2P6", "USBLC6-2SC6", "Package_TO_SOT_SMD:SOT-23-6", "C7519",
@@ -125,9 +128,9 @@ two("R5", "R", "10k", R0603, "C25804", "+5V", "RESET", mx - 4.0, 8.6, side="B", 
 two("R6", "R", "10k", R0603, "C25804", "HWB", "GND", mx + 7.2, -3.6, side="B", ok=False, mpn="0603WAF1002T5E", desc="HWB pull-down")
 
 # ---- programming pads (bootloader / ISP), Tag-Connect TC2030-IDC-NL footprint = just pads, nothing to buy
-part("J3", "Connector_Generic:Conn_02x03_Odd_Even", "ISP pads", "Connector:Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical", "",
+part("J3", "Connector_Generic:Conn_02x03_Odd_Even", "ISP pads", "CircuitPath:ISP_Pads_2x3", "",
      {"1": "ISP_MISO", "2": "+5V", "3": "MAX_CLK", "4": "MAX_DIN", "5": "RESET", "6": "GND"}, mx + 8.5, 0.0, side="B",
-     desc="Bare pads for the one-off bootloader burn (Tag-Connect TC2030-IDC-NL or pogo pins)")
+     desc="Six bare pads (TC2030 pad layout, no alignment holes) for the one-off bootloader burn with pogo pins or probes")
 
 # ---- 3 x 5mm indicator LEDs (through-hole) and their resistors
 for ref_l, ref_r, name, net, y in (("D3", "R7", "RED", "LED_R", -6.6), ("D4", "R8", "AMBER", "LED_Y", 0.0), ("D5", "R9", "GREEN", "LED_G", 6.6)):
@@ -181,5 +184,5 @@ SILK_BOT = [
     ("CircuitPath", 33.4, 0.0, 90, 1.6),
     ("Banyule Nillumbik", 35.6, 0.0, 90, 1.0),
     ("Tech School", 37.0, 0.0, 90, 1.0),
-    ("RESET = short pads 5+6", 55.5, 3.8, 0, 0.7),
+    ("RESET = short pads 5+6", 55.5, 3.8, 0, 0.8),
 ]

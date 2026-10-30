@@ -6,24 +6,24 @@ its **USB-A plug**, or connects with a cable to its **USB-C socket**. Either one
 programs it from the Arduino IDE. The layout follows the sketch: USB-A tab, USB-C, three 5 mm
 LEDs (red / amber / green), two buttons, the circuits, a 7 x 11 SMD LED array, and the BNTS area.
 
-## Status: read this first
+## Status: read this first (updated: board routed, Gerbers made)
 
 | Item | State |
 |---|---|
 | Schematic (`kicad/circuitpath-keychain.kicad_sch`) | Done. Nets are drawn as labels, so it reads as a netlist, not a tidy drawing. |
 | PCB placement (`kicad/circuitpath-keychain.kicad_pcb`) | Done: outline, all 116 parts placed, silkscreen. |
 | Schematic vs PCB | Checked: all 345 pads have identical nets (`tools/check_netlists.py`). |
-| **PCB routing (copper tracks)** | **NOT done yet.** The board is placed but unrouted, so there are no Gerbers. See "Next step". |
-| BOM + placement file for JLCPCB | Done (`fab/`). Placement file is final because routing does not move parts. |
+| PCB routing | Done with Freerouting: `kicad/circuitpath-keychain-routed.kicad_pcb` (1,130 track segments, 102 vias, GND pours both sides). |
+| KiCad design-rule check | **0 serious items** at JLCPCB-style limits (track/space 0.15 mm, via 0.6/0.3, copper to edge 0.3, hole clearance 0.2). Silkscreen warnings remain (some silk touches pads/edge; JLCPCB clips it). Run DRC again in KiCad before ordering. |
+| Gerbers + drill | Done: `fab/circuitpath-keychain-gerbers.zip` (9 layers + PTH/NPTH drill files). |
+| BOM + placement file for JLCPCB | Done (`fab/`), regenerated from the routed board. |
 | Tested on hardware | No. Nothing here has been built or powered. |
 
-**Next step:** the board needs routing. I tried to autoroute it with Freerouting (an open-source
-tool I would have downloaded from GitHub), but the session's safety check blocked running
-downloaded code, so I stopped there. Options: (a) say it is OK and I run Freerouting, (b) route it
-yourself in KiCad (Route > Autoroute is not built in; use the interactive router, or export a DSN
-to Freerouting on your own machine), or (c) I write a custom router for the LED grid. For a
-**quote** you do not need routing: JLCPCB prices PCB and assembly from board size, layer count,
-thickness and the BOM.
+**Known compromises in the routing**
+* Only one of the two USB-C VBUS pad pairs (A4/B9) is connected; A9/B4 are left unconnected on purpose (a USB-C plug ties all four VBUS pins together, so one pair carries the power either way). The schematic keeps all four on the VBUS net.
+* The USB-C data pins were tied by hand (D+ across the gap on top, D- through two vias and the back layer) because the connector's pads are interleaved.
+* One via (COL3, 64.464 / 2.103 mm) was added by hand after the autorouter left that connection open.
+* Autorouted, not hand-tuned: USB D+/D- are not length-matched or impedance-controlled (fine for full-speed USB at this length).
 
 ## What is on the board
 
@@ -38,7 +38,7 @@ thickness and the BOM.
 | Indicators | 3 x 5 mm LED (red, amber, green) + 330 ohm | Amber is pin 13, so `LED_BUILTIN` works. |
 | Buttons | 2 x TS-1187A | Pins 3 and 2 (`INPUT_PULLUP`). |
 | Buzzer | Murata PKMCS0909E4000-R1 piezo, 9 x 9 x 1 mm | On the back. No driver parts: wired straight to pins 9 and 10, so `tone(9, 440)` plays a note. Drive pin 10 the opposite way too and it is about twice as loud. |
-| Programming | 6 bare pads (Tag-Connect TC2030-IDC-NL footprint) | One-off bootloader burn. Shorting pads 5 and 6 with tweezers is a RESET. |
+| Programming | 6 bare pads on the back (Tag-Connect TC2030 pad layout, no alignment holes) | One-off bootloader burn with pogo pins or probes. Shorting pads 5 and 6 with tweezers is a RESET. |
 
 Both USB ports share D+ / D-, so **plug in only one at a time**.
 

@@ -2,6 +2,8 @@
 import sys, xml.etree.ElementTree as ET
 sys.path.insert(0, "/usr/lib/python3/dist-packages")
 import pcbnew
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import design as _D
 sch = {}
 for n in ET.parse(sys.argv[1]).getroot().iter("net"):
     name = n.get("name").lstrip("/")
@@ -18,6 +20,7 @@ for k in sorted(set(sch) | set(pcb)):
     a, c = sch.get(k), pcb.get(k)
     # unconnected pins show as unconnected-(...) in the schematic netlist
     if a and a.startswith("unconnected"): a = None
+    if k in _D.PCB_NC: continue          # deliberate: redundant USB-C VBUS pads left unconnected on the PCB
     if a != c:
         bad += 1
         print("MISMATCH", k, "schematic:", a, "pcb:", c)
