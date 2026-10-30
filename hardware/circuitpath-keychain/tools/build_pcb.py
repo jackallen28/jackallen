@@ -194,10 +194,37 @@ def main(out):
     for text, x, y, rot, size in D.SILK_BOT:
         add_text(board, text, x, y, rot, size, pcbnew.B_SilkS)
     add_text(board, "USB-A", 6.0, -9.2, 0, 1.0, pcbnew.F_SilkS)
-    add_text(board, "USB-C", 18.0, 7.0, 0, 1.0, pcbnew.F_SilkS)
-    add_text(board, "RESET: short pads 5-6", D.MCU_XY[0] + 10.0, 11.6, 0, 0.7, pcbnew.F_SilkS)
+    add_text(board, "USB-C", 17.0, 7.0, 0, 1.0, pcbnew.F_SilkS)
+    # keep-clear zone for the BNTS logo (silkscreen outline) and 3 mm text beside it
+    x0, y0, x1, y1 = D.LOGO_BOX
+    for a_, b_ in (((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))):
+        sh = pcbnew.PCB_SHAPE(board)
+        sh.SetShape(pcbnew.SHAPE_T_SEGMENT)
+        sh.SetStart(P(*a_)); sh.SetEnd(P(*b_))
+        sh.SetLayer(pcbnew.F_SilkS); sh.SetWidth(MM(0.15))
+        board.Add(sh)
+    for text, x in D.LOGO_TEXT:
+        add_text(board, text, x, 0.0, 90, 3.0, pcbnew.F_SilkS)
 
     pcbnew.SaveBoard(out, board)
+    # purple mask / white silk / ENIG, written as a KiCad stackup so the 3D viewer and exports use it
+    stack = """
+    (stackup
+      (layer "F.SilkS" (type "Top Silk Screen") (color "White"))
+      (layer "F.Paste" (type "Top Solder Paste"))
+      (layer "F.Mask" (type "Top Solder Mask") (color "Purple") (thickness 0.01))
+      (layer "F.Cu" (type "copper") (thickness 0.035))
+      (layer "dielectric 1" (type "core") (thickness 1.86) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "B.Cu" (type "copper") (thickness 0.035))
+      (layer "B.Mask" (type "Bottom Solder Mask") (color "Purple") (thickness 0.01))
+      (layer "B.Paste" (type "Bottom Solder Paste"))
+      (layer "B.SilkS" (type "Bottom Silk Screen") (color "White"))
+      (copper_finish "ENIG")
+      (dielectric_constraints no)
+    )"""
+    txt = open(out).read()
+    i = txt.index("(setup") + len("(setup")
+    open(out, "w").write(txt[:i] + stack + txt[i:])
     print("wrote", out, "with", len(board.GetFootprints()), "footprints and", len(nets), "nets")
 
 

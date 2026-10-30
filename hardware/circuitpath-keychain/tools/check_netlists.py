@@ -37,4 +37,17 @@ for (r1, p1), (r2, p2) in itertools.combinations(pads, 2):
         ov += 1
         print("PAD OVERLAP", r1, p1.GetNumber(), r2, p2.GetNumber())
 print("pad overlaps between different nets:", ov)
-sys.exit(1 if ov else 0)
+
+# courtyard check: parts on the same side must not overlap each other, and must stay inside the board
+fps = list(b.GetFootprints())
+cy = 0
+for f1, f2 in itertools.combinations(fps, 2):
+    if f1.IsFlipped() != f2.IsFlipped():
+        continue
+    lay = pcbnew.B_CrtYd if f1.IsFlipped() else pcbnew.F_CrtYd
+    c1, c2 = f1.GetCourtyard(lay), f2.GetCourtyard(lay)
+    if c1.OutlineCount() and c2.OutlineCount() and c1.Collide(c2, 0):
+        cy += 1
+        print("COURTYARD OVERLAP", f1.GetReference(), f2.GetReference())
+print("courtyard overlaps:", cy)
+sys.exit(1 if (ov or cy) else 0)

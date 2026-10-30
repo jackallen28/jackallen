@@ -11,8 +11,8 @@ LEDs (red / amber / green), two buttons, the circuits, a 7 x 11 SMD LED array, a
 | Item | State |
 |---|---|
 | Schematic (`kicad/circuitpath-keychain.kicad_sch`) | Done. Nets are drawn as labels, so it reads as a netlist, not a tidy drawing. |
-| PCB placement (`kicad/circuitpath-keychain.kicad_pcb`) | Done: outline, all 115 parts placed, silkscreen. |
-| Schematic vs PCB | Checked: all 343 pads have identical nets (`tools/check_netlists.py`). |
+| PCB placement (`kicad/circuitpath-keychain.kicad_pcb`) | Done: outline, all 116 parts placed, silkscreen. |
+| Schematic vs PCB | Checked: all 345 pads have identical nets (`tools/check_netlists.py`). |
 | **PCB routing (copper tracks)** | **NOT done yet.** The board is placed but unrouted, so there are no Gerbers. See "Next step". |
 | BOM + placement file for JLCPCB | Done (`fab/`). Placement file is final because routing does not move parts. |
 | Tested on hardware | No. Nothing here has been built or powered. |
@@ -37,13 +37,17 @@ thickness and the BOM.
 | LED array | 77 x 0603 blue LEDs, 2 x MAX7219 | 7 rows x 11 columns. Each MAX7219 sets LED current itself, so no LED resistors. 3 MCU pins (SPI) drive both. |
 | Indicators | 3 x 5 mm LED (red, amber, green) + 330 ohm | Amber is pin 13, so `LED_BUILTIN` works. |
 | Buttons | 2 x TS-1187A | Pins 3 and 2 (`INPUT_PULLUP`). |
+| Buzzer | Murata PKMCS0909E4000-R1 piezo, 9 x 9 x 1 mm | On the back. No driver parts: wired straight to pins 9 and 10, so `tone(9, 440)` plays a note. Drive pin 10 the opposite way too and it is about twice as loud. |
 | Programming | 6 bare pads (Tag-Connect TC2030-IDC-NL footprint) | One-off bootloader burn. Shorting pads 5 and 6 with tweezers is a RESET. |
 
 Both USB ports share D+ / D-, so **plug in only one at a time**.
 
 Size: about **118 x 24 mm**. That is longer than the sketch because real 5 mm LEDs, the USB-C and
-the MCU are bigger than drawn. The parts are on top except the two MAX7219 chips and their
-parts, which sit on the **back** under the LED array (so assembly is both-sided).
+the MCU are bigger than drawn. The USB-A / USB-C / LEDs / buttons / MCU sit on the left, then the
+LED array, then a clear **logo and text zone** (about 16 x 22 mm) before the keyring hole. The zone
+has an 8.5 mm silkscreen box for the BNTS logo and two vertical 3 mm text lines ("BNTS" and
+"CircuitPath"). The MCU's small support parts, the two MAX7219 chips and the buzzer are on the
+**back** (so assembly is both-sided).
 
 ## Arduino pin map (board: "Arduino Micro")
 
@@ -54,7 +58,8 @@ parts, which sit on the **back** under the LED array (so assembly is both-sided)
 | Green LED | PB7 | 11 |
 | Button A / B | PD0 / PD1 | 3 / 2 |
 | LED array LOAD / CLK / DIN | PB0 / PB1 / PB2 | `SS` / `SCK` / `MOSI` (hardware SPI) |
-| Spare (not connected) | PD2-5, PD6-7, PB4-6, PF0-1, PF4-7, PE6 | broken out nowhere |
+| Buzzer | PB5 / PB6 | 9 / 10 |
+| Spare (not connected) | PD2-5, PD6-7, PB4, PF0-1, PF4-7, PE6 | broken out nowhere |
 
 LED array: columns 1-6 are U2 digits 0-5, columns 7-11 are U3 digits 0-4. Rows are segments A-G
 (A is the top row, data bit 6; G is the bottom row, bit 0). `firmware/matrix_test.ino` sweeps a
@@ -102,8 +107,12 @@ Ask JLCPCB if they can program the chip for you. Try a single board before a bat
    Purple LEDs behave like blue. I did not find a stocked purple 0603 in the checks I could do.
 5. **Placement rotation.** JLCPCB's viewer often needs rotation fixes on the TQFP, SOIC, SOT-23,
    crystal and USB-C. Check every part in their preview before paying.
-6. **The BNTS logo** is text only (silkscreen "BNTS" and the school name on the back). Add the real
-   logo in KiCad with Image Converter, then place it on the silkscreen.
+6. **The BNTS logo** is an empty outlined box. Add the real logo in KiCad with Image Converter
+   (File > Bitmap to Component Converter, silkscreen layer) and place it in the box.
+7. **Buzzer loudness and sound path.** I could not check the PKMCS0909 sound level from here
+   (the data I found for Murata's other piezo, the 12 mm PKLCS1212, was inconsistent). It sits on
+   the back, so a board lying face-down will muffle it. If you want it louder, the 5 x 5 mm
+   MLT-5020 magnetic buzzer (C94598) is the usual alternative but needs a transistor.
 
 ## Rebuild
 

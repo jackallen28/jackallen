@@ -3,20 +3,19 @@ Qty,Designators,Value,Footprint,Side,Manufacturer part,LCSC #,LCSC number status
 2,"R1,R2",5.1k,R_0603_1608Metric,Top,0603WAF5101T5E,C23186,FROM MEMORY - check in JLCPCB parts search,USB-C CC1 pull-down
 2,"D1,D2",1N5819WS,D_SOD-323,Top,1N5819WS,C191023,verified on lcsc.com/jlcpcb.com,Schottky OR-ing diode
 1,U4,USBLC6-2SC6,SOT-23-6,Top,USBLC6-2SC6,C7519,verified on lcsc.com/jlcpcb.com,USB ESD protection
-2,"R3,R4",22,R_0603_1608Metric,Top,0603WAF220JT5E,C23345,verified on lcsc.com/jlcpcb.com,USB D- series resistor
+2,"R3,R4",22,R_0603_1608Metric,Bottom,0603WAF220JT5E,C23345,verified on lcsc.com/jlcpcb.com,USB D- series resistor
 1,U1,ATmega32U4-AU,TQFP-44_10x10mm_P0.8mm,Top,ATMEGA32U4-AU,C44854,verified on lcsc.com/jlcpcb.com,"USB microcontroller, Arduino Leonardo/Micro compatible"
-1,Y1,16MHz,Crystal_SMD_3225-4Pin_3.2x2.5mm,Top,X322516MLB4SI,C13738,verified on lcsc.com/jlcpcb.com,16 MHz crystal 3225
-2,"C1,C2",15p,C_0603_1608Metric,Top,CL10C150JB8NNNC,C1644,verified on lcsc.com/jlcpcb.com,Crystal load cap (check crystal CL)
-1,C3,1u,C_0603_1608Metric,Top,CL10A105KB8NNNC,C15849,FROM MEMORY - check in JLCPCB parts search,USB regulator capacitor
-4,"C4,C5,C6,C7",100n,C_0603_1608Metric,Top,CL10B104KB8NNNC,C14663,FROM MEMORY - check in JLCPCB parts search,Decoupling UVCC/VBUS
-1,C8,10u,C_0805_2012Metric,Top,CL21A106KAYNNNE,C15850,FROM MEMORY - check in JLCPCB parts search,Bulk capacitor
-2,"R5,R6",10k,R_0603_1608Metric,Top,0603WAF1002T5E,C25804,FROM MEMORY - check in JLCPCB parts search,RESET pull-up
+1,Y1,16MHz,Crystal_SMD_3225-4Pin_3.2x2.5mm,Bottom,X322516MLB4SI,C13738,verified on lcsc.com/jlcpcb.com,16 MHz crystal 3225
+2,"C1,C2",15p,C_0603_1608Metric,Bottom,CL10C150JB8NNNC,C1644,verified on lcsc.com/jlcpcb.com,Crystal load cap (check crystal CL)
+1,C3,1u,C_0603_1608Metric,Bottom,CL10A105KB8NNNC,C15849,FROM MEMORY - check in JLCPCB parts search,USB regulator capacitor
+6,"C4,C5,C6,C7,C9,C11",100n,C_0603_1608Metric,Bottom,CL10B104KB8NNNC,C14663,FROM MEMORY - check in JLCPCB parts search,Decoupling UVCC/VBUS
+3,"C8,C10,C12",10u,C_0805_2012Metric,Bottom,CL21A106KAYNNNE,C15850,FROM MEMORY - check in JLCPCB parts search,Bulk capacitor
+2,"R5,R6",10k,R_0603_1608Metric,Bottom,0603WAF1002T5E,C25804,FROM MEMORY - check in JLCPCB parts search,RESET pull-up
 3,"R7,R8,R9",330,R_0603_1608Metric,Top,0603WAF3300T5E,C23138,verified on lcsc.com/jlcpcb.com,LED resistor
+1,BZ1,Piezo 9x9,Buzzer_Murata_PKMCS0909E,Bottom,PKMCS0909E4000-R1,C910763,verified on lcsc.com/jlcpcb.com,9x9x1 mm SMD piezo sounder (passive: play it with tone())
 2,"SW1,SW2",Button,SW_Push_1P1T_XKB_TS-1187A,Top,TS-1187A-B-A-B,C318884,verified on lcsc.com/jlcpcb.com,SMD tactile button 5.1x5.1
 2,"U2,U3",MAX7219CWG+T,SOIC-24W_7.5x15.4mm_P1.27mm,Bottom,MAX7219CWG+T,C9964,verified on lcsc.com/jlcpcb.com,"8-digit LED driver (SPI), columns 1-6"
 2,"R10,R11",22k,R_0603_1608Metric,Bottom,0603WAF2202T5E,C31850,FROM MEMORY - check in JLCPCB parts search,MAX7219 ISET: sets LED current (~10-15 mA peak)
-2,"C9,C11",100n,C_0603_1608Metric,Bottom,CL10B104KB8NNNC,C14663,FROM MEMORY - check in JLCPCB parts search,Decoupling
-2,"C10,C12",10u,C_0805_2012Metric,Bottom,CL21A106KAYNNNE,C15850,FROM MEMORY - check in JLCPCB parts search,Bulk capacitor
 77,D6...D82,Blue 0603,LED_0603_1608Metric,Top,KT-0603B,C2288,verified on lcsc.com/jlcpcb.com,0603 blue LED (matrix)
 1,J1,USB-A plug (PCB fingers),USB_A_PCB_Plug,Top,,,NOT assembled by JLCPCB SMT,"Edge fingers on the board tongue, no part to buy"
 1,J3,ISP pads,Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical,Top,,,NOT assembled by JLCPCB SMT,Bare pads for the one-off bootloader burn (Tag-Connect TC2030-IDC-NL or pogo pins)
